@@ -1,0 +1,73 @@
+I want to build a no-code website called Ceylon Expand. It is a travel buddy and trip-sharing platform for people visiting or traveling in Sri Lanka. Please create a fully functional, mobile-friendly platform with the following structure and features:
+1. Homepage
+Hero section:
+Title: “Travel Together. Share the Journey.”
+Subtitle: “Find rides, buddies, and unique experiences across Sri Lanka. Post your trip or join one today.”
+Buttons: Browse Trips and Post a Trip.
+Section: How It Works with 3 steps: Sign Up → Post/Find a Trip → Travel Together.
+Section: Why Join Us with 3 key benefits: Save money, Meet new friends, Explore more.
+Section: House Rules with friendly bullet points:
+Be respectful to others.
+Meet in public places.
+Don’t pay strangers in advance.
+Report suspicious posts.
+Share honest trip details.
+2. Browse Trips Page (Directory)
+Display all trips in a card or list view. Each card should include:
+Trip Title
+From → To
+Date & Time
+Seats Available
+Price
+Region
+Posted by (User Name + Profile Picture)
+Each trip card has a Join / Contact button that opens email or WhatsApp.
+Add Filters and Search:
+By Destination (From / To)
+By Date
+By Price Range
+By Region
+Add a Map View option showing trip routes with pins (optional but useful).
+3. Post a Trip Page (Form)
+Form fields:
+Trip Title
+From
+To
+Date & Time
+Seats Available
+Price
+Region
+Contact Info
+Notes / Extra Details
+Save form entries into the Trips database.
+Only logged-in users can post trips.
+4. User Accounts & Profiles
+Signup fields: Name, Email, Password.
+After signup → redirect to Complete Profile Page with required fields:
+Phone Number (required, unique ID)
+Profile Picture
+Short Bio (optional)
+User dashboard:
+My Trips (trips I posted)
+Trips I Joined
+Edit Profile
+5. Community Features
+Allow users to comment or ask questions on each trip page.
+Add user ratings/reviews for drivers or trip organizers.
+Add a “Report Trip” button for spam/suspicious listings.
+6. Future-Proof (Phase 2+)
+Integrate Stripe or PayPal to allow users to split ride costs securely.
+Add multi-language support (English, Sinhala, Tamil).
+Add notification emails when a trip is posted or someone joins.
+Add social share buttons so users can share their trip on Facebook/WhatsApp.
+7. Design Style
+Modern, clean, mobile-first design.
+Colors: travel-inspired (greens, blues, sandy beige).
+Fonts: professional but friendly, easy to read.
+Icons and visuals: travel-related (cars, jeeps, palm trees, safari icons).
+👉 Output: A directory-style, user-driven travel buddy platform where users can:
+Sign up and create profiles.
+Post trips with details.
+Browse trips, filter them, and contact/join.
+Leave reviews and comments.
+Expand into payments and multilingual features in the future.
