@@ -1,0 +1,260 @@
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Mountain, UserPlus, MapPin, Handshake, PiggyBank, Users, Compass, Heart, Shield, Flag, Star } from "lucide-react";
+
+export default function Landing() {
+  const handleLogin = () => {
+    window.location.href = '/api/login';
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation Header */}
+      <nav className="bg-white shadow-sm sticky top-0 z-50 border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-2">
+              <Mountain className="text-ceylon-green h-8 w-8" data-testid="logo-icon" />
+              <span className="text-xl font-bold text-gray-800" data-testid="logo-text">Ceylon Expand</span>
+            </div>
+            <div className="hidden md:flex items-center space-x-6">
+              <a href="#browse" className="text-gray-600 hover:text-ceylon-green transition-colors" data-testid="nav-browse">Browse Trips</a>
+              <a href="#post" className="text-gray-600 hover:text-ceylon-green transition-colors" data-testid="nav-post">Post a Trip</a>
+              <a href="#community" className="text-gray-600 hover:text-ceylon-green transition-colors" data-testid="nav-community">Community</a>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Button 
+                variant="ghost" 
+                onClick={handleLogin} 
+                className="text-gray-600 hover:text-ceylon-green"
+                data-testid="button-signin"
+              >
+                Sign In
+              </Button>
+              <Button 
+                onClick={handleLogin} 
+                className="bg-ceylon-green text-white hover:bg-ceylon-green/90"
+                data-testid="button-signup"
+              >
+                Sign Up
+              </Button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="relative bg-gradient-to-br from-ceylon-green to-ceylon-blue min-h-[500px] flex items-center">
+        <div className="absolute inset-0 bg-black opacity-40"></div>
+        <div 
+          className="absolute inset-0" 
+          style={{
+            backgroundImage: "url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        ></div>
+        
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6" data-testid="hero-title">
+            Travel Together.<br />Share the Journey.
+          </h1>
+          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto opacity-90" data-testid="hero-subtitle">
+            Find rides, buddies, and unique experiences across Sri Lanka. Post your trip or join one today.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              size="lg"
+              className="bg-white text-ceylon-green hover:bg-gray-100 text-lg font-semibold"
+              onClick={() => document.getElementById('browse')?.scrollIntoView({ behavior: 'smooth' })}
+              data-testid="button-browse-trips"
+            >
+              Browse Trips
+            </Button>
+            <Button 
+              size="lg"
+              className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-lg font-semibold"
+              onClick={() => document.getElementById('post')?.scrollIntoView({ behavior: 'smooth' })}
+              data-testid="button-post-trip"
+            >
+              Post a Trip
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4" data-testid="text-how-it-works-title">
+              How It Works
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto" data-testid="text-how-it-works-subtitle">
+              Get started with Ceylon Expand in just three simple steps
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center" data-testid="step-signup">
+              <div className="bg-ceylon-green bg-opacity-10 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <UserPlus className="text-ceylon-green h-8 w-8" />
+              </div>
+              <h3 className="text-xl font-semibold mb-4 text-gray-800">1. Sign Up</h3>
+              <p className="text-gray-600">Create your account with basic details and complete your profile to get started</p>
+            </div>
+            
+            <div className="text-center" data-testid="step-post-find">
+              <div className="bg-ceylon-blue bg-opacity-10 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <MapPin className="text-ceylon-blue h-8 w-8" />
+              </div>
+              <h3 className="text-xl font-semibold mb-4 text-gray-800">2. Post/Find a Trip</h3>
+              <p className="text-gray-600">Browse existing trips or create your own adventure and invite others to join</p>
+            </div>
+            
+            <div className="text-center" data-testid="step-travel">
+              <div className="bg-ceylon-sand bg-opacity-30 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <Handshake className="text-orange-600 h-8 w-8" />
+              </div>
+              <h3 className="text-xl font-semibold mb-4 text-gray-800">3. Travel Together</h3>
+              <p className="text-gray-600">Connect with fellow travelers, share costs, and create unforgettable memories</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Benefits Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4" data-testid="text-benefits-title">
+              Why Join Us?
+            </h2>
+            <p className="text-lg text-gray-600" data-testid="text-benefits-subtitle">
+              Discover the benefits of traveling together
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card className="hover:shadow-md transition-shadow" data-testid="card-save-money">
+              <CardContent className="p-8">
+                <PiggyBank className="text-ceylon-green h-10 w-10 mb-6" />
+                <h3 className="text-xl font-semibold mb-4 text-gray-800">Save Money</h3>
+                <p className="text-gray-600">Split transportation costs with fellow travelers and make your adventures more affordable</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="hover:shadow-md transition-shadow" data-testid="card-meet-friends">
+              <CardContent className="p-8">
+                <Users className="text-ceylon-blue h-10 w-10 mb-6" />
+                <h3 className="text-xl font-semibold mb-4 text-gray-800">Meet New Friends</h3>
+                <p className="text-gray-600">Connect with like-minded travelers and build lasting friendships through shared experiences</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="hover:shadow-md transition-shadow" data-testid="card-explore-more">
+              <CardContent className="p-8">
+                <Compass className="text-orange-600 h-10 w-10 mb-6" />
+                <h3 className="text-xl font-semibold mb-4 text-gray-800">Explore More</h3>
+                <p className="text-gray-600">Discover hidden gems and local insights from experienced travelers and locals</p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* House Rules Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-800 mb-4" data-testid="text-house-rules-title">
+              House Rules
+            </h2>
+            <p className="text-lg text-gray-600" data-testid="text-house-rules-subtitle">
+              Let's keep our community safe and friendly
+            </p>
+          </div>
+
+          <div className="bg-gradient-to-br from-ceylon-green/10 to-ceylon-blue/10 rounded-xl p-8">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3" data-testid="rule-respectful">
+                  <Heart className="text-ceylon-green mt-1 h-5 w-5 flex-shrink-0" />
+                  <p className="text-gray-700"><strong>Be respectful to others</strong> - Treat everyone with kindness and courtesy</p>
+                </div>
+                <div className="flex items-start space-x-3" data-testid="rule-public-places">
+                  <MapPin className="text-ceylon-blue mt-1 h-5 w-5 flex-shrink-0" />
+                  <p className="text-gray-700"><strong>Meet in public places</strong> - Always arrange meetups in safe, public locations</p>
+                </div>
+                <div className="flex items-start space-x-3" data-testid="rule-no-advance-payment">
+                  <Shield className="text-orange-600 mt-1 h-5 w-5 flex-shrink-0" />
+                  <p className="text-gray-700"><strong>Don't pay strangers in advance</strong> - Keep payments secure and transparent</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3" data-testid="rule-report-suspicious">
+                  <Flag className="text-red-500 mt-1 h-5 w-5 flex-shrink-0" />
+                  <p className="text-gray-700"><strong>Report suspicious posts</strong> - Help us maintain a safe community</p>
+                </div>
+                <div className="flex items-start space-x-3" data-testid="rule-honest-details">
+                  <Star className="text-yellow-500 mt-1 h-5 w-5 flex-shrink-0" />
+                  <p className="text-gray-700"><strong>Share honest trip details</strong> - Be accurate about costs, timing, and expectations</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-800 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center space-x-2 mb-4">
+                <Mountain className="text-ceylon-green h-6 w-6" />
+                <span className="text-xl font-bold">Ceylon Expand</span>
+              </div>
+              <p className="text-gray-300 mb-4">Connect with fellow travelers and explore the beauty of Sri Lanka together.</p>
+            </div>
+
+            <div>
+              <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
+              <ul className="space-y-2 text-gray-300">
+                <li><a href="#browse" className="hover:text-ceylon-green transition-colors">Browse Trips</a></li>
+                <li><a href="#post" className="hover:text-ceylon-green transition-colors">Post a Trip</a></li>
+                <li><a href="#community" className="hover:text-ceylon-green transition-colors">Community</a></li>
+                <li><a href="#help" className="hover:text-ceylon-green transition-colors">Help Center</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-lg font-semibold mb-4">Popular Destinations</h4>
+              <ul className="space-y-2 text-gray-300">
+                <li><a href="#" className="hover:text-ceylon-green transition-colors">Colombo</a></li>
+                <li><a href="#" className="hover:text-ceylon-green transition-colors">Kandy</a></li>
+                <li><a href="#" className="hover:text-ceylon-green transition-colors">Galle</a></li>
+                <li><a href="#" className="hover:text-ceylon-green transition-colors">Nuwara Eliya</a></li>
+                <li><a href="#" className="hover:text-ceylon-green transition-colors">Sigiriya</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-lg font-semibold mb-4">Support</h4>
+              <ul className="space-y-2 text-gray-300">
+                <li><a href="#" className="hover:text-ceylon-green transition-colors">Safety Guidelines</a></li>
+                <li><a href="#" className="hover:text-ceylon-green transition-colors">Terms of Service</a></li>
+                <li><a href="#" className="hover:text-ceylon-green transition-colors">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-ceylon-green transition-colors">Contact Us</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-700 mt-8 pt-8 text-center">
+            <p className="text-gray-300">&copy; 2024 Ceylon Expand. All rights reserved. Made with ❤️ for Sri Lankan travelers.</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
