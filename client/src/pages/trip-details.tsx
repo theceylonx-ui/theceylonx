@@ -166,7 +166,8 @@ export default function TripDetails({ params }: TripDetailsProps) {
   };
 
   const handleContact = () => {
-    if (trip?.contactInfo.includes("@")) {
+    if (!trip) return;
+    if (trip.contactInfo.includes("@")) {
       window.open(`mailto:${trip.contactInfo}`, "_blank");
     } else {
       window.open(`https://wa.me/${trip.contactInfo.replace(/\D/g, "")}`, "_blank");
@@ -299,7 +300,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
                     Contact
                   </Button>
                   
-                  {isAuthenticated && user?.id !== trip.organizerId && (
+                  {isAuthenticated && user && trip && user.id !== trip.organizerId && (
                     <Button 
                       onClick={handleJoinTrip}
                       disabled={joinTripMutation.isPending}

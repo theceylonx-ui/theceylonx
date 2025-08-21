@@ -142,13 +142,7 @@ export class DatabaseStorage implements IStorage {
     maxPrice?: number;
     search?: string;
   }): Promise<TripWithOrganizer[]> {
-    let query = db
-      .select()
-      .from(trips)
-      .leftJoin(users, eq(trips.organizerId, users.id))
-      .where(eq(trips.status, "active"));
-
-    const conditions = [];
+    const conditions = [eq(trips.status, "active")];
     
     if (filters.from) {
       conditions.push(ilike(trips.fromLocation, `%${filters.from}%`));
@@ -184,11 +178,12 @@ export class DatabaseStorage implements IStorage {
       );
     }
 
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
-
-    const result = await query.orderBy(asc(trips.date));
+    const result = await db
+      .select()
+      .from(trips)
+      .leftJoin(users, eq(trips.organizerId, users.id))
+      .where(and(...conditions))
+      .orderBy(asc(trips.date));
     
     return result.map(({ trips: trip, users: organizer }) => ({
       ...trip,
