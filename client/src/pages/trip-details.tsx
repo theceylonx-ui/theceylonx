@@ -220,9 +220,18 @@ export default function TripDetails({ params }: TripDetailsProps) {
           <CardContent className="p-6">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-800 mb-2" data-testid="trip-title">
-                  {trip.title}
-                </h1>
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-3xl font-bold text-gray-800" data-testid="trip-title">
+                    {trip.title}
+                  </h1>
+                  <Badge 
+                    variant={trip.status === "active" ? "default" : "secondary"}
+                    className={trip.status === "active" ? "bg-ceylon-green" : "bg-gray-500"}
+                    data-testid="trip-status-badge"
+                  >
+                    {trip.status === "active" ? "Open" : "Completed"}
+                  </Badge>
+                </div>
                 <Badge variant="outline" className="text-ceylon-green border-ceylon-green" data-testid="trip-region">
                   {trip.region}
                 </Badge>
@@ -301,15 +310,27 @@ export default function TripDetails({ params }: TripDetailsProps) {
                   </Button>
                   
                   {isAuthenticated && user && trip && user.id !== trip.organizerId && (
-                    <Button 
-                      onClick={handleJoinTrip}
-                      disabled={joinTripMutation.isPending}
-                      className="flex-1 bg-ceylon-blue hover:bg-ceylon-blue/90"
-                      data-testid="button-join"
-                    >
-                      <Users className="h-4 w-4 mr-2" />
-                      {joinTripMutation.isPending ? "Joining..." : "Join Trip"}
-                    </Button>
+                    <>
+                      {trip.status === "active" ? (
+                        <Button 
+                          onClick={handleJoinTrip}
+                          disabled={joinTripMutation.isPending}
+                          className="flex-1 bg-ceylon-blue hover:bg-ceylon-blue/90"
+                          data-testid="button-join"
+                        >
+                          <Users className="h-4 w-4 mr-2" />
+                          {joinTripMutation.isPending ? "Joining..." : "Join Trip"}
+                        </Button>
+                      ) : (
+                        <Button 
+                          disabled
+                          className="flex-1 bg-gray-400 cursor-not-allowed"
+                          data-testid="button-trip-unavailable"
+                        >
+                          Trip Completed
+                        </Button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

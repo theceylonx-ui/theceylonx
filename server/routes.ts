@@ -132,6 +132,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update trip status (mark as completed/inactive)
+  app.patch('/api/trips/:id/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const userId = req.user.claims.sub;
+
+      // Verify valid status
+      if (!["active", "completed", "cancelled"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status. Must be active, completed, or cancelled" });
+      }
+
+      // Verify the user owns this trip
+      const trip = await storage.getTrip(id);
+      if (!trip) {
+        return res.status(404).json({ message: "Trip not found" });
+      }
+      
+      if (trip.organizerId !== userId) {
+        return res.status(403).json({ message: "You can only update your own trips" });
+      }
+
+      const updatedTrip = await storage.updateTrip(id, { status });
+      res.json(updatedTrip);
+    } catch (error) {
+      console.error("Error updating trip status:", error);
+      res.status(500).json({ message: "Failed to update trip status" });
+    }
+  });
+
   // User trip routes
   app.get('/api/users/trips', isAuthenticated, async (req: any, res) => {
     try {

@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
+import { Check, X } from "lucide-react";
 import type { User, TripWithOrganizer, TripParticipant } from "@shared/schema";
 
 const profileSchema = z.object({
@@ -136,6 +137,39 @@ export default function UserDashboard() {
     },
   });
 
+  const updateTripStatusMutation = useMutation({
+    mutationFn: async ({ tripId, status }: { tripId: string; status: string }) => {
+      return await apiRequest("PATCH", `/api/trips/${tripId}/status`, { status });
+    },
+    onSuccess: (_, { status }) => {
+      toast({
+        title: "Success",
+        description: status === "completed" 
+          ? "Trip marked as completed! It will no longer appear in search results." 
+          : "Trip status updated successfully!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/trips"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update trip status. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmitProfile = (data: ProfileFormData) => {
     updateProfileMutation.mutate(data);
   };
@@ -144,6 +178,16 @@ export default function UserDashboard() {
     if (confirm("Are you sure you want to delete this trip?")) {
       deleteTripMutation.mutate(tripId);
     }
+  };
+
+  const handleMarkCompleted = (tripId: string) => {
+    if (confirm("Mark this trip as completed? It will no longer appear in search results and new people won't be able to join.")) {
+      updateTripStatusMutation.mutate({ tripId, status: "completed" });
+    }
+  };
+
+  const handleReactivateTrip = (tripId: string) => {
+    updateTripStatusMutation.mutate({ tripId, status: "active" });
   };
 
   if (isLoading) {
@@ -198,6 +242,31 @@ export default function UserDashboard() {
                             >
                               {trip.status}
                             </Badge>
+                            {trip.status === "active" ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleMarkCompleted(trip.id)}
+                                disabled={updateTripStatusMutation.isPending}
+                                data-testid={`button-complete-${trip.id}`}
+                                className="text-ceylon-green border-ceylon-green hover:bg-ceylon-green hover:text-white"
+                              >
+                                <Check className="h-4 w-4 mr-1" />
+                                Mark Complete
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleReactivateTrip(trip.id)}
+                                disabled={updateTripStatusMutation.isPending}
+                                data-testid={`button-reactivate-${trip.id}`}
+                                className="text-ceylon-blue border-ceylon-blue hover:bg-ceylon-blue hover:text-white"
+                              >
+                                <X className="h-4 w-4 mr-1" />
+                                Reactivate
+                              </Button>
+                            )}
                             <Button
                               variant="destructive"
                               size="sm"
