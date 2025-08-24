@@ -3,7 +3,7 @@ import Navigation from "@/components/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Users, Shield, Phone, XCircle, CheckCircle, MapPin } from "lucide-react";
+import { MessageCircle, Users, Shield, Phone, XCircle, CheckCircle, MapPin, DollarSign } from "lucide-react";
 
 export default function FAQ() {
   const faqs = [
@@ -48,6 +48,12 @@ export default function FAQ() {
       question: "What regions of Sri Lanka does Ceylon Expand cover?",
       answer: "Ceylon Expand covers all provinces and regions of Sri Lanka! You can filter trips by major regions including Western Province (Colombo, Gampaha), Central Province (Kandy, Nuwara Eliya), Southern Province (Galle, Matara), and all other provinces. Whether you're traveling between major cities like Colombo to Kandy, or exploring destinations like Sigiriya, Ella, or Yala National Park, you'll find travel companions for your journey across the beautiful island.",
       icon: <MapPin className="h-5 w-5 text-ceylon-blue" />
+    },
+    {
+      id: "platform-costs",
+      question: "Is Ceylon Expand free to use? Are there any hidden fees?",
+      answer: "Yes, Ceylon Expand is completely free to join and use! There are no registration fees, no membership costs, and no service charges from our platform. We don't take any commission from trip costs or add any additional fees. The prices you see in trip posts are the actual travel sharing costs (fuel, tolls, etc.) that participants split among themselves. You only pay your agreed share directly to the trip organizer - never to Ceylon Expand. Our platform is designed to help travelers connect and share costs, not to profit from your journeys.",
+      icon: <DollarSign className="h-5 w-5 text-ceylon-green" />
     }
   ];
 
