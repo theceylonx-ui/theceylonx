@@ -79,6 +79,18 @@ export default function Navigation() {
                 Dashboard
               </a>
             </Link>
+            <Link href="/faq">
+              <a 
+                className={`transition-colors ${
+                  isActive('/faq') 
+                    ? 'text-ceylon-green font-medium' 
+                    : 'text-gray-600 hover:text-ceylon-green'
+                }`}
+                data-testid="nav-faq"
+              >
+                FAQ
+              </a>
+            </Link>
           </div>
 
           {/* User Menu */}
@@ -180,6 +192,19 @@ export default function Navigation() {
                   data-testid="mobile-nav-dashboard"
                 >
                   Dashboard
+                </a>
+              </Link>
+              <Link href="/faq">
+                <a 
+                  className={`block px-3 py-2 text-base transition-colors ${
+                    isActive('/faq') 
+                      ? 'text-ceylon-green font-medium' 
+                      : 'text-gray-600 hover:text-ceylon-green'
+                  }`}
+                  onClick={toggleMobileMenu}
+                  data-testid="mobile-nav-faq"
+                >
+                  FAQ
                 </a>
               </Link>
             </div>
