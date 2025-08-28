@@ -1,9 +1,10 @@
 import { Link } from "wouter";
-import { MapPin, Calendar, Users, DollarSign, Mail } from "lucide-react";
+import { MapPin, Calendar, Users, DollarSign, Mail, Lock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/useAuth";
 import type { TripWithOrganizer } from "@shared/schema";
 
 interface TripCardProps {
@@ -11,9 +12,16 @@ interface TripCardProps {
 }
 
 export default function TripCard({ trip }: TripCardProps) {
+  const { user } = useAuth();
+
   const handleContact = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    if (!user) {
+      window.location.href = '/auth/signin';
+      return;
+    }
     
     if (trip.contactInfo.includes("@")) {
       window.open(`mailto:${trip.contactInfo}`, "_blank");
@@ -118,12 +126,24 @@ export default function TripCard({ trip }: TripCardProps) {
             
             <Button 
               size="sm"
-              className="bg-ceylon-green text-white hover:bg-ceylon-green/90 text-xs px-3 py-1"
+              className={`text-xs px-3 py-1 ${user 
+                ? 'bg-ceylon-green text-white hover:bg-ceylon-green/90' 
+                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+              }`}
               onClick={handleContact}
               data-testid={`button-contact-${trip.id}`}
             >
-              <Mail className="h-3 w-3 mr-1" />
-              Contact
+              {user ? (
+                <>
+                  <Mail className="h-3 w-3 mr-1" />
+                  Contact
+                </>
+              ) : (
+                <>
+                  <Lock className="h-3 w-3 mr-1" />
+                  Sign in to Contact
+                </>
+              )}
             </Button>
           </div>
         </CardContent>

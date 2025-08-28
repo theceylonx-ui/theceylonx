@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { MapPin, Calendar, Users, DollarSign, Phone, MessageCircle, Star, Flag, ArrowLeft } from "lucide-react";
+import { MapPin, Calendar, Users, DollarSign, Phone, MessageCircle, Star, Flag, ArrowLeft, Lock } from "lucide-react";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -167,7 +167,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
   };
 
   const handleContact = () => {
-    if (!trip) return;
+    if (!trip || !isAuthenticated) return;
     if (trip.contactInfo.includes("@")) {
       window.open(`mailto:${trip.contactInfo}`, "_blank");
     } else {
@@ -296,18 +296,35 @@ export default function TripDetails({ params }: TripDetailsProps) {
                     <p className="font-medium text-gray-800">
                       {trip.organizer.firstName} {trip.organizer.lastName}
                     </p>
-                    <p className="text-sm text-gray-600">{trip.organizer.email}</p>
+                    {isAuthenticated ? (
+                      <p className="text-sm text-gray-600">{trip.organizer.email}</p>
+                    ) : (
+                      <p className="text-sm text-gray-500 italic">Sign in to view contact details</p>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex gap-2">
                   <Button 
-                    onClick={handleContact}
-                    className="flex-1 bg-ceylon-green hover:bg-ceylon-green/90"
+                    onClick={isAuthenticated ? handleContact : () => window.location.href = '/auth/signin'}
+                    className={`flex-1 ${
+                      isAuthenticated 
+                        ? 'bg-ceylon-green hover:bg-ceylon-green/90' 
+                        : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                    }`}
                     data-testid="button-contact"
                   >
-                    <Phone className="h-4 w-4 mr-2" />
-                    Contact
+                    {isAuthenticated ? (
+                      <>
+                        <Phone className="h-4 w-4 mr-2" />
+                        Contact
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="h-4 w-4 mr-2" />
+                        Sign in to Contact
+                      </>
+                    )}
                   </Button>
                   
                   {isAuthenticated && user && trip && user.id !== trip.organizerId && (
