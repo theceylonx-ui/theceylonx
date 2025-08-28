@@ -430,7 +430,7 @@ export default function CommunityPage() {
                                       <span>{answer.user?.firstName || 'Anonymous'}</span>
                                       <Calendar className="w-3 h-3 ml-2" />
                                       <span>{formatDistanceToNow(new Date(answer.createdAt || new Date()), { addSuffix: true })}</span>
-                                      {index === 0 && question.answers.length > 1 && (answer.votesCount || 0) > 0 && (
+                                      {index === 0 && question.answers && question.answers.length > 1 && (answer.votesCount || 0) > 0 && (
                                         <Badge variant="default" className="bg-green-100 text-green-800 text-xs">
                                           <CheckCircle className="w-2 h-2 mr-1" />
                                           Best Answer
@@ -480,16 +480,21 @@ export default function CommunityPage() {
                           </div>
                         </div>
                         
-{user && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => toggleQuestionExpansion(question.id)}
-                            data-testid={`button-expand-${question.id}`}
-                          >
-                            {expandedQuestions.has(question.id) ? 'Collapse' : 'Expand'}
-                          </Button>
-                        )}
+<Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            if (user) {
+                              toggleQuestionExpansion(question.id);
+                            } else {
+                              // Redirect to sign in
+                              window.location.href = '/auth/signin';
+                            }
+                          }}
+                          data-testid={`button-expand-${question.id}`}
+                        >
+                          {user && expandedQuestions.has(question.id) ? 'Collapse' : 'Expand'}
+                        </Button>
                         
                         {user && (
                           <Button 
