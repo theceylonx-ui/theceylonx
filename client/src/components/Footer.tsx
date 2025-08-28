@@ -38,19 +38,21 @@ export default function Footer() {
               {popularDestinations.length > 0 ? (
                 popularDestinations.map((dest, index) => (
                   <li key={index}>
-                    <span className="hover:text-ceylon-green transition-colors cursor-pointer">
-                      {dest.destination} ({dest.count})
-                    </span>
+                    <Link href={`/destination/${encodeURIComponent(dest.destination)}`}>
+                      <span className="hover:text-ceylon-green transition-colors cursor-pointer">
+                        {dest.destination} ({dest.count})
+                      </span>
+                    </Link>
                   </li>
                 ))
               ) : (
                 // Fallback destinations if no data available
                 <>
-                  <li><span className="hover:text-ceylon-green transition-colors cursor-pointer">Colombo</span></li>
-                  <li><span className="hover:text-ceylon-green transition-colors cursor-pointer">Kandy</span></li>
-                  <li><span className="hover:text-ceylon-green transition-colors cursor-pointer">Galle</span></li>
-                  <li><span className="hover:text-ceylon-green transition-colors cursor-pointer">Nuwara Eliya</span></li>
-                  <li><span className="hover:text-ceylon-green transition-colors cursor-pointer">Sigiriya</span></li>
+                  <li><Link href="/destination/Colombo"><span className="hover:text-ceylon-green transition-colors cursor-pointer">Colombo</span></Link></li>
+                  <li><Link href="/destination/Kandy"><span className="hover:text-ceylon-green transition-colors cursor-pointer">Kandy</span></Link></li>
+                  <li><Link href="/destination/Galle"><span className="hover:text-ceylon-green transition-colors cursor-pointer">Galle</span></Link></li>
+                  <li><Link href="/destination/Nuwara%20Eliya"><span className="hover:text-ceylon-green transition-colors cursor-pointer">Nuwara Eliya</span></Link></li>
+                  <li><Link href="/destination/Sigiriya"><span className="hover:text-ceylon-green transition-colors cursor-pointer">Sigiriya</span></Link></li>
                 </>
               )}
             </ul>
