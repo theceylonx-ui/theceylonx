@@ -83,14 +83,14 @@ export default function TripCard({ trip }: TripCardProps) {
           </div>
         </div>
         
-        <CardContent className="p-6 bg-white">
+        <CardContent className="p-4 sm:p-6 bg-white">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2" data-testid={`trip-title-${trip.id}`}>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2 line-clamp-2" data-testid={`trip-title-${trip.id}`}>
               {trip.title}
             </h3>
           </div>
           
-          <div className="space-y-3 mb-4 text-gray-600 text-sm">
+          <div className="space-y-2 sm:space-y-3 mb-4 text-gray-600 text-xs sm:text-sm">
             <div className="flex items-center" data-testid={`trip-route-${trip.id}`}>
               <MapPin className="h-4 w-4 mr-2 text-ceylon-blue flex-shrink-0" />
               <span className="truncate">{trip.fromLocation} → {trip.toLocation}</span>
@@ -120,14 +120,14 @@ export default function TripCard({ trip }: TripCardProps) {
                   {trip.organizer ? getInitials(trip.organizer) : 'U'}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm text-gray-600 truncate max-w-[120px]">
+              <span className="text-xs sm:text-sm text-gray-600 truncate max-w-[100px] sm:max-w-[120px]">
                 {trip.organizer ? getDisplayName(trip.organizer) : 'Unknown'}
               </span>
             </div>
             
             <Button 
               size="sm"
-              className={`text-xs px-3 py-1 transition-all duration-200 ${user 
+              className={`text-xs px-2 sm:px-3 py-1 transition-all duration-200 ${user 
                 ? 'bg-ceylon-green text-white hover:bg-ceylon-green/90 shadow-sm hover:shadow-md' 
                 : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
               }`}

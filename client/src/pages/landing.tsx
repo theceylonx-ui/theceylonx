@@ -57,17 +57,17 @@ export default function Landing() {
           }}
         ></div>
         
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }} data-testid="hero-title">
+        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center text-white">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-6 mt-4 drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }} data-testid="hero-title">
             Travel Together.<br />Share the Journey.
           </h1>
-          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto drop-shadow-lg" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8), 0px 0px 2px rgba(0,0,0,0.6)' }} data-testid="hero-subtitle">
+          <p className="text-lg sm:text-xl md:text-2xl mb-8 max-w-3xl mx-auto px-4 drop-shadow-lg" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8), 0px 0px 2px rgba(0,0,0,0.6)' }} data-testid="hero-subtitle">
             Find rides, buddies, and unique experiences across Sri Lanka. Post your trip or join one today.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
             <Button 
               size="lg"
-              className="bg-ceylon-green text-white hover:bg-ceylon-green/90 text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:scale-105"
+              className="bg-ceylon-green text-white hover:bg-ceylon-green/90 text-base sm:text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:scale-105 px-6 py-3"
               onClick={() => window.location.href = '/browse-trips'}
               data-testid="button-browse-trips"
             >
@@ -75,7 +75,7 @@ export default function Landing() {
             </Button>
             <Button 
               size="lg"
-              className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:scale-105"
+              className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-base sm:text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:scale-105 px-6 py-3"
               onClick={() => document.getElementById('post')?.scrollIntoView({ behavior: 'smooth' })}
               data-testid="button-post-trip"
             >

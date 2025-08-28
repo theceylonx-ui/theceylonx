@@ -156,8 +156,8 @@ export default function Navigation() {
 
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t py-4" data-testid="mobile-menu">
-            <div className="flex flex-col space-y-3">
+          <div className="md:hidden border-t py-4 bg-white" data-testid="mobile-menu">
+            <div className="flex flex-col space-y-1 px-4">
               <Link href="/browse-trips">
                 <span 
                   className={`block px-3 py-2 text-base transition-colors cursor-pointer ${

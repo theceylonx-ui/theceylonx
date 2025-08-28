@@ -222,7 +222,7 @@ export default function CommunityPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-8">
-            <div className="relative bg-gradient-to-r from-ceylon-green to-ceylon-blue rounded-2xl p-8 text-white shadow-xl overflow-hidden">
+            <div className="relative bg-gradient-to-r from-ceylon-green to-ceylon-blue rounded-2xl p-6 sm:p-8 text-white shadow-xl overflow-hidden">
               {/* Background Image */}
               <div 
                 className="absolute inset-0 rounded-2xl" 
@@ -238,7 +238,7 @@ export default function CommunityPage() {
               {/* Content */}
               <div className="relative z-10 flex flex-col space-y-6">
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }}>
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }}>
                     Ceylon Expand Community
                   </h1>
                   <p className="text-lg max-w-2xl drop-shadow-lg" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8), 0px 0px 2px rgba(0,0,0,0.6)' }}>

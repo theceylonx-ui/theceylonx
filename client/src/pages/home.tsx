@@ -33,17 +33,17 @@ export default function Home() {
           }}
         ></div>
         
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-          <h1 className="text-3xl md:text-5xl font-bold mb-6 drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }} data-testid="hero-welcome">
+        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center text-white">
+          <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-6 mt-4 drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }} data-testid="hero-welcome">
             Welcome back, Explorer!
           </h1>
-          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto drop-shadow-lg" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8), 0px 0px 2px rgba(0,0,0,0.6)' }} data-testid="hero-subtitle">
+          <p className="text-base sm:text-lg md:text-xl mb-8 max-w-2xl mx-auto px-4 drop-shadow-lg" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8), 0px 0px 2px rgba(0,0,0,0.6)' }} data-testid="hero-subtitle">
             Ready for your next adventure? Discover new trips or share your journey with fellow travelers.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
             <Button 
               size="lg"
-              className="bg-white text-ceylon-green hover:bg-gray-100 text-lg font-semibold w-full sm:w-auto shadow-lg"
+              className="bg-white text-ceylon-green hover:bg-gray-100 text-base sm:text-lg font-semibold w-full sm:w-auto shadow-lg px-6 py-3"
               onClick={() => setLocation("/browse-trips")}
               data-testid="button-browse-trips"
             >
@@ -51,7 +51,7 @@ export default function Home() {
             </Button>
             <Button 
               size="lg"
-              className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-lg font-semibold w-full sm:w-auto"
+              className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-base sm:text-lg font-semibold w-full sm:w-auto px-6 py-3"
               onClick={() => setLocation("/post")}
               data-testid="button-post-trip"
             >
