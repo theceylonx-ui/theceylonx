@@ -121,41 +121,47 @@ export default function CommunityPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="bg-gradient-to-r from-ceylon-green to-ceylon-blue rounded-xl p-8 text-white">
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">Ceylon Expand Community</h1>
-            <p className="text-lg opacity-90 mb-4">
-              Ask questions, share knowledge, and connect with fellow travelers exploring Sri Lanka
-            </p>
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-              <DialogTrigger asChild>
-                {user ? (
-                  <Button 
-                    variant="secondary" 
-                    size="lg"
-                    data-testid="button-ask-question"
-                  >
-                    <Plus className="w-5 h-5 mr-2" />
-                    Ask a Question
-                  </Button>
-                ) : (
-                  <div className="text-center">
-                    <Button 
-                      variant="outline" 
-                      size="lg"
-                      disabled
-                      data-testid="button-ask-question-disabled"
-                    >
-                      <Plus className="w-5 h-5 mr-2" />
-                      Ask a Question
-                    </Button>
-                    <p className="text-sm text-gray-500 mt-2">
-                      <Link href="/auth/signin" className="text-blue-600 hover:underline">
-                        Sign in
-                      </Link> to ask questions and participate in the community
-                    </p>
-                  </div>
-                )}
-              </DialogTrigger>
+          <div className="bg-gradient-to-r from-ceylon-green to-ceylon-blue rounded-2xl p-8 text-white shadow-xl">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+              <div className="lg:flex-1 mb-6 lg:mb-0">
+                <h1 className="text-3xl md:text-4xl font-bold mb-3">Ceylon Expand Community</h1>
+                <p className="text-lg opacity-90 max-w-2xl">
+                  Ask questions, share knowledge, and connect with fellow travelers exploring Sri Lanka
+                </p>
+              </div>
+              
+              <div className="lg:flex-shrink-0">
+                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                  <DialogTrigger asChild>
+                    {user ? (
+                      <Button 
+                        variant="secondary" 
+                        size="lg"
+                        className="bg-white text-ceylon-green hover:bg-gray-50 font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                        data-testid="button-ask-question"
+                      >
+                        <Plus className="w-6 h-6 mr-3" />
+                        Ask a Question
+                      </Button>
+                    ) : (
+                      <div className="text-center space-y-3">
+                        <Link href="/auth/signin">
+                          <Button 
+                            variant="secondary" 
+                            size="lg"
+                            className="bg-white text-ceylon-green hover:bg-gray-50 font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                            data-testid="button-ask-question-signin"
+                          >
+                            <Plus className="w-6 h-6 mr-3" />
+                            Ask a Question
+                          </Button>
+                        </Link>
+                        <p className="text-sm opacity-80">
+                          Sign in to ask questions and participate
+                        </p>
+                      </div>
+                    )}
+                  </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Ask a Question</DialogTitle>
