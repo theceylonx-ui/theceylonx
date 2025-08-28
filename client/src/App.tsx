@@ -12,6 +12,7 @@ import PostTrip from "@/pages/post-trip";
 import TripDetails from "@/pages/trip-details";
 import UserDashboard from "@/pages/user-dashboard";
 import FAQ from "@/pages/faq";
+import SignInRequired from "@/pages/signin-required";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -24,6 +25,8 @@ function Router() {
           <Route path="/browse" component={BrowseTrips} />
           <Route path="/trips/:id" component={TripDetails} />
           <Route path="/faq" component={FAQ} />
+          <Route path="/post" component={SignInRequired} />
+          <Route path="/dashboard" component={SignInRequired} />
         </>
       ) : (
         <>
