@@ -1,7 +1,13 @@
 import { Link } from "wouter";
 import { Mountain } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Footer() {
+  const { data: popularDestinations = [] } = useQuery<Array<{ destination: string; count: number }>>({
+    queryKey: ['/api/popular-destinations'],
+    queryFn: () => fetch('/api/popular-destinations').then(res => res.json()),
+  });
+
   return (
     <footer className="bg-gray-800 text-white py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -29,11 +35,24 @@ export default function Footer() {
           <div>
             <h4 className="text-lg font-semibold mb-4">Popular Destinations</h4>
             <ul className="space-y-2 text-gray-300">
-              <li><span className="hover:text-ceylon-green transition-colors cursor-pointer">Colombo</span></li>
-              <li><span className="hover:text-ceylon-green transition-colors cursor-pointer">Kandy</span></li>
-              <li><span className="hover:text-ceylon-green transition-colors cursor-pointer">Galle</span></li>
-              <li><span className="hover:text-ceylon-green transition-colors cursor-pointer">Nuwara Eliya</span></li>
-              <li><span className="hover:text-ceylon-green transition-colors cursor-pointer">Sigiriya</span></li>
+              {popularDestinations.length > 0 ? (
+                popularDestinations.map((dest, index) => (
+                  <li key={index}>
+                    <span className="hover:text-ceylon-green transition-colors cursor-pointer">
+                      {dest.destination} ({dest.count})
+                    </span>
+                  </li>
+                ))
+              ) : (
+                // Fallback destinations if no data available
+                <>
+                  <li><span className="hover:text-ceylon-green transition-colors cursor-pointer">Colombo</span></li>
+                  <li><span className="hover:text-ceylon-green transition-colors cursor-pointer">Kandy</span></li>
+                  <li><span className="hover:text-ceylon-green transition-colors cursor-pointer">Galle</span></li>
+                  <li><span className="hover:text-ceylon-green transition-colors cursor-pointer">Nuwara Eliya</span></li>
+                  <li><span className="hover:text-ceylon-green transition-colors cursor-pointer">Sigiriya</span></li>
+                </>
+              )}
             </ul>
           </div>
 

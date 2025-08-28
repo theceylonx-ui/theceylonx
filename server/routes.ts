@@ -566,6 +566,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Popular destinations endpoint
+  app.get('/api/popular-destinations', async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 5;
+      const destinations = await storage.getPopularDestinations(limit);
+      res.json(destinations);
+    } catch (error) {
+      console.error("Error fetching popular destinations:", error);
+      res.status(500).json({ message: "Failed to fetch popular destinations" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

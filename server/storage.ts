@@ -516,6 +516,62 @@ export class DatabaseStorage implements IStorage {
     await db.delete(questions).where(eq(questions.id, id));
   }
 
+  async getPopularDestinations(limit: number = 5): Promise<Array<{ destination: string; count: number }>> {
+    // Get destinations from trips
+    const tripDestinations = await db
+      .select({
+        fromLocation: trips.fromLocation,
+        toLocation: trips.toLocation,
+      })
+      .from(trips)
+      .where(eq(trips.status, "active"));
+
+    // Get locations mentioned in questions
+    const questionTitles = await db
+      .select({
+        title: questions.title,
+        body: questions.body,
+      })
+      .from(questions);
+
+    // Combine and count locations
+    const locationCounts: Record<string, number> = {};
+    
+    // Count trip locations
+    tripDestinations.forEach(trip => {
+      if (trip.fromLocation) {
+        const location = trip.fromLocation.trim();
+        locationCounts[location] = (locationCounts[location] || 0) + 1;
+      }
+      if (trip.toLocation) {
+        const location = trip.toLocation.trim();
+        locationCounts[location] = (locationCounts[location] || 0) + 1;
+      }
+    });
+
+    // Extract cities from question content
+    const commonCities = [
+      'Colombo', 'Kandy', 'Galle', 'Nuwara Eliya', 'Sigiriya', 'Mirissa',
+      'Ella', 'Anuradhapura', 'Polonnaruwa', 'Bentota', 'Negombo', 'Dambulla',
+      'Trincomalee', 'Jaffna', 'Matara', 'Hikkaduwa', 'Unawatuna', 'Arugam Bay'
+    ];
+
+    questionTitles.forEach(question => {
+      const content = `${question.title} ${question.body}`.toLowerCase();
+      commonCities.forEach(city => {
+        if (content.includes(city.toLowerCase())) {
+          locationCounts[city] = (locationCounts[city] || 0) + 1;
+        }
+      });
+    });
+
+    // Sort by count and return top destinations
+    return Object.entries(locationCounts)
+      .map(([destination, count]) => ({ destination, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit);
+  }
+
   // Answers
   async createAnswer(answerData: InsertAnswer): Promise<Answer> {
     const [answer] = await db.insert(answers).values(answerData).returning();
