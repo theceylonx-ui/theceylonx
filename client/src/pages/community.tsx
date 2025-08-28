@@ -420,17 +420,26 @@ export default function CommunityPage() {
                                 {question.answers.length} {question.answers.length === 1 ? 'Answer' : 'Answers'}
                               </h4>
                               <div className="space-y-3">
-                                {question.answers.slice(0, expandedQuestions.has(question.id) ? question.answers.length : 2).map((answer) => (
+                                {question.answers
+                                  .sort((a, b) => (b.votesCount || 0) - (a.votesCount || 0))
+                                  .slice(0, expandedQuestions.has(question.id) ? question.answers.length : 2)
+                                  .map((answer, index) => (
                                   <div key={answer.id} className="bg-gray-50 rounded-lg p-3">
                                     <div className="flex items-center space-x-2 mb-2 text-xs text-gray-500">
                                       <User className="w-3 h-3" />
                                       <span>{answer.user?.firstName || 'Anonymous'}</span>
                                       <Calendar className="w-3 h-3 ml-2" />
                                       <span>{formatDistanceToNow(new Date(answer.createdAt || new Date()), { addSuffix: true })}</span>
-                                      {answer.isAccepted && (
+                                      {index === 0 && question.answers.length > 1 && (answer.votesCount || 0) > 0 && (
                                         <Badge variant="default" className="bg-green-100 text-green-800 text-xs">
                                           <CheckCircle className="w-2 h-2 mr-1" />
                                           Best Answer
+                                        </Badge>
+                                      )}
+                                      {(answer.votesCount || 0) > 0 && (
+                                        <Badge variant="outline" className="text-xs">
+                                          <ThumbsUp className="w-2 h-2 mr-1" />
+                                          {answer.votesCount}
                                         </Badge>
                                       )}
                                     </div>
