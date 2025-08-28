@@ -34,6 +34,7 @@ export default function CommunityPage() {
   const [selectedTopic, setSelectedTopic] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"top" | "new" | "unanswered">("top");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set());
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -97,6 +98,16 @@ export default function CommunityPage() {
 
   const handleVote = (questionId: string, voteType: 'up' | 'down') => {
     voteMutation.mutate({ questionId, voteType });
+  };
+
+  const toggleQuestionExpansion = (questionId: string) => {
+    const newExpanded = new Set(expandedQuestions);
+    if (newExpanded.has(questionId)) {
+      newExpanded.delete(questionId);
+    } else {
+      newExpanded.add(questionId);
+    }
+    setExpandedQuestions(newExpanded);
   };
 
   const filteredQuestions = questions.filter(question => 
@@ -401,7 +412,7 @@ export default function CommunityPage() {
                                 {question.answers.length} {question.answers.length === 1 ? 'Answer' : 'Answers'}
                               </h4>
                               <div className="space-y-3">
-                                {question.answers.slice(0, 2).map((answer) => (
+                                {question.answers.slice(0, expandedQuestions.has(question.id) ? question.answers.length : 2).map((answer) => (
                                   <div key={answer.id} className="bg-gray-50 rounded-lg p-3">
                                     <div className="flex items-center space-x-2 mb-2 text-xs text-gray-500">
                                       <User className="w-3 h-3" />
@@ -420,7 +431,7 @@ export default function CommunityPage() {
                                     </p>
                                   </div>
                                 ))}
-                                {question.answers.length > 2 && (
+                                {question.answers.length > 2 && !expandedQuestions.has(question.id) && (
                                   <p className="text-xs text-gray-500 italic">
                                     ...and {question.answers.length - 2} more answers
                                   </p>
@@ -465,9 +476,10 @@ export default function CommunityPage() {
                         <Button 
                           variant="outline" 
                           size="sm"
+                          onClick={() => toggleQuestionExpansion(question.id)}
                           data-testid={`button-view-question-${question.id}`}
                         >
-                          View Question
+                          {expandedQuestions.has(question.id) ? 'Show Less' : 'View All Answers'}
                         </Button>
                       </div>
                     </CardContent>
