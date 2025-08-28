@@ -29,7 +29,7 @@ function Router() {
       {isLoading || !isAuthenticated ? (
         <>
           <Route path="/" component={Landing} />
-          <Route path="/browse" component={BrowseTrips} />
+          <Route path="/browse-trips" component={BrowseTrips} />
           <Route path="/trips/:id" component={TripDetails} />
           <Route path="/community" component={Community} />
           <Route path="/safety-guidelines" component={SafetyGuidelines} />
@@ -45,7 +45,7 @@ function Router() {
       ) : (
         <>
           <Route path="/" component={Home} />
-          <Route path="/browse" component={BrowseTrips} />
+          <Route path="/browse-trips" component={BrowseTrips} />
           <Route path="/post" component={PostTrip} />
           <Route path="/trips/:id" component={TripDetails} />
           <Route path="/dashboard" component={UserDashboard} />
