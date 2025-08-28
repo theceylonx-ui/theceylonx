@@ -8,32 +8,47 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
-// Validate required environment variables
-function validateEnvironmentVariables() {
-  const requiredEnvVars = [
-    { name: 'REPL_ID', value: process.env.REPL_ID },
-    { name: 'REPLIT_DOMAINS', value: process.env.REPLIT_DOMAINS },
+// Check if authentication can be enabled
+function canEnableAuth(): boolean {
+  const requiredAuthVars = [
+    process.env.REPL_ID,
+    process.env.REPLIT_DOMAINS
+  ];
+  
+  return requiredAuthVars.every(envVar => !!envVar);
+}
+
+// Validate required environment variables for session management
+function validateSessionEnvironmentVariables() {
+  const requiredSessionVars = [
     { name: 'SESSION_SECRET', value: process.env.SESSION_SECRET },
     { name: 'DATABASE_URL', value: process.env.DATABASE_URL }
   ];
 
-  const missingVars = requiredEnvVars.filter(envVar => !envVar.value);
+  const missingVars = requiredSessionVars.filter(envVar => !envVar.value);
   
   if (missingVars.length > 0) {
     const missingVarNames = missingVars.map(envVar => envVar.name).join(', ');
     throw new Error(
-      `Missing required environment variables for Replit Auth: ${missingVarNames}. ` +
+      `Missing required environment variables for session management: ${missingVarNames}. ` +
       `Please ensure these are properly configured in your deployment settings.`
     );
   }
 }
 
-// Validate environment variables on module load
+// Validate session environment variables on module load
 try {
-  validateEnvironmentVariables();
+  validateSessionEnvironmentVariables();
 } catch (error) {
-  console.error('Environment validation failed:', (error as Error).message);
+  console.error('Session environment validation failed:', (error as Error).message);
   throw error;
+}
+
+// Check authentication availability and log status
+const authEnabled = canEnableAuth();
+if (!authEnabled) {
+  console.log('Authentication disabled: REPL_ID and/or REPLIT_DOMAINS environment variables not found');
+  console.log('This is normal in development environments. Authentication will be skipped.');
 }
 
 const getOidcConfig = memoize(
@@ -121,11 +136,46 @@ async function upsertUser(
 
 export async function setupAuth(app: Express) {
   try {
+    // Always setup session management regardless of auth availability
     app.set("trust proxy", 1);
     app.use(getSession());
     app.use(passport.initialize());
     app.use(passport.session());
 
+    // Setup basic passport serialization
+    passport.serializeUser((user: Express.User, cb) => cb(null, user));
+    passport.deserializeUser((user: Express.User, cb) => cb(null, user));
+
+    // Check if authentication can be enabled
+    if (!authEnabled) {
+      console.log('Setting up development mode without Replit Auth');
+      
+      // Setup development-only auth routes that return appropriate errors
+      app.get("/api/login", (req, res) => {
+        res.status(501).json({ 
+          message: "Authentication not configured",
+          details: "REPL_ID and REPLIT_DOMAINS environment variables are required for authentication"
+        });
+      });
+
+      app.get("/api/callback", (req, res) => {
+        res.status(501).json({ 
+          message: "Authentication not configured",
+          details: "REPL_ID and REPLIT_DOMAINS environment variables are required for authentication"
+        });
+      });
+
+      app.get("/api/logout", (req, res) => {
+        req.logout(() => {
+          res.redirect('/');
+        });
+      });
+      
+      return;
+    }
+
+    console.log('Setting up Replit Auth with environment variables');
+    
     const config = await getOidcConfig();
 
     const verify: VerifyFunction = async (
@@ -143,10 +193,7 @@ export async function setupAuth(app: Express) {
       }
     };
 
-    const replitDomains = process.env.REPLIT_DOMAINS;
-    if (!replitDomains) {
-      throw new Error('REPLIT_DOMAINS environment variable is required');
-    }
+    const replitDomains = process.env.REPLIT_DOMAINS!; // We know it exists due to authEnabled check
 
     for (const domain of replitDomains.split(",")) {
       const trimmedDomain = domain.trim();
@@ -166,56 +213,63 @@ export async function setupAuth(app: Express) {
           verify,
         );
         passport.use(strategy);
+        console.log(`Authentication strategy configured for domain: ${trimmedDomain}`);
       } catch (error) {
         console.error(`Failed to setup auth strategy for domain ${trimmedDomain}:`, (error as Error).message);
         throw error;
       }
     }
 
-  passport.serializeUser((user: Express.User, cb) => cb(null, user));
-  passport.deserializeUser((user: Express.User, cb) => cb(null, user));
-
-  app.get("/api/login", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      prompt: "login consent",
-      scope: ["openid", "email", "profile", "offline_access"],
-    })(req, res, next);
-  });
-
-  app.get("/api/callback", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
-      failureRedirect: "/api/login",
-    })(req, res, next);
-  });
-
-  app.get("/api/logout", (req, res) => {
-    req.logout(() => {
-      try {
-        const replId = process.env.REPL_ID;
-        if (!replId) {
-          console.error('REPL_ID not available for logout');
-          return res.redirect('/');
-        }
-        
-        res.redirect(
-          client.buildEndSessionUrl(config, {
-            client_id: replId,
-            post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
-          }).href
-        );
-      } catch (error) {
-        console.error('Error during logout:', (error as Error).message);
-        res.redirect('/');
-      }
+    app.get("/api/login", (req, res, next) => {
+      passport.authenticate(`replitauth:${req.hostname}`, {
+        prompt: "login consent",
+        scope: ["openid", "email", "profile", "offline_access"],
+      })(req, res, next);
     });
-  });
+
+    app.get("/api/callback", (req, res, next) => {
+      passport.authenticate(`replitauth:${req.hostname}`, {
+        successReturnToOrRedirect: "/",
+        failureRedirect: "/api/login",
+      })(req, res, next);
+    });
+
+    app.get("/api/logout", (req, res) => {
+      req.logout(() => {
+        try {
+          const replId = process.env.REPL_ID;
+          if (!replId) {
+            console.error('REPL_ID not available for logout');
+            return res.redirect('/');
+          }
+          
+          res.redirect(
+            client.buildEndSessionUrl(config, {
+              client_id: replId,
+              post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
+            }).href
+          );
+        } catch (error) {
+          console.error('Error during logout:', (error as Error).message);
+          res.redirect('/');
+        }
+      });
+    });
+    
   } catch (error) {
     console.error('Failed to setup authentication:', (error as Error).message);
     throw new Error(`Authentication setup failed: ${(error as Error).message}`);
   }
 }
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // If authentication is not enabled, return unauthorized to require manual override
+  if (!authEnabled) {
+    return res.status(401).json({ 
+      message: "Unauthorized",
+      details: "Authentication not configured. REPL_ID and REPLIT_DOMAINS environment variables are required."
+    });
+  }
+
   const user = req.user as any;
 
   if (!req.isAuthenticated() || !user.expires_at) {

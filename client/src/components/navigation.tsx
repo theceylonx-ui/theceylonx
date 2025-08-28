@@ -46,8 +46,8 @@ export default function Navigation() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
             <Link href="/browse">
-              <a 
-                className={`transition-colors ${
+              <span 
+                className={`transition-colors cursor-pointer ${
                   isActive('/browse') 
                     ? 'text-ceylon-green font-medium' 
                     : 'text-gray-600 hover:text-ceylon-green'
@@ -55,11 +55,11 @@ export default function Navigation() {
                 data-testid="nav-browse"
               >
                 Browse Trips
-              </a>
+              </span>
             </Link>
             <Link href="/post">
-              <a 
-                className={`transition-colors ${
+              <span 
+                className={`transition-colors cursor-pointer ${
                   isActive('/post') 
                     ? 'text-ceylon-green font-medium' 
                     : 'text-gray-600 hover:text-ceylon-green'
@@ -67,11 +67,11 @@ export default function Navigation() {
                 data-testid="nav-post"
               >
                 Post a Trip
-              </a>
+              </span>
             </Link>
             <Link href="/dashboard">
-              <a 
-                className={`transition-colors ${
+              <span 
+                className={`transition-colors cursor-pointer ${
                   isActive('/dashboard') 
                     ? 'text-ceylon-green font-medium' 
                     : 'text-gray-600 hover:text-ceylon-green'
@@ -79,11 +79,11 @@ export default function Navigation() {
                 data-testid="nav-dashboard"
               >
                 Dashboard
-              </a>
+              </span>
             </Link>
             <Link href="/faq">
-              <a 
-                className={`transition-colors ${
+              <span 
+                className={`transition-colors cursor-pointer ${
                   isActive('/faq') 
                     ? 'text-ceylon-green font-medium' 
                     : 'text-gray-600 hover:text-ceylon-green'
@@ -91,7 +91,7 @@ export default function Navigation() {
                 data-testid="nav-faq"
               >
                 FAQ
-              </a>
+              </span>
             </Link>
           </div>
 
@@ -158,8 +158,8 @@ export default function Navigation() {
           <div className="md:hidden border-t py-4" data-testid="mobile-menu">
             <div className="flex flex-col space-y-3">
               <Link href="/browse">
-                <a 
-                  className={`block px-3 py-2 text-base transition-colors ${
+                <span 
+                  className={`block px-3 py-2 text-base transition-colors cursor-pointer ${
                     isActive('/browse') 
                       ? 'text-ceylon-green font-medium' 
                       : 'text-gray-600 hover:text-ceylon-green'
@@ -168,11 +168,11 @@ export default function Navigation() {
                   data-testid="mobile-nav-browse"
                 >
                   Browse Trips
-                </a>
+                </span>
               </Link>
               <Link href="/post">
-                <a 
-                  className={`block px-3 py-2 text-base transition-colors ${
+                <span 
+                  className={`block px-3 py-2 text-base transition-colors cursor-pointer ${
                     isActive('/post') 
                       ? 'text-ceylon-green font-medium' 
                       : 'text-gray-600 hover:text-ceylon-green'
@@ -181,11 +181,11 @@ export default function Navigation() {
                   data-testid="mobile-nav-post"
                 >
                   Post a Trip
-                </a>
+                </span>
               </Link>
               <Link href="/dashboard">
-                <a 
-                  className={`block px-3 py-2 text-base transition-colors ${
+                <span 
+                  className={`block px-3 py-2 text-base transition-colors cursor-pointer ${
                     isActive('/dashboard') 
                       ? 'text-ceylon-green font-medium' 
                       : 'text-gray-600 hover:text-ceylon-green'
@@ -194,11 +194,11 @@ export default function Navigation() {
                   data-testid="mobile-nav-dashboard"
                 >
                   Dashboard
-                </a>
+                </span>
               </Link>
               <Link href="/faq">
-                <a 
-                  className={`block px-3 py-2 text-base transition-colors ${
+                <span 
+                  className={`block px-3 py-2 text-base transition-colors cursor-pointer ${
                     isActive('/faq') 
                       ? 'text-ceylon-green font-medium' 
                       : 'text-gray-600 hover:text-ceylon-green'
@@ -207,7 +207,7 @@ export default function Navigation() {
                   data-testid="mobile-nav-faq"
                 >
                   FAQ
-                </a>
+                </span>
               </Link>
             </div>
           </div>
