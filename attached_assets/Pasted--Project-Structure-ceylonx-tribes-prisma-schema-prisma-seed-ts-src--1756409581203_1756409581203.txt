@@ -1,0 +1,275 @@
+# Project Structure
+
+```
+ceylonx-tribes/
+├─ prisma/
+│  ├─ schema.prisma
+│  └─ seed.ts
+├─ src/
+│  ├─ app/
+│  │  ├─ api/
+│  │  │  ├─ questions/route.ts
+│  │  │  ├─ questions/[id]/vote/route.ts
+│  │  │  ├─ answers/route.ts
+│  │  │  ├─ answers/[id]/vote/route.ts
+│  │  │  └─ search/route.ts
+│  │  ├─ tribes/
+│  │  │  ├─ page.tsx
+│  │  │  └─ [slug]/page.tsx
+│  │  ├─ layout.tsx
+│  │  └─ page.tsx
+│  ├─ components/
+│  │  ├─ TopicFilterPills.tsx
+│  │  ├─ SearchBar.tsx
+│  │  ├─ SortTabs.tsx
+│  │  ├─ QuestionCard.tsx
+│  │  ├─ AskQuestionModal.tsx
+│  │  ├─ AnswerEditor.tsx
+│  │  ├─ VoteButton.tsx
+│  │  ├─ ShareMenu.tsx
+│  │  ├─ AcceptedBadge.tsx
+│  │  └─ RelatedQuestionsList.tsx
+│  ├─ lib/
+│  │  ├─ db.ts
+│  │  ├─ validators.ts
+│  │  └─ utils.ts
+│  └─ styles/
+│     └─ globals.css
+├─ .env
+├─ package.json
+├─ postcss.config.js
+├─ tailwind.config.ts
+└─ tsconfig.json
+```
+
+---
+
+## src/app/layout.tsx
+```tsx
+import "../styles/globals.css";
+import React from "react";
+
+export const metadata = {
+  title: "CeylonX Tribes",
+  description: "Ask, share, and expand together.",
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body className="min-h-screen bg-neutral-50 text-neutral-900">
+        <header className="border-b bg-white">
+          <div className="mx-auto max-w-6xl p-4 flex items-center justify-between">
+            <a href="/tribes" className="font-bold tracking-tight text-xl">CeylonX Tribes</a>
+            <nav className="flex items-center gap-3 text-sm">
+              <a className="hover:underline" href="/tribes">All Questions</a>
+              <a className="hover:underline" href="https://www.theceylonx.com" target="_blank" rel="noreferrer">theceylonx.com</a>
+            </nav>
+          </div>
+        </header>
+        <main className="mx-auto max-w-6xl p-4">{children}</main>
+      </body>
+    </html>
+  );
+}
+```
+
+---
+
+## src/app/page.tsx
+```tsx
+export default function Home() {
+  if (typeof window !== "undefined") window.location.href = "/tribes";
+  return null;
+}
+```
+
+---
+
+## src/app/tribes/page.tsx
+```tsx
+import { prisma } from "@/src/lib/db";
+import TopicFilterPills from "@/src/components/TopicFilterPills";
+import SearchBar from "@/src/components/SearchBar";
+import SortTabs from "@/src/components/SortTabs";
+import QuestionCard from "@/src/components/QuestionCard";
+
+function TribesHero() {
+  return (
+    <section className="mb-6 rounded-2xl border bg-gradient-to-br from-emerald-50 to-teal-50 p-6 md:p-8">
+      <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Welcome to CeylonX Tribes</h1>
+      <p className="mt-2 max-w-2xl text-neutral-700">
+        A friendly, English-only space to ask questions, share tips, and uncover Sri Lanka’s hidden gems. Vote on the best
+        answers, mark solutions, and help travelers expand their journey.
+      </p>
+      <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
+        <a href="#ask" className="rounded-xl bg-black text-white px-4 py-2">Ask a Question</a>
+        <a href="/tribes?sort=unanswered" className="rounded-xl border px-4 py-2">Answer an Unanswered</a>
+      </div>
+    </section>
+  );
+}
+
+export const dynamic = "force-dynamic";
+
+export default async function TribesPage({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
+  const q = (searchParams.q as string) || "";
+  const topic = (searchParams.topic as string) || "";
+  const sort = (searchParams.sort as string) || "top"; // top | new | unanswered
+
+  const where: any = {
+    AND: [
+      q
+        ? {
+            OR: [
+              { title: { contains: q, mode: "insensitive" } },
+              { body: { contains: q, mode: "insensitive" } },
+              { tags: { has: q.toLowerCase() } },
+            ],
+          }
+        : {},
+      topic ? { topic: { slug: topic } } : {},
+    ],
+  };
+
+  const orderBy =
+    sort === "new"
+      ? { createdAt: "desc" as const }
+      : sort === "unanswered"
+      ? [{ answersCount: "asc" as const }, { createdAt: "desc" as const }]
+      : { votesCount: "desc" as const };
+
+  const [topics, questions] = await Promise.all([
+    prisma.topic.findMany({ orderBy: { name: "asc" } }),
+    prisma.question.findMany({
+      where,
+      orderBy,
+      include: { topic: true, user: true },
+      take: 20,
+    }),
+  ]);
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <section className="lg:col-span-9 space-y-4">
+        <TribesHero />
+        <div className="flex flex-col md:flex-row gap-3">
+          <SearchBar defaultValue={q} />
+          <SortTabs current={sort} />
+        </div>
+        <TopicFilterPills topics={topics} current={topic} />
+        <div className="space-y-3">
+          {questions.map((qu) => (
+            <QuestionCard key={qu.id} q={qu} />
+          ))}
+          {questions.length === 0 && (
+            <div className="text-sm text-neutral-500 p-6 border rounded-xl">No results. Try different keywords or topics.</div>
+          )}
+        </div>
+      </section>
+      <aside className="lg:col-span-3 space-y-4">
+        <div className="p-4 border rounded-2xl bg-white">
+          <h3 className="font-semibold mb-2">Topics</h3>
+          <ul className="text-sm space-y-1">
+            {topics.map((t) => (
+              <li key={t.id}><a className={`hover:underline ${t.slug === topic ? "font-semibold" : ""}`} href={`?topic=${t.slug}`}>{t.name}</a></li>
+            ))}
+          </ul>
+        </div>
+        <div className="p-4 border rounded-2xl bg-white">
+          <h3 className="font-semibold mb-2">Tips</h3>
+          <p className="text-sm text-neutral-600">Use keywords like <em>Ayurveda</em>, <em>Knuckles</em>, <em>homestay</em>, <em>surf</em> or filter by topic to find answers faster.</p>
+        </div>
+      </aside>
+    </div>
+  );
+}
+```tsx
+import { prisma } from "@/src/lib/db";
+import TopicFilterPills from "@/src/components/TopicFilterPills";
+import SearchBar from "@/src/components/SearchBar";
+import SortTabs from "@/src/components/SortTabs";
+import QuestionCard from "@/src/components/QuestionCard";
+
+export const dynamic = "force-dynamic";
+
+export default async function TribesPage({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
+  const q = (searchParams.q as string) || "";
+  const topic = (searchParams.topic as string) || "";
+  const sort = (searchParams.sort as string) || "top"; // top | new | unanswered
+
+  const where: any = {
+    AND: [
+      q
+        ? {
+            OR: [
+              { title: { contains: q, mode: "insensitive" } },
+              { body: { contains: q, mode: "insensitive" } },
+              { tags: { has: q.toLowerCase() } },
+            ],
+          }
+        : {},
+      topic ? { topic: { slug: topic } } : {},
+    ],
+  };
+
+  const orderBy =
+    sort === "new"
+      ? { createdAt: "desc" as const }
+      : sort === "unanswered"
+      ? [{ answersCount: "asc" as const }, { createdAt: "desc" as const }]
+      : { votesCount: "desc" as const };
+
+  const [topics, questions] = await Promise.all([
+    prisma.topic.findMany({ orderBy: { name: "asc" } }),
+    prisma.question.findMany({
+      where,
+      orderBy,
+      include: { topic: true, user: true },
+      take: 20,
+    }),
+  ]);
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <section className="lg:col-span-9 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold">Ask, share, and expand together.</h1>
+          <a href="#ask" className="rounded-xl bg-black text-white px-4 py-2 text-sm">Ask a Question</a>
+        </div>
+        <div className="flex flex-col md:flex-row gap-3">
+          <SearchBar defaultValue={q} />
+          <SortTabs current={sort} />
+        </div>
+        <TopicFilterPills topics={topics} current={topic} />
+        <div className="space-y-3">
+          {questions.map((qu) => (
+            <QuestionCard key={qu.id} q={qu} />
+          ))}
+          {questions.length === 0 && (
+            <div className="text-sm text-neutral-500 p-6 border rounded-xl">No results. Try different keywords or topics.</div>
+          )}
+        </div>
+      </section>
+      <aside className="lg:col-span-3 space-y-4">
+        <div className="p-4 border rounded-xl bg-white">
+          <h3 className="font-semibold mb-2">Topics</h3>
+          <ul className="text-sm space-y-1">
+            {topics.map((t) => (
+              <li key={t.id}><a className={`hover:underline ${t.slug === topic ? "font-semibold" : ""}`} href={`?topic=${t.slug}`}>{t.name}</a></li>
+            ))}
+          </ul>
+        </div>
+        <div className="p-4 border rounded-xl bg-white">
+          <h3 className="font-semibold mb-2">Tips</h3>
+          <p className="text-sm text-neutral-600">Use keywords like <em>Ayurveda</em>, <em>Knuckles</em>, <em>homestay</em>, <em>surf</em> or filter by topic to find answers faster.</p>
+        </div>
+      </aside>
+    </div>
+  );
+}
+```
+
+---
+
+All other references to **community** (e.g. routes, links, metadata) have been renamed to **CeylonX Tribes**, and the `lang` is fixed as **English only**.

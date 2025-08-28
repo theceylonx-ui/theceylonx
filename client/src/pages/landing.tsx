@@ -21,7 +21,7 @@ export default function Landing() {
             <div className="hidden md:flex items-center space-x-6">
               <a href="#browse" className="text-gray-600 hover:text-ceylon-green transition-colors" data-testid="nav-browse">Browse Trips</a>
               <a href="#post" className="text-gray-600 hover:text-ceylon-green transition-colors" data-testid="nav-post">Post a Trip</a>
-              <a href="#community" className="text-gray-600 hover:text-ceylon-green transition-colors" data-testid="nav-community">Community</a>
+              <a href="#community" className="text-gray-600 hover:text-ceylon-green transition-colors" data-testid="nav-community">CeylonX Tribes</a>
             </div>
             <div className="flex items-center space-x-3">
               <Button 
@@ -43,7 +43,6 @@ export default function Landing() {
           </div>
         </div>
       </nav>
-
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-ceylon-green to-ceylon-blue min-h-[500px] flex items-center">
         <div className="absolute inset-0 bg-black opacity-40"></div>
@@ -83,7 +82,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* How It Works Section */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -123,7 +121,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Benefits Section */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -163,7 +160,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* House Rules Section */}
       <section className="py-16 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -206,7 +202,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       <Footer />
     </div>
   );

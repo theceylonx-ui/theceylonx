@@ -5,6 +5,10 @@ import {
   comments,
   ratings,
   reports,
+  topics,
+  questions,
+  answers,
+  votes,
   type User,
   type UpsertUser,
   type InsertTrip,
@@ -19,6 +23,16 @@ import {
   type Rating,
   type InsertReport,
   type Report,
+  type InsertTopic,
+  type Topic,
+  type InsertQuestion,
+  type Question,
+  type QuestionWithDetails,
+  type InsertAnswer,
+  type Answer,
+  type AnswerWithUser,
+  type InsertVote,
+  type Vote,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, ilike, desc, asc, gte, lte, count } from "drizzle-orm";
@@ -63,6 +77,37 @@ export interface IStorage {
   // Report operations
   createReport(report: InsertReport): Promise<Report>;
   getReports(): Promise<Report[]>;
+  
+  // Community Q&A operations
+  // Topics
+  createTopic(topic: InsertTopic): Promise<Topic>;
+  getTopics(): Promise<Topic[]>;
+  getTopic(slug: string): Promise<Topic | undefined>;
+  
+  // Questions
+  createQuestion(question: InsertQuestion): Promise<Question>;
+  getQuestions(filters?: {
+    search?: string;
+    topic?: string;
+    sort?: 'top' | 'new' | 'unanswered';
+    limit?: number;
+  }): Promise<QuestionWithDetails[]>;
+  getQuestion(id: string): Promise<QuestionWithDetails | undefined>;
+  updateQuestion(id: string, question: Partial<InsertQuestion>): Promise<Question>;
+  deleteQuestion(id: string): Promise<void>;
+  
+  // Answers
+  createAnswer(answer: InsertAnswer): Promise<Answer>;
+  getQuestionAnswers(questionId: string): Promise<AnswerWithUser[]>;
+  updateAnswer(id: string, answer: Partial<InsertAnswer>): Promise<Answer>;
+  deleteAnswer(id: string): Promise<void>;
+  acceptAnswer(questionId: string, answerId: string): Promise<void>;
+  
+  // Votes
+  createVote(vote: InsertVote): Promise<Vote>;
+  getUserVote(userId: string, questionId?: string, answerId?: string): Promise<Vote | undefined>;
+  updateVote(userId: string, questionId: string | undefined, answerId: string | undefined, voteType: 'up' | 'down'): Promise<Vote>;
+  deleteVote(userId: string, questionId?: string, answerId?: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -282,6 +327,360 @@ export class DatabaseStorage implements IStorage {
 
   async getReports(): Promise<Report[]> {
     return await db.select().from(reports).orderBy(desc(reports.createdAt));
+  }
+
+  // Community Q&A operations
+  
+  // Topics
+  async createTopic(topicData: InsertTopic): Promise<Topic> {
+    const [topic] = await db.insert(topics).values(topicData).returning();
+    return topic;
+  }
+
+  async getTopics(): Promise<Topic[]> {
+    return db.select().from(topics).orderBy(asc(topics.name));
+  }
+
+  async getTopic(slug: string): Promise<Topic | undefined> {
+    const [topic] = await db.select().from(topics).where(eq(topics.slug, slug));
+    return topic;
+  }
+
+  // Questions
+  async createQuestion(questionData: InsertQuestion): Promise<Question> {
+    const [question] = await db.insert(questions).values(questionData).returning();
+    return question;
+  }
+
+  async getQuestions(filters?: {
+    search?: string;
+    topic?: string;
+    sort?: 'top' | 'new' | 'unanswered';
+    limit?: number;
+  }): Promise<QuestionWithDetails[]> {
+    const limit = filters?.limit || 20;
+    
+    // Build where conditions
+    const conditions = [];
+    
+    if (filters?.search) {
+      conditions.push(
+        or(
+          ilike(questions.title, `%${filters.search}%`),
+          ilike(questions.body, `%${filters.search}%`)
+        )
+      );
+    }
+    
+    if (filters?.topic) {
+      const topic = await this.getTopic(filters.topic);
+      if (topic) {
+        conditions.push(eq(questions.topicId, topic.id));
+      }
+    }
+    
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    
+    // Build order by
+    let orderBy;
+    switch (filters?.sort) {
+      case 'new':
+        orderBy = desc(questions.createdAt);
+        break;
+      case 'unanswered':
+        orderBy = [asc(questions.answersCount), desc(questions.createdAt)];
+        break;
+      default:
+        orderBy = desc(questions.votesCount);
+    }
+    
+    let query = db
+      .select({
+        id: questions.id,
+        title: questions.title,
+        body: questions.body,
+        tags: questions.tags,
+        userId: questions.userId,
+        topicId: questions.topicId,
+        votesCount: questions.votesCount,
+        answersCount: questions.answersCount,
+        acceptedAnswerId: questions.acceptedAnswerId,
+        createdAt: questions.createdAt,
+        updatedAt: questions.updatedAt,
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+          phoneNumber: users.phoneNumber,
+          bio: users.bio,
+          createdAt: users.createdAt,
+          updatedAt: users.updatedAt,
+        },
+        topic: {
+          id: topics.id,
+          name: topics.name,
+          slug: topics.slug,
+          description: topics.description,
+          createdAt: topics.createdAt,
+        },
+      })
+      .from(questions)
+      .leftJoin(users, eq(questions.userId, users.id))
+      .leftJoin(topics, eq(questions.topicId, topics.id))
+      .orderBy(orderBy)
+      .limit(limit);
+    
+    if (whereClause) {
+      query = query.where(whereClause);
+    }
+    
+    const questionsData = await query;
+    return questionsData as QuestionWithDetails[];
+  }
+
+  async getQuestion(id: string): Promise<QuestionWithDetails | undefined> {
+    const questionData = await db
+      .select({
+        id: questions.id,
+        title: questions.title,
+        body: questions.body,
+        tags: questions.tags,
+        userId: questions.userId,
+        topicId: questions.topicId,
+        votesCount: questions.votesCount,
+        answersCount: questions.answersCount,
+        acceptedAnswerId: questions.acceptedAnswerId,
+        createdAt: questions.createdAt,
+        updatedAt: questions.updatedAt,
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+          phoneNumber: users.phoneNumber,
+          bio: users.bio,
+          createdAt: users.createdAt,
+          updatedAt: users.updatedAt,
+        },
+        topic: {
+          id: topics.id,
+          name: topics.name,
+          slug: topics.slug,
+          description: topics.description,
+          createdAt: topics.createdAt,
+        },
+      })
+      .from(questions)
+      .leftJoin(users, eq(questions.userId, users.id))
+      .leftJoin(topics, eq(questions.topicId, topics.id))
+      .where(eq(questions.id, id));
+    
+    return questionData[0] as QuestionWithDetails | undefined;
+  }
+
+  async updateQuestion(id: string, questionData: Partial<InsertQuestion>): Promise<Question> {
+    const [question] = await db
+      .update(questions)
+      .set({ ...questionData, updatedAt: new Date() })
+      .where(eq(questions.id, id))
+      .returning();
+    return question;
+  }
+
+  async deleteQuestion(id: string): Promise<void> {
+    await db.delete(questions).where(eq(questions.id, id));
+  }
+
+  // Answers
+  async createAnswer(answerData: InsertAnswer): Promise<Answer> {
+    const [answer] = await db.insert(answers).values(answerData).returning();
+    
+    // Update question answers count
+    const answerCount = await db
+      .select({ count: count() })
+      .from(answers)
+      .where(eq(answers.questionId, answerData.questionId));
+    
+    await db
+      .update(questions)
+      .set({ answersCount: answerCount[0].count })
+      .where(eq(questions.id, answerData.questionId));
+    
+    return answer;
+  }
+
+  async getQuestionAnswers(questionId: string): Promise<AnswerWithUser[]> {
+    const answersData = await db
+      .select({
+        id: answers.id,
+        body: answers.body,
+        questionId: answers.questionId,
+        userId: answers.userId,
+        votesCount: answers.votesCount,
+        isAccepted: answers.isAccepted,
+        createdAt: answers.createdAt,
+        updatedAt: answers.updatedAt,
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+          phoneNumber: users.phoneNumber,
+          bio: users.bio,
+          createdAt: users.createdAt,
+          updatedAt: users.updatedAt,
+        },
+      })
+      .from(answers)
+      .leftJoin(users, eq(answers.userId, users.id))
+      .where(eq(answers.questionId, questionId))
+      .orderBy(desc(answers.votesCount));
+    
+    return answersData as AnswerWithUser[];
+  }
+
+  async updateAnswer(id: string, answerData: Partial<InsertAnswer>): Promise<Answer> {
+    const [answer] = await db
+      .update(answers)
+      .set({ ...answerData, updatedAt: new Date() })
+      .where(eq(answers.id, id))
+      .returning();
+    return answer;
+  }
+
+  async deleteAnswer(id: string): Promise<void> {
+    await db.delete(answers).where(eq(answers.id, id));
+  }
+
+  async acceptAnswer(questionId: string, answerId: string): Promise<void> {
+    // First, unaccept any previously accepted answer
+    await db
+      .update(answers)
+      .set({ isAccepted: false })
+      .where(eq(answers.questionId, questionId));
+    
+    // Accept the new answer
+    await db
+      .update(answers)
+      .set({ isAccepted: true })
+      .where(eq(answers.id, answerId));
+    
+    // Update question with accepted answer ID
+    await db
+      .update(questions)
+      .set({ acceptedAnswerId: answerId })
+      .where(eq(questions.id, questionId));
+  }
+
+  // Votes
+  async createVote(voteData: InsertVote): Promise<Vote> {
+    const [vote] = await db.insert(votes).values(voteData).returning();
+    
+    // Update vote counts
+    if (voteData.questionId) {
+      const upVoteCount = await db
+        .select({ count: count() })
+        .from(votes)
+        .where(and(
+          eq(votes.questionId, voteData.questionId),
+          eq(votes.voteType, 'up')
+        ));
+      
+      const downVoteCount = await db
+        .select({ count: count() })
+        .from(votes)
+        .where(and(
+          eq(votes.questionId, voteData.questionId),
+          eq(votes.voteType, 'down')
+        ));
+      
+      await db
+        .update(questions)
+        .set({ votesCount: upVoteCount[0].count - downVoteCount[0].count })
+        .where(eq(questions.id, voteData.questionId));
+    }
+    
+    if (voteData.answerId) {
+      const upVoteCount = await db
+        .select({ count: count() })
+        .from(votes)
+        .where(and(
+          eq(votes.answerId, voteData.answerId),
+          eq(votes.voteType, 'up')
+        ));
+      
+      const downVoteCount = await db
+        .select({ count: count() })
+        .from(votes)
+        .where(and(
+          eq(votes.answerId, voteData.answerId),
+          eq(votes.voteType, 'down')
+        ));
+      
+      await db
+        .update(answers)
+        .set({ votesCount: upVoteCount[0].count - downVoteCount[0].count })
+        .where(eq(answers.id, voteData.answerId));
+    }
+    
+    return vote;
+  }
+
+  async getUserVote(userId: string, questionId?: string, answerId?: string): Promise<Vote | undefined> {
+    const conditions = [eq(votes.userId, userId)];
+    
+    if (questionId) {
+      conditions.push(eq(votes.questionId, questionId));
+    }
+    
+    if (answerId) {
+      conditions.push(eq(votes.answerId, answerId));
+    }
+    
+    const [vote] = await db
+      .select()
+      .from(votes)
+      .where(and(...conditions));
+    
+    return vote;
+  }
+
+  async updateVote(userId: string, questionId: string | undefined, answerId: string | undefined, voteType: 'up' | 'down'): Promise<Vote> {
+    const conditions = [eq(votes.userId, userId)];
+    
+    if (questionId) {
+      conditions.push(eq(votes.questionId, questionId));
+    }
+    
+    if (answerId) {
+      conditions.push(eq(votes.answerId, answerId));
+    }
+    
+    const [vote] = await db
+      .update(votes)
+      .set({ voteType })
+      .where(and(...conditions))
+      .returning();
+    
+    return vote;
+  }
+
+  async deleteVote(userId: string, questionId?: string, answerId?: string): Promise<void> {
+    const conditions = [eq(votes.userId, userId)];
+    
+    if (questionId) {
+      conditions.push(eq(votes.questionId, questionId));
+    }
+    
+    if (answerId) {
+      conditions.push(eq(votes.answerId, answerId));
+    }
+    
+    await db.delete(votes).where(and(...conditions));
   }
 }
 

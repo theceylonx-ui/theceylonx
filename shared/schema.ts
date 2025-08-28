@@ -98,6 +98,54 @@ export const reports = pgTable("reports", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Community Q&A Tables
+
+// Topics table for categorizing questions
+export const topics = pgTable("topics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  slug: varchar("slug").notNull().unique(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Questions table
+export const questions = pgTable("questions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  body: text("body").notNull(),
+  tags: text("tags").array(),
+  userId: varchar("user_id").notNull(),
+  topicId: varchar("topic_id"),
+  votesCount: integer("votes_count").default(0),
+  answersCount: integer("answers_count").default(0),
+  acceptedAnswerId: varchar("accepted_answer_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Answers table
+export const answers = pgTable("answers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  body: text("body").notNull(),
+  questionId: varchar("question_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  votesCount: integer("votes_count").default(0),
+  isAccepted: boolean("is_accepted").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Votes table for questions and answers
+export const votes = pgTable("votes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  questionId: varchar("question_id"),
+  answerId: varchar("answer_id"),
+  voteType: varchar("vote_type").notNull(), // 'up' or 'down'
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   organizedTrips: many(trips),
@@ -173,6 +221,55 @@ export const reportsRelations = relations(reports, ({ one }) => ({
   }),
 }));
 
+// Community Q&A Relations
+export const topicsRelations = relations(topics, ({ many }) => ({
+  questions: many(questions),
+}));
+
+export const questionsRelations = relations(questions, ({ one, many }) => ({
+  user: one(users, {
+    fields: [questions.userId],
+    references: [users.id],
+  }),
+  topic: one(topics, {
+    fields: [questions.topicId],
+    references: [topics.id],
+  }),
+  answers: many(answers),
+  votes: many(votes),
+  acceptedAnswer: one(answers, {
+    fields: [questions.acceptedAnswerId],
+    references: [answers.id],
+  }),
+}));
+
+export const answersRelations = relations(answers, ({ one, many }) => ({
+  question: one(questions, {
+    fields: [answers.questionId],
+    references: [questions.id],
+  }),
+  user: one(users, {
+    fields: [answers.userId],
+    references: [users.id],
+  }),
+  votes: many(votes),
+}));
+
+export const votesRelations = relations(votes, ({ one }) => ({
+  user: one(users, {
+    fields: [votes.userId],
+    references: [users.id],
+  }),
+  question: one(questions, {
+    fields: [votes.questionId],
+    references: [questions.id],
+  }),
+  answer: one(answers, {
+    fields: [votes.answerId],
+    references: [answers.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -206,6 +303,33 @@ export const insertReportSchema = createInsertSchema(reports).omit({
   createdAt: true,
 });
 
+// Community Q&A insert schemas
+export const insertTopicSchema = createInsertSchema(topics).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertQuestionSchema = createInsertSchema(questions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  votesCount: true,
+  answersCount: true,
+});
+
+export const insertAnswerSchema = createInsertSchema(answers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  votesCount: true,
+  isAccepted: true,
+});
+
+export const insertVoteSchema = createInsertSchema(votes).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -221,3 +345,21 @@ export type InsertRating = z.infer<typeof insertRatingSchema>;
 export type Rating = typeof ratings.$inferSelect;
 export type InsertReport = z.infer<typeof insertReportSchema>;
 export type Report = typeof reports.$inferSelect;
+
+// Community Q&A Types
+export type InsertTopic = z.infer<typeof insertTopicSchema>;
+export type Topic = typeof topics.$inferSelect;
+export type InsertQuestion = z.infer<typeof insertQuestionSchema>;
+export type Question = typeof questions.$inferSelect;
+export type QuestionWithDetails = Question & {
+  user: User;
+  topic?: Topic;
+  answers?: AnswerWithUser[];
+  votesCount: number;
+  answersCount: number;
+};
+export type InsertAnswer = z.infer<typeof insertAnswerSchema>;
+export type Answer = typeof answers.$inferSelect;
+export type AnswerWithUser = Answer & { user: User };
+export type InsertVote = z.infer<typeof insertVoteSchema>;
+export type Vote = typeof votes.$inferSelect;

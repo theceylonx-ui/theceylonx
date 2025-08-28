@@ -21,7 +21,7 @@ export default function Footer() {
             <ul className="space-y-2 text-gray-300">
               <li><Link href="/browse"><span className="hover:text-ceylon-green transition-colors cursor-pointer">Browse Trips</span></Link></li>
               <li><Link href="/post"><span className="hover:text-ceylon-green transition-colors cursor-pointer">Post a Trip</span></Link></li>
-              <li><Link href="/dashboard"><span className="hover:text-ceylon-green transition-colors cursor-pointer">Community</span></Link></li>
+              <li><Link href="/community"><span className="hover:text-ceylon-green transition-colors cursor-pointer">Community</span></Link></li>
               <li><Link href="/faq"><span className="hover:text-ceylon-green transition-colors cursor-pointer">Help Center</span></Link></li>
             </ul>
           </div>
@@ -49,7 +49,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-gray-700 mt-8 pt-8 text-center">
-          <p className="text-gray-300">&copy; 2024 Ceylon Expand. All rights reserved. Made with ❤️ for Sri Lankan travelers.</p>
+          <p className="text-gray-300">© 2025 Ceylon Expand. All rights reserved. Made with ❤️ for the tourist visiting Sri Lanka.</p>
         </div>
       </div>
     </footer>

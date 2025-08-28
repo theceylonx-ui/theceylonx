@@ -12,6 +12,7 @@ import PostTrip from "@/pages/post-trip";
 import TripDetails from "@/pages/trip-details";
 import UserDashboard from "@/pages/user-dashboard";
 import FAQ from "@/pages/faq";
+import Community from "@/pages/community";
 import SignInRequired from "@/pages/signin-required";
 
 function Router() {
@@ -24,6 +25,7 @@ function Router() {
           <Route path="/" component={Landing} />
           <Route path="/browse" component={BrowseTrips} />
           <Route path="/trips/:id" component={TripDetails} />
+          <Route path="/community" component={Community} />
           <Route path="/faq" component={FAQ} />
           <Route path="/post" component={SignInRequired} />
           <Route path="/dashboard" component={SignInRequired} />
@@ -35,6 +37,7 @@ function Router() {
           <Route path="/post" component={PostTrip} />
           <Route path="/trips/:id" component={TripDetails} />
           <Route path="/dashboard" component={UserDashboard} />
+          <Route path="/community" component={Community} />
           <Route path="/faq" component={FAQ} />
         </>
       )}
