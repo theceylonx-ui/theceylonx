@@ -19,6 +19,7 @@ import { Link } from "wouter";
 import type { QuestionWithDetails, Topic, User as UserType } from "@shared/schema";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
+import communityBgImage from "@assets/2_1756418517711.png";
 
 const questionSchema = z.object({
   title: z.string().min(10, "Title must be at least 10 characters"),
@@ -121,14 +122,29 @@ export default function CommunityPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-8">
-            <div className="bg-gradient-to-r from-ceylon-green to-ceylon-blue rounded-2xl p-8 text-white shadow-xl">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-              <div className="lg:flex-1 mb-6 lg:mb-0">
-                <h1 className="text-3xl md:text-4xl font-bold mb-3">Ceylon Expand Community</h1>
-                <p className="text-lg opacity-90 max-w-2xl">
-                  Ask questions, share knowledge, and connect with fellow travelers exploring Sri Lanka
-                </p>
-              </div>
+            <div className="relative bg-gradient-to-r from-ceylon-green to-ceylon-blue rounded-2xl p-8 text-white shadow-xl overflow-hidden">
+              {/* Background Image */}
+              <div 
+                className="absolute inset-0 rounded-2xl" 
+                style={{
+                  backgroundImage: `url(${communityBgImage})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }}
+              ></div>
+              {/* Dark overlay for text readability */}
+              <div className="absolute inset-0 bg-black opacity-50 rounded-2xl"></div>
+              
+              {/* Content */}
+              <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                <div className="lg:flex-1 mb-6 lg:mb-0">
+                  <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }}>
+                    Ceylon Expand Community
+                  </h1>
+                  <p className="text-lg max-w-2xl drop-shadow-lg" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8), 0px 0px 2px rgba(0,0,0,0.6)' }}>
+                    Ask questions, share knowledge, and connect with fellow travelers exploring Sri Lanka
+                  </p>
+                </div>
               
               <div className="lg:flex-shrink-0">
                 <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -251,8 +267,8 @@ export default function CommunityPage() {
               </DialogContent>
             </Dialog>
               </div>
+              </div>
             </div>
-          </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
