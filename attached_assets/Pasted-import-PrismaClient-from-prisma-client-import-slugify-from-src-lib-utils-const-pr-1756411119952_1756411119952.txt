@@ -1,0 +1,342 @@
+import { PrismaClient } from "@prisma/client";
+import { slugify } from "../src/lib/utils";
+
+const prisma = new PrismaClient();
+
+async function seedTopics() {
+  const topics = [
+    { slug: "hidden-trails", name: "Hidden Trails & Trekking", description: "Knuckles, Pekoe Trail, secret waterfalls" },
+    { slug: "culture-rituals", name: "Culture & Rituals", description: "Festivals, temple etiquette, customs" },
+    { slug: "food-kitchens", name: "Food & Local Kitchens", description: "Home cooking, street food, regional dishes" },
+    { slug: "coast-surf-sea", name: "Coast, Surf & Sea", description: "Uncrowded beaches, surfing, diving" },
+    { slug: "wellness-ayurveda", name: "Wellness & Ayurveda", description: "Retreats, meditation, healing" },
+  ];
+  for (const t of topics) {
+    await prisma.topic.upsert({ where: { slug: t.slug }, update: {}, create: t });
+  }
+}
+
+async function seedUsers() {
+  const users = [
+    { email: "seed@theceylonx.com", name: "CeylonX" },
+    { email: "traveler1@theceylonx.com", name: "Traveler One" },
+    { email: "traveler2@theceylonx.com", name: "Traveler Two" },
+    { email: "traveler3@theceylonx.com", name: "Traveler Three" },
+  ];
+  const created = [];
+  for (const u of users) {
+    const user = await prisma.user.upsert({
+      where: { email: u.email },
+      update: { name: u.name },
+      create: u,
+    });
+    created.push(user);
+  }
+  return created;
+}
+
+type SeedQA = {
+  topicSlug: string;
+  title: string;
+  bodyHtml: string;
+  tags: string[];
+  votes?: number;
+  answers: { authorEmail: string; bodyHtml: string; votes?: number; accepted?: boolean }[];
+};
+
+const QA: SeedQA[] = [
+  // HIDDEN TRAILS & TREKKING
+  {
+    topicSlug: "hidden-trails",
+    title: "Is the Knuckles Range suitable for a beginner-friendly day hike with viewpoints?",
+    bodyHtml:
+      "<p>Looking for a quiet, beginner-friendly trail in the Knuckles Range with viewpoints but without crowded paths. Any route tips, entry points, and safety basics?</p>",
+    tags: ["knuckles", "hike", "dayhike", "viewpoints"],
+    votes: 6,
+    answers: [
+      {
+        authorEmail: "seed@theceylonx.com",
+        bodyHtml:
+          "<p>Yes. Try the <strong>Mini World's End (Pitawala Pathana)</strong> boardwalk loop. It’s short (≈1.5–2 km), relatively flat, and offers a dramatic escarpment view. Go early (before 9am) for clear skies. Bring water, a hat, and keep to the marked path—edges can be windy.</p>",
+        votes: 7,
+        accepted: true,
+      },
+      {
+        authorEmail: "traveler1@theceylonx.com",
+        bodyHtml:
+          "<p>If you want a bit more challenge, the <em>Deanston</em> nature trail is easy-moderate, with shade and river sounds. Check weather—mist can roll in fast.</p>",
+      },
+    ],
+  },
+  {
+    topicSlug: "hidden-trails",
+    title: "How do I find lesser-known waterfalls without causing harm to the area?",
+    bodyHtml:
+      "<p>We want to explore hidden waterfalls, but we’re concerned about safety and sustainability. Any guidelines or general tips?</p>",
+    tags: ["waterfalls", "safety", "sustainability"],
+    votes: 4,
+    answers: [
+      {
+        authorEmail: "seed@theceylonx.com",
+        bodyHtml:
+          "<p>Follow <strong>Leave No Trace</strong>: go with a local guide, avoid posting exact GPS pins publicly, pack out all waste, and don’t build rock stacks. Check recent rainfall—flash floods can occur. Wear proper footwear; algae on rocks is slippery.</p>",
+        votes: 5,
+        accepted: true,
+      },
+    ],
+  },
+
+  // CULTURE & RITUALS
+  {
+    topicSlug: "culture-rituals",
+    title: "Temple etiquette for first-timers in Sri Lanka?",
+    bodyHtml:
+      "<p>We want to attend a village temple ceremony respectfully. What should we wear and avoid?</p>",
+    tags: ["etiquette", "temple", "culture"],
+    votes: 8,
+    answers: [
+      {
+        authorEmail: "seed@theceylonx.com",
+        bodyHtml:
+          "<p>Wear modest clothing (shoulders and knees covered). Remove shoes and hats before entering. Keep voices low, ask before photographing people, and never turn your back to the main shrine while posing. Offerings are welcome—flowers or fruit are common.</p>",
+        votes: 10,
+        accepted: true,
+      },
+      {
+        authorEmail: "traveler2@theceylonx.com",
+        bodyHtml:
+          "<p>Also avoid touching sacred objects or statues. If unsure, follow what locals do, or ask a caretaker politely.</p>",
+        votes: 2,
+      },
+    ],
+  },
+  {
+    topicSlug: "culture-rituals",
+    title: "Are small village festivals open to outsiders?",
+    bodyHtml:
+      "<p>We’ve heard of lesser-known processions and village shows. Can travelers attend? How do we contribute responsibly?</p>",
+    tags: ["festivals", "village", "responsible"],
+    answers: [
+      {
+        authorEmail: "seed@theceylonx.com",
+        bodyHtml:
+          "<p>Many are community-led and welcoming. Go with a local contact or guide, make a small donation when appropriate, and keep space for performers. Avoid blocking pathways and be careful with flash photography.</p>",
+        accepted: true,
+      },
+    ],
+  },
+
+  // FOOD & LOCAL KITCHENS
+  {
+    topicSlug: "food-kitchens",
+    title: "What’s a respectful way to join a village cooking experience?",
+    bodyHtml:
+      "<p>We want to learn a home-style Sri Lankan curry. How to find hosts and participate respectfully?</p>",
+    tags: ["cooking", "local", "food"],
+    votes: 5,
+    answers: [
+      {
+        authorEmail: "seed@theceylonx.com",
+        bodyHtml:
+          "<p>Look for small, vetted hosts via community collectives or eco-stays. Bring a small gift (spices/tea). Ask about dietary preferences beforehand. Help with prep/cleanup and request permission before filming. Always credit your host if you share online.</p>",
+        votes: 6,
+        accepted: true,
+      },
+    ],
+  },
+  {
+    topicSlug: "food-kitchens",
+    title: "Must-try regional dishes off the tourist trail?",
+    bodyHtml:
+      "<p>Beyond kottu and hoppers, what regional dishes should we try on lesser-known routes?</p>",
+    tags: ["regional", "dishes", "offbeat"],
+    answers: [
+      {
+        authorEmail: "seed@theceylonx.com",
+        bodyHtml:
+          "<p>Try <strong>Jaffna crab curry</strong>, <em>odiyal kool</em> (a seafood root broth), eastern <em>pittu</em> with coconut sambol, and hill-country <em>gotu kola</em> salads. Ask locals for small eateries over highway restaurants.</p>",
+        accepted: true,
+      },
+    ],
+  },
+
+  // COAST, SURF & SEA
+  {
+    topicSlug: "coast-surf-sea",
+    title: "Where can beginners surf without crowds?",
+    bodyHtml:
+      "<p>Looking for mellow breaks suitable for first-timers and longboards, ideally away from heavy crowds.</p>",
+    tags: ["surf", "beginner", "coast"],
+    votes: 7,
+    answers: [
+      {
+        authorEmail: "seed@theceylonx.com",
+        bodyHtml:
+          "<p>Ask locally about sand-bottom breaks near quieter bays and go early morning. Choose licensed instructors, warm up properly, and avoid reef days until you’re confident. Respect lineups—safety first.</p>",
+        votes: 8,
+        accepted: true,
+      },
+    ],
+  },
+  {
+    topicSlug: "coast-surf-sea",
+    title: "Best practices for ethical turtle watching?",
+    bodyHtml:
+      "<p>We want to see turtles but avoid disturbing them. Any guidelines?</p>",
+    tags: ["wildlife", "turtles", "ethics"],
+    answers: [
+      {
+        authorEmail: "seed@theceylonx.com",
+        bodyHtml:
+          "<p>Use reputable guides, keep distance, no touching, and avoid bright lights/flash at night. Don’t stand between turtles and the water. Follow site rules and keep groups small.</p>",
+        accepted: true,
+      },
+    ],
+  },
+
+  // WELLNESS & AYURVEDA
+  {
+    topicSlug: "wellness-ayurveda",
+    title: "How to choose a genuine Ayurveda experience?",
+    bodyHtml:
+      "<p>We’d like a short wellness stay that’s authentic. What should we look for?</p>",
+    tags: ["ayurveda", "wellness", "authentic"],
+    votes: 9,
+    answers: [
+      {
+        authorEmail: "seed@theceylonx.com",
+        bodyHtml:
+          "<p>Check for qualified practitioners, an intake consultation, and treatments matched to your condition rather than one-size-fits-all packages. Ask about ingredients, rest time, and diet plans. Avoid aggressive upselling.</p>",
+        votes: 9,
+        accepted: true,
+      },
+    ],
+  },
+  {
+    topicSlug: "wellness-ayurveda",
+    title: "Is meditation in forest temples okay for visitors?",
+    bodyHtml:
+      "<p>We’re keen to try meditation in a forest monastery. Any etiquette or access tips?</p>",
+    tags: ["meditation", "forest", "etiquette"],
+    answers: [
+      {
+        authorEmail: "seed@theceylonx.com",
+        bodyHtml:
+          "<p>Some monasteries welcome visitors during specific hours. Wear modest clothes, keep devices silent, and follow posted rules. Donations are appreciated but not required. Stay quiet and leave no trace.</p>",
+        accepted: true,
+      },
+    ],
+  },
+
+  // EXTRA (LOGISTICS / SAFETY within topics flavor)
+  {
+    topicSlug: "hidden-trails",
+    title: "Self-drive vs. local guide for remote hikes?",
+    bodyHtml:
+      "<p>We’re experienced travelers but new to Sri Lanka. Should we self-navigate or hire a guide for remote trails?</p>",
+    tags: ["selfdrive", "guide", "safety"],
+    votes: 3,
+    answers: [
+      {
+        authorEmail: "seed@theceylonx.com",
+        bodyHtml:
+          "<p>For remote or unmarked trails, go with a local guide—safer, faster route-finding, and better cultural context. Self-drive is fine for well-known lookouts—just check road conditions and weather.</p>",
+        votes: 4,
+        accepted: true,
+      },
+    ],
+  },
+  {
+    topicSlug: "culture-rituals",
+    title: "Can we film traditional dance rehearsals?",
+    bodyHtml:
+      "<p>We found a community dance practice and want to document respectfully. What’s appropriate?</p>",
+    tags: ["dance", "filming", "permission"],
+    answers: [
+      {
+        authorEmail: "seed@theceylonx.com",
+        bodyHtml:
+          "<p>Always ask permission first and be ready to stop if requested. Share copies with the troupe if they’d like. Avoid obstructing performers and don’t use bright lights. Credit the group when posting.</p>",
+        accepted: true,
+      },
+    ],
+  },
+];
+
+async function seedQA() {
+  const topics = await prisma.topic.findMany();
+  const bySlug = new Map(topics.map((t) => [t.slug, t]));
+  const seedUser = await prisma.user.findUnique({ where: { email: "seed@theceylonx.com" } });
+
+  let qCount = 0;
+  let aCount = 0;
+
+  for (const item of QA) {
+    const topic = bySlug.get(item.topicSlug);
+    if (!topic) continue;
+
+    const slug = slugify(item.title);
+    // Skip if already exists
+    const existing = await prisma.question.findUnique({ where: { slug } });
+    let questionId: string;
+
+    if (!existing) {
+      const q = await prisma.question.create({
+        data: {
+          title: item.title,
+          body: item.bodyHtml,
+          tags: item.tags.map((t) => t.toLowerCase()),
+          slug,
+          topicId: topic.id,
+          user: { connect: { id: seedUser!.id } },
+          votesCount: item.votes ?? 0,
+        },
+      });
+      questionId = q.id;
+      qCount++;
+    } else {
+      questionId = existing.id;
+    }
+
+    // Answers
+    let acceptedAnswerId: string | null = null;
+    for (const ans of item.answers) {
+      const user = await prisma.user.findUnique({ where: { email: ans.authorEmail } });
+      const a = await prisma.answer.create({
+        data: {
+          body: ans.bodyHtml,
+          questionId,
+          userId: user ? user.id : seedUser!.id,
+          votesCount: ans.votes ?? 0,
+          isAccepted: !!ans.accepted,
+        },
+      });
+      if (ans.accepted) acceptedAnswerId = a.id;
+      aCount++;
+    }
+    if (acceptedAnswerId) {
+      await prisma.question.update({
+        where: { id: questionId },
+        data: { acceptedAnswerId },
+      });
+    }
+    // Update answersCount
+    const count = await prisma.answer.count({ where: { questionId } });
+    await prisma.question.update({ where: { id: questionId }, data: { answersCount: count } });
+  }
+
+  console.log(`Seeded Qs: ${qCount}, As: ${aCount} ✅`);
+}
+
+async function main() {
+  await seedTopics();
+  await seedUsers();
+  await seedQA();
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => prisma.$disconnect());
