@@ -473,14 +473,26 @@ export default function CommunityPage() {
                           </div>
                         </div>
                         
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => toggleQuestionExpansion(question.id)}
-                          data-testid={`button-view-question-${question.id}`}
-                        >
-                          {expandedQuestions.has(question.id) ? 'Show Less' : 'View All Answers'}
-                        </Button>
+                        {question.answers && question.answers.length > 2 && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => toggleQuestionExpansion(question.id)}
+                            data-testid={`button-view-question-${question.id}`}
+                          >
+                            {expandedQuestions.has(question.id) ? 'Show Less' : 'View All Answers'}
+                          </Button>
+                        )}
+                        
+                        {user && (
+                          <Button 
+                            variant="default" 
+                            size="sm"
+                            data-testid={`button-reply-${question.id}`}
+                          >
+                            Reply
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
