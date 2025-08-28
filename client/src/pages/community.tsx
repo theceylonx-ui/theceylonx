@@ -369,7 +369,7 @@ export default function CommunityPage() {
                             {question.title}
                           </h3>
                           <p className="text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
-                            {question.body}
+                            {question.body.replace(/<[^>]*>/g, '')}
                           </p>
                           
                           <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
