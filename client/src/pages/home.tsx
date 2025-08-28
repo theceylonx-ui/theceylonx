@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import TripCard from "@/components/trip-card";
@@ -10,6 +10,7 @@ import type { TripWithOrganizer } from "@shared/schema";
 import backgroundImage from "@assets/11_1756417976014.png";
 
 export default function Home() {
+  const [, setLocation] = useLocation();
   const { data: trips, isLoading } = useQuery<TripWithOrganizer[]>({
     queryKey: ["/api/trips"],
   });
@@ -40,24 +41,22 @@ export default function Home() {
             Ready for your next adventure? Discover new trips or share your journey with fellow travelers.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/browse">
-              <Button 
-                size="lg"
-                className="bg-white text-ceylon-green hover:bg-gray-100 text-lg font-semibold"
-                data-testid="button-browse-trips"
-              >
-                Browse Trips
-              </Button>
-            </Link>
-            <Link href="/post">
-              <Button 
-                size="lg"
-                className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-lg font-semibold"
-                data-testid="button-post-trip"
-              >
-                Post a Trip
-              </Button>
-            </Link>
+            <Button 
+              size="lg"
+              className="bg-white text-ceylon-green hover:bg-gray-100 text-lg font-semibold w-full sm:w-auto"
+              onClick={() => setLocation("/browse")}
+              data-testid="button-browse-trips"
+            >
+              Browse Trips
+            </Button>
+            <Button 
+              size="lg"
+              className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-lg font-semibold w-full sm:w-auto"
+              onClick={() => setLocation("/post")}
+              data-testid="button-post-trip"
+            >
+              Post a Trip
+            </Button>
           </div>
         </div>
       </section>
