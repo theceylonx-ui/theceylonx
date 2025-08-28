@@ -49,7 +49,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-gray-700 mt-8 pt-8 text-center">
-          <p className="text-gray-300">© 2025 Ceylon Expand. All rights reserved. Made with ❤️ for the tourist visiting Sri Lanka.</p>
+          <p className="text-gray-300">© 2025 Ceylon Expand. All rights reserved. Made with ❤️ for the tourists visiting Sri Lanka.</p>
         </div>
       </div>
     </footer>
