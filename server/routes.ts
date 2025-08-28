@@ -84,6 +84,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/trips', async (req, res) => {
     try {
+      const page = req.query.page ? Number(req.query.page) : 1;
+      const limit = req.query.limit ? Number(req.query.limit) : 8;
+      const offset = (page - 1) * limit;
+      
       const filters = {
         from: req.query.from as string,
         to: req.query.to as string,
@@ -92,10 +96,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         minPrice: req.query.minPrice ? Number(req.query.minPrice) : undefined,
         maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
         search: req.query.search as string,
+        limit,
+        offset,
       };
       
-      const trips = await storage.searchTrips(filters);
-      res.json(trips);
+      const result = await storage.searchTrips(filters);
+      res.json({
+        trips: result.trips,
+        pagination: {
+          page,
+          limit,
+          total: result.total,
+          totalPages: Math.ceil(result.total / limit),
+        }
+      });
     } catch (error) {
       console.error("Error fetching trips:", error);
       res.status(500).json({ message: "Failed to fetch trips" });

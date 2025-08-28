@@ -57,7 +57,9 @@ export interface IStorage {
     minPrice?: number;
     maxPrice?: number;
     search?: string;
-  }): Promise<TripWithOrganizer[]>;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ trips: TripWithOrganizer[], total: number }>;
   
   // Trip participation operations
   joinTrip(participation: InsertTripParticipant): Promise<TripParticipant>;
@@ -193,7 +195,9 @@ export class DatabaseStorage implements IStorage {
     minPrice?: number;
     maxPrice?: number;
     search?: string;
-  }): Promise<TripWithOrganizer[]> {
+    limit?: number;
+    offset?: number;
+  }): Promise<{ trips: TripWithOrganizer[], total: number }> {
     const conditions = [eq(trips.status, "active")];
     
     if (filters.from) {
@@ -231,17 +235,36 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
-    const result = await db
+    // Get total count
+    const [{ count: total }] = await db
+      .select({ count: count() })
+      .from(trips)
+      .where(and(...conditions));
+
+    // Get paginated results
+    const query = db
       .select()
       .from(trips)
       .leftJoin(users, eq(trips.organizerId, users.id))
       .where(and(...conditions))
       .orderBy(asc(trips.date));
     
-    return result.map(({ trips: trip, users: organizer }) => ({
+    if (filters.limit) {
+      query.limit(filters.limit);
+    }
+    
+    if (filters.offset) {
+      query.offset(filters.offset);
+    }
+    
+    const result = await query;
+    
+    const tripsWithOrganizers = result.map(({ trips: trip, users: organizer }) => ({
       ...trip,
       organizer: organizer!,
     }));
+    
+    return { trips: tripsWithOrganizers, total };
   }
 
   // Trip participation operations

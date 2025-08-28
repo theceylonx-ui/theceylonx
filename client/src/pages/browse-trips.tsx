@@ -6,9 +6,11 @@ import TripCard from "@/components/trip-card";
 import TripFilters from "@/components/trip-filters";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import type { TripWithOrganizer } from "@shared/schema";
 
 export default function BrowseTrips() {
+  const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
     from: "",
     to: "",
@@ -19,20 +21,127 @@ export default function BrowseTrips() {
     search: "",
   });
 
-  const { data: trips, isLoading } = useQuery<TripWithOrganizer[]>({
-    queryKey: ["/api/trips", filters],
+  const { data, isLoading } = useQuery<{
+    trips: TripWithOrganizer[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }>({
+    queryKey: ["/api/trips", filters, currentPage],
     queryFn: async () => {
       const params = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
         if (value) params.set(key, value);
       });
+      params.set('page', currentPage.toString());
+      params.set('limit', '8');
       
       const response = await fetch(`/api/trips?${params}`);
       if (!response.ok) throw new Error("Failed to fetch trips");
       return response.json();
     },
   });
+  
+  const trips = data?.trips || [];
+  const pagination = data?.pagination;
 
+  // Reset to page 1 when filters change
+  const handleFiltersChange = (newFilters: typeof filters) => {
+    setFilters(newFilters);
+    setCurrentPage(1);
+  };
+  
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+  
+  // Pagination component
+  const PaginationComponent = () => {
+    if (!pagination || pagination.totalPages <= 1) return null;
+    
+    const { page, totalPages } = pagination;
+    const maxVisiblePages = 5;
+    const startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
+    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    const pages = [];
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    
+    return (
+      <div className="flex justify-center items-center space-x-2 mt-8" data-testid="pagination">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handlePageChange(page - 1)}
+          disabled={page === 1}
+          className="hover:bg-gray-50"
+          data-testid="pagination-prev"
+        >
+          Previous
+        </Button>
+        
+        {startPage > 1 && (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(1)}
+              className="hover:bg-gray-50"
+              data-testid="pagination-page-1"
+            >
+              1
+            </Button>
+            {startPage > 2 && <span className="px-2">...</span>}
+          </>
+        )}
+        
+        {pages.map((pageNum) => (
+          <Button
+            key={pageNum}
+            variant={page === pageNum ? "default" : "outline"}
+            size="sm"
+            onClick={() => handlePageChange(pageNum)}
+            className={page === pageNum ? "bg-ceylon-green hover:bg-ceylon-green/90 shadow-sm" : "hover:bg-gray-50"}
+            data-testid={`pagination-page-${pageNum}`}
+          >
+            {pageNum}
+          </Button>
+        ))}
+        
+        {endPage < totalPages && (
+          <>
+            {endPage < totalPages - 1 && <span className="px-2">...</span>}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(totalPages)}
+              className="hover:bg-gray-50"
+              data-testid={`pagination-page-${totalPages}`}
+            >
+              {totalPages}
+            </Button>
+          </>
+        )}
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handlePageChange(page + 1)}
+          disabled={page === totalPages}
+          className="hover:bg-gray-50"
+          data-testid="pagination-next"
+        >
+          Next
+        </Button>
+      </div>
+    );
+  };
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
@@ -48,12 +157,17 @@ export default function BrowseTrips() {
         </div>
 
         {/* Filters */}
-        <TripFilters filters={filters} onFiltersChange={setFilters} />
+        <TripFilters filters={filters} onFiltersChange={handleFiltersChange} />
 
         {/* Results */}
         <div className="mb-6">
           <p className="text-gray-600" data-testid="results-count">
-            {isLoading ? "Loading..." : `${trips?.length || 0} trips found`}
+            {isLoading ? "Loading..." : `${pagination?.total || 0} trips found`}
+            {pagination && pagination.totalPages > 1 && (
+              <span className="text-sm text-gray-500 ml-2">
+                (Page {pagination.page} of {pagination.totalPages})
+              </span>
+            )}
           </p>
         </div>
 
@@ -73,7 +187,7 @@ export default function BrowseTrips() {
                 </CardContent>
               </Card>
             ))
-          ) : trips && trips.length > 0 ? (
+          ) : trips.length > 0 ? (
             trips.map((trip) => (
               <TripCard key={trip.id} trip={trip} data-testid={`trip-card-${trip.id}`} />
             ))
@@ -91,6 +205,9 @@ export default function BrowseTrips() {
             </div>
           )}
         </div>
+        
+        {/* Pagination */}
+        <PaginationComponent />
       </div>
       
       <Footer />
