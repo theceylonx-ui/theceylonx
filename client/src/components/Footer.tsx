@@ -1,6 +1,6 @@
 import { Link } from "wouter";
-import { Mountain } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import logoImage from "@assets/5_1756417819316.png";
 
 export default function Footer() {
   const { data: popularDestinations = [] } = useQuery<Array<{ destination: string; count: number }>>({
@@ -15,7 +15,7 @@ export default function Footer() {
           <div>
             <Link href="/">
               <div className="flex items-center space-x-2 mb-4 cursor-pointer hover:opacity-80 transition-opacity">
-                <Mountain className="text-ceylon-green h-6 w-6" />
+                <img src={logoImage} alt="Ceylon Expand Logo" className="h-6 w-6" />
                 <span className="text-xl font-bold">Ceylon Expand</span>
               </div>
             </Link>

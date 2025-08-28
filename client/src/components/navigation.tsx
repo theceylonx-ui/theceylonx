@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
-import { Mountain, User, LogOut, Menu, X } from "lucide-react";
+import { User, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
+import logoImage from "@assets/5_1756417819316.png";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -36,7 +37,7 @@ export default function Navigation() {
           {/* Logo */}
           <Link href="/">
             <div className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity" data-testid="nav-logo">
-              <Mountain className="text-ceylon-green h-8 w-8" />
+              <img src={logoImage} alt="Ceylon Expand Logo" className="h-8 w-8" />
               <span className="text-xl font-bold text-gray-800">Ceylon Expand</span>
             </div>
           </Link>

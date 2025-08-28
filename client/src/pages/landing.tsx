@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Footer from "@/components/Footer";
-import { Mountain, UserPlus, MapPin, Handshake, PiggyBank, Users, Compass, Heart, Shield, Flag, Star, UserCheck, Route } from "lucide-react";
+import { UserPlus, MapPin, Handshake, PiggyBank, Users, Compass, Heart, Shield, Flag, Star, UserCheck, Route } from "lucide-react";
+import logoImage from "@assets/5_1756417819316.png";
 
 export default function Landing() {
   const handleLogin = () => {
@@ -15,7 +16,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
-              <Mountain className="text-ceylon-green h-8 w-8" data-testid="logo-icon" />
+              <img src={logoImage} alt="Ceylon Expand Logo" className="h-8 w-8" data-testid="logo-icon" />
               <span className="text-xl font-bold text-gray-800" data-testid="logo-text">Ceylon Expand</span>
             </div>
             <div className="hidden md:flex items-center space-x-6">
