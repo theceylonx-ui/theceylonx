@@ -47,7 +47,7 @@ export default function Landing() {
       </nav>
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-ceylon-green to-ceylon-blue min-h-[500px] flex items-center">
-        <div className="absolute inset-0 bg-black opacity-40"></div>
+        <div className="absolute inset-0 bg-black opacity-60"></div>
         <div 
           className="absolute inset-0" 
           style={{
