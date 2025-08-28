@@ -67,7 +67,7 @@ export default function Landing() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               size="lg"
-              className="bg-ceylon-green text-white hover:bg-ceylon-green/90 text-lg font-semibold"
+              className="bg-ceylon-green text-white hover:bg-ceylon-green/90 text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:scale-105"
               onClick={() => document.getElementById('browse')?.scrollIntoView({ behavior: 'smooth' })}
               data-testid="button-browse-trips"
             >
@@ -75,7 +75,7 @@ export default function Landing() {
             </Button>
             <Button 
               size="lg"
-              className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-lg font-semibold"
+              className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:scale-105"
               onClick={() => document.getElementById('post')?.scrollIntoView({ behavior: 'smooth' })}
               data-testid="button-post-trip"
             >
