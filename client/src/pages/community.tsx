@@ -464,16 +464,6 @@ export default function CommunityPage() {
                               <ThumbsUp className="w-4 h-4 mr-1" />
                               {question.votesCount}
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={user ? () => handleVote(question.id, 'down') : undefined}
-                              disabled={!user || voteMutation.isPending}
-                              title={!user ? "Sign in to vote" : ""}
-                              data-testid={`button-downvote-${question.id}`}
-                            >
-                              <ThumbsDown className="w-4 h-4" />
-                            </Button>
                           </div>
                           <div className="flex items-center text-sm text-gray-500">
                             <MessageSquare className="w-4 h-4 mr-1" />
@@ -481,14 +471,14 @@ export default function CommunityPage() {
                           </div>
                         </div>
                         
-                        {question.answers && question.answers.length > 2 && (
+{user && (
                           <Button 
                             variant="outline" 
                             size="sm"
                             onClick={() => toggleQuestionExpansion(question.id)}
-                            data-testid={`button-view-question-${question.id}`}
+                            data-testid={`button-expand-${question.id}`}
                           >
-                            {expandedQuestions.has(question.id) ? 'Show Less' : 'View All Answers'}
+                            {expandedQuestions.has(question.id) ? 'Collapse' : 'Expand'}
                           </Button>
                         )}
                         
