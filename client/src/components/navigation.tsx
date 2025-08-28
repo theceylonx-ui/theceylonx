@@ -34,12 +34,14 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/">
-            <div className="flex items-center space-x-2 cursor-pointer" data-testid="nav-logo">
-              <Mountain className="text-ceylon-green h-8 w-8" />
-              <span className="text-xl font-bold text-gray-800">Ceylon Expand</span>
-            </div>
-          </Link>
+          <div className="flex items-center space-x-2 cursor-pointer" data-testid="nav-logo">
+            <Link href="/">
+              <div className="flex items-center space-x-2">
+                <Mountain className="text-ceylon-green h-8 w-8" />
+                <span className="text-xl font-bold text-gray-800">Ceylon Expand</span>
+              </div>
+            </Link>
+          </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">

@@ -19,9 +19,11 @@ interface TripFiltersProps {
 
 export default function TripFilters({ filters, onFiltersChange }: TripFiltersProps) {
   const updateFilter = (key: string, value: string) => {
+    // Convert "any" and "all" back to empty strings for the API
+    const normalizedValue = (value === "any" || value === "all") ? "" : value;
     onFiltersChange({
       ...filters,
-      [key]: value,
+      [key]: normalizedValue,
     });
   };
 
@@ -82,12 +84,12 @@ export default function TripFilters({ filters, onFiltersChange }: TripFiltersPro
           <div className="grid md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">From Location</label>
-              <Select value={filters.from} onValueChange={(value) => updateFilter("from", value)}>
+              <Select value={filters.from || "any"} onValueChange={(value) => updateFilter("from", value)}>
                 <SelectTrigger data-testid="select-from">
                   <SelectValue placeholder="Select departure" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any location</SelectItem>
+                  <SelectItem value="any">Any location</SelectItem>
                   {popularLocations.map((location) => (
                     <SelectItem key={location} value={location}>
                       {location}
@@ -99,12 +101,12 @@ export default function TripFilters({ filters, onFiltersChange }: TripFiltersPro
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">To Location</label>
-              <Select value={filters.to} onValueChange={(value) => updateFilter("to", value)}>
+              <Select value={filters.to || "any"} onValueChange={(value) => updateFilter("to", value)}>
                 <SelectTrigger data-testid="select-to">
                   <SelectValue placeholder="Select destination" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any location</SelectItem>
+                  <SelectItem value="any">Any location</SelectItem>
                   {popularLocations.map((location) => (
                     <SelectItem key={location} value={location}>
                       {location}
@@ -130,12 +132,12 @@ export default function TripFilters({ filters, onFiltersChange }: TripFiltersPro
           <div className="grid md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Region</label>
-              <Select value={filters.region} onValueChange={(value) => updateFilter("region", value)}>
+              <Select value={filters.region || "all"} onValueChange={(value) => updateFilter("region", value)}>
                 <SelectTrigger data-testid="select-region">
                   <SelectValue placeholder="Select region" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All regions</SelectItem>
+                  <SelectItem value="all">All regions</SelectItem>
                   <SelectItem value="western">Western Province</SelectItem>
                   <SelectItem value="southern">Southern Province</SelectItem>
                   <SelectItem value="central">Central Province</SelectItem>
