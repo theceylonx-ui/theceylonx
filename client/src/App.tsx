@@ -18,6 +18,7 @@ import TermsOfService from "@/pages/terms-of-service";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import ContactUs from "@/pages/contact-us";
 import SignInRequired from "@/pages/signin-required";
+import AuthSignInPage from "@/pages/auth-signin";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -35,6 +36,7 @@ function Router() {
           <Route path="/privacy-policy" component={PrivacyPolicy} />
           <Route path="/contact-us" component={ContactUs} />
           <Route path="/faq" component={FAQ} />
+          <Route path="/auth/signin" component={AuthSignInPage} />
           <Route path="/post" component={SignInRequired} />
           <Route path="/dashboard" component={SignInRequired} />
         </>
@@ -51,6 +53,7 @@ function Router() {
           <Route path="/privacy-policy" component={PrivacyPolicy} />
           <Route path="/contact-us" component={ContactUs} />
           <Route path="/faq" component={FAQ} />
+          <Route path="/auth/signin" component={AuthSignInPage} />
         </>
       )}
       <Route component={NotFound} />
