@@ -15,7 +15,7 @@ export default function Landing() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
               <Mountain className="text-ceylon-green h-8 w-8" data-testid="logo-icon" />
-              <span className="text-xl font-bold text-gray-800" data-testid="logo-text">CeylonX Tribes</span>
+              <span className="text-xl font-bold text-gray-800" data-testid="logo-text">Ceylon Expand</span>
             </div>
             <div className="hidden md:flex items-center space-x-6">
               <a href="#browse" className="text-gray-600 hover:text-ceylon-green transition-colors" data-testid="nav-browse">Browse Trips</a>
@@ -91,7 +91,7 @@ export default function Landing() {
               How It Works
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto" data-testid="text-how-it-works-subtitle">
-              Get started with CeylonX Tribes in just three simple steps
+              Get started with Ceylon Expand in just three simple steps
             </p>
           </div>
           
@@ -213,7 +213,7 @@ export default function Landing() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <Mountain className="text-ceylon-green h-6 w-6" />
-                <span className="text-xl font-bold">CeylonX Tribes</span>
+                <span className="text-xl font-bold">Ceylon Expand</span>
               </div>
               <p className="text-gray-300 mb-4">Connect with fellow travelers and explore the beauty of Sri Lanka together.</p>
             </div>
@@ -251,7 +251,7 @@ export default function Landing() {
           </div>
 
           <div className="border-t border-gray-700 mt-8 pt-8 text-center">
-            <p className="text-gray-300">&copy; 2024 CeylonX Tribes. All rights reserved. Made with ❤️ for Sri Lankan travelers.</p>
+            <p className="text-gray-300">&copy; 2024 Ceylon Expand. All rights reserved. Made with ❤️ for Sri Lankan travelers.</p>
           </div>
         </div>
       </footer>

@@ -9,7 +9,7 @@ export default function FAQ() {
   const faqs = [
     {
       id: "posting-trips",
-      question: "How do I post a trip on CeylonX Tribes?",
+      question: "How do I post a trip on Ceylon Expand?",
       answer: "To post a trip, you need to sign up and log in first. Once logged in, click on 'Post Trip' in the navigation menu. Fill in all the required details including your route (from and to locations), travel date and time, number of available seats, price per person, and contact information. You can also add optional notes about your trip. After submitting, your trip will appear in the browse section for other travelers to find.",
       icon: <Users className="h-5 w-5 text-ceylon-blue" />
     },
@@ -22,7 +22,7 @@ export default function FAQ() {
     {
       id: "safety-traveling",
       question: "Is it safe to travel with people I don't know?",
-      answer: "CeylonX Tribes promotes safe travel practices. Every user must create a complete profile with verified contact information. You can see trip organizers' profiles, read comments from other travelers, and communicate directly before committing to any trip. We recommend meeting in public places, sharing trip details with family/friends, and trusting your instincts. You can also report any inappropriate behavior using the report feature on trip posts.",
+      answer: "Ceylon Expand promotes safe travel practices. Every user must create a complete profile with verified contact information. You can see trip organizers' profiles, read comments from other travelers, and communicate directly before committing to any trip. We recommend meeting in public places, sharing trip details with family/friends, and trusting your instincts. You can also report any inappropriate behavior using the report feature on trip posts.",
       icon: <Shield className="h-5 w-5 text-ceylon-blue" />
     },
     {
@@ -45,14 +45,14 @@ export default function FAQ() {
     },
     {
       id: "sri-lanka-coverage",
-      question: "What regions of Sri Lanka does CeylonX Tribes cover?",
-      answer: "CeylonX Tribes covers all provinces and regions of Sri Lanka! You can filter trips by major regions including Western Province (Colombo, Gampaha), Central Province (Kandy, Nuwara Eliya), Southern Province (Galle, Matara), and all other provinces. Whether you're traveling between major cities like Colombo to Kandy, or exploring destinations like Sigiriya, Ella, or Yala National Park, you'll find travel companions for your journey across the beautiful island.",
+      question: "What regions of Sri Lanka does Ceylon Expand cover?",
+      answer: "Ceylon Expand covers all provinces and regions of Sri Lanka! You can filter trips by major regions including Western Province (Colombo, Gampaha), Central Province (Kandy, Nuwara Eliya), Southern Province (Galle, Matara), and all other provinces. Whether you're traveling between major cities like Colombo to Kandy, or exploring destinations like Sigiriya, Ella, or Yala National Park, you'll find travel companions for your journey across the beautiful island.",
       icon: <MapPin className="h-5 w-5 text-ceylon-blue" />
     },
     {
       id: "platform-costs",
-      question: "Is CeylonX Tribes free to use? Are there any hidden fees?",
-      answer: "Yes, CeylonX Tribes is completely free to join and use! There are no registration fees, no membership costs, and no service charges from our platform. We don't take any commission from trip costs or add any additional fees. The prices you see in trip posts are the actual travel sharing costs (fuel, tolls, etc.) that participants split among themselves. You only pay your agreed share directly to the trip organizer - never to CeylonX Tribes. Our platform is designed to help travelers connect and share costs, not to profit from your journeys.",
+      question: "Is Ceylon Expand free to use? Are there any hidden fees?",
+      answer: "Yes, Ceylon Expand is completely free to join and use! There are no registration fees, no membership costs, and no service charges from our platform. We don't take any commission from trip costs or add any additional fees. The prices you see in trip posts are the actual travel sharing costs (fuel, tolls, etc.) that participants split among themselves. You only pay your agreed share directly to the trip organizer - never to Ceylon Expand. Our platform is designed to help travelers connect and share costs, not to profit from your journeys.",
       icon: <DollarSign className="h-5 w-5 text-ceylon-green" />
     }
   ];
@@ -68,7 +68,7 @@ export default function FAQ() {
             Frequently Asked Questions
           </h1>
           <p className="text-gray-600 max-w-2xl mx-auto" data-testid="faq-subtitle">
-            Everything you need to know about using CeylonX Tribes to find travel companions and share your journeys across Sri Lanka.
+            Everything you need to know about using Ceylon Expand to find travel companions and share your journeys across Sri Lanka.
           </p>
         </div>
 

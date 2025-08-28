@@ -4,7 +4,7 @@ import { setupVite, serveStatic, log } from "./vite";
 
 // Log startup information
 console.log('Environment:', process.env.NODE_ENV || 'development');
-console.log('Starting CeylonX Tribes server...');
+console.log('Starting Ceylon Expand server...');
 
 const app = express();
 app.use(express.json());
