@@ -58,10 +58,10 @@ export default function Landing() {
         ></div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6" data-testid="hero-title">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }} data-testid="hero-title">
             Travel Together.<br />Share the Journey.
           </h1>
-          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto opacity-90" data-testid="hero-subtitle">
+          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto drop-shadow-lg" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8), 0px 0px 2px rgba(0,0,0,0.6)' }} data-testid="hero-subtitle">
             Find rides, buddies, and unique experiences across Sri Lanka. Post your trip or join one today.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
