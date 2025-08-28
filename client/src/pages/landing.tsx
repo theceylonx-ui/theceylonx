@@ -97,7 +97,7 @@ export default function Landing() {
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center" data-testid="step-signup">
               <div className="bg-ceylon-green bg-opacity-10 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                <UserPlus className="text-ceylon-green h-8 w-8" />
+                <UserPlus className="text-ceylon-green h-10 w-10" />
               </div>
               <h3 className="text-xl font-semibold mb-4 text-gray-800">1. Sign Up</h3>
               <p className="text-gray-600">Create your account with basic details and complete your profile to get started</p>
@@ -105,7 +105,7 @@ export default function Landing() {
             
             <div className="text-center" data-testid="step-post-find">
               <div className="bg-ceylon-blue bg-opacity-10 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                <MapPin className="text-ceylon-blue h-8 w-8" />
+                <Compass className="text-ceylon-blue h-10 w-10" />
               </div>
               <h3 className="text-xl font-semibold mb-4 text-gray-800">2. Post/Find a Trip</h3>
               <p className="text-gray-600">Browse existing trips or create your own adventure and invite others to join</p>
@@ -113,7 +113,7 @@ export default function Landing() {
             
             <div className="text-center" data-testid="step-travel">
               <div className="bg-ceylon-sand bg-opacity-30 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                <Handshake className="text-orange-600 h-8 w-8" />
+                <Heart className="text-orange-600 h-10 w-10" />
               </div>
               <h3 className="text-xl font-semibold mb-4 text-gray-800">3. Travel Together</h3>
               <p className="text-gray-600">Connect with fellow travelers, share costs, and create unforgettable memories</p>
