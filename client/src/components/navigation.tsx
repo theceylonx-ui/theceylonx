@@ -67,18 +67,6 @@ export default function Navigation() {
                 Post a Trip
               </span>
             </Link>
-            <Link href="/dashboard">
-              <span 
-                className={`transition-colors cursor-pointer ${
-                  isActive('/dashboard') 
-                    ? 'text-ceylon-green font-medium' 
-                    : 'text-gray-600 hover:text-ceylon-green'
-                }`}
-                data-testid="nav-dashboard"
-              >
-                Dashboard
-              </span>
-            </Link>
             <Link href="/community">
               <span 
                 className={`transition-colors cursor-pointer ${
@@ -189,19 +177,6 @@ export default function Navigation() {
                   data-testid="mobile-nav-post"
                 >
                   Post a Trip
-                </span>
-              </Link>
-              <Link href="/dashboard">
-                <span 
-                  className={`block px-3 py-2 text-base transition-colors cursor-pointer ${
-                    isActive('/dashboard') 
-                      ? 'text-ceylon-green font-medium' 
-                      : 'text-gray-600 hover:text-ceylon-green'
-                  }`}
-                  onClick={toggleMobileMenu}
-                  data-testid="mobile-nav-dashboard"
-                >
-                  Dashboard
                 </span>
               </Link>
               <Link href="/community">
