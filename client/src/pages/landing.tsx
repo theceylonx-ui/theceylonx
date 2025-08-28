@@ -67,7 +67,7 @@ export default function Landing() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               size="lg"
-              className="bg-white text-ceylon-green hover:bg-gray-100 text-lg font-semibold"
+              className="bg-ceylon-green text-white hover:bg-ceylon-green/90 text-lg font-semibold"
               onClick={() => document.getElementById('browse')?.scrollIntoView({ behavior: 'smooth' })}
               data-testid="button-browse-trips"
             >
