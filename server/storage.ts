@@ -214,13 +214,14 @@ export class DatabaseStorage implements IStorage {
     }
     
     if (filters.search) {
-      conditions.push(
-        or(
-          ilike(trips.title, `%${filters.search}%`),
-          ilike(trips.fromLocation, `%${filters.search}%`),
-          ilike(trips.toLocation, `%${filters.search}%`)
-        )
+      const searchCondition = or(
+        ilike(trips.title, `%${filters.search}%`),
+        ilike(trips.fromLocation, `%${filters.search}%`),
+        ilike(trips.toLocation, `%${filters.search}%`)
       );
+      if (searchCondition) {
+        conditions.push(searchCondition);
+      }
     }
 
     const result = await db
@@ -382,19 +383,19 @@ export class DatabaseStorage implements IStorage {
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
     
     // Build order by
-    let orderBy;
+    let orderBy: any;
     switch (filters?.sort) {
       case 'new':
-        orderBy = desc(questions.createdAt);
+        orderBy = [desc(questions.createdAt)];
         break;
       case 'unanswered':
         orderBy = [asc(questions.answersCount), desc(questions.createdAt)];
         break;
       default:
-        orderBy = desc(questions.votesCount);
+        orderBy = [desc(questions.votesCount)];
     }
     
-    let query = db
+    const baseQuery = db
       .select({
         id: questions.id,
         title: questions.title,
@@ -428,13 +429,13 @@ export class DatabaseStorage implements IStorage {
       })
       .from(questions)
       .leftJoin(users, eq(questions.userId, users.id))
-      .leftJoin(topics, eq(questions.topicId, topics.id))
-      .orderBy(orderBy)
-      .limit(limit);
+      .leftJoin(topics, eq(questions.topicId, topics.id));
     
-    if (whereClause) {
-      query = query.where(whereClause);
-    }
+    const queryWithConditions = whereClause ? baseQuery.where(whereClause) : baseQuery;
+    
+    const query = queryWithConditions
+      .orderBy(...orderBy)
+      .limit(limit);
     
     const questionsData = await query;
     

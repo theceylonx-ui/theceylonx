@@ -119,9 +119,9 @@ export default function CommunityPage() {
       <Navigation />
       <div className="py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="bg-gradient-to-r from-ceylon-green to-ceylon-blue rounded-2xl p-8 text-white shadow-xl">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="bg-gradient-to-r from-ceylon-green to-ceylon-blue rounded-2xl p-8 text-white shadow-xl">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
               <div className="lg:flex-1 mb-6 lg:mb-0">
                 <h1 className="text-3xl md:text-4xl font-bold mb-3">Ceylon Expand Community</h1>
@@ -250,10 +250,12 @@ export default function CommunityPage() {
                 </Form>
               </DialogContent>
             </Dialog>
+              </div>
+            </div>
           </div>
-        </div>
+          </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
             {/* Search */}
@@ -392,7 +394,7 @@ export default function CommunityPage() {
                           <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
                             <div className="flex items-center">
                               <User className="w-4 h-4 mr-1" />
-                              {question.user?.firstName || question.user?.first_name || 'Anonymous'}
+                              {question.user?.firstName || 'Anonymous'}
                             </div>
                             <div className="flex items-center">
                               <Calendar className="w-4 h-4 mr-1" />
@@ -422,7 +424,7 @@ export default function CommunityPage() {
                                   <div key={answer.id} className="bg-gray-50 rounded-lg p-3">
                                     <div className="flex items-center space-x-2 mb-2 text-xs text-gray-500">
                                       <User className="w-3 h-3" />
-                                      <span>{answer.user?.firstName || answer.user?.first_name || 'Anonymous'}</span>
+                                      <span>{answer.user?.firstName || 'Anonymous'}</span>
                                       <Calendar className="w-3 h-3 ml-2" />
                                       <span>{formatDistanceToNow(new Date(answer.createdAt || new Date()), { addSuffix: true })}</span>
                                       {answer.isAccepted && (

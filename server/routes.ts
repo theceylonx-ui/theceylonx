@@ -524,16 +524,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const voteData = insertVoteSchema.parse({ ...req.body, userId });
       
       // Check if user already voted
-      const existingVote = await storage.getUserVote(userId, voteData.questionId, voteData.answerId);
+      const existingVote = await storage.getUserVote(userId, voteData.questionId || undefined, voteData.answerId || undefined);
       
       if (existingVote) {
         if (existingVote.voteType === voteData.voteType) {
           // Same vote type - remove vote
-          await storage.deleteVote(userId, voteData.questionId, voteData.answerId);
+          await storage.deleteVote(userId, voteData.questionId || undefined, voteData.answerId || undefined);
           res.json({ message: "Vote removed" });
         } else {
           // Different vote type - update vote
-          const vote = await storage.updateVote(userId, voteData.questionId, voteData.answerId, voteData.voteType);
+          const vote = await storage.updateVote(userId, voteData.questionId || undefined, voteData.answerId || undefined, voteData.voteType as 'up' | 'down');
           res.json(vote);
         }
       } else {
