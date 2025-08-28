@@ -356,7 +356,7 @@ export default function CommunityPage() {
                           <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
                             <div className="flex items-center">
                               <User className="w-4 h-4 mr-1" />
-                              {question.user.firstName} {question.user.lastName}
+                              {question.user?.firstName || question.user?.first_name || 'Anonymous'}
                             </div>
                             <div className="flex items-center">
                               <Calendar className="w-4 h-4 mr-1" />
