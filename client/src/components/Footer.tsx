@@ -40,10 +40,10 @@ export default function Footer() {
           <div>
             <h4 className="text-lg font-semibold mb-4">Support</h4>
             <ul className="space-y-2 text-gray-300">
-              <li><span className="hover:text-ceylon-green transition-colors cursor-pointer">Safety Guidelines</span></li>
-              <li><span className="hover:text-ceylon-green transition-colors cursor-pointer">Terms of Service</span></li>
-              <li><span className="hover:text-ceylon-green transition-colors cursor-pointer">Privacy Policy</span></li>
-              <li><span className="hover:text-ceylon-green transition-colors cursor-pointer">Contact Us</span></li>
+              <li><Link href="/safety-guidelines"><span className="hover:text-ceylon-green transition-colors cursor-pointer">Safety Guidelines</span></Link></li>
+              <li><Link href="/terms-of-service"><span className="hover:text-ceylon-green transition-colors cursor-pointer">Terms of Service</span></Link></li>
+              <li><Link href="/privacy-policy"><span className="hover:text-ceylon-green transition-colors cursor-pointer">Privacy Policy</span></Link></li>
+              <li><Link href="/contact-us"><span className="hover:text-ceylon-green transition-colors cursor-pointer">Contact Us</span></Link></li>
             </ul>
           </div>
         </div>
