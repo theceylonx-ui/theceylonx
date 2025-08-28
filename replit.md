@@ -1,8 +1,8 @@
-# Ceylon Expand - Travel Buddy Platform
+# CeylonX Tribes - Travel Buddy Platform
 
 ## Overview
 
-Ceylon Expand is a travel buddy and trip-sharing platform specifically designed for travelers visiting Sri Lanka. The application allows users to post trips, find travel companions, and share journeys across the beautiful island nation. Built as a full-stack web application with modern technologies, it provides a seamless experience for connecting travelers and facilitating shared transportation and experiences.
+CeylonX Tribes is a travel buddy and trip-sharing platform specifically designed for travelers visiting Sri Lanka. The application allows users to post trips, find travel companions, and share journeys across the beautiful island nation. Built as a full-stack web application with modern technologies, it provides a seamless experience for connecting travelers and facilitating shared transportation and experiences.
 
 ## User Preferences
 

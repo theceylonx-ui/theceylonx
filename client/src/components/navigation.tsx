@@ -38,7 +38,7 @@ export default function Navigation() {
             <Link href="/">
               <div className="flex items-center space-x-2">
                 <Mountain className="text-ceylon-green h-8 w-8" />
-                <span className="text-xl font-bold text-gray-800">Ceylon Expand</span>
+                <span className="text-xl font-bold text-gray-800">CeylonX Tribes</span>
               </div>
             </Link>
           </div>
