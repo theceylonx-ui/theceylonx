@@ -16,6 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
 import type { QuestionWithDetails, Topic, User as UserType } from "@shared/schema";
+import Navigation from "@/components/navigation";
+import Footer from "@/components/Footer";
 
 const questionSchema = z.object({
   title: z.string().min(10, "Title must be at least 10 characters"),
@@ -41,7 +43,14 @@ export default function CommunityPage() {
   });
 
   const { data: questions = [], isLoading } = useQuery<QuestionWithDetails[]>({
-    queryKey: ['/api/questions', { q: searchQuery, topic: selectedTopic === "all" ? undefined : selectedTopic, sort: sortBy }],
+    queryKey: ['/api/questions', searchQuery, selectedTopic, sortBy],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (searchQuery) params.append('q', searchQuery);
+      if (selectedTopic !== "all") params.append('topic', selectedTopic);
+      params.append('sort', sortBy);
+      return fetch(`/api/questions?${params.toString()}`).then(res => res.json());
+    }
   });
 
   const { data: user } = useQuery<UserType>({
@@ -94,8 +103,10 @@ export default function CommunityPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Navigation />
+      <div className="py-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <div className="bg-gradient-to-r from-ceylon-green to-ceylon-blue rounded-xl p-8 text-white">
@@ -410,7 +421,9 @@ export default function CommunityPage() {
             )}
           </div>
         </div>
+        </div>
       </div>
+      <Footer />
     </div>
   );
 }
