@@ -437,7 +437,19 @@ export class DatabaseStorage implements IStorage {
     }
     
     const questionsData = await query;
-    return questionsData as QuestionWithDetails[];
+    
+    // Fetch answers for each question
+    const questionsWithAnswers = await Promise.all(
+      questionsData.map(async (question) => {
+        const answers = await this.getQuestionAnswers(question.id);
+        return {
+          ...question,
+          answers,
+        };
+      })
+    );
+    
+    return questionsWithAnswers as QuestionWithDetails[];
   }
 
   async getQuestion(id: string): Promise<QuestionWithDetails | undefined> {
@@ -478,7 +490,16 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(topics, eq(questions.topicId, topics.id))
       .where(eq(questions.id, id));
     
-    return questionData[0] as QuestionWithDetails | undefined;
+    const question = questionData[0];
+    if (!question) return undefined;
+    
+    // Fetch answers for this question
+    const answers = await this.getQuestionAnswers(question.id);
+    
+    return {
+      ...question,
+      answers,
+    } as QuestionWithDetails;
   }
 
   async updateQuestion(id: string, questionData: Partial<InsertQuestion>): Promise<Question> {
