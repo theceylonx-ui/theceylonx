@@ -1,4 +1,5 @@
 import Navigation from "@/components/navigation";
+import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserPlus, ArrowRight } from "lucide-react";
@@ -63,6 +64,8 @@ export default function SignInRequired() {
           </CardContent>
         </Card>
       </div>
+      
+      <Footer />
     </div>
   );
 }

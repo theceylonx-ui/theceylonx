@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import Footer from "@/components/Footer";
 import { Mountain, UserPlus, MapPin, Handshake, PiggyBank, Users, Compass, Heart, Shield, Flag, Star } from "lucide-react";
 
 export default function Landing() {
@@ -206,55 +207,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <Mountain className="text-ceylon-green h-6 w-6" />
-                <span className="text-xl font-bold">Ceylon Expand</span>
-              </div>
-              <p className="text-gray-300 mb-4">Connect with fellow travelers and explore the beauty of Sri Lanka together.</p>
-            </div>
-
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
-              <ul className="space-y-2 text-gray-300">
-                <li><a href="#browse" className="hover:text-ceylon-green transition-colors">Browse Trips</a></li>
-                <li><a href="#post" className="hover:text-ceylon-green transition-colors">Post a Trip</a></li>
-                <li><a href="#community" className="hover:text-ceylon-green transition-colors">Community</a></li>
-                <li><a href="#help" className="hover:text-ceylon-green transition-colors">Help Center</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Popular Destinations</h4>
-              <ul className="space-y-2 text-gray-300">
-                <li><a href="#" className="hover:text-ceylon-green transition-colors">Colombo</a></li>
-                <li><a href="#" className="hover:text-ceylon-green transition-colors">Kandy</a></li>
-                <li><a href="#" className="hover:text-ceylon-green transition-colors">Galle</a></li>
-                <li><a href="#" className="hover:text-ceylon-green transition-colors">Nuwara Eliya</a></li>
-                <li><a href="#" className="hover:text-ceylon-green transition-colors">Sigiriya</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-gray-300">
-                <li><a href="#" className="hover:text-ceylon-green transition-colors">Safety Guidelines</a></li>
-                <li><a href="#" className="hover:text-ceylon-green transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-ceylon-green transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-ceylon-green transition-colors">Contact Us</a></li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-700 mt-8 pt-8 text-center">
-            <p className="text-gray-300">&copy; 2024 Ceylon Expand. All rights reserved. Made with ❤️ for Sri Lankan travelers.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

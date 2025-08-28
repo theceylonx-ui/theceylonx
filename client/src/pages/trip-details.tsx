@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { MapPin, Calendar, Users, DollarSign, Phone, MessageCircle, Star, Flag, ArrowLeft } from "lucide-react";
 import Navigation from "@/components/navigation";
+import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -409,6 +410,8 @@ export default function TripDetails({ params }: TripDetailsProps) {
           </CardContent>
         </Card>
       </div>
+      
+      <Footer />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
+import Footer from "@/components/Footer";
 import TripCard from "@/components/trip-card";
 import TripFilters from "@/components/trip-filters";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -91,6 +92,8 @@ export default function BrowseTrips() {
           )}
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 }
