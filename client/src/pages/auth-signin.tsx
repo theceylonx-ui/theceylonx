@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mountain, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 import { Link } from "wouter";
+import logoImage from "@assets/5_1756417819316.png";
 
 export default function AuthSignInPage() {
   const handleSignIn = () => {
@@ -13,7 +14,7 @@ export default function AuthSignInPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <Mountain className="text-ceylon-green h-12 w-12" />
+            <img src={logoImage} alt="Ceylon Expand Logo" className="h-12 w-12" />
           </div>
           <CardTitle className="text-2xl font-bold text-gray-800" data-testid="signin-title">
             Welcome to Ceylon Expand

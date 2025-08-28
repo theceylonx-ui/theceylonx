@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { TripWithOrganizer } from "@shared/schema";
+import backgroundImage from "@assets/11_1756417976014.png";
 
 export default function Home() {
   const { data: trips, isLoading } = useQuery<TripWithOrganizer[]>({
@@ -21,21 +22,21 @@ export default function Home() {
       
       {/* Hero Section for logged in users */}
       <section className="relative bg-gradient-to-br from-ceylon-green to-ceylon-blue py-16">
-        <div className="absolute inset-0 bg-black opacity-30"></div>
+        <div className="absolute inset-0 bg-black opacity-50"></div>
         <div 
           className="absolute inset-0" 
           style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=400')",
+            backgroundImage: `url(${backgroundImage})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center'
           }}
         ></div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-          <h1 className="text-3xl md:text-5xl font-bold mb-6" data-testid="hero-welcome">
+          <h1 className="text-3xl md:text-5xl font-bold mb-6 drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }} data-testid="hero-welcome">
             Welcome back, Explorer!
           </h1>
-          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-90" data-testid="hero-subtitle">
+          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto drop-shadow-lg" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8), 0px 0px 2px rgba(0,0,0,0.6)' }} data-testid="hero-subtitle">
             Ready for your next adventure? Discover new trips or share your journey with fellow travelers.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
