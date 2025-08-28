@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
+import { generateRandomProfilePicture, getDisplayName, getInitials } from "@/lib/profileUtils";
 import type { TripWithOrganizer } from "@shared/schema";
 
 interface TripCardProps {
@@ -114,13 +115,13 @@ export default function TripCard({ trip }: TripCardProps) {
           <div className="flex items-center justify-between pt-3 border-t border-gray-100">
             <div className="flex items-center space-x-2" data-testid={`trip-organizer-${trip.id}`}>
               <Avatar className="h-8 w-8">
-                <AvatarImage src={trip.organizer?.profileImageUrl || ""} />
+                <AvatarImage src={trip.organizer?.profileImageUrl || generateRandomProfilePicture(trip.organizer?.id)} />
                 <AvatarFallback className="text-xs">
-                  {trip.organizer?.firstName?.[0] || 'U'}{trip.organizer?.lastName?.[0] || 'U'}
+                  {trip.organizer ? getInitials(trip.organizer) : 'U'}
                 </AvatarFallback>
               </Avatar>
               <span className="text-sm text-gray-600 truncate max-w-[120px]">
-                {trip.organizer?.firstName || 'Unknown'} {trip.organizer?.lastName?.[0] || ''}.
+                {trip.organizer ? getDisplayName(trip.organizer) : 'Unknown'}
               </span>
             </div>
             

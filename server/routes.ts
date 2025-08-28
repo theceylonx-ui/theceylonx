@@ -34,14 +34,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { phoneNumber, bio } = req.body;
+      const { username, phoneNumber, bio, profileImageUrl } = req.body;
+      
+      // Check if username is already taken by another user
+      if (username) {
+        const existingUser = await storage.getUserByUsername(username);
+        if (existingUser && existingUser.id !== userId) {
+          return res.status(400).json({ message: "Username is already taken" });
+        }
+      }
       
       const updatedUser = await storage.upsertUser({
         id: userId,
         email: req.user.claims.email,
         firstName: req.user.claims.first_name,
         lastName: req.user.claims.last_name,
-        profileImageUrl: req.user.claims.profile_image_url,
+        username: username || undefined,
+        profileImageUrl: profileImageUrl || req.user.claims.profile_image_url,
         phoneNumber,
         bio,
       });
@@ -49,6 +58,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedUser);
     } catch (error) {
       console.error("Error updating user profile:", error);
+      if (error instanceof Error && error.message && error.message.includes('unique')) {
+        return res.status(400).json({ message: "Username is already taken" });
+      }
       res.status(500).json({ message: "Failed to update profile" });
     }
   });

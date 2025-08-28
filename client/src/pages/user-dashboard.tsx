@@ -17,12 +17,15 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Check, X } from "lucide-react";
+import { Check, X, RefreshCw, User as UserIcon } from "lucide-react";
+import { generateRandomProfilePicture, getDisplayName, getInitials } from "@/lib/profileUtils";
 import type { User, TripWithOrganizer, TripParticipant } from "@shared/schema";
 
 const profileSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username must be less than 20 characters").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores").optional().or(z.literal('')),
   phoneNumber: z.string().min(1, "Phone number is required"),
   bio: z.string().optional(),
+  profileImageUrl: z.string().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -36,8 +39,10 @@ export default function UserDashboard() {
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
+      username: "",
       phoneNumber: "",
       bio: "",
+      profileImageUrl: "",
     },
   });
 
@@ -60,8 +65,10 @@ export default function UserDashboard() {
   useEffect(() => {
     if (user) {
       form.reset({
+        username: user.username || "",
         phoneNumber: user.phoneNumber || "",
         bio: user.bio || "",
+        profileImageUrl: user.profileImageUrl || "",
       });
     }
   }, [user, form]);
@@ -173,6 +180,11 @@ export default function UserDashboard() {
 
   const onSubmitProfile = (data: ProfileFormData) => {
     updateProfileMutation.mutate(data);
+  };
+
+  const generateNewProfilePicture = () => {
+    const newProfileUrl = generateRandomProfilePicture();
+    form.setValue('profileImageUrl', newProfileUrl);
   };
 
   const handleDeleteTrip = (tripId: string) => {
@@ -347,22 +359,80 @@ export default function UserDashboard() {
                     {/* Profile Header */}
                     <div className="flex items-center space-x-4 mb-6" data-testid="profile-header">
                       <Avatar className="h-16 w-16">
-                        <AvatarImage src={user.profileImageUrl || ""} />
+                        <AvatarImage src={user.profileImageUrl || generateRandomProfilePicture(user.id)} />
                         <AvatarFallback className="text-lg">
-                          {user.firstName?.[0]}{user.lastName?.[0]}
+                          {getInitials(user)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <h3 className="text-xl font-semibold text-gray-800">
-                          {user.firstName} {user.lastName}
+                          {getDisplayName(user)}
                         </h3>
                         <p className="text-gray-600">{user.email}</p>
+                        {user.username && (
+                          <p className="text-sm text-gray-500">@{user.username}</p>
+                        )}
                       </div>
                     </div>
 
                     {/* Profile Form */}
                     <Form {...form}>
-                      <form onSubmit={form.handleSubmit(onSubmitProfile)} className="space-y-4" data-testid="form-profile">
+                      <form onSubmit={form.handleSubmit(onSubmitProfile)} className="space-y-6" data-testid="form-profile">
+                        {/* Profile Picture Section */}
+                        <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                          <Avatar className="h-20 w-20">
+                            <AvatarImage 
+                              src={form.watch('profileImageUrl') || user?.profileImageUrl || generateRandomProfilePicture(user?.id)} 
+                              alt="Profile picture" 
+                            />
+                            <AvatarFallback className="text-lg">
+                              {getInitials(user)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h3 className="font-medium text-gray-800">Profile Picture</h3>
+                            <p className="text-sm text-gray-600 mb-2">
+                              {user?.profileImageUrl ? 'Custom profile picture' : 'Auto-generated avatar'}
+                            </p>
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="sm"
+                              onClick={generateNewProfilePicture}
+                              data-testid="button-generate-avatar"
+                              className="flex items-center gap-2"
+                            >
+                              <RefreshCw className="h-4 w-4" />
+                              Generate New Avatar
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Username Section */}
+                        <FormField
+                          control={form.control}
+                          name="username"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Username</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Choose a unique username" 
+                                  {...field} 
+                                  data-testid="input-username"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                              <p className="text-sm text-gray-600">
+                                {user?.username 
+                                  ? `Current username: @${user.username}` 
+                                  : `Currently displaying: ${getDisplayName(user)}`
+                                }
+                              </p>
+                            </FormItem>
+                          )}
+                        />
+
                         <FormField
                           control={form.control}
                           name="phoneNumber"
@@ -402,7 +472,7 @@ export default function UserDashboard() {
 
                         <Button 
                           type="submit" 
-                          className="bg-ceylon-green hover:bg-ceylon-green/90"
+                          className="bg-ceylon-green hover:bg-ceylon-green/90 w-full"
                           disabled={updateProfileMutation.isPending}
                           data-testid="button-update-profile"
                         >

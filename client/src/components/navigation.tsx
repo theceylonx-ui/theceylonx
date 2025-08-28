@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
+import { generateRandomProfilePicture, getDisplayName, getInitials } from "@/lib/profileUtils";
 
 export default function Navigation() {
   const { user } = useAuth();
@@ -99,9 +100,9 @@ export default function Navigation() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full" data-testid="user-menu-trigger">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.profileImageUrl || ""} alt="Profile" />
+                      <AvatarImage src={user.profileImageUrl || generateRandomProfilePicture(user.id)} alt="Profile" />
                       <AvatarFallback>
-                        {user.firstName?.[0]}{user.lastName?.[0]}
+                        {getInitials(user)}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -110,8 +111,11 @@ export default function Navigation() {
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-1 leading-none">
                       <p className="font-medium" data-testid="user-menu-name">
-                        {user.firstName} {user.lastName}
+                        {getDisplayName(user)}
                       </p>
+                      {user.username && (
+                        <p className="text-xs text-muted-foreground">@{user.username}</p>
+                      )}
                       <p className="w-[200px] truncate text-sm text-muted-foreground" data-testid="user-menu-email">
                         {user.email}
                       </p>
