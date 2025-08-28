@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Footer from "@/components/Footer";
 import { UserPlus, MapPin, Handshake, PiggyBank, Users, Compass, Heart, Shield, Flag, Star, UserCheck, Route } from "lucide-react";
 import logoImage from "@assets/5_1756417819316.png";
+import backgroundImage from "@assets/11_1756417976014.png";
 
 export default function Landing() {
   const handleLogin = () => {
@@ -50,7 +51,7 @@ export default function Landing() {
         <div 
           className="absolute inset-0" 
           style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080')",
+            backgroundImage: `url(${backgroundImage})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center'
           }}
