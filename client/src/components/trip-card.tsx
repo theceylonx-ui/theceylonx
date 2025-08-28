@@ -114,13 +114,13 @@ export default function TripCard({ trip }: TripCardProps) {
           <div className="flex items-center justify-between pt-3 border-t border-gray-100">
             <div className="flex items-center space-x-2" data-testid={`trip-organizer-${trip.id}`}>
               <Avatar className="h-8 w-8">
-                <AvatarImage src={trip.organizer.profileImageUrl || ""} />
+                <AvatarImage src={trip.organizer?.profileImageUrl || ""} />
                 <AvatarFallback className="text-xs">
-                  {trip.organizer.firstName?.[0]}{trip.organizer.lastName?.[0]}
+                  {trip.organizer?.firstName?.[0] || 'U'}{trip.organizer?.lastName?.[0] || 'U'}
                 </AvatarFallback>
               </Avatar>
               <span className="text-sm text-gray-600 truncate max-w-[120px]">
-                {trip.organizer.firstName} {trip.organizer.lastName?.[0]}.
+                {trip.organizer?.firstName || 'Unknown'} {trip.organizer?.lastName?.[0] || ''}.
               </span>
             </div>
             
