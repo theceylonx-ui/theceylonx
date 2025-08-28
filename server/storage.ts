@@ -92,7 +92,8 @@ export interface IStorage {
     topic?: string;
     sort?: 'top' | 'new' | 'unanswered';
     limit?: number;
-  }): Promise<QuestionWithDetails[]>;
+    offset?: number;
+  }): Promise<{questions: QuestionWithDetails[], total: number}>;
   getQuestion(id: string): Promise<QuestionWithDetails | undefined>;
   updateQuestion(id: string, question: Partial<InsertQuestion>): Promise<Question>;
   deleteQuestion(id: string): Promise<void>;
@@ -364,8 +365,10 @@ export class DatabaseStorage implements IStorage {
     topic?: string;
     sort?: 'top' | 'new' | 'unanswered';
     limit?: number;
-  }): Promise<QuestionWithDetails[]> {
+    offset?: number;
+  }): Promise<{questions: QuestionWithDetails[], total: number}> {
     const limit = filters?.limit || 10;
+    const offset = filters?.offset || 0;
     
     // Build where conditions
     const conditions = [];
@@ -440,9 +443,17 @@ export class DatabaseStorage implements IStorage {
     
     const queryWithConditions = whereClause ? baseQuery.where(whereClause) : baseQuery;
     
+    // Get total count first
+    const countQuery = whereClause 
+      ? db.select({ count: count() }).from(questions).leftJoin(topics, eq(questions.topicId, topics.id)).where(whereClause)
+      : db.select({ count: count() }).from(questions);
+    
+    const [{ count: totalCount }] = await countQuery;
+    
     const query = queryWithConditions
       .orderBy(...orderBy)
-      .limit(limit);
+      .limit(limit)
+      .offset(offset);
     
     const questionsData = await query;
     
@@ -457,7 +468,10 @@ export class DatabaseStorage implements IStorage {
       })
     );
     
-    return questionsWithAnswers as QuestionWithDetails[];
+    return {
+      questions: questionsWithAnswers as QuestionWithDetails[],
+      total: totalCount
+    };
   }
 
   async getQuestion(id: string): Promise<QuestionWithDetails | undefined> {

@@ -47,21 +47,31 @@ export default function CommunityPage() {
     queryKey: ['/api/topics'],
   });
 
-  const { data: questions = [], isLoading } = useQuery<QuestionWithDetails[]>({
-    queryKey: ['/api/questions', searchQuery, selectedTopic, sortBy],
+  const { data: questionsResponse, isLoading } = useQuery<{questions: QuestionWithDetails[], total: number}>({
+    queryKey: ['/api/questions', searchQuery, selectedTopic, sortBy, currentPage],
     queryFn: () => {
       const params = new URLSearchParams();
       if (searchQuery) params.append('q', searchQuery);
       if (selectedTopic !== "all") params.append('topic', selectedTopic);
       params.append('sort', sortBy);
       params.append('limit', '10');
+      params.append('offset', ((currentPage - 1) * questionsPerPage).toString());
       return fetch(`/api/questions?${params.toString()}`).then(res => res.json());
     }
   });
 
+  const questions = questionsResponse?.questions || [];
+  const totalQuestions = questionsResponse?.total || 0;
+  const totalPages = Math.ceil(totalQuestions / questionsPerPage);
+
   const { data: user } = useQuery<UserType>({
     queryKey: ['/api/auth/user'],
   });
+
+  // Reset page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedTopic, sortBy]);
 
   // Form
   const form = useForm<QuestionFormData>({
@@ -100,6 +110,93 @@ export default function CommunityPage() {
     createQuestionMutation.mutate(data);
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return (
+      <div className="flex justify-center items-center space-x-2 mt-8" data-testid="pagination">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          data-testid="pagination-prev"
+        >
+          Previous
+        </Button>
+        
+        {startPage > 1 && (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(1)}
+              data-testid="pagination-page-1"
+            >
+              1
+            </Button>
+            {startPage > 2 && <span className="px-2">...</span>}
+          </>
+        )}
+        
+        {pages.map((page) => (
+          <Button
+            key={page}
+            variant={currentPage === page ? "default" : "outline"}
+            size="sm"
+            onClick={() => handlePageChange(page)}
+            className={currentPage === page ? "bg-ceylon-green hover:bg-ceylon-green/90" : ""}
+            data-testid={`pagination-page-${page}`}
+          >
+            {page}
+          </Button>
+        ))}
+        
+        {endPage < totalPages && (
+          <>
+            {endPage < totalPages - 1 && <span className="px-2">...</span>}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(totalPages)}
+              data-testid={`pagination-page-${totalPages}`}
+            >
+              {totalPages}
+            </Button>
+          </>
+        )}
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          data-testid="pagination-next"
+        >
+          Next
+        </Button>
+      </div>
+    );
+  };
+
   const handleVote = (questionId: string, voteType: 'up' | 'down') => {
     voteMutation.mutate({ questionId, voteType });
   };
@@ -114,9 +211,7 @@ export default function CommunityPage() {
     setExpandedQuestions(newExpanded);
   };
 
-  const filteredQuestions = questions.filter(question => 
-    selectedTopic === "all" || question.topic?.slug === selectedTopic
-  );
+  // Questions are already filtered on the server, no need for client-side filtering
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -375,7 +470,7 @@ export default function CommunityPage() {
                   </Card>
                 ))}
               </div>
-            ) : filteredQuestions.length === 0 ? (
+            ) : questions.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center">
                   <MessageSquare className="w-16 h-16 mx-auto text-gray-400 mb-4" />
@@ -396,7 +491,7 @@ export default function CommunityPage() {
               </Card>
             ) : (
               <div className="space-y-4">
-                {filteredQuestions.map((question) => (
+                {questions.map((question) => (
                   <Card key={question.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between mb-4">
@@ -528,6 +623,9 @@ export default function CommunityPage() {
                 ))}
               </div>
             )}
+            
+            {/* Pagination */}
+            {renderPagination()}
           </div>
         </div>
         </div>

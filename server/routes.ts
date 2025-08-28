@@ -413,9 +413,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         topic: req.query.topic as string,
         sort: req.query.sort as 'top' | 'new' | 'unanswered',
         limit: req.query.limit ? Number(req.query.limit) : undefined,
+        offset: req.query.offset ? Number(req.query.offset) : undefined,
       };
-      const questions = await storage.getQuestions(filters);
-      res.json(questions);
+      const result = await storage.getQuestions(filters);
+      res.json(result);
     } catch (error) {
       console.error("Error fetching questions:", error);
       res.status(500).json({ message: "Failed to fetch questions" });
