@@ -15,6 +15,7 @@ import { MessageSquare, ThumbsUp, ThumbsDown, Plus, Search, Calendar, User, Chec
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
+import { Link } from "wouter";
 import type { QuestionWithDetails, Topic, User as UserType } from "@shared/schema";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
@@ -116,15 +117,33 @@ export default function CommunityPage() {
             </p>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button 
-                  variant="secondary" 
-                  size="lg"
-                  disabled={!user}
-                  data-testid="button-ask-question"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Ask a Question
-                </Button>
+                {user ? (
+                  <Button 
+                    variant="secondary" 
+                    size="lg"
+                    data-testid="button-ask-question"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Ask a Question
+                  </Button>
+                ) : (
+                  <div className="text-center">
+                    <Button 
+                      variant="outline" 
+                      size="lg"
+                      disabled
+                      data-testid="button-ask-question-disabled"
+                    >
+                      <Plus className="w-5 h-5 mr-2" />
+                      Ask a Question
+                    </Button>
+                    <p className="text-sm text-gray-500 mt-2">
+                      <Link href="/auth/signin" className="text-blue-600 hover:underline">
+                        Sign in
+                      </Link> to ask questions and participate in the community
+                    </p>
+                  </div>
+                )}
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
@@ -383,8 +402,9 @@ export default function CommunityPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleVote(question.id, 'up')}
+                              onClick={user ? () => handleVote(question.id, 'up') : undefined}
                               disabled={!user || voteMutation.isPending}
+                              title={!user ? "Sign in to vote" : ""}
                               data-testid={`button-upvote-${question.id}`}
                             >
                               <ThumbsUp className="w-4 h-4 mr-1" />
@@ -393,8 +413,9 @@ export default function CommunityPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleVote(question.id, 'down')}
+                              onClick={user ? () => handleVote(question.id, 'down') : undefined}
                               disabled={!user || voteMutation.isPending}
+                              title={!user ? "Sign in to vote" : ""}
                               data-testid={`button-downvote-${question.id}`}
                             >
                               <ThumbsDown className="w-4 h-4" />
