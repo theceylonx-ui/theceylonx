@@ -87,9 +87,7 @@ export default function Navigation() {
                     : 'text-gray-600 hover:text-ceylon-green'
                 }`}
                 data-testid="nav-community"
-              >
-                Community
-              </span>
+              >CeylonX Tribes</span>
             </Link>
             <Link href="/faq">
               <span 
