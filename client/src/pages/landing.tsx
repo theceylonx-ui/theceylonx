@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Footer from "@/components/Footer";
-import { Mountain, UserPlus, MapPin, Handshake, PiggyBank, Users, Compass, Heart, Shield, Flag, Star } from "lucide-react";
+import { Mountain, UserPlus, MapPin, Handshake, PiggyBank, Users, Compass, Heart, Shield, Flag, Star, UserCheck, Route } from "lucide-react";
 
 export default function Landing() {
   const handleLogin = () => {
@@ -96,16 +96,16 @@ export default function Landing() {
           
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center" data-testid="step-signup">
-              <div className="bg-ceylon-green bg-opacity-10 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                <UserPlus className="text-ceylon-green h-10 w-10" />
+              <div className="bg-ceylon-green bg-opacity-20 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <UserCheck className="text-ceylon-green h-12 w-12 stroke-[2.5]" />
               </div>
               <h3 className="text-xl font-semibold mb-4 text-gray-800">1. Sign Up</h3>
               <p className="text-gray-600">Create your account with basic details and complete your profile to get started</p>
             </div>
             
             <div className="text-center" data-testid="step-post-find">
-              <div className="bg-ceylon-blue bg-opacity-10 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                <Compass className="text-ceylon-blue h-10 w-10" />
+              <div className="bg-ceylon-blue bg-opacity-20 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <Route className="text-ceylon-blue h-12 w-12 stroke-[2.5]" />
               </div>
               <h3 className="text-xl font-semibold mb-4 text-gray-800">2. Post/Find a Trip</h3>
               <p className="text-gray-600">Browse existing trips or create your own adventure and invite others to join</p>
