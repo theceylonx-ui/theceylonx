@@ -63,7 +63,7 @@ export default function TripCard({ trip }: TripCardProps) {
 
   return (
     <Link href={`/trips/${trip.id}`}>
-      <Card className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer group" data-testid={`trip-card-${trip.id}`}>
+      <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group border-0 shadow-sm" data-testid={`trip-card-${trip.id}`}>
         <div className="relative">
           <img 
             src={getDestinationImage(trip.region, trip.fromLocation, trip.toLocation)}
@@ -83,7 +83,7 @@ export default function TripCard({ trip }: TripCardProps) {
           </div>
         </div>
         
-        <CardContent className="p-6">
+        <CardContent className="p-6 bg-white">
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2" data-testid={`trip-title-${trip.id}`}>
               {trip.title}
@@ -127,8 +127,8 @@ export default function TripCard({ trip }: TripCardProps) {
             
             <Button 
               size="sm"
-              className={`text-xs px-3 py-1 ${user 
-                ? 'bg-ceylon-green text-white hover:bg-ceylon-green/90' 
+              className={`text-xs px-3 py-1 transition-all duration-200 ${user 
+                ? 'bg-ceylon-green text-white hover:bg-ceylon-green/90 shadow-sm hover:shadow-md' 
                 : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
               }`}
               onClick={handleContact}

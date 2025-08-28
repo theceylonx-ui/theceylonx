@@ -138,6 +138,7 @@ export default function CommunityPage() {
           size="sm"
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
+          className="hover:bg-gray-50"
           data-testid="pagination-prev"
         >
           Previous
@@ -163,7 +164,7 @@ export default function CommunityPage() {
             variant={currentPage === page ? "default" : "outline"}
             size="sm"
             onClick={() => handlePageChange(page)}
-            className={currentPage === page ? "bg-ceylon-green hover:bg-ceylon-green/90" : ""}
+            className={currentPage === page ? "bg-ceylon-green hover:bg-ceylon-green/90 shadow-sm" : "hover:bg-gray-50"}
             data-testid={`pagination-page-${page}`}
           >
             {page}
@@ -189,6 +190,7 @@ export default function CommunityPage() {
           size="sm"
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
+          className="hover:bg-gray-50"
           data-testid="pagination-next"
         >
           Next

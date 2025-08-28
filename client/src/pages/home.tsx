@@ -43,8 +43,8 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               size="lg"
-              className="bg-white text-ceylon-green hover:bg-gray-100 text-lg font-semibold w-full sm:w-auto"
-              onClick={() => setLocation("/browse")}
+              className="bg-white text-ceylon-green hover:bg-gray-100 text-lg font-semibold w-full sm:w-auto shadow-lg"
+              onClick={() => setLocation("/browse-trips")}
               data-testid="button-browse-trips"
             >
               Browse Trips
@@ -71,7 +71,7 @@ export default function Home() {
               </h2>
               <p className="text-gray-600">Discover amazing travel opportunities</p>
             </div>
-            <Link href="/browse">
+            <Link href="/browse-trips">
               <Button variant="outline" className="text-ceylon-green border-ceylon-green hover:bg-ceylon-green hover:text-white" data-testid="link-view-all">
                 View All →
               </Button>

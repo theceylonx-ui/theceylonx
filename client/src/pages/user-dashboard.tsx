@@ -229,7 +229,7 @@ export default function UserDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-3 bg-gray-100">
             <TabsTrigger value="my-trips" data-testid="tab-my-trips">My Trips</TabsTrigger>
             <TabsTrigger value="joined-trips" data-testid="tab-joined-trips">Joined Trips</TabsTrigger>
             <TabsTrigger value="profile" data-testid="tab-profile">Profile</TabsTrigger>
@@ -472,7 +472,7 @@ export default function UserDashboard() {
 
                         <Button 
                           type="submit" 
-                          className="bg-ceylon-green hover:bg-ceylon-green/90 w-full"
+                          className="bg-ceylon-green hover:bg-ceylon-green/90 w-full shadow-sm"
                           disabled={updateProfileMutation.isPending}
                           data-testid="button-update-profile"
                         >

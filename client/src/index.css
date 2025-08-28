@@ -52,11 +52,15 @@
   --tracking-normal: 0em;
   --spacing: 0.25rem;
   
-  /* Ceylon Expand custom colors */
+  /* Ceylon Expand custom colors - Enhanced for better consistency */
   --ceylon-green: hsl(158 64% 52%);
+  --ceylon-green-hover: hsl(158 64% 42%);
   --ceylon-blue: hsl(199 89% 48%);
+  --ceylon-blue-hover: hsl(199 89% 38%);
   --ceylon-beige: hsl(60 56% 91%);
   --ceylon-sand: hsl(37 44% 67%);
+  --ceylon-accent: hsl(202 100% 50%);
+  --ceylon-dark: hsl(210 25% 8%);
 }
 
 .dark {
@@ -149,12 +153,28 @@
     border-color: var(--ceylon-blue);
   }
   
-  .hover\:bg-ceylon-green:hover {
-    background-color: hsl(158 64% 42%);
+  .hover\:bg-ceylon-green\/90:hover {
+    background-color: var(--ceylon-green-hover);
   }
   
-  .hover\:bg-ceylon-blue:hover {
-    background-color: hsl(199 89% 38%);
+  .hover\:bg-ceylon-blue\/90:hover {
+    background-color: var(--ceylon-blue-hover);
+  }
+  
+  .text-ceylon-accent {
+    color: var(--ceylon-accent);
+  }
+  
+  .bg-ceylon-accent {
+    background-color: var(--ceylon-accent);
+  }
+  
+  .text-ceylon-dark {
+    color: var(--ceylon-dark);
+  }
+  
+  .bg-ceylon-dark {
+    background-color: var(--ceylon-dark);
   }
   
   .focus\:ring-ceylon-green:focus {

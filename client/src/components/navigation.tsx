@@ -32,23 +32,23 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-50 border-b">
+    <nav className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/">
-            <div className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity" data-testid="nav-logo">
+            <div className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-all duration-200" data-testid="nav-logo">
               <img src={logoImage} alt="Ceylon Expand Logo" className="h-8 w-8" />
-              <span className="text-xl font-bold text-gray-800">Ceylon Expand</span>
+              <span className="text-xl font-bold text-ceylon-dark">Ceylon Expand</span>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link href="/browse">
+            <Link href="/browse-trips">
               <span 
                 className={`transition-colors cursor-pointer ${
-                  isActive('/browse') 
+                  isActive('/browse-trips') 
                     ? 'text-ceylon-green font-medium' 
                     : 'text-gray-600 hover:text-ceylon-green'
                 }`}
@@ -130,7 +130,7 @@ export default function Navigation() {
                   </Link>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
-                    className="cursor-pointer text-red-600 focus:text-red-600" 
+                    className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50" 
                     onClick={handleLogout}
                     data-testid="user-menu-logout"
                   >
@@ -158,10 +158,10 @@ export default function Navigation() {
         {isMobileMenuOpen && (
           <div className="md:hidden border-t py-4" data-testid="mobile-menu">
             <div className="flex flex-col space-y-3">
-              <Link href="/browse">
+              <Link href="/browse-trips">
                 <span 
                   className={`block px-3 py-2 text-base transition-colors cursor-pointer ${
-                    isActive('/browse') 
+                    isActive('/browse-trips') 
                       ? 'text-ceylon-green font-medium' 
                       : 'text-gray-600 hover:text-ceylon-green'
                   }`}

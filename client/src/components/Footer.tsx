@@ -25,7 +25,7 @@ export default function Footer() {
           <div>
             <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2 text-gray-300">
-              <li><Link href="/browse"><span className="hover:text-ceylon-green transition-colors cursor-pointer">Browse Trips</span></Link></li>
+              <li><Link href="/browse-trips"><span className="hover:text-ceylon-green transition-colors cursor-pointer">Browse Trips</span></Link></li>
               <li><Link href="/post"><span className="hover:text-ceylon-green transition-colors cursor-pointer">Post a Trip</span></Link></li>
               <li><Link href="/community"><span className="hover:text-ceylon-green transition-colors cursor-pointer">CeylonX Tribes</span></Link></li>
               <li><Link href="/faq"><span className="hover:text-ceylon-green transition-colors cursor-pointer">Help Center</span></Link></li>

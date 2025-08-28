@@ -13,30 +13,30 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation Header */}
-      <nav className="bg-white shadow-sm sticky top-0 z-50 border-b">
+      <nav className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
               <img src={logoImage} alt="Ceylon Expand Logo" className="h-8 w-8" data-testid="logo-icon" />
-              <span className="text-xl font-bold text-gray-800" data-testid="logo-text">Ceylon Expand</span>
+              <span className="text-xl font-bold text-ceylon-dark" data-testid="logo-text">Ceylon Expand</span>
             </div>
             <div className="hidden md:flex items-center space-x-6">
-              <a href="/browse" className="text-gray-600 hover:text-ceylon-green transition-colors" data-testid="nav-browse">Browse Trips</a>
-              <a href="/post" className="text-gray-600 hover:text-ceylon-green transition-colors" data-testid="nav-post">Post a Trip</a>
-              <a href="/community" className="text-gray-600 hover:text-ceylon-green transition-colors" data-testid="nav-community">CeylonX Tribes</a>
+              <a href="/browse-trips" className="text-gray-600 hover:text-ceylon-green transition-colors font-medium" data-testid="nav-browse">Browse Trips</a>
+              <a href="/post" className="text-gray-600 hover:text-ceylon-green transition-colors font-medium" data-testid="nav-post">Post a Trip</a>
+              <a href="/community" className="text-gray-600 hover:text-ceylon-green transition-colors font-medium" data-testid="nav-community">CeylonX Tribes</a>
             </div>
             <div className="flex items-center space-x-3">
               <Button 
                 variant="ghost" 
                 onClick={handleLogin} 
-                className="text-gray-600 hover:text-ceylon-green"
+                className="text-gray-600 hover:text-ceylon-green transition-colors"
                 data-testid="button-signin"
               >
                 Sign In
               </Button>
               <Button 
                 onClick={handleLogin} 
-                className="bg-ceylon-green text-white hover:bg-ceylon-green/90"
+                className="bg-ceylon-green text-white hover:bg-ceylon-green/90 shadow-sm"
                 data-testid="button-signup"
               >
                 Sign Up
@@ -68,7 +68,7 @@ export default function Landing() {
             <Button 
               size="lg"
               className="bg-ceylon-green text-white hover:bg-ceylon-green/90 text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:scale-105"
-              onClick={() => document.getElementById('browse')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => window.location.href = '/browse-trips'}
               data-testid="button-browse-trips"
             >
               Browse Trips
