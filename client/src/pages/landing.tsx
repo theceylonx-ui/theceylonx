@@ -19,9 +19,9 @@ export default function Landing() {
               <span className="text-xl font-bold text-gray-800" data-testid="logo-text">Ceylon Expand</span>
             </div>
             <div className="hidden md:flex items-center space-x-6">
-              <a href="#browse" className="text-gray-600 hover:text-ceylon-green transition-colors" data-testid="nav-browse">Browse Trips</a>
-              <a href="#post" className="text-gray-600 hover:text-ceylon-green transition-colors" data-testid="nav-post">Post a Trip</a>
-              <a href="#community" className="text-gray-600 hover:text-ceylon-green transition-colors" data-testid="nav-community">CeylonX Tribes</a>
+              <a href="/browse" className="text-gray-600 hover:text-ceylon-green transition-colors" data-testid="nav-browse">Browse Trips</a>
+              <a href="/post" className="text-gray-600 hover:text-ceylon-green transition-colors" data-testid="nav-post">Post a Trip</a>
+              <a href="/community" className="text-gray-600 hover:text-ceylon-green transition-colors" data-testid="nav-community">CeylonX Tribes</a>
             </div>
             <div className="flex items-center space-x-3">
               <Button 
