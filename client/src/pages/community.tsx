@@ -136,8 +136,8 @@ export default function CommunityPage() {
               <div className="absolute inset-0 bg-black opacity-50 rounded-2xl"></div>
               
               {/* Content */}
-              <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                <div className="lg:flex-1 mb-6 lg:mb-0">
+              <div className="relative z-10 flex flex-col space-y-6">
+                <div>
                   <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }}>
                     Ceylon Expand Community
                   </h1>
@@ -146,33 +146,31 @@ export default function CommunityPage() {
                   </p>
                 </div>
               
-              <div className="lg:flex-shrink-0">
+              <div className="flex flex-col items-start">
                 <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                   <DialogTrigger asChild>
                     {user ? (
                       <Button 
-                        variant="secondary" 
                         size="lg"
-                        className="bg-white text-ceylon-green hover:bg-gray-50 font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                        className="bg-ceylon-green text-white hover:bg-ceylon-green/90 font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300"
                         data-testid="button-ask-question"
                       >
                         <Plus className="w-6 h-6 mr-3" />
                         Ask a Question
                       </Button>
                     ) : (
-                      <div className="text-center space-y-3">
+                      <div className="space-y-3">
                         <Link href="/auth/signin">
                           <Button 
-                            variant="secondary" 
                             size="lg"
-                            className="bg-white text-ceylon-green hover:bg-gray-50 font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                            className="bg-ceylon-green text-white hover:bg-ceylon-green/90 font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300"
                             data-testid="button-ask-question-signin"
                           >
                             <Plus className="w-6 h-6 mr-3" />
                             Ask a Question
                           </Button>
                         </Link>
-                        <p className="text-sm opacity-80">
+                        <p className="text-sm opacity-80" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
                           Sign in to ask questions and participate
                         </p>
                       </div>
