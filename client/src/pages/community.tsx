@@ -36,6 +36,8 @@ export default function CommunityPage() {
   const [sortBy, setSortBy] = useState<"top" | "new" | "unanswered">("top");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const questionsPerPage = 10;
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -52,6 +54,7 @@ export default function CommunityPage() {
       if (searchQuery) params.append('q', searchQuery);
       if (selectedTopic !== "all") params.append('topic', selectedTopic);
       params.append('sort', sortBy);
+      params.append('limit', '10');
       return fetch(`/api/questions?${params.toString()}`).then(res => res.json());
     }
   });

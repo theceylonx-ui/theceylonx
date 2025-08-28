@@ -365,7 +365,7 @@ export class DatabaseStorage implements IStorage {
     sort?: 'top' | 'new' | 'unanswered';
     limit?: number;
   }): Promise<QuestionWithDetails[]> {
-    const limit = filters?.limit || 20;
+    const limit = filters?.limit || 10;
     
     // Build where conditions
     const conditions = [];
@@ -419,6 +419,7 @@ export class DatabaseStorage implements IStorage {
           email: users.email,
           firstName: users.firstName,
           lastName: users.lastName,
+          username: users.username,
           profileImageUrl: users.profileImageUrl,
           phoneNumber: users.phoneNumber,
           bio: users.bio,
@@ -478,6 +479,7 @@ export class DatabaseStorage implements IStorage {
           email: users.email,
           firstName: users.firstName,
           lastName: users.lastName,
+          username: users.username,
           profileImageUrl: users.profileImageUrl,
           phoneNumber: users.phoneNumber,
           bio: users.bio,
@@ -612,6 +614,7 @@ export class DatabaseStorage implements IStorage {
           email: users.email,
           firstName: users.firstName,
           lastName: users.lastName,
+          username: users.username,
           profileImageUrl: users.profileImageUrl,
           phoneNumber: users.phoneNumber,
           bio: users.bio,
