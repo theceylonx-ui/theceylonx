@@ -92,7 +92,7 @@ export default function Landing() {
               How It Works
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto" data-testid="text-how-it-works-subtitle">
-              Get started with Ceylon Expand in just three simple steps
+              Get started with Ceylon Expand in just three simple steps.
             </p>
           </div>
           
@@ -102,7 +102,7 @@ export default function Landing() {
                 <UserCheck className="text-green-600 h-12 w-12 stroke-2" />
               </div>
               <h3 className="text-xl font-semibold mb-4 text-gray-800">1. Sign Up</h3>
-              <p className="text-gray-600">Create your account with basic details and complete your profile to get started</p>
+              <p className="text-gray-600">Create your account with basic details and complete your profile to get started.</p>
             </div>
             
             <div className="text-center" data-testid="step-post-find">
@@ -110,7 +110,7 @@ export default function Landing() {
                 <Route className="text-blue-600 h-12 w-12 stroke-2" />
               </div>
               <h3 className="text-xl font-semibold mb-4 text-gray-800">2. Post/Find a Trip</h3>
-              <p className="text-gray-600">Browse existing trips or create your own adventure and invite others to join</p>
+              <p className="text-gray-600">Browse existing trips or create your own adventure and invite others to join.</p>
             </div>
             
             <div className="text-center" data-testid="step-travel">
@@ -118,7 +118,7 @@ export default function Landing() {
                 <Heart className="text-orange-600 h-10 w-10" />
               </div>
               <h3 className="text-xl font-semibold mb-4 text-gray-800">3. Travel Together</h3>
-              <p className="text-gray-600">Connect with fellow travelers, share costs, and create unforgettable memories</p>
+              <p className="text-gray-600">Connect with fellow travelers, share costs, and create unforgettable memories.</p>
             </div>
           </div>
         </div>
@@ -131,7 +131,7 @@ export default function Landing() {
               Why Join Us?
             </h2>
             <p className="text-lg text-gray-600" data-testid="text-benefits-subtitle">
-              Discover the benefits of traveling together
+              Discover the benefits of traveling together.
             </p>
           </div>
           
@@ -140,7 +140,7 @@ export default function Landing() {
               <CardContent className="p-8">
                 <PiggyBank className="text-ceylon-green h-10 w-10 mb-6" />
                 <h3 className="text-xl font-semibold mb-4 text-gray-800">Save Money</h3>
-                <p className="text-gray-600">Split transportation costs with fellow travelers and make your adventures more affordable</p>
+                <p className="text-gray-600">Split transportation costs with fellow travelers and make your adventures more affordable.</p>
               </CardContent>
             </Card>
             
@@ -148,7 +148,7 @@ export default function Landing() {
               <CardContent className="p-8">
                 <Users className="text-ceylon-blue h-10 w-10 mb-6" />
                 <h3 className="text-xl font-semibold mb-4 text-gray-800">Meet New Friends</h3>
-                <p className="text-gray-600">Connect with like-minded travelers and build lasting friendships through shared experiences</p>
+                <p className="text-gray-600">Connect with like-minded travelers and build lasting friendships through shared experiences.</p>
               </CardContent>
             </Card>
             
@@ -156,7 +156,7 @@ export default function Landing() {
               <CardContent className="p-8">
                 <Compass className="text-orange-600 h-10 w-10 mb-6" />
                 <h3 className="text-xl font-semibold mb-4 text-gray-800">Explore More</h3>
-                <p className="text-gray-600">Discover hidden gems and local insights from experienced travelers and locals</p>
+                <p className="text-gray-600">Discover hidden gems and local insights from experienced travelers and locals.</p>
               </CardContent>
             </Card>
           </div>
@@ -179,25 +179,25 @@ export default function Landing() {
               <div className="space-y-4">
                 <div className="flex items-start space-x-3" data-testid="rule-respectful">
                   <Heart className="text-ceylon-green mt-1 h-5 w-5 flex-shrink-0" />
-                  <p className="text-gray-700"><strong>Be respectful to others</strong> - Treat everyone with kindness and courtesy</p>
+                  <p className="text-gray-700"><strong>Be respectful to others</strong> - Treat everyone with kindness and courtesy.</p>
                 </div>
                 <div className="flex items-start space-x-3" data-testid="rule-public-places">
                   <MapPin className="text-ceylon-blue mt-1 h-5 w-5 flex-shrink-0" />
-                  <p className="text-gray-700"><strong>Meet in public places</strong> - Always arrange meetups in safe, public locations</p>
+                  <p className="text-gray-700"><strong>Meet in public places</strong> - Always arrange meetups in safe, public locations.</p>
                 </div>
                 <div className="flex items-start space-x-3" data-testid="rule-no-advance-payment">
                   <Shield className="text-orange-600 mt-1 h-5 w-5 flex-shrink-0" />
-                  <p className="text-gray-700"><strong>Don't pay strangers in advance</strong> - Keep payments secure and transparent</p>
+                  <p className="text-gray-700"><strong>Don't pay strangers in advance</strong> - Keep payments secure and transparent.</p>
                 </div>
               </div>
               <div className="space-y-4">
                 <div className="flex items-start space-x-3" data-testid="rule-report-suspicious">
                   <Flag className="text-red-500 mt-1 h-5 w-5 flex-shrink-0" />
-                  <p className="text-gray-700"><strong>Report suspicious posts</strong> - Help us maintain a safe community</p>
+                  <p className="text-gray-700"><strong>Report suspicious posts</strong> - Help us maintain a safe community.</p>
                 </div>
                 <div className="flex items-start space-x-3" data-testid="rule-honest-details">
                   <Star className="text-yellow-500 mt-1 h-5 w-5 flex-shrink-0" />
-                  <p className="text-gray-700"><strong>Share honest trip details</strong> - Be accurate about costs, timing, and expectations</p>
+                  <p className="text-gray-700"><strong>Share honest trip details</strong> - Be accurate about costs, timing, and expectations.</p>
                 </div>
               </div>
             </div>

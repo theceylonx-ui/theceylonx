@@ -481,12 +481,12 @@ export default function CommunityPage() {
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400 mb-4">
                     {searchQuery || selectedTopic !== "all"
-                      ? "Try adjusting your search or filters"
+                      ? "Try adjusting your search or filters."
                       : "Be the first to ask a question about traveling in Sri Lanka!"}
                   </p>
                   {!user && (
                     <p className="text-sm text-gray-500">
-                      Sign in to ask questions and participate in the community
+                      Sign in to ask questions and participate in the community.
                     </p>
                   )}
                 </CardContent>

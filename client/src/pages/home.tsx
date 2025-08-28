@@ -69,7 +69,7 @@ export default function Home() {
               <h2 className="text-3xl font-bold text-gray-800 mb-2" data-testid="text-featured-trips">
                 Featured Trips
               </h2>
-              <p className="text-gray-600">Discover amazing travel opportunities</p>
+              <p className="text-gray-600">Discover amazing travel opportunities.</p>
             </div>
             <Link href="/browse-trips">
               <Button variant="outline" className="text-ceylon-green border-ceylon-green hover:bg-ceylon-green hover:text-white" data-testid="link-view-all">

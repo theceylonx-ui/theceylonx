@@ -174,7 +174,7 @@ export default function ContactUs() {
                   <div>
                     <p className="font-medium text-gray-900 dark:text-gray-100">Response Time</p>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      We aim to respond to all inquiries within 48 hours
+                      We aim to respond to all inquiries within 48 hours.
                     </p>
                   </div>
                 </div>
@@ -184,7 +184,7 @@ export default function ContactUs() {
                   <div>
                     <p className="font-medium text-gray-900 dark:text-gray-100">Service Area</p>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      Sri Lanka & International Travelers
+                      Sri Lanka & International Travelers.
                     </p>
                   </div>
                 </div>
@@ -194,7 +194,7 @@ export default function ContactUs() {
                   <div>
                     <p className="font-medium text-gray-900 dark:text-gray-100">Support</p>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      Available through platform messaging
+                      Available through platform messaging.
                     </p>
                   </div>
                 </div>

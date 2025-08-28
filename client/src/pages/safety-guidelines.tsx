@@ -156,9 +156,9 @@ export default function SafetyGuidelines() {
                 <div>
                   <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Ceylon Expand Support:</h4>
                   <div className="space-y-2 text-gray-600 dark:text-gray-300">
-                    <p><strong>Report Issues:</strong> Use our report feature</p>
-                    <p><strong>Safety Concerns:</strong> Contact us immediately</p>
-                    <p><strong>24/7 Support:</strong> Available through the app</p>
+                    <p><strong>Report Issues:</strong> Use our report feature.</p>
+                    <p><strong>Safety Concerns:</strong> Contact us immediately.</p>
+                    <p><strong>24/7 Support:</strong> Available through the app.</p>
                   </div>
                 </div>
               </div>

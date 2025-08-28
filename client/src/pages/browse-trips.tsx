@@ -152,7 +152,7 @@ export default function BrowseTrips() {
             Browse Trips
           </h1>
           <p className="text-gray-600" data-testid="page-subtitle">
-            Discover amazing travel opportunities across Sri Lanka
+            Discover amazing travel opportunities across Sri Lanka.
           </p>
         </div>
 
