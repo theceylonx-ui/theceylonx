@@ -96,7 +96,9 @@ export function setupAuth(app: Express) {
         {
           clientID: process.env.GOOGLE_CLIENT_ID,
           clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          callbackURL: "/auth/google/callback",
+          callbackURL: process.env.NODE_ENV === "production" 
+            ? "https://" + process.env.REPL_SLUG + "." + process.env.REPL_OWNER + ".repl.co/auth/google/callback"
+            : "https://" + process.env.REPL_SLUG + "." + process.env.REPL_OWNER + ".repl.co/auth/google/callback",
         },
         async (accessToken: string, refreshToken: string, profile: GoogleProfile, done: any) => {
           try {
