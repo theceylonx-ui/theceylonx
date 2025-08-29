@@ -6,7 +6,7 @@ import { UserPlus, ArrowRight } from "lucide-react";
 
 export default function SignInRequired() {
   const handleSignIn = () => {
-    window.location.href = "/api/login";
+    window.location.href = "/auth/signin";
   };
 
   return (

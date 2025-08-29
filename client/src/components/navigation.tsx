@@ -15,12 +15,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { generateRandomProfilePicture, getDisplayName, getInitials } from "@/lib/profileUtils";
 
 export default function Navigation() {
-  const { user } = useAuth();
+  const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    window.location.href = "/api/logout";
+    logoutMutation.mutate();
   };
 
   const isActive = (path: string) => {
