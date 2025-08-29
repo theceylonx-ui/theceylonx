@@ -55,7 +55,7 @@ export default function UserDashboard() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        window.location.href = "/auth/signin";
       }, 500);
       return;
     }
@@ -102,7 +102,7 @@ export default function UserDashboard() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth/signin";
         }, 500);
         return;
       }
@@ -133,7 +133,7 @@ export default function UserDashboard() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth/signin";
         }, 500);
         return;
       }
@@ -166,7 +166,7 @@ export default function UserDashboard() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth/signin";
         }, 500);
         return;
       }

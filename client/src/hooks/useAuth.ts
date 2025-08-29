@@ -10,6 +10,7 @@ type AuthContextType = {
   loginMutation: UseMutationResult<User, Error, LoginUser>;
   registerMutation: UseMutationResult<User, Error, RegisterUser>;
   logoutMutation: UseMutationResult<void, Error, void>;
+  isAuthenticated: boolean;
 };
 
 export function useAuth(): AuthContextType {
@@ -95,5 +96,5 @@ export function useAuth(): AuthContextType {
     registerMutation,
     logoutMutation,
     isAuthenticated: !!user,
-  } as AuthContextType & { isAuthenticated: boolean };
+  };
 }

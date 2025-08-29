@@ -62,7 +62,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth/signin";
         }, 500);
         return;
       }
@@ -94,7 +94,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth/signin";
         }, 500);
         return;
       }
@@ -128,7 +128,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth/signin";
         }, 500);
         return;
       }
