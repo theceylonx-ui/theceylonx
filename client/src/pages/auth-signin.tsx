@@ -46,19 +46,11 @@ export default function AuthSignInPage() {
   });
 
   const handleLogin = (data: LoginUser) => {
-    loginMutation.mutate(data, {
-      onSuccess: () => {
-        navigate("/");
-      },
-    });
+    loginMutation.mutate(data);
   };
 
   const handleRegister = (data: RegisterUser) => {
-    registerMutation.mutate(data, {
-      onSuccess: () => {
-        navigate("/");
-      },
-    });
+    registerMutation.mutate(data);
   };
 
   const handleGoogleSignIn = () => {

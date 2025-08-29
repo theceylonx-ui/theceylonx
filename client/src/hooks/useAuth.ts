@@ -22,8 +22,21 @@ export function useAuth(): AuthContextType {
     isLoading,
   } = useQuery<User | null>({
     queryKey: ["/api/user"],
+    queryFn: async () => {
+      const res = await fetch("/api/user", {
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        return null;
+      }
+      if (!res.ok) {
+        throw new Error(`${res.status}: ${res.statusText}`);
+      }
+      return await res.json();
+    },
     retry: false,
-    initialData: null,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
   });
 
   const loginMutation = useMutation({
