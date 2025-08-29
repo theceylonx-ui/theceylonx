@@ -221,14 +221,62 @@ export async function setupAuth(app: Express) {
     }
 
     app.get("/api/login", (req, res, next) => {
-      passport.authenticate(`replitauth:${req.hostname}`, {
+      // Find the correct strategy name by matching the hostname
+      const replitDomains = process.env.REPLIT_DOMAINS!.split(",").map(d => d.trim());
+      const currentHostname = req.hostname || req.get('host')?.split(':')[0] || '';
+      
+      let strategyName = `replitauth:${currentHostname}`;
+      
+      // If exact match not found, try to find a matching domain
+      if (!replitDomains.includes(currentHostname)) {
+        const matchingDomain = replitDomains.find(domain => 
+          domain === currentHostname || currentHostname.endsWith(domain)
+        );
+        if (matchingDomain) {
+          strategyName = `replitauth:${matchingDomain}`;
+        } else {
+          // Fallback to first available domain for development/localhost access
+          if (replitDomains.length > 0) {
+            strategyName = `replitauth:${replitDomains[0]}`;
+            console.log(`No matching domain found for ${currentHostname}, using fallback: ${replitDomains[0]}`);
+          }
+        }
+      }
+      
+      console.log(`Login attempt with hostname: ${currentHostname}, using strategy: ${strategyName}`);
+      
+      passport.authenticate(strategyName, {
         prompt: "login consent",
         scope: ["openid", "email", "profile", "offline_access"],
       })(req, res, next);
     });
 
     app.get("/api/callback", (req, res, next) => {
-      passport.authenticate(`replitauth:${req.hostname}`, {
+      // Find the correct strategy name by matching the hostname
+      const replitDomains = process.env.REPLIT_DOMAINS!.split(",").map(d => d.trim());
+      const currentHostname = req.hostname || req.get('host')?.split(':')[0] || '';
+      
+      let strategyName = `replitauth:${currentHostname}`;
+      
+      // If exact match not found, try to find a matching domain
+      if (!replitDomains.includes(currentHostname)) {
+        const matchingDomain = replitDomains.find(domain => 
+          domain === currentHostname || currentHostname.endsWith(domain)
+        );
+        if (matchingDomain) {
+          strategyName = `replitauth:${matchingDomain}`;
+        } else {
+          // Fallback to first available domain for development/localhost access
+          if (replitDomains.length > 0) {
+            strategyName = `replitauth:${replitDomains[0]}`;
+            console.log(`No matching domain found for ${currentHostname}, using fallback: ${replitDomains[0]}`);
+          }
+        }
+      }
+      
+      console.log(`Callback with hostname: ${currentHostname}, using strategy: ${strategyName}`);
+      
+      passport.authenticate(strategyName, {
         successReturnToOrRedirect: "/",
         failureRedirect: "/api/login",
       })(req, res, next);
