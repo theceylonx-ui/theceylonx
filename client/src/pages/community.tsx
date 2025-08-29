@@ -65,7 +65,7 @@ export default function CommunityPage() {
   const totalPages = Math.ceil(totalQuestions / questionsPerPage);
 
   const { data: user } = useQuery<UserType>({
-    queryKey: ['/api/auth/user'],
+    queryKey: ['/api/user'],
   });
 
   // Reset page when filters change

@@ -206,7 +206,7 @@ export function setupAuth(app: Express) {
 
   app.get(
     "/auth/google/callback",
-    passport.authenticate("google", { failureRedirect: "/auth?error=google_failed" }),
+    passport.authenticate("google", { failureRedirect: "/auth/signin?error=google_failed" }),
     (req, res) => {
       res.redirect("/");
     }
@@ -224,6 +224,20 @@ export function setupAuth(app: Express) {
       return res.status(401).json({ message: "Unauthorized" });
     }
     res.json(req.user);
+  });
+
+  app.patch("/api/user", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const updatedUser = await storage.updateUser(req.user.id, req.body);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Update user error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
   });
 }
 

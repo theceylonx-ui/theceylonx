@@ -85,14 +85,14 @@ export default function UserDashboard() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileFormData) => {
-      return await apiRequest("PATCH", "/api/auth/user", data);
+      return await apiRequest("PATCH", "/api/user", data);
     },
     onSuccess: () => {
       toast({
         title: "Success",
         description: "Profile updated successfully!",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
