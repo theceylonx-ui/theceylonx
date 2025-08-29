@@ -20,7 +20,7 @@ export default function DestinationPage() {
   const city = params?.city ? decodeURIComponent(params.city) : "";
 
   // Fetch trips related to this destination
-  const { data: trips = [], isLoading: tripsLoading } = useQuery<TripWithOrganizer[]>({
+  const { data: tripsResponse, isLoading: tripsLoading } = useQuery<{trips: TripWithOrganizer[], pagination: any}>({
     queryKey: ['/api/trips', 'destination', city],
     queryFn: () => {
       const params = new URLSearchParams();
@@ -29,9 +29,11 @@ export default function DestinationPage() {
     },
     enabled: !!city,
   });
+  
+  const trips = tripsResponse?.trips || [];
 
   // Fetch community questions related to this destination
-  const { data: questions = [], isLoading: questionsLoading } = useQuery<QuestionWithDetails[]>({
+  const { data: questionsResponse, isLoading: questionsLoading } = useQuery<{questions: QuestionWithDetails[], total: number}>({
     queryKey: ['/api/questions', 'destination', city],
     queryFn: () => {
       const params = new URLSearchParams();
@@ -40,6 +42,8 @@ export default function DestinationPage() {
     },
     enabled: !!city,
   });
+  
+  const questions = questionsResponse?.questions || [];
 
   const handleSeeMoreTrips = () => {
     if (user) {
@@ -151,14 +155,16 @@ export default function DestinationPage() {
                             </div>
                             <div className="flex items-center text-sm text-gray-500">
                               <Users className="w-4 h-4 mr-1" />
-                              {trip.availableSeats} seats
+                              {trip.seatsAvailable} seats
                             </div>
                           </div>
                         </div>
                         
-                        <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
-                          {trip.description}
-                        </p>
+                        {trip.notes && (
+                          <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
+                            {trip.notes}
+                          </p>
+                        )}
                         
                         <div className="flex items-center justify-between">
                           <div className="text-sm text-gray-500">
