@@ -142,7 +142,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
 
   const handleJoinTrip = () => {
     if (!isAuthenticated) {
-      window.location.href = "/api/login";
+      window.location.href = "/auth/signin";
       return;
     }
     joinTripMutation.mutate();
@@ -150,7 +150,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
 
   const handleAddComment = () => {
     if (!isAuthenticated) {
-      window.location.href = "/api/login";
+      window.location.href = "/auth/signin";
       return;
     }
     if (newComment.trim()) {
@@ -160,7 +160,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
 
   const handleReport = () => {
     if (!isAuthenticated) {
-      window.location.href = "/api/login";
+      window.location.href = "/auth/signin";
       return;
     }
     reportTripMutation.mutate("inappropriate_content");

@@ -15,12 +15,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { generateRandomProfilePicture, getDisplayName, getInitials } from "@/lib/profileUtils";
 
 export default function Navigation() {
-  const { user, logoutMutation } = useAuth();
+  const { user, logout, isLoggingOut } = useAuth();
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    logoutMutation.mutate();
+    logout();
   };
 
   const isActive = (path: string) => {
