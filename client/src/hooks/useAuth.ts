@@ -5,6 +5,7 @@ export function useAuth() {
   const { data: user, isLoading, error } = useQuery({
     queryKey: ["/api/auth/me"],
     retry: false,
+    refetchOnWindowFocus: false,
   });
 
   const logoutMutation = useMutation({
