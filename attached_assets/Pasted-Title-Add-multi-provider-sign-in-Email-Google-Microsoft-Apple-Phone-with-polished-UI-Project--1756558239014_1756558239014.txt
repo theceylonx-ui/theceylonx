@@ -1,0 +1,129 @@
+Title: Add multi-provider sign in (Email, Google, Microsoft, Apple, Phone) with polished UI
+Project: Existing Next.js (App Router) site for theceylonx.com using NextAuth.
+Goal: Replace current auth with a unified sign-in component that supports:
+Type email address and continue (magic link)
+Continue with Google
+Continue with Microsoft
+Continue with Apple
+Continue with phone (SMS OTP)
+Language: English-only. Keep existing routes/pages intact. Non-authenticated users can browse; posting requires auth.
+1) Packages
+Keep next-auth v5 (Auth.js).
+Add: nodemailer, @auth/core (if needed), twilio for SMS.
+If any provider requires it, add uuid.
+2) ENV (create/fill)
+Add these to .env (or Replit Secrets) and wire in the code:
+# NextAuth
+NEXTAUTH_URL="https://theceylonx.com"
+NEXTAUTH_SECRET="***generate-a-strong-secret***"
+
+# Email Magic Link (Nodemailer – choose one transport)
+EMAIL_SERVER_HOST="smtp.yourhost.com"
+EMAIL_SERVER_PORT="587"
+EMAIL_SERVER_USER="no-reply@theceylonx.com"
+EMAIL_SERVER_PASSWORD="***"
+EMAIL_FROM="CeylonX <no-reply@theceylonx.com>"
+
+# Google
+GOOGLE_CLIENT_ID="***"
+GOOGLE_CLIENT_SECRET="***"
+
+# Microsoft (Azure AD single-tenant or common)
+AZURE_AD_CLIENT_ID="***"
+AZURE_AD_CLIENT_SECRET="***"
+AZURE_AD_TENANT_ID="common" # or your tenant
+
+# Apple (Service ID flow)
+APPLE_ID="***"               # Services ID
+APPLE_TEAM_ID="***"
+APPLE_CLIENT_ID="***"        # same as APPLE_ID for Services
+APPLE_KEY_ID="***"
+APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+
+# Phone (Twilio Verify or Messaging)
+TWILIO_ACCOUNT_SID="***"
+TWILIO_AUTH_TOKEN="***"
+TWILIO_MESSAGING_SERVICE_SID="***" # or VERIFY_SERVICE_SID if using Verify
+If you prefer Email-only and Google initially, you can leave Microsoft/Apple/Phone vars undefined; the UI should hide unavailable providers automatically.
+3) Auth config
+Update/create src/lib/auth.ts with providers:
+EmailProvider (magic link via Nodemailer)
+GoogleProvider
+AzureADProvider (Microsoft)
+AppleProvider (Services flow)
+CredentialsProvider for Phone OTP (pair with Twilio endpoints)
+Session strategy: jwt.
+Map user email/name/avatar into your User table on first sign-in.
+4) Phone OTP flow (minimal, secure)
+Create two endpoints:
+POST /api/auth/phone/send → accept phone, rate-limit (IP + phone), generate 6-digit code, send via Twilio (Verify or Messaging). Store hashed code + expiry (5 min) in a short-lived table PhoneOtp { id, phone, codeHash, expiresAt, attempts }.
+POST /api/auth/phone/verify → accept phone, code; validate, then sign in via CredentialsProvider (attach a stable synthetic email like phone:+9477xxxxxxx@theceylonx.com), create/find User, delete OTP row.
+Security/abuse:
+Max 3 attempts per code; block for 15 minutes after fail.
+Rate-limit sends (e.g., 3 per hour per phone/IP).
+5) DB additions (Prisma)
+Add PhoneOtp model; migration included.
+model PhoneOtp {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+}
+6) UI — unified Sign-in screen
+Create src/app/(auth)/signin/page.tsx with a single panel:
+Email: input + “Continue with Email” (sends magic link)
+Or divider
+Buttons: Continue with Google, Continue with Microsoft, Continue with Apple
+Phone: phone input (+country code) + “Send Code” → show code input → “Verify & Continue”
+Accessible, mobile-first, Tailwind styling, friendly copy:
+Title: “Sign in to CeylonX”
+Subtitle: “Ask questions, share tips, and join the Tribes.”
+Hide any provider buttons if env vars are missing.
+7) Header changes
+Update header CTA to Sign in (routes to /signin) if logged out, Sign out if logged in.
+Keep English-only copy.
+8) Protect write actions only
+Keep GET routes public (view Q&A).
+Require session for POST /api/questions and /api/answers.
+If 401, return friendly JSON { error: "Sign in required" }.
+9) Email magic link details
+Use NextAuth EmailProvider with Nodemailer transport.
+Template the email to include logo/title “CeylonX – Sign in”.
+Link TTL: 10 minutes.
+10) Apple & Microsoft specifics
+Apple: use Services ID OAuth (not iOS native), configure callback on Apple dev console to https://theceylonx.com/api/auth/callback/apple.
+Microsoft: use Azure AD app (tenant common for consumer + work/school) and callback https://theceylonx.com/api/auth/callback/azure-ad.
+11) Acceptance Criteria
+/signin shows:
+Email input + “Continue with Email”
+Continue with Google
+Continue with Microsoft
+Continue with Apple
+Continue with Phone (OTP flow: send → verify)
+Providers hide if misconfigured.
+Non-logged users can browse; posting prompts to sign in.
+Rate-limited OTP; codes expire; no code leakage in logs.
+English-only copy.
+12) Files to provide/modify
+src/lib/auth.ts (providers + callbacks)
+src/app/api/auth/[...nextauth]/route.ts (Auth.js handler)
+src/app/(auth)/signin/page.tsx (UI)
+src/app/api/auth/phone/send/route.ts (Twilio send)
+src/app/api/auth/phone/verify/route.ts (OTP verify + session)
+prisma/schema.prisma (PhoneOtp) + migration
+Header/layout updates to link /signin
+13) Post-change commands
+npm i
+npm run migrate
+npm run dev
+Short UI copy (use in the screen)
+Headline: Sign in to CeylonX
+Sub: Ask, answer, and explore with the Tribes.
+Buttons:
+Continue with Google
+Continue with Microsoft
+Continue with Apple
+Continue with Phone
+Or enter your email to continue

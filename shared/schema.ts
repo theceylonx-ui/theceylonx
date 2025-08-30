@@ -25,22 +25,55 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// Users table for custom auth
+// Users table for multi-provider auth
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique().notNull(),
-  password: varchar("password"), // For email/password auth
+  email: varchar("email").unique(),
+  phone: varchar("phone").unique(),
+  name: varchar("name"),
+  image: varchar("image"),
+  provider: varchar("provider"), // 'google' | 'microsoft' | 'apple' | 'email' | 'phone'
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   username: varchar("username").unique(),
   profileImageUrl: varchar("profile_image_url"),
   phoneNumber: varchar("phone_number").unique(),
   bio: text("bio"),
-  googleId: varchar("google_id").unique(), // For Google OAuth
-  authProvider: varchar("auth_provider").default("email"), // 'email' or 'google'
+  googleId: varchar("google_id").unique(),
+  microsoftId: varchar("microsoft_id").unique(),
+  appleId: varchar("apple_id").unique(),
   emailVerified: boolean("email_verified").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// JWT refresh token sessions
+export const authSessions = pgTable("auth_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  refreshToken: varchar("refresh_token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Email magic link tokens
+export const emailTokens = pgTable("email_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").notNull(),
+  tokenHash: varchar("token_hash").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  used: boolean("used").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [index("IDX_email_tokens_email").on(table.email)]);
+
+// Phone OTP codes
+export const phoneOtps = pgTable("phone_otps", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  phone: varchar("phone").notNull().unique(),
+  codeHash: varchar("code_hash").notNull(),
+  attempts: integer("attempts").default(0),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Trips table
@@ -159,6 +192,14 @@ export const usersRelations = relations(users, ({ many }) => ({
   givenRatings: many(ratings, { relationName: "raterRatings" }),
   receivedRatings: many(ratings, { relationName: "ratedRatings" }),
   reports: many(reports),
+  authSessions: many(authSessions),
+}));
+
+export const authSessionsRelations = relations(authSessions, ({ one }) => ({
+  user: one(users, {
+    fields: [authSessions.userId],
+    references: [users.id],
+  }),
 }));
 
 export const tripsRelations = relations(trips, ({ one, many }) => ({
@@ -283,22 +324,36 @@ export const insertUserSchema = createInsertSchema(users).omit({
 });
 
 // Auth schemas
-export const registerSchema = createInsertSchema(users).pick({
-  email: true,
-  password: true,
-  firstName: true,
-  lastName: true,
-}).extend({
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string()
-}).refine(data => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"]
+export const insertAuthSessionSchema = createInsertSchema(authSessions).omit({
+  id: true,
+  createdAt: true,
 });
 
-export const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1, "Password is required")
+export const insertEmailTokenSchema = createInsertSchema(emailTokens).omit({
+  id: true,
+  createdAt: true,
+  used: true,
+});
+
+export const insertPhoneOtpSchema = createInsertSchema(phoneOtps).omit({
+  id: true,
+  createdAt: true,
+  attempts: true,
+});
+
+// Email magic link schema
+export const emailAuthSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+});
+
+// Phone OTP schemas
+export const phoneStartSchema = z.object({
+  phone: z.string().regex(/^\+[1-9]\d{1,14}$/, "Please enter a valid phone number in E.164 format"),
+});
+
+export const phoneVerifySchema = z.object({
+  phone: z.string().regex(/^\+[1-9]\d{1,14}$/, "Please enter a valid phone number in E.164 format"),
+  code: z.string().length(6, "Please enter a 6-digit code"),
 });
 
 export const insertTripSchema = createInsertSchema(trips).omit({
@@ -357,8 +412,15 @@ export const insertVoteSchema = createInsertSchema(votes).omit({
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
-export type RegisterUser = z.infer<typeof registerSchema>;
-export type LoginUser = z.infer<typeof loginSchema>;
+export type InsertAuthSession = z.infer<typeof insertAuthSessionSchema>;
+export type AuthSession = typeof authSessions.$inferSelect;
+export type InsertEmailToken = z.infer<typeof insertEmailTokenSchema>;
+export type EmailToken = typeof emailTokens.$inferSelect;
+export type InsertPhoneOtp = z.infer<typeof insertPhoneOtpSchema>;
+export type PhoneOtp = typeof phoneOtps.$inferSelect;
+export type EmailAuth = z.infer<typeof emailAuthSchema>;
+export type PhoneStart = z.infer<typeof phoneStartSchema>;
+export type PhoneVerify = z.infer<typeof phoneVerifySchema>;
 export type InsertTrip = z.infer<typeof insertTripSchema>;
 export type Trip = typeof trips.$inferSelect;
 export type TripWithOrganizer = Trip & { organizer: User };

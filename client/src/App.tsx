@@ -19,6 +19,8 @@ import PrivacyPolicy from "@/pages/privacy-policy";
 import ContactUs from "@/pages/contact-us";
 import SignInRequired from "@/pages/signin-required";
 import AuthSignInPage from "@/pages/auth-signin";
+import AuthMagicPage from "@/pages/auth-magic";
+import AuthCallbackPage from "@/pages/auth-callback";
 import DestinationPage from "@/pages/destination";
 import { FloatingActionMenu } from "@/components/floating-action-menu";
 
@@ -52,6 +54,8 @@ function Router() {
             <Route path="/contact-us" component={ContactUs} />
             <Route path="/faq" component={FAQ} />
             <Route path="/auth/signin" component={AuthSignInPage} />
+            <Route path="/auth/magic" component={AuthMagicPage} />
+            <Route path="/auth/callback" component={AuthCallbackPage} />
             <Route path="/destination/:city" component={DestinationPage} />
             <Route path="/post" component={SignInRequired} />
             <Route path="/dashboard" component={SignInRequired} />

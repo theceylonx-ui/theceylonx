@@ -1,0 +1,204 @@
+Title: Add multi-provider authentication (Email Magic Link, Google, Microsoft, Apple, Phone OTP) to Express + React app
+Stack assumptions:
+Backend: Express.js (TypeScript preferred), DB via Prisma (SQLite/Postgres ok)
+Frontend: React (Vite/CRA)
+Sessions: JWT access + refresh tokens in httpOnly, Secure cookies
+Auth: Passport.js (Google, Microsoft, Apple), Nodemailer (email magic link), Twilio (phone OTP)
+1) Install packages
+Server:
+npm i passport passport-google-oauth20 passport-microsoft passport-apple
+npm i jsonwebtoken cookie-parser bcrypt zod nanoid
+npm i nodemailer twilio
+npm i prisma @prisma/client
+npm i express-rate-limit cors
+npm i date-fns
+npm i -D ts-node typescript @types/express @types/jsonwebtoken @types/cookie-parser @types/node
+Client:
+npm i axios react-hook-form zod
+2) ENV (Replit Secrets / .env)
+APP_URL=https://theceylonx.com
+API_URL=https://api.theceylonx.com   # or your dev URL
+JWT_ACCESS_SECRET=***strong***
+JWT_REFRESH_SECRET=***strong***
+COOKIE_DOMAIN=.theceylonx.com        # in dev use localhost without dot
+COOKIE_SECURE=true                   # false in local http
+
+# Email (magic link)
+EMAIL_FROM="CeylonX <no-reply@theceylonx.com>"
+SMTP_HOST=smtp.yourhost.com
+SMTP_PORT=587
+SMTP_USER=no-reply@theceylonx.com
+SMTP_PASS=***
+
+# Google
+GOOGLE_CLIENT_ID=***
+GOOGLE_CLIENT_SECRET=***
+
+# Microsoft (Azure AD)
+MICROSOFT_CLIENT_ID=***
+MICROSOFT_CLIENT_SECRET=***
+MICROSOFT_TENANT_ID=common
+MICROSOFT_SCOPE="openid profile email"
+
+# Apple (Services ID)
+APPLE_CLIENT_ID=***
+APPLE_TEAM_ID=***
+APPLE_KEY_ID=***
+APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+
+# Twilio (Phone OTP)
+TWILIO_ACCOUNT_SID=***
+TWILIO_AUTH_TOKEN=***
+TWILIO_MESSAGING_SERVICE_SID=***   # or TWILIO_VERIFY_SERVICE_SID if using Verify
+3) Prisma schema additions
+Create/update prisma/schema.prisma:
+model User {
+  id           String   @id @default(cuid())
+  email        String?  @unique
+  phone        String?  @unique
+  name         String?
+  image        String?
+  provider     String?   // 'google' | 'microsoft' | 'apple' | 'email' | 'phone'
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  sessions     Session[]
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  refreshToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+}
+
+model EmailToken {
+  id         String   @id @default(cuid())
+  email      String
+  tokenHash  String
+  expiresAt  DateTime
+  used       Boolean  @default(false)
+
+  @@index([email])
+}
+
+model PhoneOtp {
+  id         String   @id @default(cuid())
+  phone      String   @unique
+  codeHash   String
+  attempts   Int      @default(0)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+}
+Run:
+npx prisma migrate dev --name auth_init
+4) Server structure & middleware
+Create src/server:
+src/server/
+  index.ts
+  auth/
+    passport.ts
+    jwt.ts
+    routes.ts
+    email.ts
+    phone.ts
+  db.ts
+  rateLimit.ts
+  types.ts
+CORS: allow your frontend origin; send credentials.
+cookie-parser: for jwt cookies.
+rateLimit: protect OTP/email endpoints.
+5) JWT helpers (access + refresh, httpOnly cookies)
+src/server/auth/jwt.ts:
+signAccessToken(user)
+signRefreshToken(user) & persist to Session with expiry (e.g., 30d)
+setAuthCookies(res, {access, refresh}) with httpOnly, secure, sameSite:'lax', domain from env
+clearAuthCookies(res)
+Add authGuard middleware for protected POST endpoints (reads stay public).
+6) Passport strategies (OAuth)
+src/server/auth/passport.ts:
+GoogleStrategy (passport-google-oauth20)
+MicrosoftStrategy (passport-microsoft or passport-azure-ad-oauth2)
+AppleStrategy (passport-apple; Services ID web flow)
+On success:
+find/create user by provider email
+issue JWTs & set cookies
+redirect to ${APP_URL}/auth/callback?ok=1
+Routes to add:
+GET /api/auth/google
+GET /api/auth/google/callback
+
+GET /api/auth/microsoft
+GET /api/auth/microsoft/callback
+
+GET /api/auth/apple
+POST/GET /api/auth/apple/callback   # per library
+7) Email Magic Link
+src/server/auth/email.ts:
+POST /api/auth/email/start with { email }
+rate-limit, create EmailToken with random token (nanoid), store hashed (bcrypt), set 10-min expiry
+send email via Nodemailer: link https://theceylonx.com/auth/magic?token=...&email=...
+GET /api/auth/email/verify with token,email
+validate (hash compare), mark used, find/create user, issue JWT cookies, redirect to ${APP_URL}/auth/callback?ok=1
+8) Phone OTP (Twilio)
+src/server/auth/phone.ts:
+POST /api/auth/phone/send with { phone }
+normalize E.164, rate-limit, create/update PhoneOtp with hashed code (6 digits), TTL 5 min
+send via Twilio (Verify or Messaging Service)
+POST /api/auth/phone/verify with { phone, code }
+validate/compare hash, enforce attempts limit, create/find user, issue JWT cookies, delete OTP row
+9) Session routes
+src/server/auth/routes.ts:
+POST /api/auth/logout        // clear cookies + delete refresh session
+GET  /api/auth/me            // return current user from access token (optional)
+All GET (read) routes in your app remain public.
+All POST (write) routes (e.g., /api/questions, /api/answers) must use authGuard.
+10) Express app entry
+src/server/index.ts:
+cors({ origin: APP_URL, credentials: true })
+cookieParser()
+app.use(passport.initialize())
+mount /api/auth/* routes
+mount your existing APIs
+start server
+11) React Sign-in UI (single screen/modal)
+Create src/client/components/AuthSignIn.tsx with:
+Email field + “Continue with Email” → POST /api/auth/email/start, show “Check your email” state
+Buttons:
+“Continue with Google” → window.location = API_URL + '/api/auth/google'
+“Continue with Microsoft” → .../microsoft
+“Continue with Apple” → .../apple
+Phone:
+phone input (+ country code), Send Code
+show code field → Verify & Continue (POST /api/auth/phone/verify)
+Hide provider buttons if env not configured (optionally fetch /api/auth/providers to know).
+Create a small client route /auth/magic to hit /api/auth/email/verify, then redirect to homepage.
+12) Protect only participation actions on the client
+When a visitor clicks Ask or Answer, if not authenticated, open the Sign-in UI.
+Browsing lists & details stays public.
+On success, refresh user state and proceed.
+13) Acceptance Criteria
+Sign-in screen shows:
+Type email address and continue (magic link)
+Continue with Google
+Continue with Microsoft
+Continue with Apple
+Continue with Phone (OTP)
+Public reading works without login.
+Posting requires login; APIs enforce via JWT.
+Cookies are httpOnly, secure, sameSite=lax.
+Magic link & OTP are rate-limited and expire.
+All English-only copy.
+14) Nice-to-haves (if time permits)
+/api/auth/providers to expose which buttons to show (based on env).
+Friendly error toasts on the client.
+Minimal profile endpoint /api/auth/me.
+Please deliver
+Updated Prisma schema + migration.
+New Express auth routes (email, phone, oauth providers).
+Passport strategy setup & callbacks.
+JWT helper + cookie utilities.
+React AuthSignIn component + minimal styles.
+Updates to post routes to require authGuard.
+README with env + run steps.

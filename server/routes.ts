@@ -1,7 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./auth";
+import { authRouter, authGuard } from "./auth/routes";
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import passport from 'passport';
 import { 
   insertTripSchema, 
   insertCommentSchema, 
@@ -15,25 +18,21 @@ import {
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
-  await setupAuth(app);
+  // CORS and cookie middleware
+  app.use(cors({
+    origin: process.env.APP_URL || 'http://localhost:5000',
+    credentials: true
+  }));
+  app.use(cookieParser());
+  app.use(passport.initialize());
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+  // Mount auth routes
+  app.use('/api/auth', authRouter);
 
   // User profile routes
-  app.patch('/api/user', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/user', authGuard, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { username, phoneNumber, bio, profileImageUrl } = req.body;
       
       // Check if username is already taken by another user
@@ -62,9 +61,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Trip routes
-  app.post('/api/trips', isAuthenticated, async (req: any, res) => {
+  app.post('/api/trips', authGuard, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const tripData = insertTripSchema.parse({ ...req.body, organizerId: userId });
       
       const trip = await storage.createTrip(tripData);
@@ -125,9 +124,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/trips/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/trips/:id', authGuard, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const tripId = req.params.id;
       
       // Check if user is the organizer
@@ -144,9 +143,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/trips/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/trips/:id', authGuard, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const tripId = req.params.id;
       
       // Check if user is the organizer
@@ -164,11 +163,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update trip status (mark as completed/inactive)
-  app.patch('/api/trips/:id/status', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/trips/:id/status', authGuard, async (req: any, res) => {
     try {
       const { id } = req.params;
       const { status } = req.body;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
 
       // Verify valid status
       if (!["active", "completed", "cancelled"].includes(status)) {
@@ -194,9 +193,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User trip routes
-  app.get('/api/users/trips', isAuthenticated, async (req: any, res) => {
+  app.get('/api/users/trips', authGuard, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const trips = await storage.getUserTrips(userId);
       res.json(trips);
     } catch (error) {
@@ -205,9 +204,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/users/participations', isAuthenticated, async (req: any, res) => {
+  app.get('/api/users/participations', authGuard, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const participations = await storage.getUserParticipations(userId);
       res.json(participations);
     } catch (error) {
@@ -217,9 +216,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Trip participation routes
-  app.post('/api/trips/:id/join', isAuthenticated, async (req: any, res) => {
+  app.post('/api/trips/:id/join', authGuard, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const tripId = req.params.id;
       
       const participation = await storage.joinTrip({
@@ -235,7 +234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/trips/:id/participants', isAuthenticated, async (req, res) => {
+  app.get('/api/trips/:id/participants', authGuard, async (req, res) => {
     try {
       const participants = await storage.getTripParticipants(req.params.id);
       res.json(participants);
@@ -245,7 +244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/participants/:id/status', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/participants/:id/status', authGuard, async (req: any, res) => {
     try {
       const { status } = req.body;
       const participation = await storage.updateParticipationStatus(req.params.id, status);
@@ -257,9 +256,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Comment routes
-  app.post('/api/trips/:id/comments', isAuthenticated, async (req: any, res) => {
+  app.post('/api/trips/:id/comments', authGuard, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const tripId = req.params.id;
       const commentData = insertCommentSchema.parse({
         ...req.body,
@@ -288,7 +287,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/comments/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/comments/:id', authGuard, async (req: any, res) => {
     try {
       await storage.deleteComment(req.params.id);
       res.json({ message: "Comment deleted successfully" });
@@ -299,7 +298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Rating routes
-  app.post('/api/trips/:id/ratings', isAuthenticated, async (req: any, res) => {
+  app.post('/api/trips/:id/ratings', authGuard, async (req: any, res) => {
     try {
       const raterId = req.user.claims.sub;
       const tripId = req.params.id;
@@ -341,7 +340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Report routes
-  app.post('/api/reports', isAuthenticated, async (req: any, res) => {
+  app.post('/api/reports', authGuard, async (req: any, res) => {
     try {
       const reporterId = req.user.claims.sub;
       const reportData = insertReportSchema.parse({
@@ -363,7 +362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Community Q&A Routes
   
   // Topics
-  app.post('/api/topics', isAuthenticated, async (req: any, res) => {
+  app.post('/api/topics', authGuard, async (req: any, res) => {
     try {
       const topicData = insertTopicSchema.parse(req.body);
       const topic = await storage.createTopic(topicData);
@@ -401,9 +400,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Questions
-  app.post('/api/questions', isAuthenticated, async (req: any, res) => {
+  app.post('/api/questions', authGuard, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const questionData = insertQuestionSchema.parse({ ...req.body, userId });
       const question = await storage.createQuestion(questionData);
       res.json(question);
@@ -446,9 +445,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/questions/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/questions/:id', authGuard, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // First check if the question exists and belongs to the user
       const existingQuestion = await storage.getQuestion(req.params.id);
@@ -471,9 +470,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/questions/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/questions/:id', authGuard, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // First check if the question exists and belongs to the user
       const existingQuestion = await storage.getQuestion(req.params.id);
@@ -493,9 +492,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Answers
-  app.post('/api/questions/:questionId/answers', isAuthenticated, async (req: any, res) => {
+  app.post('/api/questions/:questionId/answers', authGuard, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const answerData = insertAnswerSchema.parse({ 
         ...req.body, 
         userId, 
@@ -522,9 +521,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/questions/:questionId/accept/:answerId', isAuthenticated, async (req: any, res) => {
+  app.post('/api/questions/:questionId/accept/:answerId', authGuard, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // Check if the user owns the question
       const question = await storage.getQuestion(req.params.questionId);
@@ -541,9 +540,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Votes
-  app.post('/api/vote', isAuthenticated, async (req: any, res) => {
+  app.post('/api/vote', authGuard, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const voteData = insertVoteSchema.parse({ ...req.body, userId });
       
       // Check if user already voted
@@ -573,9 +572,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/vote/:type/:id', isAuthenticated, async (req: any, res) => {
+  app.get('/api/vote/:type/:id', authGuard, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { type, id } = req.params;
       
       const questionId = type === 'question' ? id : undefined;
