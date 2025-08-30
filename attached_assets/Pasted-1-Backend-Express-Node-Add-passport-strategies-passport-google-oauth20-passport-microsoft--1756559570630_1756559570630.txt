@@ -1,0 +1,106 @@
+1) Backend – Express (Node)
+Add passport + strategies (passport-google-oauth20, passport-microsoft, passport-apple).
+Add nodemailer (magic links) + twilio (phone OTP).
+Add JWT session handling (jsonwebtoken, cookie-parser).
+DB: Prisma models for User, Session, EmailToken, PhoneOtp.
+Endpoints to create:
+/api/auth/email/start     // send magic link
+/api/auth/email/verify    // validate link, issue JWT
+/api/auth/phone/send      // send OTP via Twilio
+/api/auth/phone/verify    // validate OTP, issue JWT
+/api/auth/google          // redirect to Google OAuth
+/api/auth/google/callback
+/api/auth/microsoft
+/api/auth/microsoft/callback
+/api/auth/apple
+/api/auth/apple/callback
+/api/auth/logout
+/api/auth/me
+Middleware: authGuard for POST routes (/api/questions, /api/answers).
+2) Prisma schema (additions)
+model User {
+  id        String   @id @default(cuid())
+  email     String?  @unique
+  phone     String?  @unique
+  name      String?
+  image     String?
+  provider  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  refreshToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+model EmailToken {
+  id        String   @id @default(cuid())
+  email     String
+  tokenHash String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+}
+
+model PhoneOtp {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  codeHash  String
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+3) Env Vars
+APP_URL=https://theceylonx.com
+API_URL=https://api.theceylonx.com
+JWT_ACCESS_SECRET=***
+JWT_REFRESH_SECRET=***
+COOKIE_DOMAIN=.theceylonx.com
+COOKIE_SECURE=true
+
+EMAIL_FROM="CeylonX <no-reply@theceylonx.com>"
+SMTP_HOST=smtp.yourhost.com
+SMTP_PORT=587
+SMTP_USER=no-reply@theceylonx.com
+SMTP_PASS=***
+
+GOOGLE_CLIENT_ID=***
+GOOGLE_CLIENT_SECRET=***
+
+MICROSOFT_CLIENT_ID=***
+MICROSOFT_CLIENT_SECRET=***
+MICROSOFT_TENANT_ID=common
+
+APPLE_CLIENT_ID=***
+APPLE_TEAM_ID=***
+APPLE_KEY_ID=***
+APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+
+TWILIO_ACCOUNT_SID=***
+TWILIO_AUTH_TOKEN=***
+TWILIO_MESSAGING_SERVICE_SID=***
+4) React frontend (Sign-in page/component)
+/signin screen should show:
+Email input → “Continue with Email” (calls /api/auth/email/start).
+Google, Microsoft, Apple buttons → redirect to backend /api/auth/{provider}.
+Phone input → “Send Code” → enter code → “Verify & Continue”.
+Hide unavailable providers if env not set.
+When not logged in and user tries Ask/Answer, redirect or show modal → /signin.
+5) Acceptance Criteria
+Browsing Q&A = open.
+Posting requires sign-in.
+Screen shows all 5 options.
+JWT stored in httpOnly cookies.
+Magic links & OTPs expire (10 mins, 5 mins).
+OTP rate-limited.
+All UI copy in English.
+6) Deliverables
+Updated prisma/schema.prisma + migration.
+New auth/ folder: passport strategies, email, phone, jwt utils, routes.
+React AuthSignIn.tsx component.
+Updates to Express routes: read open, post protected.
+README instructions for .env, running, testing.
