@@ -20,6 +20,7 @@ import ContactUs from "@/pages/contact-us";
 import SignInRequired from "@/pages/signin-required";
 import AuthSignInPage from "@/pages/auth-signin";
 import DestinationPage from "@/pages/destination";
+import { FloatingActionMenu } from "@/components/floating-action-menu";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -37,42 +38,47 @@ function Router() {
   }
 
   return (
-    <Switch>
-      {!isAuthenticated ? (
-        <>
-          <Route path="/" component={Landing} />
-          <Route path="/browse-trips" component={BrowseTrips} />
-          <Route path="/trips/:id" component={TripDetails} />
-          <Route path="/community" component={Community} />
-          <Route path="/safety-guidelines" component={SafetyGuidelines} />
-          <Route path="/terms-of-service" component={TermsOfService} />
-          <Route path="/privacy-policy" component={PrivacyPolicy} />
-          <Route path="/contact-us" component={ContactUs} />
-          <Route path="/faq" component={FAQ} />
-          <Route path="/auth/signin" component={AuthSignInPage} />
-          <Route path="/destination/:city" component={DestinationPage} />
-          <Route path="/post" component={SignInRequired} />
-          <Route path="/dashboard" component={SignInRequired} />
-        </>
-      ) : (
-        <>
-          <Route path="/" component={Home} />
-          <Route path="/browse-trips" component={BrowseTrips} />
-          <Route path="/post" component={PostTrip} />
-          <Route path="/trips/:id" component={TripDetails} />
-          <Route path="/dashboard" component={UserDashboard} />
-          <Route path="/community" component={Community} />
-          <Route path="/safety-guidelines" component={SafetyGuidelines} />
-          <Route path="/terms-of-service" component={TermsOfService} />
-          <Route path="/privacy-policy" component={PrivacyPolicy} />
-          <Route path="/contact-us" component={ContactUs} />
-          <Route path="/faq" component={FAQ} />
-          <Route path="/auth/signin" component={AuthSignInPage} />
-          <Route path="/destination/:city" component={DestinationPage} />
-        </>
-      )}
-      <Route component={NotFound} />
-    </Switch>
+    <>
+      <Switch>
+        {!isAuthenticated ? (
+          <>
+            <Route path="/" component={Landing} />
+            <Route path="/browse-trips" component={BrowseTrips} />
+            <Route path="/trips/:id" component={TripDetails} />
+            <Route path="/community" component={Community} />
+            <Route path="/safety-guidelines" component={SafetyGuidelines} />
+            <Route path="/terms-of-service" component={TermsOfService} />
+            <Route path="/privacy-policy" component={PrivacyPolicy} />
+            <Route path="/contact-us" component={ContactUs} />
+            <Route path="/faq" component={FAQ} />
+            <Route path="/auth/signin" component={AuthSignInPage} />
+            <Route path="/destination/:city" component={DestinationPage} />
+            <Route path="/post" component={SignInRequired} />
+            <Route path="/dashboard" component={SignInRequired} />
+          </>
+        ) : (
+          <>
+            <Route path="/" component={Home} />
+            <Route path="/browse-trips" component={BrowseTrips} />
+            <Route path="/post" component={PostTrip} />
+            <Route path="/trips/:id" component={TripDetails} />
+            <Route path="/dashboard" component={UserDashboard} />
+            <Route path="/community" component={Community} />
+            <Route path="/safety-guidelines" component={SafetyGuidelines} />
+            <Route path="/terms-of-service" component={TermsOfService} />
+            <Route path="/privacy-policy" component={PrivacyPolicy} />
+            <Route path="/contact-us" component={ContactUs} />
+            <Route path="/faq" component={FAQ} />
+            <Route path="/auth/signin" component={AuthSignInPage} />
+            <Route path="/destination/:city" component={DestinationPage} />
+          </>
+        )}
+        <Route component={NotFound} />
+      </Switch>
+      
+      {/* Show floating action menu only for authenticated users */}
+      {isAuthenticated && <FloatingActionMenu />}
+    </>
   );
 }
 
