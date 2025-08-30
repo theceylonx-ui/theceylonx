@@ -38,7 +38,7 @@ import { db } from "./db";
 import { eq, and, or, ilike, desc, asc, gte, lte, count } from "drizzle-orm";
 
 export interface IStorage {
-  // User operations (for custom auth)
+  // User operations (for Replit auth)
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;

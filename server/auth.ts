@@ -1,44 +1,28 @@
+import * as client from "openid-client";
+import { Strategy, type VerifyFunction } from "openid-client/passport";
+
 import passport from "passport";
-import { Strategy as LocalStrategy } from "passport-local";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { Express } from "express";
 import session from "express-session";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
-import { promisify } from "util";
-import { storage } from "./storage";
-import { User as DbUser } from "@shared/schema";
+import type { Express, RequestHandler } from "express";
+import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
+import { storage } from "./storage";
 
-declare global {
-  namespace Express {
-    interface User extends DbUser {}
-  }
+if (!process.env.REPLIT_DOMAINS) {
+  throw new Error("Environment variable REPLIT_DOMAINS not provided");
 }
 
-interface GoogleProfile {
-  id: string;
-  emails?: Array<{ value: string; verified?: boolean }>;
-  name?: { givenName?: string; familyName?: string };
-  photos?: Array<{ value: string }>;
-}
+const getOidcConfig = memoize(
+  async () => {
+    return await client.discovery(
+      new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
+      process.env.REPL_ID!
+    );
+  },
+  { maxAge: 3600 * 1000 }
+);
 
-const scryptAsync = promisify(scrypt);
-
-export async function hashPassword(password: string): Promise<string> {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
-}
-
-export async function comparePasswords(supplied: string, stored: string): Promise<boolean> {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
-}
-
-export function setupAuth(app: Express) {
-  // Session setup
+export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
@@ -47,205 +31,133 @@ export function setupAuth(app: Express) {
     ttl: sessionTtl,
     tableName: "sessions",
   });
-
-  const sessionSettings: session.SessionOptions = {
+  return session({
     secret: process.env.SESSION_SECRET!,
+    store: sessionStore,
     resave: false,
     saveUninitialized: false,
-    store: sessionStore,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       maxAge: sessionTtl,
     },
-  };
-
-  app.set("trust proxy", 1);
-  app.use(session(sessionSettings));
-  app.use(passport.initialize());
-  app.use(passport.session());
-
-  // Passport strategies
-  passport.use(
-    new LocalStrategy(
-      { usernameField: "email" },
-      async (email, password, done) => {
-        try {
-          const user = await storage.getUserByEmail(email);
-          if (!user || !user.password) {
-            return done(null, false, { message: "Invalid credentials" });
-          }
-
-          const isValid = await comparePasswords(password, user.password);
-          if (!isValid) {
-            return done(null, false, { message: "Invalid credentials" });
-          }
-
-          return done(null, user);
-        } catch (error) {
-          return done(error);
-        }
-      }
-    )
-  );
-
-  // Google OAuth strategy
-  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    passport.use(
-      new GoogleStrategy(
-        {
-          clientID: process.env.GOOGLE_CLIENT_ID,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          callbackURL: process.env.NODE_ENV === 'production' 
-            ? "https://3763d1bd-749a-4f1b-be62-f889e504e8a5-00-yclemjl7ntzq.riker.replit.dev/auth/google/callback"
-            : "https://3763d1bd-749a-4f1b-be62-f889e504e8a5-00-yclemjl7ntzq.riker.replit.dev/auth/google/callback",
-        },
-        async (accessToken: string, refreshToken: string, profile: GoogleProfile, done: any) => {
-          try {
-            // Check if user exists by Google ID
-            let user = await storage.getUserByGoogleId(profile.id);
-            
-            if (!user) {
-              // Check if user exists by email
-              const email = profile.emails?.[0]?.value;
-              if (email) {
-                user = await storage.getUserByEmail(email);
-                if (user) {
-                  // Update existing user with Google ID
-                  user = await storage.updateUser(user.id, {
-                    googleId: profile.id,
-                    authProvider: "google",
-                    emailVerified: true,
-                    profileImageUrl: profile.photos?.[0]?.value || user.profileImageUrl,
-                  });
-                }
-              }
-            }
-
-            if (!user && profile.emails?.[0]?.value) {
-              // Create new user
-              user = await storage.createUser({
-                email: profile.emails[0].value,
-                firstName: profile.name?.givenName || "",
-                lastName: profile.name?.familyName || "",
-                googleId: profile.id,
-                authProvider: "google",
-                emailVerified: true,
-                profileImageUrl: profile.photos?.[0]?.value,
-                username: `google_${profile.id}`,
-              });
-            }
-
-            return done(null, user || false);
-          } catch (error) {
-            return done(error);
-          }
-        }
-      )
-    );
-  }
-
-  passport.serializeUser((user, done) => done(null, user.id));
-  passport.deserializeUser(async (id: string, done) => {
-    try {
-      const user = await storage.getUser(id);
-      done(null, user);
-    } catch (error) {
-      done(error);
-    }
-  });
-
-  // Auth routes
-  app.post("/api/register", async (req, res, next) => {
-    try {
-      const { email, password, firstName, lastName } = req.body;
-
-      // Check if user already exists
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(400).json({ message: "User already exists" });
-      }
-
-      // Hash password and create user
-      const hashedPassword = await hashPassword(password);
-      const user = await storage.createUser({
-        email,
-        password: hashedPassword,
-        firstName,
-        lastName,
-        authProvider: "email",
-        username: `user_${Date.now()}`, // Temporary username
-      });
-
-      req.login(user, (err) => {
-        if (err) return next(err);
-        res.status(201).json(user);
-      });
-    } catch (error) {
-      console.error("Registration error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: any, user: DbUser | false, info: any) => {
-      if (err) {
-        return next(err);
-      }
-      if (!user) {
-        return res.status(401).json({ message: info?.message || "Invalid credentials" });
-      }
-      req.login(user, (err) => {
-        if (err) {
-          return next(err);
-        }
-        res.json(user);
-      });
-    })(req, res, next);
-  });
-
-  app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
-
-  app.get(
-    "/auth/google/callback",
-    passport.authenticate("google", { failureRedirect: "/auth/signin?error=google_failed" }),
-    (req, res) => {
-      res.redirect("/");
-    }
-  );
-
-  app.post("/api/logout", (req, res, next) => {
-    req.logout((err) => {
-      if (err) return next(err);
-      res.sendStatus(200);
-    });
-  });
-
-  app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    res.json(req.user);
-  });
-
-  app.patch("/api/user", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    
-    try {
-      const updatedUser = await storage.updateUser(req.user.id, req.body);
-      res.json(updatedUser);
-    } catch (error) {
-      console.error("Update user error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
   });
 }
 
-export const isAuthenticated = (req: any, res: any, next: any) => {
-  if (req.isAuthenticated()) {
+function updateUserSession(
+  user: any,
+  tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers
+) {
+  user.claims = tokens.claims();
+  user.access_token = tokens.access_token;
+  user.refresh_token = tokens.refresh_token;
+  user.expires_at = user.claims?.exp;
+}
+
+async function upsertUser(
+  claims: any,
+) {
+  await storage.upsertUser({
+    id: claims["sub"],
+    email: claims["email"],
+    firstName: claims["first_name"],
+    lastName: claims["last_name"],
+    profileImageUrl: claims["profile_image_url"],
+  });
+}
+
+export async function setupAuth(app: Express) {
+  app.set("trust proxy", 1);
+  app.use(getSession());
+  app.use(passport.initialize());
+  app.use(passport.session());
+
+  const config = await getOidcConfig();
+
+  const verify: VerifyFunction = async (
+    tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
+    verified: passport.AuthenticateCallback
+  ) => {
+    const user = {};
+    updateUserSession(user, tokens);
+    await upsertUser(tokens.claims());
+    verified(null, user);
+  };
+
+  for (const domain of process.env
+    .REPLIT_DOMAINS!.split(",")) {
+    const strategy = new Strategy(
+      {
+        name: `replitauth:${domain}`,
+        config,
+        scope: "openid email profile offline_access",
+        callbackURL: `https://${domain}/api/callback`,
+      },
+      verify,
+    );
+    passport.use(strategy);
+  }
+
+  passport.serializeUser((user: Express.User, cb) => cb(null, user));
+  passport.deserializeUser((user: Express.User, cb) => cb(null, user));
+
+  app.get("/api/login", (req, res, next) => {
+    const domain = req.hostname === 'localhost' 
+      ? process.env.REPLIT_DOMAINS!.split(',')[0] 
+      : req.hostname;
+    passport.authenticate(`replitauth:${domain}`, {
+      prompt: "login consent",
+      scope: ["openid", "email", "profile", "offline_access"],
+    })(req, res, next);
+  });
+
+  app.get("/api/callback", (req, res, next) => {
+    const domain = req.hostname === 'localhost' 
+      ? process.env.REPLIT_DOMAINS!.split(',')[0] 
+      : req.hostname;
+    passport.authenticate(`replitauth:${domain}`, {
+      successReturnToOrRedirect: "/",
+      failureRedirect: "/api/login",
+    })(req, res, next);
+  });
+
+  app.get("/api/logout", (req, res) => {
+    req.logout(() => {
+      res.redirect(
+        client.buildEndSessionUrl(config, {
+          client_id: process.env.REPL_ID!,
+          post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
+        }).href
+      );
+    });
+  });
+}
+
+export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  const user = req.user as any;
+
+  if (!req.isAuthenticated() || !user.expires_at) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  if (now <= user.expires_at) {
     return next();
   }
-  res.status(401).json({ message: "Unauthorized" });
+
+  const refreshToken = user.refresh_token;
+  if (!refreshToken) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const config = await getOidcConfig();
+    const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
+    updateUserSession(user, tokenResponse);
+    return next();
+  } catch (error) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
 };

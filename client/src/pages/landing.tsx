@@ -7,7 +7,7 @@ import backgroundImage from "@assets/11_1756417976014.png";
 
 export default function Landing() {
   const handleLogin = () => {
-    window.location.href = '/auth/signin';
+    window.location.href = '/api/login';
   };
 
   return (
