@@ -19,15 +19,8 @@ export default function AuthSignInPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-ceylon-green/10 to-ceylon-orange/10 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-bounce-gentle">
-            <div className="h-12 w-12 border-2 border-ceylon-green/30 rounded-full animate-spin-slow border-dashed mx-auto mb-4"></div>
-          </div>
-          <p className="text-gray-600 animate-fade-in">Preparing sign-in options...</p>
-          <div className="flex justify-center space-x-1 mt-3">
-            <div className="w-2 h-2 bg-ceylon-blue rounded-full animate-pulse"></div>
-            <div className="w-2 h-2 bg-ceylon-green rounded-full animate-pulse delay-200"></div>
-            <div className="w-2 h-2 bg-ceylon-orange rounded-full animate-pulse delay-400"></div>
-          </div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ceylon-green mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
         </div>
       </div>
     );
