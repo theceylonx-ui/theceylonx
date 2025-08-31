@@ -1,10 +1,13 @@
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useKpiAnalytics } from "@/hooks/useEnhancedRecommendations";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   BarChart3, 
   TrendingUp, 
@@ -16,7 +19,12 @@ import {
   Activity,
   Zap,
   Target,
-  Clock
+  Clock,
+  Flag,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Shield
 } from "lucide-react";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 
@@ -24,6 +32,35 @@ export default function AdminDashboard() {
   const [timeRange, setTimeRange] = useState("7d");
   const [eventType, setEventType] = useState("all");
   const [abTestGroup, setAbTestGroup] = useState("all");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Reports data
+  const { data: reports = [], isLoading: reportsLoading } = useQuery({
+    queryKey: ['/api/admin/reports'],
+    queryFn: () => fetch('/api/admin/reports').then(res => res.json()),
+  });
+
+  // Update report status mutation
+  const updateReportStatusMutation = useMutation({
+    mutationFn: async ({ reportId, status }: { reportId: string; status: string }) => {
+      return await apiRequest("PATCH", `/api/admin/reports/${reportId}/status`, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
+      toast({
+        title: "Success",
+        description: "Report status updated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update report status.",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Calculate date range
   const getDateRange = () => {
@@ -231,6 +268,7 @@ export default function AdminDashboard() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="events">Event Details</TabsTrigger>
           <TabsTrigger value="abtest">A/B Testing</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -422,6 +460,98 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="reports" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Flag className="h-5 w-5" />
+                Trip Reports Management
+              </CardTitle>
+              <CardDescription>
+                Review and manage reported trips for platform safety
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {reportsLoading ? (
+                <div className="flex items-center justify-center h-32">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : reports.length === 0 ? (
+                <div className="text-center py-8">
+                  <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No reports to review</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {reports.map((report: any) => (
+                    <div key={report.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold">Trip Report</h4>
+                            <Badge 
+                              variant={
+                                report.status === 'resolved' ? 'default' :
+                                report.status === 'dismissed' ? 'secondary' : 'destructive'
+                              }
+                            >
+                              {report.status}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            <strong>Reason:</strong> {report.reason}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            <strong>Trip:</strong> {report.tripTitle}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            <strong>Reported:</strong> {format(new Date(report.createdAt), 'MMM dd, yyyy HH:mm')}
+                          </p>
+                          {report.description && (
+                            <p className="text-sm">
+                              <strong>Details:</strong> {report.description}
+                            </p>
+                          )}
+                        </div>
+                        
+                        {report.status === 'pending' && (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateReportStatusMutation.mutate({ 
+                                reportId: report.id, 
+                                status: 'dismissed' 
+                              })}
+                              disabled={updateReportStatusMutation.isPending}
+                              data-testid={`button-dismiss-${report.id}`}
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Dismiss
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => updateReportStatusMutation.mutate({ 
+                                reportId: report.id, 
+                                status: 'resolved' 
+                              })}
+                              disabled={updateReportStatusMutation.isPending}
+                              data-testid={`button-resolve-${report.id}`}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Resolve
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

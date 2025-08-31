@@ -345,7 +345,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Report routes
   app.post('/api/reports', authGuard, async (req: any, res) => {
     try {
-      const reporterId = req.user.claims.sub;
+      const reporterId = req.user.id; // Fixed: use req.user.id instead of req.user.claims.sub
       const reportData = insertReportSchema.parse({
         ...req.body,
         reporterId,
@@ -359,6 +359,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.error("Error creating report:", error);
       res.status(500).json({ message: "Failed to create report" });
+    }
+  });
+
+  // Admin route to get all reports
+  app.get('/api/admin/reports', authGuard, async (req: any, res) => {
+    try {
+      // Check if user is admin (add your admin user IDs here)
+      const adminUserIds = [
+        "bcc1d79a-d83a-4a99-8556-e1d367140e88", // PraDas S Agnya
+        "313a0e58-6745-4db7-91bd-31e69c7496ab", // Add more admin IDs as needed
+      ];
+      
+      if (!adminUserIds.includes(req.user.id)) {
+        return res.status(403).json({ message: "Access denied. Admin privileges required." });
+      }
+
+      const reports = await storage.getReports();
+      res.json(reports);
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+      res.status(500).json({ message: "Failed to fetch reports" });
+    }
+  });
+
+  // Admin route to update report status
+  app.patch('/api/admin/reports/:id/status', authGuard, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      
+      // Check if user is admin
+      const adminUserIds = [
+        "bcc1d79a-d83a-4a99-8556-e1d367140e88", // PraDas S Agnya
+        "313a0e58-6745-4db7-91bd-31e69c7496ab", // Add more admin IDs as needed
+      ];
+      
+      if (!adminUserIds.includes(req.user.id)) {
+        return res.status(403).json({ message: "Access denied. Admin privileges required." });
+      }
+
+      // Validate status
+      if (!["pending", "resolved", "dismissed"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status. Must be pending, resolved, or dismissed" });
+      }
+
+      const updatedReport = await storage.updateReportStatus(id, status);
+      res.json(updatedReport);
+    } catch (error) {
+      console.error("Error updating report status:", error);
+      res.status(500).json({ message: "Failed to update report status" });
     }
   });
 

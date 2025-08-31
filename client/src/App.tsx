@@ -24,6 +24,7 @@ import AuthCallbackPage from "@/pages/auth-callback";
 import DestinationPage from "@/pages/destination";
 import PreferencesPage from "@/pages/preferences";
 import AdminDashboardPage from "@/pages/admin-dashboard";
+import ReportTripPage from "@/pages/report-trip";
 import { FloatingActionMenu } from "@/components/floating-action-menu";
 
 function Router() {
@@ -80,6 +81,7 @@ function Router() {
             <Route path="/destination/:city" component={DestinationPage} />
             <Route path="/preferences" component={PreferencesPage} />
             <Route path="/admin" component={AdminDashboardPage} />
+            <Route path="/report-trip/:id" component={ReportTripPage} />
           </>
         )}
         <Route component={NotFound} />

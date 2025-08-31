@@ -183,7 +183,8 @@ export default function TripDetails({ params }: TripDetailsProps) {
       window.location.href = "/auth/signin";
       return;
     }
-    reportTripMutation.mutate("inappropriate_content");
+    // Navigate to dedicated report page
+    window.location.href = `/report-trip/${id}`;
   };
 
   const handleContact = () => {

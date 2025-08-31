@@ -99,6 +99,7 @@ export interface IStorage {
   // Report operations
   createReport(report: InsertReport): Promise<Report>;
   getReports(): Promise<Report[]>;
+  updateReportStatus(reportId: string, status: string): Promise<Report>;
   
   // Community Q&A operations
   // Topics
@@ -423,6 +424,15 @@ export class DatabaseStorage implements IStorage {
 
   async getReports(): Promise<Report[]> {
     return await db.select().from(reports).orderBy(desc(reports.createdAt));
+  }
+
+  async updateReportStatus(reportId: string, status: string): Promise<Report> {
+    const [updatedReport] = await db
+      .update(reports)
+      .set({ status })
+      .where(eq(reports.id, reportId))
+      .returning();
+    return updatedReport;
   }
 
   // Community Q&A operations
