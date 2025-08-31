@@ -30,7 +30,9 @@ export function useAuth() {
         throw new Error(`${res.status}: ${res.statusText}`);
       }
       
-      return await res.json();
+      const userData = await res.json();
+      console.log("🔄 useAuth fetched user data:", userData);
+      return userData;
     },
   });
 

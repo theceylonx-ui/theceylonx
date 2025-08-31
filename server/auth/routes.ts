@@ -133,6 +133,12 @@ router.get('/me', async (req: Request, res: Response) => {
     updatedAt: freshUser.updatedAt,
   };
   
+  console.log("🔄 /api/auth/me returning fresh user data:", { 
+    username: responseUser.username, 
+    bio: responseUser.bio ? responseUser.bio.substring(0, 30) : null,
+    updatedAt: responseUser.updatedAt 
+  });
+  
   // Add cache-busting headers to prevent browser caching
   res.set({
     'Cache-Control': 'no-cache, no-store, must-revalidate',
