@@ -100,7 +100,8 @@ export default function PostTrip() {
         description: "Your trip has been posted successfully!",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
-      setLocation("/browse");
+      queryClient.invalidateQueries({ queryKey: ["/api/users/trips"] });
+      setLocation("/dashboard");
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
