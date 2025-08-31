@@ -26,13 +26,6 @@ const authRateLimit = rateLimit({
   legacyHeaders: false,
 });
 
-const otpRateLimit = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3, // limit each IP to 3 OTP requests per hour
-  message: { error: 'Too many OTP requests, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
 
 // OAuth Routes
 
@@ -114,48 +107,13 @@ router.get('/email/verify', async (req: Request, res: Response) => {
   res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=email_auth_disabled`);
 });
 
-// Phone OTP Routes
-router.post('/phone/send', otpRateLimit, async (req: Request, res: Response) => {
-  if (!isPhoneConfigured()) {
-    return res.status(503).json({ error: 'Phone authentication not configured' });
-  }
-
-  try {
-    const { phone } = phoneStartSchema.parse(req.body);
-    await sendPhoneOtp(phone);
-    res.json({ success: true, message: 'Verification code sent to your phone' });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors[0]?.message || 'Invalid phone number' });
-    }
-    console.error('Phone OTP send error:', error);
-    res.status(500).json({ error: 'Failed to send verification code' });
-  }
+// Phone authentication removed - Google OAuth only
+router.post('/phone/send', authRateLimit, async (req: Request, res: Response) => {
+  res.status(503).json({ error: 'Phone authentication has been disabled. Please use Google sign-in.' });
 });
 
 router.post('/phone/verify', authRateLimit, async (req: Request, res: Response) => {
-  if (!isPhoneConfigured()) {
-    return res.status(503).json({ error: 'Phone authentication not configured' });
-  }
-
-  try {
-    const { phone, code } = phoneVerifySchema.parse(req.body);
-    const user = await verifyPhoneOtp(phone, code);
-    
-    if (!user) {
-      return res.status(400).json({ error: 'Invalid or expired verification code' });
-    }
-
-    const tokens = await generateAuthTokens(user);
-    setAuthCookies(res, tokens);
-    res.json({ success: true, message: 'Phone verification successful' });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors[0]?.message || 'Invalid input' });
-    }
-    console.error('Phone OTP verify error:', error);
-    res.status(500).json({ error: 'Verification failed' });
-  }
+  res.status(503).json({ error: 'Phone authentication has been disabled. Please use Google sign-in.' });
 });
 
 // Session Management Routes
@@ -178,8 +136,8 @@ router.get('/providers', (req: Request, res: Response) => {
     google: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
     microsoft: !!(process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET),
     apple: !!(process.env.APPLE_CLIENT_ID && process.env.APPLE_PRIVATE_KEY),
-    email: isEmailConfigured(),
-    phone: isPhoneConfigured(),
+    email: false, // Disabled
+    phone: false, // Disabled
   };
 
   res.json(providers);
