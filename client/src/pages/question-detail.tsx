@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
 import { Link } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
 import type { QuestionWithDetails, Answer, User as UserType } from "@shared/schema";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
@@ -45,9 +46,7 @@ export default function QuestionDetailPage() {
   const { toast } = useToast();
 
   // Get current user
-  const { data: user } = useQuery<UserType>({
-    queryKey: ['/api/user'],
-  });
+  const { user } = useAuth();
 
   // Get question details
   const { data: question, isLoading } = useQuery<QuestionWithDetails>({
@@ -389,11 +388,17 @@ export default function QuestionDetailPage() {
             {!user && (
               <div className="mb-6 p-4 bg-blue-50 rounded-lg text-center">
                 <p className="text-gray-700 mb-2">Want to contribute an answer?</p>
-                <Link href="/auth/signin">
-                  <Button variant="default">
-                    Sign In to Answer
-                  </Button>
-                </Link>
+                <Button 
+                  variant="default"
+                  onClick={() => {
+                    const currentPath = window.location.pathname;
+                    localStorage.setItem('returnPath', currentPath);
+                    window.location.href = '/auth/signin';
+                  }}
+                  data-testid="button-signin-to-answer"
+                >
+                  Sign In to Answer
+                </Button>
               </div>
             )}
 

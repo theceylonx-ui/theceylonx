@@ -11,7 +11,14 @@ export default function AuthSignInPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (!isLoading && user) {
-      navigate("/");
+      // Check if there's a return path in localStorage
+      const returnPath = localStorage.getItem('returnPath');
+      if (returnPath) {
+        localStorage.removeItem('returnPath');
+        navigate(returnPath);
+      } else {
+        navigate("/");
+      }
     }
   }, [user, isLoading, navigate]);
 
@@ -41,7 +48,16 @@ export default function AuthSignInPage() {
         </div>
 
         {/* Multi-provider Sign In Component */}
-        <AuthSignIn onSuccess={() => navigate("/")} />
+        <AuthSignIn onSuccess={() => {
+          // Check if there's a return path in localStorage
+          const returnPath = localStorage.getItem('returnPath');
+          if (returnPath) {
+            localStorage.removeItem('returnPath');
+            navigate(returnPath);
+          } else {
+            navigate("/");
+          }
+        }} />
 
         <div className="mt-6 text-center text-sm text-gray-500">
           <p>

@@ -18,7 +18,14 @@ export default function AuthCallbackPage() {
     if (success === '1') {
       setStatus('success');
       setTimeout(() => {
-        navigate('/');
+        // Check if there's a return path in localStorage
+        const returnPath = localStorage.getItem('returnPath');
+        if (returnPath) {
+          localStorage.removeItem('returnPath');
+          navigate(returnPath);
+        } else {
+          navigate('/');
+        }
       }, 2000);
     } else if (error) {
       setStatus('error');
