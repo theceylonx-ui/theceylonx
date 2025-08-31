@@ -73,16 +73,13 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
     clientID: process.env.FACEBOOK_APP_ID,
     clientSecret: process.env.FACEBOOK_APP_SECRET,
     callbackURL: `${process.env.APP_URL || process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'http://localhost:5000'}/api/auth/facebook/callback`,
-    profileFields: ['id', 'displayName', 'photos', 'email']
+    profileFields: ['id', 'displayName', 'photos']
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
-      // Check if user already exists
+      // Check if user already exists by Facebook ID
       const [existingUser] = await db.select().from(users).where(
-        or(
-          eq(users.facebookId, profile.id),
-          eq(users.email, profile.emails?.[0]?.value || '')
-        )
+        eq(users.facebookId, profile.id)
       );
 
       if (existingUser) {
@@ -105,12 +102,12 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
 
       // Create new user
       const [newUser] = await db.insert(users).values({
-        email: profile.emails?.[0]?.value,
+        email: null, // Facebook no longer provides email by default
         name: profile.displayName,
         image: profile.photos?.[0]?.value,
         provider: 'facebook',
         facebookId: profile.id,
-        emailVerified: true,
+        emailVerified: false,
       }).returning();
 
       const jwtUser: JWTUser = {
