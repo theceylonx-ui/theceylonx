@@ -90,7 +90,8 @@ export default function UserDashboard() {
 
   // Update form when user data loads
   useEffect(() => {
-    if (user) {
+    if (user && !form.formState.isDirty) {
+      // Only reset if form hasn't been modified to avoid losing user input
       form.reset({
         username: user.username || "",
         phoneNumber: user.phoneNumber || "",
@@ -297,7 +298,15 @@ export default function UserDashboard() {
   });
 
   const onSubmitProfile = (data: ProfileFormData) => {
-    updateProfileMutation.mutate(data);
+    // Ensure we always have current values, fall back to existing user data
+    const cleanData = {
+      username: data.username?.trim() || user?.username || undefined,
+      phoneNumber: data.phoneNumber?.trim() || user?.phoneNumber || undefined,
+      bio: data.bio?.trim() || user?.bio || undefined,
+      profileImageUrl: data.profileImageUrl?.trim() || user?.profileImageUrl || undefined,
+    };
+    console.log("Submitting profile data:", cleanData);
+    updateProfileMutation.mutate(cleanData);
   };
 
   const generateNewProfilePicture = () => {
