@@ -12,7 +12,11 @@ export function getDisplayName(user: {
   firstName?: string | null;
   lastName?: string | null;
   id: string;
-}): string {
+} | null | undefined): string {
+  if (!user || !user.id) {
+    return 'Unknown User';
+  }
+  
   if (user.username) {
     return user.username;
   }
@@ -34,7 +38,11 @@ export function getInitials(user: {
   username?: string | null;
   firstName?: string | null;
   lastName?: string | null;
-}): string {
+} | null | undefined): string {
+  if (!user) {
+    return 'U';
+  }
+  
   if (user.username) {
     return user.username.slice(0, 2).toUpperCase();
   }
