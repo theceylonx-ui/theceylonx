@@ -38,6 +38,7 @@ const profileSchema = z.object({
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 export default function UserDashboard() {
+  // ALL HOOKS MUST BE AT THE TOP - BEFORE ANY CONDITIONAL RETURNS
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -52,54 +53,6 @@ export default function UserDashboard() {
       profileImageUrl: "",
     },
   });
-
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/auth/signin";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
-
-  // Show loading state while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ceylon-green mx-auto"></div>
-            <p className="mt-2 text-gray-600">Loading...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Don't render content if not authenticated (redirect is handled in useEffect)
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  // Update form when user data loads
-  useEffect(() => {
-    if (user && !form.formState.isDirty) {
-      // Only reset if form hasn't been modified to avoid losing user input
-      form.reset({
-        username: user.username || "",
-        phoneNumber: user.phoneNumber || "",
-        bio: user.bio || "",
-        profileImageUrl: user.profileImageUrl || "",
-      });
-    }
-  }, [user, form]);
 
   const { data: myTrips } = useQuery<TripWithOrganizer[]>({
     queryKey: ["/api/users/trips"],
@@ -292,6 +245,35 @@ export default function UserDashboard() {
       });
     },
   });
+
+  // ALL EFFECTS MUST BE AFTER ALL HOOKS
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      toast({
+        title: "Unauthorized",
+        description: "You are logged out. Logging in again...",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/auth/signin";
+      }, 500);
+      return;
+    }
+  }, [isAuthenticated, isLoading, toast]);
+
+  // Update form when user data loads
+  useEffect(() => {
+    if (user && !form.formState.isDirty) {
+      // Only reset if form hasn't been modified to avoid losing user input
+      form.reset({
+        username: user.username || "",
+        phoneNumber: user.phoneNumber || "",
+        bio: user.bio || "",
+        profileImageUrl: user.profileImageUrl || "",
+      });
+    }
+  }, [user, form]);
 
   const onSubmitProfile = (data: ProfileFormData) => {
     // Ensure we always have current values, fall back to existing user data
