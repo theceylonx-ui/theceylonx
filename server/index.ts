@@ -7,6 +7,8 @@ console.log('Environment:', process.env.NODE_ENV || 'development');
 console.log('Starting Ceylon Expand server...');
 
 const app = express();
+// Trust proxy for proper IP detection (required for rate limiting in production)
+app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
