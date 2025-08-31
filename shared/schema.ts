@@ -523,6 +523,7 @@ export const insertVoteSchema = createInsertSchema(votes).omit({
 // ML recommendation schemas
 export const insertUserPreferencesSchema = createInsertSchema(userPreferences).omit({
   id: true,
+  userId: true,
   createdAt: true,
   updatedAt: true,
 });
