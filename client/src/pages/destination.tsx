@@ -254,33 +254,35 @@ export default function DestinationPage() {
               ) : (
                 <div className="space-y-4">
                   {displayedQuestions.map((question) => (
-                    <Card key={question.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                          {question.title}
-                        </h3>
-                        <p className="text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
-                          {question.body.replace(/<[^>]*>/g, '')}
-                        </p>
-                        
-                        <div className="flex items-center justify-between text-sm text-gray-500">
-                          <div className="flex items-center space-x-4">
-                            <span>{question.user?.firstName || 'Anonymous'}</span>
-                            <span>{formatDistanceToNow(new Date(question.createdAt || new Date()), { addSuffix: true })}</span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <div className="flex items-center">
-                              <MessageSquare className="w-4 h-4 mr-1" />
-                              {question.answersCount}
+                    <Link key={question.id} href={`/question/${question.id}`}>
+                      <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <CardContent className="p-6">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                            {question.title}
+                          </h3>
+                          <p className="text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
+                            {question.body.replace(/<[^>]*>/g, '')}
+                          </p>
+                          
+                          <div className="flex items-center justify-between text-sm text-gray-500">
+                            <div className="flex items-center space-x-4">
+                              <span>{question.user?.firstName || 'Anonymous'}</span>
+                              <span>{formatDistanceToNow(new Date(question.createdAt || new Date()), { addSuffix: true })}</span>
                             </div>
-                            <div className="flex items-center">
-                              <span className="text-ceylon-green">↑</span>
-                              {question.votesCount}
+                            <div className="flex items-center space-x-2">
+                              <div className="flex items-center">
+                                <MessageSquare className="w-4 h-4 mr-1" />
+                                {question.answersCount}
+                              </div>
+                              <div className="flex items-center">
+                                <span className="text-ceylon-green">↑</span>
+                                {question.votesCount}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                    </Link>
                   ))}
                   
                   {questions.length > 3 && !showAllQuestions && (
