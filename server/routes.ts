@@ -2,9 +2,16 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { authRouter, authGuard } from "./auth/routes";
+import { JWTUser } from "./auth/jwt";
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import passport from 'passport';
+
+declare module 'express' {
+  interface Request {
+    user?: JWTUser;
+  }
+}
 import { 
   insertTripSchema, 
   insertCommentSchema, 
@@ -33,9 +40,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/auth', authRouter);
 
   // User profile routes
-  app.patch('/api/user', authGuard, async (req: any, res) => {
+  app.patch('/api/user', authGuard, async (req, res) => {
     try {
-      const userId = req.user.id;
+      const userId = (req.user as JWTUser).id;
       const { username, phoneNumber, bio, profileImageUrl } = req.body;
       
       console.log("Profile update request:", { userId, username, phoneNumber: phoneNumber ? "***" : null, bio: bio ? bio.substring(0, 50) : null });
@@ -81,9 +88,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Trip routes
-  app.post('/api/trips', authGuard, async (req: any, res) => {
+  app.post('/api/trips', authGuard, async (req, res) => {
     try {
-      const userId = req.user.id;
+      const userId = (req.user as JWTUser).id;
       const tripData = insertTripSchema.parse({ ...req.body, organizerId: userId });
       
       const trip = await storage.createTrip(tripData);
