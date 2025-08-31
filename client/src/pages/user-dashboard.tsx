@@ -166,25 +166,15 @@ export default function UserDashboard() {
         description: "Profile updated successfully!",
       });
       
-      // Completely clear the cache and force fresh data
-      queryClient.clear();
-      
-      // Set the updated user data immediately
+      // Set the updated user data immediately for instant UI feedback
       queryClient.setQueryData(["/api/auth/me"], updatedUser);
       
-      // Force immediate refresh of all queries
-      queryClient.invalidateQueries();
-      
-      // Force immediate refetch with no delay
+      // Force immediate refresh of auth data since backend now returns fresh database data
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       queryClient.refetchQueries({ 
         queryKey: ["/api/auth/me"], 
-        type: 'all' 
+        type: 'active' 
       });
-      
-      // Also force a hard refresh of the page to ensure all components re-render
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
     },
     onError: (error: any, newData, context) => {
       console.error("Profile update error:", error);

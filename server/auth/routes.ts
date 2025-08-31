@@ -106,10 +106,32 @@ router.post('/logout', (req: Request, res: Response) => {
 });
 
 router.get('/me', async (req: Request, res: Response) => {
-  const user = await getCurrentUser(req);
-  if (!user) {
+  const jwtUser = await getCurrentUser(req);
+  if (!jwtUser) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
+  
+  // CRITICAL FIX: Get fresh user data from database instead of using stale JWT data
+  const { storage } = await import('../storage');
+  const freshUser = await storage.getUser(jwtUser.id);
+  if (!freshUser) {
+    return res.status(401).json({ error: 'User not found' });
+  }
+  
+  // Return fresh database data with JWT auth info
+  const responseUser = {
+    id: freshUser.id,
+    email: freshUser.email,
+    name: freshUser.name,
+    username: freshUser.username,
+    bio: freshUser.bio,
+    phone: freshUser.phone,
+    profileImageUrl: freshUser.profileImageUrl,
+    provider: jwtUser.provider,
+    emailVerified: freshUser.emailVerified,
+    createdAt: freshUser.createdAt,
+    updatedAt: freshUser.updatedAt,
+  };
   
   // Add cache-busting headers to prevent browser caching
   res.set({
@@ -118,7 +140,7 @@ router.get('/me', async (req: Request, res: Response) => {
     'Expires': '0'
   });
   
-  res.json(user);
+  res.json(responseUser);
 });
 
 // Get available authentication providers
