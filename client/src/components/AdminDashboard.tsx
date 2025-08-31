@@ -41,22 +41,49 @@ export default function AdminDashboard() {
     queryFn: () => fetch('/api/admin/reports').then(res => res.json()),
   });
 
-  // Update report status mutation
+  // Update report status mutation with enhanced actions
   const updateReportStatusMutation = useMutation({
-    mutationFn: async ({ reportId, status }: { reportId: string; status: string }) => {
-      return await apiRequest("PATCH", `/api/admin/reports/${reportId}/status`, { status });
+    mutationFn: async ({ reportId, status, action }: { reportId: string; status: string; action?: string }) => {
+      return await apiRequest("PATCH", `/api/admin/reports/${reportId}/status`, { status, action });
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] });
+      // Also invalidate trips cache if trip was deleted
+      if (data.tripDeleted) {
+        queryClient.invalidateQueries({ queryKey: ['/api/trips'] });
+      }
       toast({
         title: "Success",
-        description: "Report status updated successfully.",
+        description: data.actionTaken ? 
+          `Report ${data.status} and ${data.actionTaken.replace('_', ' ')} completed.` :
+          "Report status updated successfully.",
       });
     },
     onError: (error) => {
       toast({
         title: "Error",
         description: "Failed to update report status.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Edit trip mutation
+  const editTripMutation = useMutation({
+    mutationFn: async ({ tripId, tripData }: { tripId: string; tripData: any }) => {
+      return await apiRequest("PATCH", `/api/admin/trips/${tripId}`, tripData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/trips'] });
+      toast({
+        title: "Success",
+        description: "Trip updated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update trip.",
         variant: "destructive",
       });
     },
@@ -517,32 +544,90 @@ export default function AdminDashboard() {
                         </div>
                         
                         {report.status === 'pending' && (
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateReportStatusMutation.mutate({ 
-                                reportId: report.id, 
-                                status: 'dismissed' 
-                              })}
-                              disabled={updateReportStatusMutation.isPending}
-                              data-testid={`button-dismiss-${report.id}`}
-                            >
-                              <XCircle className="h-4 w-4 mr-1" />
-                              Dismiss
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => updateReportStatusMutation.mutate({ 
-                                reportId: report.id, 
-                                status: 'resolved' 
-                              })}
-                              disabled={updateReportStatusMutation.isPending}
-                              data-testid={`button-resolve-${report.id}`}
-                            >
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Resolve
-                            </Button>
+                          <div className="space-y-3">
+                            {/* Admin Action Buttons */}
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+                                onClick={() => updateReportStatusMutation.mutate({ 
+                                  reportId: report.id, 
+                                  status: 'resolved',
+                                  action: 'delete_trip'
+                                })}
+                                disabled={updateReportStatusMutation.isPending}
+                                data-testid={`button-delete-trip-${report.id}`}
+                              >
+                                <AlertTriangle className="h-4 w-4 mr-1" />
+                                Delete Trip
+                              </Button>
+                              
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100"
+                                onClick={() => updateReportStatusMutation.mutate({ 
+                                  reportId: report.id, 
+                                  status: 'resolved',
+                                  action: 'suspend_user'
+                                })}
+                                disabled={updateReportStatusMutation.isPending}
+                                data-testid={`button-suspend-user-${report.id}`}
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Suspend User
+                              </Button>
+                              
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                                onClick={() => {
+                                  // For now, just log the edit action
+                                  console.log(`Editing trip ${report.tripId}`);
+                                  updateReportStatusMutation.mutate({ 
+                                    reportId: report.id, 
+                                    status: 'resolved',
+                                    action: 'edit_trip'
+                                  });
+                                }}
+                                disabled={updateReportStatusMutation.isPending}
+                                data-testid={`button-edit-trip-${report.id}`}
+                              >
+                                <Shield className="h-4 w-4 mr-1" />
+                                Edit Trip
+                              </Button>
+                            </div>
+                            
+                            {/* Status Resolution Buttons */}
+                            <div className="flex gap-2 pt-2 border-t border-gray-200">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => updateReportStatusMutation.mutate({ 
+                                  reportId: report.id, 
+                                  status: 'dismissed' 
+                                })}
+                                disabled={updateReportStatusMutation.isPending}
+                                data-testid={`button-dismiss-${report.id}`}
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Dismiss Report
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => updateReportStatusMutation.mutate({ 
+                                  reportId: report.id, 
+                                  status: 'resolved' 
+                                })}
+                                disabled={updateReportStatusMutation.isPending}
+                                data-testid={`button-resolve-${report.id}`}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Mark Resolved
+                              </Button>
+                            </div>
                           </div>
                         )}
                       </div>

@@ -383,11 +383,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin route to update report status
+  // Admin route to update report status with enhanced actions
   app.patch('/api/admin/reports/:id/status', authGuard, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const { status } = req.body;
+      const { status, action } = req.body; // action: 'resolve' | 'dismiss' | 'delete_trip' | 'suspend_user' | 'edit_trip'
       
       // Check if user is admin
       const adminUserIds = [
@@ -404,11 +404,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid status. Must be pending, resolved, or dismissed" });
       }
 
+      // Get the report details first
+      const reports = await storage.getReports();
+      const report = reports.find(r => r.id === id);
+      if (!report) {
+        return res.status(404).json({ message: "Report not found" });
+      }
+
+      // Handle different admin actions
+      if (status === 'resolved' && action) {
+        switch (action) {
+          case 'delete_trip':
+            // Delete the reported trip
+            await storage.deleteTrip(report.tripId);
+            console.log(`Admin deleted trip ${report.tripId} due to report ${id}`);
+            break;
+          
+          case 'suspend_user':
+            // In a real app, you'd implement user suspension
+            // For now, we'll just log it
+            console.log(`Admin would suspend user ${report.tripOrganizerId} due to report ${id}`);
+            // TODO: Implement user suspension logic
+            break;
+          
+          case 'edit_trip':
+            // This would redirect to trip edit interface
+            console.log(`Admin initiated edit for trip ${report.tripId} due to report ${id}`);
+            break;
+        }
+      }
+
+      // Handle dismiss action - send notification to reporter
+      if (status === 'dismissed') {
+        // TODO: Send notification to reporter
+        console.log(`Report ${id} dismissed - should notify reporter ${report.reporterId}`);
+      }
+
       const updatedReport = await storage.updateReportStatus(id, status);
-      res.json(updatedReport);
+      res.json({ 
+        ...updatedReport, 
+        actionTaken: action,
+        tripDeleted: action === 'delete_trip' && status === 'resolved'
+      });
     } catch (error) {
       console.error("Error updating report status:", error);
       res.status(500).json({ message: "Failed to update report status" });
+    }
+  });
+
+  // Admin route to delete trip
+  app.delete('/api/admin/trips/:id', authGuard, async (req: any, res) => {
+    try {
+      // Check if user is admin
+      const adminUserIds = [
+        "bcc1d79a-d83a-4a99-8556-e1d367140e88", // PraDas S Agnya
+        "313a0e58-6745-4db7-91bd-31e69c7496ab", // Add more admin IDs as needed
+      ];
+      
+      if (!adminUserIds.includes(req.user.id)) {
+        return res.status(403).json({ message: "Access denied. Admin privileges required." });
+      }
+
+      const { id } = req.params;
+      await storage.deleteTrip(id);
+      res.json({ success: true, message: "Trip deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting trip:", error);
+      res.status(500).json({ message: "Failed to delete trip" });
+    }
+  });
+
+  // Admin route to edit trip
+  app.patch('/api/admin/trips/:id', authGuard, async (req: any, res) => {
+    try {
+      // Check if user is admin
+      const adminUserIds = [
+        "bcc1d79a-d83a-4a99-8556-e1d367140e88", // PraDas S Agnya
+        "313a0e58-6745-4db7-91bd-31e69c7496ab", // Add more admin IDs as needed
+      ];
+      
+      if (!adminUserIds.includes(req.user.id)) {
+        return res.status(403).json({ message: "Access denied. Admin privileges required." });
+      }
+
+      const { id } = req.params;
+      const tripData = req.body;
+      
+      const updatedTrip = await storage.updateTrip(id, tripData);
+      res.json(updatedTrip);
+    } catch (error) {
+      console.error("Error updating trip:", error);
+      res.status(500).json({ message: "Failed to update trip" });
     }
   });
 
