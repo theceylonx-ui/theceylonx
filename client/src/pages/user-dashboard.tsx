@@ -151,18 +151,25 @@ export default function UserDashboard() {
         description: "Profile updated successfully!",
       });
       
-      // Immediately update the cache with the returned user data
+      // Clear the cache completely and force refetch
+      queryClient.removeQueries({ queryKey: ["/api/auth/me"] });
+      queryClient.removeQueries({ queryKey: ["/api/user"] });
+      
+      // Immediately set the updated user data
       queryClient.setQueryData(["/api/auth/me"], updatedUser);
       
-      // Invalidate all user-related queries to update everywhere
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      // Invalidate and force refetch all user-related queries
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/trips"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/participations"] });
       
-      // Force refetch to ensure all components get the latest data
-      queryClient.refetchQueries({ queryKey: ["/api/auth/me"] });
+      // Force immediate refetch to bypass any caching
+      queryClient.refetchQueries({ 
+        queryKey: ["/api/auth/me"], 
+        type: 'active' 
+      });
     },
     onError: (error: any, newData, context) => {
       console.error("Profile update error:", error);
