@@ -36,7 +36,7 @@ export default function Footer() {
             <h4 className="text-lg font-semibold mb-4">Popular Destinations</h4>
             <ul className="space-y-2 text-gray-300">
               {popularDestinations.length > 0 ? (
-                popularDestinations.map((dest, index) => (
+                popularDestinations.slice(0, 5).map((dest, index) => (
                   <li key={index}>
                     <Link href={`/destination/${encodeURIComponent(dest.destination)}`}>
                       <span className="hover:text-ceylon-green transition-colors cursor-pointer">
@@ -56,6 +56,15 @@ export default function Footer() {
                 </>
               )}
             </ul>
+            
+            {/* View More Button */}
+            <div className="mt-4">
+              <Link href="/browse-trips">
+                <span className="text-sm text-gray-400 hover:text-ceylon-green transition-colors cursor-pointer border-b border-gray-400 hover:border-ceylon-green">
+                  View more destinations →
+                </span>
+              </Link>
+            </div>
           </div>
 
           <div>
