@@ -32,7 +32,7 @@ export const users = pgTable("users", {
   phone: varchar("phone").unique(),
   name: varchar("name"),
   image: varchar("image"),
-  provider: varchar("provider"), // 'google' | 'microsoft' | 'apple' | 'email' | 'phone'
+  provider: varchar("provider"), // 'google' | 'facebook' | 'microsoft' | 'apple' | 'email' | 'phone'
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   username: varchar("username").unique(),
@@ -40,6 +40,7 @@ export const users = pgTable("users", {
   phoneNumber: varchar("phone_number").unique(),
   bio: text("bio"),
   googleId: varchar("google_id").unique(),
+  facebookId: varchar("facebook_id").unique(),
   microsoftId: varchar("microsoft_id").unique(),
   appleId: varchar("apple_id").unique(),
   emailVerified: boolean("email_verified").default(false),

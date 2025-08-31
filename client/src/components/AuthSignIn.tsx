@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FaGoogle, FaMicrosoft, FaApple } from "react-icons/fa";
+import { FaGoogle, FaFacebook } from "react-icons/fa";
 
 interface AuthSignInProps {
   onSuccess?: () => void;
@@ -21,7 +21,7 @@ export function AuthSignIn({ onSuccess }: AuthSignInProps) {
 
 
 
-  const handleOAuthProvider = (provider: 'google' | 'microsoft' | 'apple') => {
+  const handleOAuthProvider = (provider: 'google' | 'facebook') => {
     window.location.href = `/api/auth/${provider}`;
   };
 
@@ -48,24 +48,15 @@ export function AuthSignIn({ onSuccess }: AuthSignInProps) {
           </Button>
 
           <Button 
-            onClick={() => handleOAuthProvider('microsoft')}
+            onClick={() => handleOAuthProvider('facebook')}
             variant="outline" 
-            className="w-full"
-            data-testid="button-microsoft-signin"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+            data-testid="button-facebook-signin"
           >
-            <FaMicrosoft className="h-4 w-4 mr-2" />
-            Continue with Microsoft
+            <FaFacebook className="h-4 w-4 mr-2" />
+            Continue with Facebook
           </Button>
 
-          <Button 
-            onClick={() => handleOAuthProvider('apple')}
-            variant="outline" 
-            className="w-full"
-            data-testid="button-apple-signin"
-          >
-            <FaApple className="h-4 w-4 mr-2" />
-            Continue with Apple
-          </Button>
         </div>
 
       </CardContent>

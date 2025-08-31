@@ -52,6 +52,29 @@ router.get('/google/callback',
   }
 );
 
+// Facebook OAuth
+router.get('/facebook', passport.authenticate('facebook', {
+  scope: ['email']
+}));
+
+router.get('/facebook/callback',
+  passport.authenticate('facebook', { session: false }),
+  async (req: Request & { user?: JWTUser }, res: Response) => {
+    if (!req.user) {
+      return res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=oauth_failed`);
+    }
+
+    try {
+      const tokens = await generateAuthTokens(req.user);
+      setAuthCookies(res, tokens);
+      res.redirect(`${process.env.APP_URL || ''}/auth/callback?success=1`);
+    } catch (error) {
+      console.error('OAuth callback error:', error);
+      res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=callback_failed`);
+    }
+  }
+);
+
 // Microsoft OAuth
 router.get('/microsoft', passport.authenticate('microsoft', {
   scope: ['user.read']
@@ -134,6 +157,7 @@ router.get('/me', async (req: Request, res: Response) => {
 router.get('/providers', (req: Request, res: Response) => {
   const providers = {
     google: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+    facebook: !!(process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET),
     microsoft: !!(process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET),
     apple: !!(process.env.APPLE_CLIENT_ID && process.env.APPLE_PRIVATE_KEY),
     email: false, // Disabled

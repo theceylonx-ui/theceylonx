@@ -1,5 +1,6 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { Strategy as FacebookStrategy } from 'passport-facebook';
 import { Strategy as MicrosoftStrategy } from 'passport-microsoft';
 import { Strategy as AppleStrategy } from 'passport-apple';
 import { db } from '../db';
@@ -57,6 +58,66 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         email: newUser.email || undefined,
         name: newUser.name || undefined,
         provider: 'google'
+      };
+
+      return done(null, jwtUser);
+    } catch (error) {
+      return done(error, null);
+    }
+  }));
+}
+
+// Facebook OAuth Strategy
+if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
+  passport.use(new FacebookStrategy({
+    clientID: process.env.FACEBOOK_APP_ID,
+    clientSecret: process.env.FACEBOOK_APP_SECRET,
+    callbackURL: `${process.env.APP_URL || process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'http://localhost:5000'}/api/auth/facebook/callback`,
+    profileFields: ['id', 'displayName', 'photos', 'email']
+  },
+  async (accessToken, refreshToken, profile, done) => {
+    try {
+      // Check if user already exists
+      const [existingUser] = await db.select().from(users).where(
+        or(
+          eq(users.facebookId, profile.id),
+          eq(users.email, profile.emails?.[0]?.value || '')
+        )
+      );
+
+      if (existingUser) {
+        // Update Facebook ID if not set
+        if (!existingUser.facebookId) {
+          await db.update(users)
+            .set({ facebookId: profile.id })
+            .where(eq(users.id, existingUser.id));
+        }
+        
+        const jwtUser: JWTUser = {
+          id: existingUser.id,
+          email: existingUser.email || undefined,
+          name: existingUser.name || undefined,
+          provider: 'facebook'
+        };
+        
+        return done(null, jwtUser);
+      }
+
+      // Create new user
+      const [newUser] = await db.insert(users).values({
+        email: profile.emails?.[0]?.value,
+        name: profile.displayName,
+        image: profile.photos?.[0]?.value,
+        provider: 'facebook',
+        facebookId: profile.id,
+        emailVerified: true,
+      }).returning();
+
+      const jwtUser: JWTUser = {
+        id: newUser.id,
+        email: newUser.email || undefined,
+        name: newUser.name || undefined,
+        provider: 'facebook'
       };
 
       return done(null, jwtUser);
