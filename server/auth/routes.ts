@@ -103,45 +103,15 @@ router.post('/apple/callback',
   }
 );
 
-// Email Magic Link Routes
+// Email Magic Link Routes - DISABLED (using Phone and Google OAuth only)
 router.post('/email/start', authRateLimit, async (req: Request, res: Response) => {
-  if (!isEmailConfigured()) {
-    return res.status(503).json({ error: 'Email authentication not configured' });
-  }
-
-  try {
-    const { email } = emailAuthSchema.parse(req.body);
-    await sendMagicLink(email);
-    res.json({ success: true, message: 'Magic link sent to your email' });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors[0]?.message || 'Invalid email' });
-    }
-    console.error('Email auth error:', error);
-    res.status(500).json({ error: 'Failed to send magic link' });
-  }
+  res.status(503).json({ 
+    error: 'Email authentication is currently disabled. Please use Phone or Google sign-in.' 
+  });
 });
 
 router.get('/email/verify', async (req: Request, res: Response) => {
-  const { token, email } = req.query;
-
-  if (!token || !email || typeof token !== 'string' || typeof email !== 'string') {
-    return res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=invalid_link`);
-  }
-
-  try {
-    const user = await verifyMagicLink(token, email);
-    if (!user) {
-      return res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=invalid_or_expired`);
-    }
-
-    const tokens = await generateAuthTokens(user);
-    setAuthCookies(res, tokens);
-    res.redirect(`${process.env.APP_URL || ''}/auth/callback?success=1`);
-  } catch (error) {
-    console.error('Email verification error:', error);
-    res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=verification_failed`);
-  }
+  res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=email_auth_disabled`);
 });
 
 // Phone OTP Routes
