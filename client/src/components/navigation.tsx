@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { generateRandomProfilePicture, getDisplayName, getInitials } from "@/lib/profileUtils";
+import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
 
 export default function Navigation() {
   const { user, logout, isLoggingOut } = useAuth();
@@ -96,7 +97,9 @@ export default function Navigation() {
           {/* User Menu */}
           <div className="flex items-center space-x-3">
             {user && (
-              <DropdownMenu>
+              <>
+                <NotificationDropdown />
+                <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full" data-testid="user-menu-trigger">
                     <Avatar className="h-8 w-8">
@@ -151,6 +154,7 @@ export default function Navigation() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              </>
             )}
 
             {/* Mobile Menu Button */}

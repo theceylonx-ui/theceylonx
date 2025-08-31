@@ -252,10 +252,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const tripId = req.params.id;
       
+      // Get trip details to find organizer
+      const trip = await storage.getTrip(tripId);
+      if (!trip) {
+        return res.status(404).json({ message: "Trip not found" });
+      }
+      
       const participation = await storage.joinTrip({
         tripId,
         userId,
         status: "pending",
+      });
+      
+      // Create notification for trip organizer
+      await storage.createNotification({
+        userId: trip.organizerId,
+        type: "trip_join_request",
+        title: "New Join Request",
+        message: `Someone wants to join your trip "${trip.title}"`,
+        relatedTripId: tripId,
+        relatedUserId: userId,
+        actionUrl: `/trips/${tripId}`,
+        isRead: false,
       });
       
       res.json(participation);
@@ -279,6 +297,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { status } = req.body;
       const participation = await storage.updateParticipationStatus(req.params.id, status);
+      
+      if (participation) {
+        // Get trip details
+        const trip = await storage.getTrip(participation.tripId);
+        if (trip) {
+          const notificationType = status === "approved" ? "trip_join_approved" : "trip_join_declined";
+          const title = status === "approved" ? "Trip Join Approved!" : "Trip Join Declined";
+          const message = status === "approved" 
+            ? `Your request to join "${trip.title}" has been approved!`
+            : `Your request to join "${trip.title}" was declined.`;
+          
+          // Create notification for the participant
+          await storage.createNotification({
+            userId: participation.userId,
+            type: notificationType,
+            title: title,
+            message: message,
+            relatedTripId: participation.tripId,
+            relatedUserId: trip.organizerId,
+            actionUrl: `/trips/${participation.tripId}`,
+            isRead: false,
+          });
+        }
+      }
+      
       res.json(participation);
     } catch (error) {
       console.error("Error updating participation status:", error);
@@ -380,6 +423,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const report = await storage.createReport(reportData);
+      
+      // If this is a trip report, notify the trip organizer
+      if (report.tripId) {
+        const trip = await storage.getTrip(report.tripId);
+        if (trip && trip.organizerId !== reporterId) {
+          await storage.createNotification({
+            userId: trip.organizerId,
+            type: "trip_reported",
+            title: "Trip Report Submitted",
+            message: `Your trip "${trip.title}" has been reported and is under review.`,
+            relatedTripId: report.tripId,
+            relatedUserId: reporterId,
+            actionUrl: `/trips/${report.tripId}`,
+            isRead: false,
+          });
+        }
+      }
+      
       res.json(report);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1065,6 +1126,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error getting user interactions:", error);
       res.status(500).json({ message: "Failed to get interactions" });
+    }
+  });
+
+  // Notification routes
+  app.get('/api/notifications', authGuard, async (req, res) => {
+    try {
+      const userId = (req.user as JWTUser).id;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const notifications = await storage.getUserNotifications(userId, limit);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.get('/api/notifications/unread-count', authGuard, async (req, res) => {
+    try {
+      const userId = (req.user as JWTUser).id;
+      const count = await storage.getUnreadNotificationCount(userId);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching unread notification count:", error);
+      res.status(500).json({ message: "Failed to fetch notification count" });
+    }
+  });
+
+  app.patch('/api/notifications/:id/read', authGuard, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.markNotificationAsRead(id);
+      res.json({ message: "Notification marked as read" });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  app.patch('/api/notifications/read-all', authGuard, async (req, res) => {
+    try {
+      const userId = (req.user as JWTUser).id;
+      await storage.markAllNotificationsAsRead(userId);
+      res.json({ message: "All notifications marked as read" });
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      res.status(500).json({ message: "Failed to mark all notifications as read" });
+    }
+  });
+
+  app.delete('/api/notifications/:id', authGuard, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteNotification(id);
+      res.json({ message: "Notification deleted" });
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      res.status(500).json({ message: "Failed to delete notification" });
     }
   });
 

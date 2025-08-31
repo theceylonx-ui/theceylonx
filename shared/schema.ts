@@ -123,6 +123,20 @@ export const tripParticipants = pgTable("trip_participants", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Notifications table
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(), // who receives the notification
+  type: varchar("type").notNull(), // trip_join_request, trip_join_approved, trip_join_declined, trip_reported, trip_completed, etc.
+  title: varchar("title").notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").default(false),
+  relatedTripId: varchar("related_trip_id"), // optional: related trip
+  relatedUserId: varchar("related_user_id"), // optional: who triggered the notification
+  actionUrl: varchar("action_url"), // optional: where to navigate when clicked
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Comments table
 export const comments = pgTable("comments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -488,6 +502,22 @@ export const insertTripParticipantSchema = createInsertSchema(tripParticipants).
   createdAt: true,
 });
 
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const notificationTypeSchema = z.enum([
+  "trip_join_request",     // When someone joins your trip
+  "trip_join_approved",    // When your join request is approved
+  "trip_join_declined",    // When your join request is declined
+  "trip_reported",         // When your trip is reported
+  "trip_completed",        // When a trip you joined is marked complete
+  "trip_cancelled",        // When a trip you joined is cancelled
+  "new_trip_in_region",    // When a new trip is posted in your preferred region
+  "system_update"          // System announcements
+]);
+
 export const insertCommentSchema = createInsertSchema(comments).omit({
   id: true,
   createdAt: true,
@@ -576,6 +606,10 @@ export type Trip = typeof trips.$inferSelect;
 export type TripWithOrganizer = Trip & { organizer: User };
 export type InsertTripParticipant = z.infer<typeof insertTripParticipantSchema>;
 export type TripParticipant = typeof tripParticipants.$inferSelect;
+
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;
+export type NotificationType = z.infer<typeof notificationTypeSchema>;
 export type InsertComment = z.infer<typeof insertCommentSchema>;
 export type Comment = typeof comments.$inferSelect;
 export type CommentWithUser = Comment & { user: User };
