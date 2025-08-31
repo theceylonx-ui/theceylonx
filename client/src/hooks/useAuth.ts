@@ -8,7 +8,7 @@ export function useAuth() {
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchInterval: false,
-    staleTime: 30000, // Allow refetching after 30 seconds instead of Infinity
+    staleTime: 0, // Always consider data fresh so updates happen immediately
     queryFn: async () => {
       const res = await fetch('/api/auth/me', {
         credentials: 'include',

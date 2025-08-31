@@ -139,21 +139,30 @@ export default function UserDashboard() {
           profileImageUrl: newData.profileImageUrl?.trim() || user.profileImageUrl,
         };
         queryClient.setQueryData(["/api/auth/me"], optimisticUser);
+        // Also invalidate immediately to trigger re-renders
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       }
       
       return { previousUser };
     },
-    onSuccess: () => {
+    onSuccess: (updatedUser) => {
       toast({
         title: "Success",
         description: "Profile updated successfully!",
       });
+      
+      // Immediately update the cache with the returned user data
+      queryClient.setQueryData(["/api/auth/me"], updatedUser);
+      
       // Invalidate all user-related queries to update everywhere
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/trips"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/participations"] });
+      
+      // Force refetch to ensure all components get the latest data
+      queryClient.refetchQueries({ queryKey: ["/api/auth/me"] });
     },
     onError: (error: any, newData, context) => {
       console.error("Profile update error:", error);
@@ -196,6 +205,7 @@ export default function UserDashboard() {
     onSettled: () => {
       // Always refetch after error or success to ensure we have the latest data
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      queryClient.refetchQueries({ queryKey: ["/api/auth/me"] });
     },
   });
 
