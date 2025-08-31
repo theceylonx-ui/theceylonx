@@ -14,11 +14,19 @@ import { useAuth } from "@/hooks/useAuth";
 export default function Home() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
-  const { data: trips, isLoading } = useQuery<TripWithOrganizer[]>({
+  const { data: tripsData, isLoading } = useQuery<{
+    trips: TripWithOrganizer[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }>({
     queryKey: ["/api/trips"],
   });
 
-  const featuredTrips = trips?.slice(0, 6) || [];
+  const featuredTrips = tripsData?.trips?.slice(0, 6) || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -130,19 +138,19 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-8 text-center">
             <div data-testid="stat-active-trips">
               <div className="text-3xl font-bold text-ceylon-green mb-2">
-                {trips?.length || 0}
+                {tripsData?.trips?.length || 0}
               </div>
               <div className="text-gray-600">Active Trips</div>
             </div>
             <div data-testid="stat-destinations">
               <div className="text-3xl font-bold text-ceylon-blue mb-2">
-                {new Set(trips?.map(trip => trip.region)).size || 0}
+                {new Set(tripsData?.trips?.map(trip => trip.region)).size || 0}
               </div>
               <div className="text-gray-600">Destinations</div>
             </div>
             <div data-testid="stat-travelers">
               <div className="text-3xl font-bold text-ceylon-green mb-2">
-                {trips?.reduce((sum, trip) => sum + trip.seatsAvailable, 0) || 0}
+                {tripsData?.trips?.reduce((sum, trip) => sum + trip.seatsAvailable, 0) || 0}
               </div>
               <div className="text-gray-600">Available Seats</div>
             </div>
