@@ -695,6 +695,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update answer
+  app.patch('/api/answers/:id', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const answerId = req.params.id;
+      
+      // First check if the answer exists and belongs to the user
+      const existingAnswer = await storage.getAnswer(answerId);
+      if (!existingAnswer) {
+        return res.status(404).json({ message: "Answer not found" });
+      }
+      if (existingAnswer.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized to edit this answer" });
+      }
+      
+      const answerData = insertAnswerSchema.partial().parse(req.body);
+      const answer = await storage.updateAnswer(answerId, answerData);
+      res.json(answer);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid answer data", errors: error.errors });
+      }
+      console.error("Error updating answer:", error);
+      res.status(500).json({ message: "Failed to update answer" });
+    }
+  });
+
+  // Delete answer
+  app.delete('/api/answers/:id', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const answerId = req.params.id;
+      
+      // First check if the answer exists and belongs to the user
+      const existingAnswer = await storage.getAnswer(answerId);
+      if (!existingAnswer) {
+        return res.status(404).json({ message: "Answer not found" });
+      }
+      if (existingAnswer.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized to delete this answer" });
+      }
+      
+      await storage.deleteAnswer(answerId);
+      res.json({ message: "Answer deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting answer:", error);
+      res.status(500).json({ message: "Failed to delete answer" });
+    }
+  });
+
   // Votes
   app.post('/api/vote', authGuard, async (req: any, res) => {
     try {

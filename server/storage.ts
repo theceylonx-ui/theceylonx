@@ -742,6 +742,11 @@ export class DatabaseStorage implements IStorage {
     return answersData as AnswerWithUser[];
   }
 
+  async getAnswer(id: string): Promise<Answer | undefined> {
+    const [answer] = await db.select().from(answers).where(eq(answers.id, id));
+    return answer;
+  }
+
   async updateAnswer(id: string, answerData: Partial<InsertAnswer>): Promise<Answer> {
     const [answer] = await db
       .update(answers)

@@ -20,7 +20,11 @@ import {
   Facebook,
   Twitter,
   Copy,
-  ArrowLeft
+  ArrowLeft,
+  Edit,
+  Trash2,
+  X,
+  Save
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -42,6 +46,8 @@ export default function QuestionDetailPage() {
   const [, setLocation] = useLocation();
   const [showAnswerForm, setShowAnswerForm] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState<string>("");
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -87,6 +93,34 @@ export default function QuestionDetailPage() {
     },
   });
 
+  const updateAnswerMutation = useMutation({
+    mutationFn: ({ answerId, body }: { answerId: string; body: string }) => 
+      apiRequest('PATCH', `/api/answers/${answerId}`, { body }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/questions/${id}`] });
+      setEditingAnswerId(null);
+      setEditingText("");
+      toast({ title: "Answer updated successfully!" });
+    },
+    onError: (error) => {
+      console.error("Answer update error:", error);
+      toast({ title: "Failed to update answer", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteAnswerMutation = useMutation({
+    mutationFn: (answerId: string) => 
+      apiRequest('DELETE', `/api/answers/${answerId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/questions/${id}`] });
+      toast({ title: "Answer deleted successfully!" });
+    },
+    onError: (error) => {
+      console.error("Answer deletion error:", error);
+      toast({ title: "Failed to delete answer", description: error.message, variant: "destructive" });
+    },
+  });
+
   const handleVote = (voteType: 'up' | 'down', questionId?: string, answerId?: string) => {
     if (!user) {
       toast({ 
@@ -109,6 +143,30 @@ export default function QuestionDetailPage() {
       return;
     }
     createAnswerMutation.mutate(data);
+  };
+
+  const startEditingAnswer = (answer: any) => {
+    setEditingAnswerId(answer.id);
+    setEditingText(answer.body);
+  };
+
+  const cancelEditingAnswer = () => {
+    setEditingAnswerId(null);
+    setEditingText("");
+  };
+
+  const saveEditingAnswer = () => {
+    if (!editingAnswerId || !editingText.trim()) return;
+    updateAnswerMutation.mutate({ 
+      answerId: editingAnswerId, 
+      body: editingText.trim() 
+    });
+  };
+
+  const deleteAnswer = (answerId: string) => {
+    if (window.confirm('Are you sure you want to delete this answer? This action cannot be undone.')) {
+      deleteAnswerMutation.mutate(answerId);
+    }
   };
 
   const handleShare = (platform: string) => {
@@ -430,12 +488,71 @@ export default function QuestionDetailPage() {
                           </Badge>
                         )}
                       </div>
+                      
+                      {/* Edit/Delete buttons for answer author */}
+                      {user && user.id === answer.userId && (
+                        <div className="flex items-center space-x-2">
+                          {editingAnswerId === answer.id ? (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={saveEditingAnswer}
+                                disabled={updateAnswerMutation.isPending || !editingText.trim()}
+                                data-testid={`button-save-answer-${answer.id}`}
+                              >
+                                <Save className="w-4 h-4 mr-1" />
+                                Save
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={cancelEditingAnswer}
+                                data-testid={`button-cancel-edit-answer-${answer.id}`}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => startEditingAnswer(answer)}
+                                data-testid={`button-edit-answer-${answer.id}`}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => deleteAnswer(answer.id)}
+                                disabled={deleteAnswerMutation.isPending}
+                                className="text-red-600 hover:text-red-700"
+                                data-testid={`button-delete-answer-${answer.id}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                     
                     <div className="prose max-w-none mb-4">
-                      <p className="text-gray-700 whitespace-pre-wrap">
-                        {answer.body.replace(/<[^>]*>/g, '')}
-                      </p>
+                      {editingAnswerId === answer.id ? (
+                        <Textarea
+                          value={editingText}
+                          onChange={(e) => setEditingText(e.target.value)}
+                          className="w-full min-h-[100px]"
+                          placeholder="Edit your answer..."
+                          data-testid={`textarea-edit-answer-${answer.id}`}
+                        />
+                      ) : (
+                        <p className="text-gray-700 whitespace-pre-wrap">
+                          {answer.body.replace(/<[^>]*>/g, '')}
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex items-center space-x-2">
