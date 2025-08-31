@@ -467,22 +467,20 @@ export const phoneVerifySchema = z.object({
   code: z.string().length(6, "Please enter a 6-digit code"),
 });
 
-export const insertTripSchema = createInsertSchema(trips).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  // Omit optional enhanced fields - they can be undefined
-  tags: true,
-  priceMin: true,
-  priceMax: true,
-  duration: true,
-  difficulty: true,
-  buddyFriendly: true,
-  seasonality: true,
-  safetyFlags: true,
-  viewCount: true,
-  bookingCount: true,
-  freshBoost: true,
+// Custom schema for trip posting that handles string inputs
+export const insertTripSchema = z.object({
+  title: z.string().min(5, "Title must be at least 5 characters"),
+  fromLocation: z.string().min(1, "From location is required"),
+  toLocation: z.string().min(1, "To location is required"),
+  date: z.union([z.string(), z.date()]).transform(val => typeof val === 'string' ? new Date(val) : val),
+  time: z.string().min(1, "Time is required"),
+  seatsAvailable: z.union([z.number(), z.string()]).transform(val => typeof val === 'string' ? parseInt(val) : val),
+  price: z.union([z.number(), z.string()]).transform(val => typeof val === 'string' ? parseFloat(val) : val),
+  region: z.string().min(1, "Region is required"),
+  contactInfo: z.string().min(1, "Contact information is required"),
+  notes: z.string().optional(),
+  organizerId: z.string(),
+  status: z.string().optional(),
 });
 
 export const insertTripParticipantSchema = createInsertSchema(tripParticipants).omit({

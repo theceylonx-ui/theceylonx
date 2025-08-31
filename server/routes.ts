@@ -93,16 +93,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as JWTUser).id;
       console.log("Creating trip with data:", { ...req.body, organizerId: userId });
       
-      // Convert date string to Date object and price to number
-      const processedData = {
-        ...req.body,
-        organizerId: userId,
-        date: new Date(req.body.date),
-        price: parseFloat(req.body.price),
-        seatsAvailable: parseInt(req.body.seatsAvailable)
-      };
-      
-      const tripData = insertTripSchema.parse(processedData);
+      const tripData = insertTripSchema.parse({ ...req.body, organizerId: userId });
       console.log("Trip data validated successfully:", tripData);
       
       const trip = await storage.createTrip(tripData);
