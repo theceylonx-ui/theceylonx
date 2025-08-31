@@ -42,8 +42,12 @@ export default function AuthCallbackPage() {
           setErrorMessage('Authentication failed');
       }
     } else {
-      // No success or error parameter, redirect to signin
-      navigate('/auth/signin');
+      // No success or error parameter, show error and redirect to signin
+      setStatus('error');
+      setErrorMessage('Invalid authentication callback. Please try signing in again.');
+      setTimeout(() => {
+        navigate('/auth/signin');
+      }, 3000);
     }
   }, [navigate]);
 

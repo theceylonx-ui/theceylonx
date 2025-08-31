@@ -61,8 +61,22 @@ export default function DestinationPage() {
     }
   };
 
-  if (!match) {
-    return <div>Destination not found</div>;
+  if (!match || !city) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Destination Not Found</h2>
+            <p className="text-gray-600 mb-4">The destination you're looking for doesn't exist.</p>
+            <Link href="/browse-trips">
+              <Button className="bg-ceylon-green hover:bg-ceylon-green/90" data-testid="button-browse-all-trips">Browse All Trips</Button>
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
   }
 
   const displayedTrips = showAllTrips ? trips : trips.slice(0, 3);

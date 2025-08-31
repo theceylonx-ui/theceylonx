@@ -32,7 +32,7 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      {/* Hero Section for logged in users */}
+      {/* Hero Section - conditional content based on authentication */}
       <section className="relative bg-gradient-to-br from-ceylon-green to-ceylon-blue py-16">
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div 
@@ -46,10 +46,13 @@ export default function Home() {
         
         <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center text-white">
           <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-6 mt-4 drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }} data-testid="hero-welcome">
-            Welcome back, Explorer!
+            {user ? "Welcome back, Explorer!" : "Discover Sri Lanka Together"}
           </h1>
           <p className="text-base sm:text-lg md:text-xl mb-8 max-w-2xl mx-auto px-4 drop-shadow-lg" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8), 0px 0px 2px rgba(0,0,0,0.6)' }} data-testid="hero-subtitle">
-            Ready for your next adventure? Discover new trips or share your journey with fellow travelers.
+            {user 
+              ? "Ready for your next adventure? Discover new trips or share your journey with fellow travelers."
+              : "Join our community of travelers and explore the beauty of Sri Lanka with like-minded adventurers."
+            }
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
             <Button 
@@ -60,14 +63,25 @@ export default function Home() {
             >
               Browse Trips
             </Button>
-            <Button 
-              size="lg"
-              className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-base sm:text-lg font-semibold w-full sm:w-auto px-6 py-3"
-              onClick={() => window.location.href = "/post"}
-              data-testid="button-post-trip"
-            >
-              Post a Trip
-            </Button>
+            {user ? (
+              <Button 
+                size="lg"
+                className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-base sm:text-lg font-semibold w-full sm:w-auto px-6 py-3"
+                onClick={() => window.location.href = "/post"}
+                data-testid="button-post-trip"
+              >
+                Post a Trip
+              </Button>
+            ) : (
+              <Button 
+                size="lg"
+                className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-base sm:text-lg font-semibold w-full sm:w-auto px-6 py-3"
+                onClick={() => window.location.href = "/auth/signin"}
+                data-testid="button-get-started"
+              >
+                Get Started
+              </Button>
+            )}
           </div>
         </div>
       </section>
