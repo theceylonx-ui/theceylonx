@@ -102,16 +102,46 @@ export default function UserDashboard() {
       };
       return await apiRequest("PATCH", "/api/user", cleanData);
     },
+    onMutate: async (newData) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/auth/me"] });
+      
+      // Snapshot the previous value
+      const previousUser = queryClient.getQueryData(["/api/auth/me"]);
+      
+      // Optimistically update the cache with new data
+      if (previousUser && user) {
+        const optimisticUser = {
+          ...user,
+          username: newData.username?.trim() || user.username,
+          phoneNumber: newData.phoneNumber?.trim() || user.phoneNumber,
+          bio: newData.bio?.trim() || user.bio,
+          profileImageUrl: newData.profileImageUrl?.trim() || user.profileImageUrl,
+        };
+        queryClient.setQueryData(["/api/auth/me"], optimisticUser);
+      }
+      
+      return { previousUser };
+    },
     onSuccess: () => {
       toast({
         title: "Success",
         description: "Profile updated successfully!",
       });
+      // Invalidate all user-related queries to update everywhere
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/trips"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/participations"] });
     },
-    onError: (error: any) => {
+    onError: (error: any, newData, context) => {
       console.error("Profile update error:", error);
+      
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousUser) {
+        queryClient.setQueryData(["/api/auth/me"], context.previousUser);
+      }
       
       if (isUnauthorizedError(error)) {
         toast({
@@ -142,6 +172,10 @@ export default function UserDashboard() {
         description: errorMessage,
         variant: "destructive",
       });
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure we have the latest data
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
     },
   });
 
