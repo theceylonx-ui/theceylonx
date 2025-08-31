@@ -151,9 +151,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/trips/:id', authGuard, async (req: any, res) => {
+  app.patch('/api/trips/:id', authGuard, async (req, res) => {
     try {
-      const userId = req.user.id;
+      const userId = (req.user as JWTUser).id;
       const tripId = req.params.id;
       
       // Check if user is the organizer
@@ -170,9 +170,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/trips/:id', authGuard, async (req: any, res) => {
+  app.delete('/api/trips/:id', authGuard, async (req, res) => {
     try {
-      const userId = req.user.id;
+      const userId = (req.user as JWTUser).id;
       const tripId = req.params.id;
       
       // Check if user is the organizer
