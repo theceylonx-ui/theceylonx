@@ -36,7 +36,7 @@ router.get('/google', passport.authenticate('google', {
 
 router.get('/google/callback', 
   passport.authenticate('google', { session: false }),
-  async (req: Request & { user?: JWTUser }, res: Response) => {
+  async (req: any, res: Response) => {
     if (!req.user) {
       return res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=oauth_failed`);
     }
@@ -59,7 +59,7 @@ router.get('/facebook', passport.authenticate('facebook', {
 
 router.get('/facebook/callback',
   passport.authenticate('facebook', { session: false }),
-  async (req: Request & { user?: JWTUser }, res: Response) => {
+  async (req: any, res: Response) => {
     if (!req.user) {
       return res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=oauth_failed`);
     }
@@ -82,7 +82,7 @@ router.get('/microsoft', passport.authenticate('microsoft', {
 
 router.get('/microsoft/callback',
   passport.authenticate('microsoft', { session: false }),
-  async (req: Request & { user?: JWTUser }, res: Response) => {
+  async (req: any, res: Response) => {
     if (!req.user) {
       return res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=oauth_failed`);
     }
@@ -103,7 +103,7 @@ router.get('/apple', passport.authenticate('apple'));
 
 router.post('/apple/callback',
   passport.authenticate('apple', { session: false }),
-  async (req: Request & { user?: JWTUser }, res: Response) => {
+  async (req: any, res: Response) => {
     if (!req.user) {
       return res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=oauth_failed`);
     }
