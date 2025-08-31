@@ -15,6 +15,7 @@ import {
   kpiEvents,
   userPersonalization,
   notifications,
+  tripViews,
   type User,
   type UpsertUser,
   type InsertTrip,
@@ -25,6 +26,8 @@ import {
   type InsertComment,
   type Comment,
   type CommentWithUser,
+  type InsertTripView,
+  type TripView,
   type InsertRating,
   type Rating,
   type InsertReport,
@@ -165,6 +168,11 @@ export interface IStorage {
   markAllNotificationsAsRead(userId: string): Promise<void>;
   getUnreadNotificationCount(userId: string): Promise<number>;
   deleteNotification(id: string): Promise<void>;
+  
+  // Trip view tracking operations
+  createTripView(tripView: InsertTripView): Promise<TripView>;
+  getTripViewCount(tripId: string): Promise<number>;
+  getTripViewCountSince(tripId: string, since: Date): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1085,6 +1093,34 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(notifications)
       .where(eq(notifications.id, id));
+  }
+
+  // Trip view tracking implementation
+  async createTripView(tripView: InsertTripView): Promise<TripView> {
+    const [newTripView] = await db
+      .insert(tripViews)
+      .values(tripView)
+      .returning();
+    return newTripView;
+  }
+
+  async getTripViewCount(tripId: string): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(tripViews)
+      .where(eq(tripViews.tripId, tripId));
+    return result?.count || 0;
+  }
+
+  async getTripViewCountSince(tripId: string, since: Date): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(tripViews)
+      .where(and(
+        eq(tripViews.tripId, tripId), 
+        gte(tripViews.createdAt, since)
+      ));
+    return result?.count || 0;
   }
 }
 

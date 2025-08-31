@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { generateRandomProfilePicture, getDisplayName, getInitials } from "@/lib/profileUtils";
-import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
+import { EnhancedNotificationDropdown } from "@/components/notifications/enhanced-notification-dropdown";
 
 export default function Navigation() {
   const { user, logout, isLoggingOut } = useAuth();
@@ -98,7 +98,7 @@ export default function Navigation() {
           <div className="flex items-center space-x-3">
             {user && (
               <>
-                <NotificationDropdown />
+                <EnhancedNotificationDropdown />
                 <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full" data-testid="user-menu-trigger">

@@ -148,6 +148,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!trip) {
         return res.status(404).json({ message: "Trip not found" });
       }
+      
+      // Track trip view (for authenticated users and anonymous users)
+      const userId = (req as any).user?.id; // Get user if authenticated
+      const viewerIp = req.ip || req.connection.remoteAddress;
+      const userAgent = req.get('User-Agent');
+      
+      try {
+        await storage.createTripView({
+          tripId: req.params.id,
+          userId: userId || null,
+          viewerIp,
+          userAgent,
+        });
+        
+        // Check if this trip has reached milestone view counts and notify organizer
+        if (userId !== trip.organizerId) {
+          const viewCount = await storage.getTripViewCount(req.params.id);
+          
+          // Notify at milestones: 5, 10, 25, 50, 100, 250, 500, 1000 views
+          const milestones = [5, 10, 25, 50, 100, 250, 500, 1000];
+          if (milestones.includes(viewCount)) {
+            await storage.createNotification({
+              userId: trip.organizerId,
+              type: "trip_viewed",
+              category: "trips",
+              priority: "info",
+              title: "Trip View Milestone!",
+              message: `Your trip "${trip.title}" has reached ${viewCount} views! 🎉`,
+              relatedTripId: req.params.id,
+              actionUrl: `/trips/${req.params.id}`,
+              isRead: false,
+            });
+          }
+        }
+      } catch (viewError) {
+        // Don't fail the request if view tracking fails
+        console.error("Error tracking trip view:", viewError);
+      }
+      
       res.json(trip);
     } catch (error) {
       console.error("Error fetching trip:", error);
@@ -268,6 +307,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createNotification({
         userId: trip.organizerId,
         type: "trip_join_request",
+        category: "trips",
+        priority: "normal",
         title: "New Join Request",
         message: `Someone wants to join your trip "${trip.title}"`,
         relatedTripId: tripId,
@@ -307,11 +348,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const message = status === "approved" 
             ? `Your request to join "${trip.title}" has been approved!`
             : `Your request to join "${trip.title}" was declined.`;
+          const priority = status === "approved" ? "normal" : "critical";
           
           // Create notification for the participant
           await storage.createNotification({
             userId: participation.userId,
             type: notificationType,
+            category: "trips",
+            priority: priority,
             title: title,
             message: message,
             relatedTripId: participation.tripId,
@@ -341,6 +385,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const comment = await storage.createComment(commentData);
+      
+      // Trigger notification for trip organizer if commenter is not the organizer
+      const trip = await storage.getTrip(tripId);
+      if (trip && trip.organizerId !== userId) {
+        const commenter = await storage.getUser(userId);
+        await storage.createNotification({
+          userId: trip.organizerId,
+          type: "trip_commented",
+          category: "social",
+          priority: "normal",
+          title: "New Comment on Your Trip",
+          message: `${commenter?.firstName || 'Someone'} commented on your trip "${trip.title}".`,
+          relatedTripId: tripId,
+          relatedUserId: userId,
+          actionUrl: `/trips/${tripId}`,
+          isRead: false,
+        });
+      }
+      
       res.json(comment);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -431,6 +494,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.createNotification({
             userId: trip.organizerId,
             type: "trip_reported",
+            category: "safety",
+            priority: "critical",
             title: "Trip Report Submitted",
             message: `Your trip "${trip.title}" has been reported and is under review.`,
             relatedTripId: report.tripId,

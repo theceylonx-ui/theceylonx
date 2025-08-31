@@ -127,13 +127,16 @@ export const tripParticipants = pgTable("trip_participants", {
 export const notifications = pgTable("notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(), // who receives the notification
-  type: varchar("type").notNull(), // trip_join_request, trip_join_approved, trip_join_declined, trip_reported, trip_completed, etc.
+  type: varchar("type").notNull(), // expanded notification types below
+  category: varchar("category").notNull(), // "trips", "social", "safety", "system"
+  priority: varchar("priority").notNull(), // "critical", "normal", "info"
   title: varchar("title").notNull(),
   message: text("message").notNull(),
   isRead: boolean("is_read").default(false),
   relatedTripId: varchar("related_trip_id"), // optional: related trip
   relatedUserId: varchar("related_user_id"), // optional: who triggered the notification
   actionUrl: varchar("action_url"), // optional: where to navigate when clicked
+  metadata: jsonb("metadata").default({}), // additional data for weather alerts, view counts, etc.
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -143,6 +146,16 @@ export const comments = pgTable("comments", {
   tripId: varchar("trip_id").notNull(),
   userId: varchar("user_id").notNull(),
   content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Trip Views table for tracking views and generating notifications
+export const tripViews = pgTable("trip_views", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  tripId: varchar("trip_id").notNull(),
+  userId: varchar("user_id"), // Optional - can be null for anonymous views
+  viewerIp: varchar("viewer_ip"), // For anonymous tracking
+  userAgent: text("user_agent"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -508,17 +521,64 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
 });
 
 export const notificationTypeSchema = z.enum([
-  "trip_join_request",     // When someone joins your trip
-  "trip_join_approved",    // When your join request is approved
-  "trip_join_declined",    // When your join request is declined
-  "trip_reported",         // When your trip is reported
-  "trip_completed",        // When a trip you joined is marked complete
-  "trip_cancelled",        // When a trip you joined is cancelled
-  "new_trip_in_region",    // When a new trip is posted in your preferred region
-  "system_update"          // System announcements
+  // Trip Participation
+  "trip_join_request",        // Someone wants to join your trip
+  "trip_join_approved",       // Your join request was accepted
+  "trip_join_declined",       // Your join request was rejected
+  "trip_join_pending_reminder", // Reminder for pending join request
+  
+  // My Posted Trips
+  "trip_viewed",              // Someone viewed your trip (threshold-based)
+  "trip_commented",           // Someone commented on your trip
+  "trip_edited",              // Trip details were updated (co-hosts)
+  
+  // System & Safety Alerts
+  "trip_reported",            // Your trip was reported
+  "trip_flagged",             // Trip temporarily flagged by admin
+  "weather_alert",            // Weather warning for your trip area
+  "region_alert",             // Region-specific alerts (closures, strikes)
+  
+  // Social Interactions
+  "new_follower",             // Someone followed you
+  "trip_liked",               // Someone liked/saved your trip
+  "direct_message",           // Direct message received
+  
+  // Booking & Payment (future)
+  "booking_confirmed",        // Booking confirmed
+  "booking_failed",           // Booking failed/canceled
+  "payment_received",         // Payment received for your trip
+  
+  // Admin & Platform
+  "feature_update",           // New feature announcement
+  "policy_change",            // Important policy change
+  "account_alert",            // Account verification/security issues
+  
+  // Legacy types (keeping for compatibility)
+  "trip_completed",           // Trip marked as complete
+  "trip_cancelled",           // Trip was cancelled
+  "new_trip_in_region",       // New trip in preferred region
+  "system_update"             // System announcements
+]);
+
+export const notificationCategorySchema = z.enum([
+  "trips",    // Trip-related notifications
+  "social",   // Social interactions and follows
+  "safety",   // Weather alerts, reports, flagged content
+  "system"    // Platform updates, account alerts
+]);
+
+export const notificationPrioritySchema = z.enum([
+  "critical", // Red - safety alerts, rejections, reports
+  "normal",   // Blue/green - joins, comments, likes
+  "info"      // Grey - views, tips, updates
 ]);
 
 export const insertCommentSchema = createInsertSchema(comments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTripViewSchema = createInsertSchema(tripViews).omit({
   id: true,
   createdAt: true,
 });
@@ -613,6 +673,8 @@ export type NotificationType = z.infer<typeof notificationTypeSchema>;
 export type InsertComment = z.infer<typeof insertCommentSchema>;
 export type Comment = typeof comments.$inferSelect;
 export type CommentWithUser = Comment & { user: User };
+export type InsertTripView = z.infer<typeof insertTripViewSchema>;
+export type TripView = typeof tripViews.$inferSelect;
 export type InsertRating = z.infer<typeof insertRatingSchema>;
 export type Rating = typeof ratings.$inferSelect;
 export type InsertReport = z.infer<typeof insertReportSchema>;
