@@ -471,6 +471,18 @@ export const insertTripSchema = createInsertSchema(trips).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  // Omit optional enhanced fields - they can be undefined
+  tags: true,
+  priceMin: true,
+  priceMax: true,
+  duration: true,
+  difficulty: true,
+  buddyFriendly: true,
+  seasonality: true,
+  safetyFlags: true,
+  viewCount: true,
+  bookingCount: true,
+  freshBoost: true,
 });
 
 export const insertTripParticipantSchema = createInsertSchema(tripParticipants).omit({
