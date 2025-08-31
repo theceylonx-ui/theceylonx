@@ -12,10 +12,31 @@ const messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID;
 
 const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
 
+// Normalize phone number to E.164 format
+function normalizePhoneNumber(phone: string): string {
+  // Remove all non-digit characters
+  let cleaned = phone.replace(/\D/g, '');
+  
+  // If starts with 0, assume it's a local Sri Lankan number
+  if (cleaned.startsWith('0')) {
+    cleaned = '94' + cleaned.substring(1); // Sri Lanka country code
+  }
+  // If doesn't start with +, add +
+  if (!cleaned.startsWith('+')) {
+    cleaned = '+' + cleaned;
+  }
+  
+  return cleaned;
+}
+
 export async function sendPhoneOtp(phone: string): Promise<void> {
   if (!client) {
     throw new Error('Twilio not configured');
   }
+
+  // Normalize phone number
+  const normalizedPhone = normalizePhoneNumber(phone);
+  console.log(`Sending SMS to normalized number: ${normalizedPhone}`);
 
   // Generate 6-digit OTP
   const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -23,10 +44,10 @@ export async function sendPhoneOtp(phone: string): Promise<void> {
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
   // Clean up old OTPs and create new one
-  await db.delete(phoneOtps).where(eq(phoneOtps.phone, phone));
+  await db.delete(phoneOtps).where(eq(phoneOtps.phone, normalizedPhone));
 
   await db.insert(phoneOtps).values({
-    phone,
+    phone: normalizedPhone,
     codeHash,
     expiresAt,
   });
@@ -39,16 +60,17 @@ export async function sendPhoneOtp(phone: string): Promise<void> {
       await client.messages.create({
         body: message,
         messagingServiceSid,
-        to: phone,
+        to: normalizedPhone,
       });
     } else {
       // Fallback if no messaging service configured
       await client.messages.create({
         body: message,
         from: process.env.TWILIO_PHONE_NUMBER,
-        to: phone,
+        to: normalizedPhone,
       });
     }
+    console.log(`SMS sent successfully to ${normalizedPhone}`);
   } catch (error) {
     console.error('Failed to send SMS:', error);
     throw new Error('Failed to send verification code');
@@ -57,10 +79,13 @@ export async function sendPhoneOtp(phone: string): Promise<void> {
 
 export async function verifyPhoneOtp(phone: string, code: string): Promise<JWTUser | null> {
   try {
+    // Normalize phone number for lookup
+    const normalizedPhone = normalizePhoneNumber(phone);
+    
     // Find OTP record
     const [otpRecord] = await db.select()
       .from(phoneOtps)
-      .where(eq(phoneOtps.phone, phone));
+      .where(eq(phoneOtps.phone, normalizedPhone));
 
     if (!otpRecord || otpRecord.expiresAt < new Date()) {
       return null;

@@ -456,13 +456,13 @@ export const emailAuthSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
 });
 
-// Phone OTP schemas
+// Phone OTP schemas - relaxed validation, normalization happens server-side
 export const phoneStartSchema = z.object({
-  phone: z.string().regex(/^\+[1-9]\d{1,14}$/, "Please enter a valid phone number in E.164 format"),
+  phone: z.string().min(8, "Phone number must be at least 8 digits").max(15, "Phone number too long"),
 });
 
 export const phoneVerifySchema = z.object({
-  phone: z.string().regex(/^\+[1-9]\d{1,14}$/, "Please enter a valid phone number in E.164 format"),
+  phone: z.string().min(8, "Phone number must be at least 8 digits").max(15, "Phone number too long"),
   code: z.string().length(6, "Please enter a 6-digit code"),
 });
 
