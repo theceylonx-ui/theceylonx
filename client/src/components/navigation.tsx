@@ -134,6 +134,12 @@ export default function Navigation() {
                       Preferences
                     </DropdownMenuItem>
                   </Link>
+                  <Link href="/admin">
+                    <DropdownMenuItem className="cursor-pointer" data-testid="user-menu-admin">
+                      <User className="mr-2 h-4 w-4" />
+                      ML Analytics
+                    </DropdownMenuItem>
+                  </Link>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50" 

@@ -23,6 +23,7 @@ import AuthMagicPage from "@/pages/auth-magic";
 import AuthCallbackPage from "@/pages/auth-callback";
 import DestinationPage from "@/pages/destination";
 import PreferencesPage from "@/pages/preferences";
+import AdminDashboardPage from "@/pages/admin-dashboard";
 import { FloatingActionMenu } from "@/components/floating-action-menu";
 
 function Router() {
@@ -78,6 +79,7 @@ function Router() {
             <Route path="/auth/signin" component={AuthSignInPage} />
             <Route path="/destination/:city" component={DestinationPage} />
             <Route path="/preferences" component={PreferencesPage} />
+            <Route path="/admin" component={AdminDashboardPage} />
           </>
         )}
         <Route component={NotFound} />
