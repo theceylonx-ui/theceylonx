@@ -75,49 +75,9 @@ router.get('/facebook/callback',
   }
 );
 
-// Microsoft OAuth
-router.get('/microsoft', passport.authenticate('microsoft', {
-  scope: ['user.read']
-}));
+// Microsoft OAuth removed
 
-router.get('/microsoft/callback',
-  passport.authenticate('microsoft', { session: false }),
-  async (req: any, res: Response) => {
-    if (!req.user) {
-      return res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=oauth_failed`);
-    }
-
-    try {
-      const tokens = await generateAuthTokens(req.user);
-      setAuthCookies(res, tokens);
-      res.redirect(`${process.env.APP_URL || ''}/auth/callback?success=1`);
-    } catch (error) {
-      console.error('OAuth callback error:', error);
-      res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=callback_failed`);
-    }
-  }
-);
-
-// Apple OAuth
-router.get('/apple', passport.authenticate('apple'));
-
-router.post('/apple/callback',
-  passport.authenticate('apple', { session: false }),
-  async (req: any, res: Response) => {
-    if (!req.user) {
-      return res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=oauth_failed`);
-    }
-
-    try {
-      const tokens = await generateAuthTokens(req.user);
-      setAuthCookies(res, tokens);
-      res.redirect(`${process.env.APP_URL || ''}/auth/callback?success=1`);
-    } catch (error) {
-      console.error('OAuth callback error:', error);
-      res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=callback_failed`);
-    }
-  }
-);
+// Apple OAuth removed
 
 // Email Magic Link Routes - DISABLED (using Phone and Google OAuth only)
 router.post('/email/start', authRateLimit, async (req: Request, res: Response) => {
