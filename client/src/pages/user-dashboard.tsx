@@ -120,7 +120,21 @@ export default function UserDashboard() {
         bio: data.bio?.trim() || undefined,
         profileImageUrl: data.profileImageUrl?.trim() || undefined,
       };
-      return await apiRequest("PATCH", "/api/user", cleanData);
+      const result = await apiRequest("PATCH", "/api/user", cleanData);
+      // Add cache buster to force fresh data
+      const timestamp = Date.now();
+      const freshUserResponse = await fetch(`/api/auth/me?_t=${timestamp}`, {
+        credentials: 'include',
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      if (freshUserResponse.ok) {
+        return await freshUserResponse.json();
+      }
+      return result;
     },
     onMutate: async (newData) => {
       // Cancel any outgoing refetches
