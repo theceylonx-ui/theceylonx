@@ -93,17 +93,17 @@ export const trips = pgTable("trips", {
   organizerId: varchar("organizer_id").notNull(),
   status: varchar("status").default("active"), // active, full, completed, cancelled
   
-  // Enhanced fields for better recommendations
-  tags: text("tags").array(), // Required: trip type tags like 'adventure', 'cultural', 'beach'
-  priceMin: decimal("price_min", { precision: 10, scale: 2 }), // Required: minimum price range
-  priceMax: decimal("price_max", { precision: 10, scale: 2 }), // Required: maximum price range
-  duration: varchar("duration"), // Required: duration like '1 day', '2-3 days', '1 week'
-  difficulty: varchar("difficulty"), // Required: 'easy', 'moderate', 'challenging'
-  buddyFriendly: boolean("buddy_friendly").default(false), // Required: suitable for solo travelers
+  // Optional enhanced fields for better recommendations
+  tags: text("tags").array(), // Optional: trip type tags like 'adventure', 'cultural', 'beach'
+  priceMin: decimal("price_min", { precision: 10, scale: 2 }), // Optional: minimum price range
+  priceMax: decimal("price_max", { precision: 10, scale: 2 }), // Optional: maximum price range
+  duration: varchar("duration"), // Optional: duration like '1 day', '2-3 days', '1 week'
+  difficulty: varchar("difficulty"), // Optional: 'easy', 'moderate', 'challenging'
+  buddyFriendly: boolean("buddy_friendly").default(false), // Optional: suitable for solo travelers
   
   // Seasonality and safety
-  seasonality: text("seasonality").array(), // Required: ['dry_season', 'wet_season', 'year_round']
-  safetyFlags: text("safety_flags").array(), // Required: ['weather_dependent', 'road_conditions', 'equipment_required']
+  seasonality: text("seasonality").array(), // Optional: ['dry_season', 'wet_season', 'year_round']
+  safetyFlags: text("safety_flags").array(), // Optional: ['weather_dependent', 'road_conditions', 'equipment_required']
   
   // Exposure and ranking metrics
   viewCount: integer("view_count").default(0),
