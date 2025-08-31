@@ -22,6 +22,7 @@ import AuthSignInPage from "@/pages/auth-signin";
 import AuthMagicPage from "@/pages/auth-magic";
 import AuthCallbackPage from "@/pages/auth-callback";
 import DestinationPage from "@/pages/destination";
+import PreferencesPage from "@/pages/preferences";
 import { FloatingActionMenu } from "@/components/floating-action-menu";
 
 function Router() {
@@ -57,6 +58,7 @@ function Router() {
             <Route path="/auth/magic" component={AuthMagicPage} />
             <Route path="/auth/callback" component={AuthCallbackPage} />
             <Route path="/destination/:city" component={DestinationPage} />
+            <Route path="/preferences" component={PreferencesPage} />
             <Route path="/post" component={SignInRequired} />
             <Route path="/dashboard" component={SignInRequired} />
           </>
@@ -75,6 +77,7 @@ function Router() {
             <Route path="/faq" component={FAQ} />
             <Route path="/auth/signin" component={AuthSignInPage} />
             <Route path="/destination/:city" component={DestinationPage} />
+            <Route path="/preferences" component={PreferencesPage} />
           </>
         )}
         <Route component={NotFound} />

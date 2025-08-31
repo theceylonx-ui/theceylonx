@@ -8,9 +8,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { TripWithOrganizer } from "@shared/schema";
 import backgroundImage from "@assets/11_1756417976014.png";
+import { RecommendedTrips } from "@/components/RecommendedTrips";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Home() {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
   const { data: trips, isLoading } = useQuery<TripWithOrganizer[]>({
     queryKey: ["/api/trips"],
   });
@@ -61,8 +64,17 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Personalized Recommendations Section - Only for authenticated users */}
+      {user && (
+        <section className="py-16 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <RecommendedTrips limit={6} className="mb-8" />
+          </div>
+        </section>
+      )}
+
       {/* Featured Trips Section */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-8">
             <div>

@@ -9,6 +9,9 @@ import {
   questions,
   answers,
   votes,
+  userPreferences,
+  userInteractions,
+  tripFeatures,
   type User,
   type UpsertUser,
   type InsertTrip,
@@ -33,9 +36,15 @@ import {
   type AnswerWithUser,
   type InsertVote,
   type Vote,
+  type InsertUserPreferences,
+  type UserPreferences,
+  type InsertUserInteraction,
+  type UserInteraction,
+  type InsertTripFeatures,
+  type TripFeatures,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, ilike, desc, asc, gte, lte, count } from "drizzle-orm";
+import { eq, and, or, ilike, desc, asc, gte, lte, count, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (for Replit auth)
@@ -116,6 +125,14 @@ export interface IStorage {
   getUserVote(userId: string, questionId?: string, answerId?: string): Promise<Vote | undefined>;
   updateVote(userId: string, questionId: string | undefined, answerId: string | undefined, voteType: 'up' | 'down'): Promise<Vote>;
   deleteVote(userId: string, questionId?: string, answerId?: string): Promise<void>;
+
+  // ML Recommendations
+  getUserPreferences(userId: string): Promise<UserPreferences | undefined>;
+  upsertUserPreferences(userId: string, preferences: Partial<InsertUserPreferences>): Promise<UserPreferences>;
+  createUserInteraction(interaction: InsertUserInteraction): Promise<UserInteraction>;
+  getUserInteractions(userId: string, limit?: number): Promise<UserInteraction[]>;
+  getTripFeatures(tripId: string): Promise<TripFeatures | undefined>;
+  upsertTripFeatures(tripId: string, features: Partial<InsertTripFeatures>): Promise<TripFeatures>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -833,6 +850,76 @@ export class DatabaseStorage implements IStorage {
     }
     
     await db.delete(votes).where(and(...conditions));
+  }
+
+  // ML Recommendations implementation
+  async getUserPreferences(userId: string): Promise<UserPreferences | undefined> {
+    const [preferences] = await db
+      .select()
+      .from(userPreferences)
+      .where(eq(userPreferences.userId, userId));
+    return preferences;
+  }
+
+  async upsertUserPreferences(userId: string, prefs: Partial<InsertUserPreferences>): Promise<UserPreferences> {
+    const [preferences] = await db
+      .insert(userPreferences)
+      .values({
+        userId,
+        ...prefs,
+      } as any)
+      .onConflictDoUpdate({
+        target: userPreferences.userId,
+        set: {
+          ...prefs,
+          updatedAt: new Date(),
+        } as any,
+      })
+      .returning();
+    return preferences;
+  }
+
+  async createUserInteraction(interaction: InsertUserInteraction): Promise<UserInteraction> {
+    const [newInteraction] = await db
+      .insert(userInteractions)
+      .values(interaction)
+      .returning();
+    return newInteraction;
+  }
+
+  async getUserInteractions(userId: string, limit: number = 100): Promise<UserInteraction[]> {
+    return await db
+      .select()
+      .from(userInteractions)
+      .where(eq(userInteractions.userId, userId))
+      .orderBy(desc(userInteractions.createdAt))
+      .limit(limit);
+  }
+
+  async getTripFeatures(tripId: string): Promise<TripFeatures | undefined> {
+    const [features] = await db
+      .select()
+      .from(tripFeatures)
+      .where(eq(tripFeatures.tripId, tripId));
+    return features;
+  }
+
+  async upsertTripFeatures(tripId: string, features: Partial<InsertTripFeatures>): Promise<TripFeatures> {
+    const [tripFeatureRecord] = await db
+      .insert(tripFeatures)
+      .values({
+        tripId,
+        ...features,
+      } as any)
+      .onConflictDoUpdate({
+        target: tripFeatures.tripId,
+        set: {
+          ...features,
+          updatedAt: new Date(),
+        } as any,
+      })
+      .returning();
+    return tripFeatureRecord;
   }
 }
 

@@ -13,8 +13,11 @@ import {
   insertTopicSchema,
   insertQuestionSchema,
   insertAnswerSchema,
-  insertVoteSchema
+  insertVoteSchema,
+  insertUserPreferencesSchema,
+  insertUserInteractionSchema
 } from "@shared/schema";
+import { recommendationService } from "./ml/recommendationService";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -597,6 +600,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching popular destinations:", error);
       res.status(500).json({ message: "Failed to fetch popular destinations" });
+    }
+  });
+
+  // ML Recommendation endpoints
+  app.get('/api/recommendations/trips', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { limit = 10, region, minPrice, maxPrice, date } = req.query;
+      
+      const filters: any = {};
+      if (region) filters.region = region;
+      if (minPrice) filters.minPrice = parseFloat(minPrice);
+      if (maxPrice) filters.maxPrice = parseFloat(maxPrice);
+      if (date) filters.date = new Date(date);
+
+      const recommendations = await recommendationService.getPersonalizedRecommendations(
+        userId, 
+        parseInt(limit), 
+        filters
+      );
+      
+      res.json(recommendations);
+    } catch (error) {
+      console.error("Error getting trip recommendations:", error);
+      res.status(500).json({ message: "Failed to get recommendations" });
+    }
+  });
+
+  app.get('/api/user/preferences', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const preferences = await storage.getUserPreferences(userId);
+      res.json(preferences || {});
+    } catch (error) {
+      console.error("Error getting user preferences:", error);
+      res.status(500).json({ message: "Failed to get preferences" });
+    }
+  });
+
+  app.put('/api/user/preferences', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const preferencesData = insertUserPreferencesSchema.parse(req.body);
+      
+      const preferences = await storage.upsertUserPreferences(userId, preferencesData);
+      res.json(preferences);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid preferences data", errors: error.errors });
+      }
+      console.error("Error updating user preferences:", error);
+      res.status(500).json({ message: "Failed to update preferences" });
+    }
+  });
+
+  app.post('/api/user/interactions', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { tripId, interactionType, duration } = req.body;
+      
+      // Track interaction via ML service (which also updates trip features)
+      await recommendationService.trackUserInteraction(userId, tripId, interactionType, duration);
+      
+      res.json({ message: "Interaction tracked successfully" });
+    } catch (error) {
+      console.error("Error tracking user interaction:", error);
+      res.status(500).json({ message: "Failed to track interaction" });
+    }
+  });
+
+  app.get('/api/user/interactions', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { limit = 50 } = req.query;
+      
+      const interactions = await storage.getUserInteractions(userId, parseInt(limit));
+      res.json(interactions);
+    } catch (error) {
+      console.error("Error getting user interactions:", error);
+      res.status(500).json({ message: "Failed to get interactions" });
     }
   });
 

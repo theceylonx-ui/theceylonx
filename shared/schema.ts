@@ -184,6 +184,48 @@ export const votes = pgTable("votes", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// User preferences table for ML recommendations
+export const userPreferences = pgTable("user_preferences", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique(),
+  preferredRegions: jsonb("preferred_regions").$type<string[]>().default([]),
+  budgetRange: jsonb("budget_range").$type<{min: number, max: number}>(),
+  preferredDays: jsonb("preferred_days").$type<string[]>().default([]), // ['weekday', 'weekend']
+  preferredTimes: jsonb("preferred_times").$type<string[]>().default([]), // ['morning', 'afternoon', 'evening']
+  tripTypes: jsonb("trip_types").$type<string[]>().default([]), // ['adventure', 'cultural', 'beach', 'nature']
+  groupSize: varchar("group_size"), // 'solo', 'couple', 'small_group', 'large_group'
+  travelStyle: varchar("travel_style"), // 'budget', 'comfort', 'luxury'
+  interests: jsonb("interests").$type<string[]>().default([]),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User interactions table for tracking behavior
+export const userInteractions = pgTable("user_interactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  tripId: varchar("trip_id").notNull(),
+  interactionType: varchar("interaction_type").notNull(), // 'view', 'click', 'bookmark', 'share', 'join_request'
+  duration: integer("duration"), // time spent viewing in seconds
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Trip features table for ML analysis
+export const tripFeatures = pgTable("trip_features", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  tripId: varchar("trip_id").notNull().unique(),
+  distanceKm: integer("distance_km"),
+  popularityScore: decimal("popularity_score", { precision: 5, scale: 2 }).default("0"),
+  avgRating: decimal("avg_rating", { precision: 3, scale: 2 }),
+  totalBookings: integer("total_bookings").default(0),
+  viewCount: integer("view_count").default(0),
+  tags: jsonb("tags").$type<string[]>().default([]),
+  difficulty: varchar("difficulty"), // 'easy', 'moderate', 'challenging'
+  season: varchar("season"), // 'all_year', 'dry_season', 'wet_season'
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   organizedTrips: many(trips),
@@ -316,6 +358,32 @@ export const votesRelations = relations(votes, ({ one }) => ({
   }),
 }));
 
+// ML recommendation relations
+export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
+  user: one(users, {
+    fields: [userPreferences.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userInteractionsRelations = relations(userInteractions, ({ one }) => ({
+  user: one(users, {
+    fields: [userInteractions.userId],
+    references: [users.id],
+  }),
+  trip: one(trips, {
+    fields: [userInteractions.tripId],
+    references: [trips.id],
+  }),
+}));
+
+export const tripFeaturesRelations = relations(tripFeatures, ({ one }) => ({
+  trip: one(trips, {
+    fields: [tripFeatures.tripId],
+    references: [trips.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -409,6 +477,24 @@ export const insertVoteSchema = createInsertSchema(votes).omit({
   createdAt: true,
 });
 
+// ML recommendation schemas
+export const insertUserPreferencesSchema = createInsertSchema(userPreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserInteractionSchema = createInsertSchema(userInteractions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTripFeaturesSchema = createInsertSchema(tripFeatures).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -451,3 +537,11 @@ export type Answer = typeof answers.$inferSelect;
 export type AnswerWithUser = Answer & { user: User };
 export type InsertVote = z.infer<typeof insertVoteSchema>;
 export type Vote = typeof votes.$inferSelect;
+
+// ML recommendation types
+export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
+export type UserPreferences = typeof userPreferences.$inferSelect;
+export type InsertUserInteraction = z.infer<typeof insertUserInteractionSchema>;
+export type UserInteraction = typeof userInteractions.$inferSelect;
+export type InsertTripFeatures = z.infer<typeof insertTripFeaturesSchema>;
+export type TripFeatures = typeof tripFeatures.$inferSelect;

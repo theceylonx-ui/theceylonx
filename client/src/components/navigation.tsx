@@ -128,6 +128,12 @@ export default function Navigation() {
                       Dashboard
                     </DropdownMenuItem>
                   </Link>
+                  <Link href="/preferences">
+                    <DropdownMenuItem className="cursor-pointer" data-testid="user-menu-preferences">
+                      <User className="mr-2 h-4 w-4" />
+                      Preferences
+                    </DropdownMenuItem>
+                  </Link>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50" 

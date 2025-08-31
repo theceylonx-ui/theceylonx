@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { MapPin, Calendar, Users, DollarSign, Phone, MessageCircle, Star, Flag, ArrowLeft, Lock } from "lucide-react";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useTrackInteraction } from "@/hooks/useRecommendations";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import type { TripWithOrganizer, CommentWithUser } from "@shared/schema";
@@ -25,6 +26,18 @@ export default function TripDetails({ params }: TripDetailsProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [newComment, setNewComment] = useState("");
+  const { mutate: trackInteraction } = useTrackInteraction();
+
+  // Track trip view when component mounts and user is authenticated
+  useEffect(() => {
+    if (user && id) {
+      trackInteraction({
+        tripId: id,
+        interactionType: 'view',
+        duration: 1, // Basic view tracking
+      });
+    }
+  }, [user, id, trackInteraction]);
 
   const { data: trip, isLoading: tripLoading } = useQuery<TripWithOrganizer>({
     queryKey: ["/api/trips", id],
@@ -49,6 +62,13 @@ export default function TripDetails({ params }: TripDetailsProps) {
       return await apiRequest("POST", `/api/trips/${id}/join`);
     },
     onSuccess: () => {
+      // Track join request interaction
+      if (user) {
+        trackInteraction({
+          tripId: id,
+          interactionType: 'join_request',
+        });
+      }
       toast({
         title: "Success",
         description: "Your request to join this trip has been sent!",
