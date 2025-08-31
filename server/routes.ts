@@ -91,12 +91,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/trips', authGuard, async (req, res) => {
     try {
       const userId = (req.user as JWTUser).id;
+      console.log("Creating trip with data:", { ...req.body, organizerId: userId });
+      
       const tripData = insertTripSchema.parse({ ...req.body, organizerId: userId });
+      console.log("Trip data validated successfully:", tripData);
       
       const trip = await storage.createTrip(tripData);
       res.json(trip);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Trip validation errors:", error.errors);
         return res.status(400).json({ message: "Invalid trip data", errors: error.errors });
       }
       console.error("Error creating trip:", error);
