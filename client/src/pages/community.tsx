@@ -594,31 +594,25 @@ export default function CommunityPage() {
                           </div>
                         </div>
                         
-<Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => {
-                            if (user) {
-                              toggleQuestionExpansion(question.id);
-                            } else {
-                              // Redirect to sign in
-                              window.location.href = '/auth/signin';
-                            }
-                          }}
-                          data-testid={`button-expand-${question.id}`}
-                        >
-                          {user && expandedQuestions.has(question.id) ? 'Collapse' : 'Expand'}
-                        </Button>
+                        <Link href={`/question/${question.id}`}>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            data-testid={`button-expand-${question.id}`}
+                          >
+                            View Question
+                          </Button>
+                        </Link>
                         
-                        {user && (
+                        <Link href={`/question/${question.id}`}>
                           <Button 
                             variant="default" 
                             size="sm"
                             data-testid={`button-reply-${question.id}`}
                           >
-                            Reply
+                            {user ? 'Join Discussion' : 'View Answers'}
                           </Button>
-                        )}
+                        </Link>
                       </div>
                     </CardContent>
                   </Card>
