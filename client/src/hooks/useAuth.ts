@@ -11,8 +11,15 @@ export function useAuth() {
     staleTime: 0, // Always consider data fresh so updates happen immediately
     gcTime: 0, // Don't cache the data at all (TanStack Query v5 uses gcTime instead of cacheTime)
     queryFn: async () => {
-      const res = await fetch('/api/auth/me', {
+      // Add cache buster and no-cache headers to every request
+      const timestamp = Date.now();
+      const res = await fetch(`/api/auth/me?_t=${timestamp}`, {
         credentials: 'include',
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
       });
       
       if (res.status === 401) {

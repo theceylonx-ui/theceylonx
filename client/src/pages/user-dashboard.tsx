@@ -169,21 +169,23 @@ export default function UserDashboard() {
       queryClient.removeQueries({ queryKey: ["/api/auth/me"] });
       queryClient.removeQueries({ queryKey: ["/api/user"] });
       
-      // Immediately set the updated user data
+      // Set the updated user data immediately
       queryClient.setQueryData(["/api/auth/me"], updatedUser);
       
-      // Invalidate and force refetch all user-related queries
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users/trips"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users/participations"] });
-      
-      // Force immediate refetch to bypass any caching
-      queryClient.refetchQueries({ 
-        queryKey: ["/api/auth/me"], 
-        type: 'active' 
-      });
+      // Force immediate refetch of all auth-related queries to bypass any caching
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/users/trips"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/users/participations"] });
+        
+        // Force refetch with cache bypass
+        queryClient.refetchQueries({ 
+          queryKey: ["/api/auth/me"], 
+          type: 'all' 
+        });
+      }, 100);
     },
     onError: (error: any, newData, context) => {
       console.error("Profile update error:", error);
