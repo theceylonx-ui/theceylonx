@@ -23,7 +23,7 @@ import type { User, TripWithOrganizer, TripParticipant } from "@shared/schema";
 
 const profileSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username must be less than 20 characters").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores").optional().or(z.literal('')),
-  phoneNumber: z.string().min(1, "Phone number is required"),
+  phoneNumber: z.string().optional().or(z.literal('')), // Made optional
   bio: z.string().optional(),
   profileImageUrl: z.string().optional(),
 });
@@ -438,15 +438,18 @@ export default function UserDashboard() {
                           name="phoneNumber"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Phone Number</FormLabel>
+                              <FormLabel>Phone Number (Optional)</FormLabel>
                               <FormControl>
                                 <Input 
-                                  placeholder="Your phone number" 
+                                  placeholder="Your phone number (optional)" 
                                   {...field} 
                                   data-testid="input-phone"
                                 />
                               </FormControl>
                               <FormMessage />
+                              <p className="text-sm text-gray-600">
+                                Adding a phone number helps other travelers contact you directly
+                              </p>
                             </FormItem>
                           )}
                         />
