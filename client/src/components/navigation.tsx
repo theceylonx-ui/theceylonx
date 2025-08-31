@@ -125,19 +125,19 @@ export default function Navigation() {
                   <Link href="/dashboard">
                     <DropdownMenuItem className="cursor-pointer" data-testid="user-menu-dashboard">
                       <User className="mr-2 h-4 w-4" />
-                      Dashboard
+                      My Profile
                     </DropdownMenuItem>
                   </Link>
                   <Link href="/preferences">
                     <DropdownMenuItem className="cursor-pointer" data-testid="user-menu-preferences">
                       <User className="mr-2 h-4 w-4" />
-                      Preferences
+                      Travel Preferences
                     </DropdownMenuItem>
                   </Link>
                   <Link href="/admin">
                     <DropdownMenuItem className="cursor-pointer" data-testid="user-menu-admin">
                       <User className="mr-2 h-4 w-4" />
-                      ML Analytics
+                      Smart Insights
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuSeparator />

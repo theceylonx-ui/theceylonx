@@ -243,17 +243,17 @@ export default function EnhancedRecommendedTrips() {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Sparkles className="h-6 w-6 text-purple-600" />
-            Enhanced AI Recommendations
+            Smart Travel Picks for You
           </h2>
           <p className="text-muted-foreground">
-            Powered by ML with seasonality, safety, and diversity insights
+            Personalized recommendations based on your preferences and travel style
           </p>
         </div>
 
         <div className="flex items-center gap-4">
           {/* A/B Test Indicator */}
           <Badge variant={abTestGroup === 'personalized' ? 'default' : 'secondary'}>
-            {abTestGroup === 'personalized' ? '🤖 AI Personalized' : '📊 Popular Baseline'}
+            {abTestGroup === 'personalized' ? '✨ Smart Picks' : '📊 Popular Trips'}
           </Badge>
 
           {/* Personalization Toggle */}

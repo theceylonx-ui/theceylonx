@@ -57,7 +57,7 @@ export function RecommendedTrips({ limit = 6, region, className, enhanced = fals
       <div className={`space-y-4 ${className}`}>
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <TrendingUp className="h-5 w-5" />
-          Recommended for You
+          Perfect Trips for You
         </h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: limit }).map((_, i) => (
@@ -96,11 +96,11 @@ export function RecommendedTrips({ limit = 6, region, className, enhanced = fals
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <TrendingUp className="h-5 w-5" />
-          Recommended for You
+          Perfect Trips for You
         </h2>
         {recommendations.length > 0 && (
           <Badge variant="secondary" className="text-xs">
-            Personalized
+            Just for You
           </Badge>
         )}
       </div>
