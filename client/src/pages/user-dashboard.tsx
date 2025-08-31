@@ -23,7 +23,14 @@ import type { User, TripWithOrganizer, TripParticipant } from "@shared/schema";
 
 const profileSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username must be less than 20 characters").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores").optional().or(z.literal('')),
-  phoneNumber: z.string().optional().or(z.literal('')), // Made optional
+  phoneNumber: z.string().optional().or(z.literal('')).refine((val) => {
+    // If phone number is provided, do basic validation
+    if (val && val.trim()) {
+      const cleaned = val.replace(/[\s\-\(\)]/g, '');
+      return /^\+?[\d]{7,15}$/.test(cleaned);
+    }
+    return true;
+  }, "Please enter a valid phone number"),
   bio: z.string().optional(),
   profileImageUrl: z.string().optional(),
 });
@@ -85,7 +92,15 @@ export default function UserDashboard() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileFormData) => {
-      return await apiRequest("PATCH", "/api/user", data);
+      // Clean up empty strings to undefined for optional fields
+      const cleanData = {
+        ...data,
+        username: data.username?.trim() || undefined,
+        phoneNumber: data.phoneNumber?.trim() || undefined,
+        bio: data.bio?.trim() || undefined,
+        profileImageUrl: data.profileImageUrl?.trim() || undefined,
+      };
+      return await apiRequest("PATCH", "/api/user", cleanData);
     },
     onSuccess: () => {
       toast({
@@ -93,8 +108,11 @@ export default function UserDashboard() {
         description: "Profile updated successfully!",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error("Profile update error:", error);
+      
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -106,9 +124,22 @@ export default function UserDashboard() {
         }, 500);
         return;
       }
+      
+      // Handle specific error messages from the server
+      let errorMessage = "Failed to update profile. Please try again.";
+      if (error?.message) {
+        if (error.message.includes("Username is already taken")) {
+          errorMessage = "Username is already taken. Please choose a different one.";
+        } else if (error.message.includes("unique")) {
+          errorMessage = "Username or phone number is already in use.";
+        } else if (error.message.includes("validation")) {
+          errorMessage = "Please check your input and try again.";
+        }
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to update profile. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     },

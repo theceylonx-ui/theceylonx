@@ -38,27 +38,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const { username, phoneNumber, bio, profileImageUrl } = req.body;
       
+      console.log("Profile update request:", { userId, username, phoneNumber: phoneNumber ? "***" : null, bio: bio ? bio.substring(0, 50) : null });
+      
       // Check if username is already taken by another user
-      if (username) {
-        const existingUser = await storage.getUserByUsername(username);
+      if (username && username.trim()) {
+        const existingUser = await storage.getUserByUsername(username.trim());
         if (existingUser && existingUser.id !== userId) {
           return res.status(400).json({ message: "Username is already taken" });
         }
       }
       
-      const updatedUser = await storage.updateUser(userId, {
-        username: username || undefined,
-        profileImageUrl,
-        phoneNumber,
-        bio,
-      });
+      // Clean the data before updating
+      const updateData = {
+        username: username?.trim() || undefined,
+        profileImageUrl: profileImageUrl?.trim() || undefined,
+        phoneNumber: phoneNumber?.trim() || undefined,
+        bio: bio?.trim() || undefined,
+      };
       
+      console.log("Updating user with data:", { ...updateData, phoneNumber: updateData.phoneNumber ? "***" : null });
+      
+      const updatedUser = await storage.updateUser(userId, updateData);
+      
+      console.log("Profile update successful for user:", userId);
       res.json(updatedUser);
     } catch (error) {
       console.error("Error updating user profile:", error);
-      if (error instanceof Error && error.message && error.message.includes('unique')) {
-        return res.status(400).json({ message: "Username is already taken" });
+      
+      if (error instanceof Error) {
+        if (error.message.includes('unique')) {
+          if (error.message.includes('username')) {
+            return res.status(400).json({ message: "Username is already taken" });
+          } else if (error.message.includes('phone')) {
+            return res.status(400).json({ message: "Phone number is already in use" });
+          }
+          return res.status(400).json({ message: "Username or phone number is already in use" });
+        }
       }
+      
       res.status(500).json({ message: "Failed to update profile" });
     }
   });
