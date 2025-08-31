@@ -64,11 +64,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Personalized Recommendations Section - Only for authenticated users */}
+      {/* Enhanced AI Recommendations Section - Only for authenticated users */}
       {user && (
         <section className="py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <RecommendedTrips limit={6} className="mb-8" />
+            <RecommendedTrips limit={12} enhanced={true} className="mb-8" />
           </div>
         </section>
       )}

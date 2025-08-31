@@ -12,6 +12,8 @@ import {
   userPreferences,
   userInteractions,
   tripFeatures,
+  kpiEvents,
+  userPersonalization,
   type User,
   type UpsertUser,
   type InsertTrip,
@@ -42,6 +44,10 @@ import {
   type UserInteraction,
   type InsertTripFeatures,
   type TripFeatures,
+  type InsertKpiEvent,
+  type KpiEvent,
+  type InsertUserPersonalization,
+  type UserPersonalization,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, ilike, desc, asc, gte, lte, count, sql } from "drizzle-orm";
@@ -133,6 +139,20 @@ export interface IStorage {
   getUserInteractions(userId: string, limit?: number): Promise<UserInteraction[]>;
   getTripFeatures(tripId: string): Promise<TripFeatures | undefined>;
   upsertTripFeatures(tripId: string, features: Partial<InsertTripFeatures>): Promise<TripFeatures>;
+  
+  // KPI and Analytics
+  createKpiEvent(event: InsertKpiEvent): Promise<KpiEvent>;
+  getKpiEvents(filters?: {
+    eventType?: string;
+    userId?: string;
+    abTestGroup?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<KpiEvent[]>;
+  
+  // User Personalization
+  getUserPersonalization(userId: string): Promise<UserPersonalization | undefined>;
+  upsertUserPersonalization(userId: string, settings: Partial<InsertUserPersonalization>): Promise<UserPersonalization>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -920,6 +940,78 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return tripFeatureRecord;
+  }
+
+  // KPI and Analytics implementation
+  async createKpiEvent(event: InsertKpiEvent): Promise<KpiEvent> {
+    const [newEvent] = await db
+      .insert(kpiEvents)
+      .values(event)
+      .returning();
+    return newEvent;
+  }
+
+  async getKpiEvents(filters?: {
+    eventType?: string;
+    userId?: string;
+    abTestGroup?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<KpiEvent[]> {
+    const conditions = [];
+    
+    if (filters?.eventType) {
+      conditions.push(eq(kpiEvents.eventType, filters.eventType));
+    }
+    
+    if (filters?.userId) {
+      conditions.push(eq(kpiEvents.userId, filters.userId));
+    }
+    
+    if (filters?.abTestGroup) {
+      conditions.push(eq(kpiEvents.abTestGroup, filters.abTestGroup));
+    }
+    
+    if (filters?.startDate) {
+      conditions.push(gte(kpiEvents.createdAt, filters.startDate));
+    }
+    
+    if (filters?.endDate) {
+      conditions.push(lte(kpiEvents.createdAt, filters.endDate));
+    }
+
+    return await db
+      .select()
+      .from(kpiEvents)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(kpiEvents.createdAt));
+  }
+
+  // User Personalization implementation
+  async getUserPersonalization(userId: string): Promise<UserPersonalization | undefined> {
+    const [personalization] = await db
+      .select()
+      .from(userPersonalization)
+      .where(eq(userPersonalization.userId, userId));
+    return personalization;
+  }
+
+  async upsertUserPersonalization(userId: string, settings: Partial<InsertUserPersonalization>): Promise<UserPersonalization> {
+    const [personalization] = await db
+      .insert(userPersonalization)
+      .values({
+        userId,
+        ...settings,
+      } as any)
+      .onConflictDoUpdate({
+        target: userPersonalization.userId,
+        set: {
+          ...settings,
+          updatedAt: new Date(),
+        } as any,
+      })
+      .returning();
+    return personalization;
   }
 }
 

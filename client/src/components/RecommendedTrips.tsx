@@ -1,9 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, Users, DollarSign, Star, Eye, TrendingUp } from "lucide-react";
+import { MapPin, Clock, Users, DollarSign, Star, Eye, TrendingUp, Sparkles } from "lucide-react";
 import { useRecommendations, useTrackInteraction } from "@/hooks/useRecommendations";
 import { useAuth } from "@/hooks/useAuth";
+import EnhancedRecommendedTrips from "./EnhancedRecommendedTrips";
 import { Link } from "wouter";
 import { format } from "date-fns";
 
@@ -11,10 +12,21 @@ interface RecommendedTripsProps {
   limit?: number;
   region?: string;
   className?: string;
+  enhanced?: boolean;
 }
 
-export function RecommendedTrips({ limit = 6, region, className }: RecommendedTripsProps) {
+export function RecommendedTrips({ limit = 6, region, className, enhanced = false }: RecommendedTripsProps) {
   const { user } = useAuth();
+  
+  // If enhanced mode is requested, render the enhanced component
+  if (enhanced && user) {
+    return (
+      <div className={className}>
+        <EnhancedRecommendedTrips />
+      </div>
+    );
+  }
+  
   const { data: recommendations, isLoading } = useRecommendations({ 
     limit, 
     region 

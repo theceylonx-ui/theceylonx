@@ -91,6 +91,24 @@ export const trips = pgTable("trips", {
   notes: text("notes"),
   organizerId: varchar("organizer_id").notNull(),
   status: varchar("status").default("active"), // active, full, completed, cancelled
+  
+  // Enhanced fields for better recommendations
+  tags: text("tags").array(), // Required: trip type tags like 'adventure', 'cultural', 'beach'
+  priceMin: decimal("price_min", { precision: 10, scale: 2 }), // Required: minimum price range
+  priceMax: decimal("price_max", { precision: 10, scale: 2 }), // Required: maximum price range
+  duration: varchar("duration"), // Required: duration like '1 day', '2-3 days', '1 week'
+  difficulty: varchar("difficulty"), // Required: 'easy', 'moderate', 'challenging'
+  buddyFriendly: boolean("buddy_friendly").default(false), // Required: suitable for solo travelers
+  
+  // Seasonality and safety
+  seasonality: text("seasonality").array(), // Required: ['dry_season', 'wet_season', 'year_round']
+  safetyFlags: text("safety_flags").array(), // Required: ['weather_dependent', 'road_conditions', 'equipment_required']
+  
+  // Exposure and ranking metrics
+  viewCount: integer("view_count").default(0),
+  bookingCount: integer("booking_count").default(0),
+  freshBoost: decimal("fresh_boost", { precision: 3, scale: 2 }).default('1.0'), // New listing boost that decays
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -205,8 +223,10 @@ export const userInteractions = pgTable("user_interactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),
   tripId: varchar("trip_id").notNull(),
-  interactionType: varchar("interaction_type").notNull(), // 'view', 'click', 'bookmark', 'share', 'join_request'
-  duration: integer("duration"), // time spent viewing in seconds
+  interactionType: varchar("interaction_type").notNull(), // 'view', 'click', 'bookmark', 'share', 'join_request', 'not_interested'
+  duration: integer("duration"), // Duration in seconds for views (dwell_ms for quality signals)
+  sessionId: varchar("session_id"), // anon_session_id for first-time visitors
+  abTestGroup: varchar("ab_test_group"), // 'baseline' | 'personalized' for A/B testing
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -222,6 +242,28 @@ export const tripFeatures = pgTable("trip_features", {
   tags: jsonb("tags").$type<string[]>().default([]),
   difficulty: varchar("difficulty"), // 'easy', 'moderate', 'challenging'
   season: varchar("season"), // 'all_year', 'dry_season', 'wet_season'
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// KPI tracking table for metrics and A/B testing
+export const kpiEvents = pgTable("kpi_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id"),
+  sessionId: varchar("session_id"),
+  eventType: varchar("event_type").notNull(), // 'ctr_top5', 'save_session', 'chat_start', 'booking_start', 'return_7d'
+  tripId: varchar("trip_id"),
+  abTestGroup: varchar("ab_test_group"), // 'baseline' | 'personalized'
+  eventData: jsonb("event_data"), // Additional event context
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// User personalization settings
+export const userPersonalization = pgTable("user_personalization", {
+  userId: varchar("user_id").primaryKey(),
+  isPaused: boolean("is_paused").default(false), // User can pause personalization
+  resetAt: timestamp("reset_at"), // When user last reset recommendations
+  abTestGroup: varchar("ab_test_group").default('personalized'), // 'baseline' | 'personalized'
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -495,6 +537,16 @@ export const insertTripFeaturesSchema = createInsertSchema(tripFeatures).omit({
   updatedAt: true,
 });
 
+export const insertKpiEventSchema = createInsertSchema(kpiEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUserPersonalizationSchema = createInsertSchema(userPersonalization).omit({
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -545,3 +597,7 @@ export type InsertUserInteraction = z.infer<typeof insertUserInteractionSchema>;
 export type UserInteraction = typeof userInteractions.$inferSelect;
 export type InsertTripFeatures = z.infer<typeof insertTripFeaturesSchema>;
 export type TripFeatures = typeof tripFeatures.$inferSelect;
+export type InsertKpiEvent = z.infer<typeof insertKpiEventSchema>;
+export type KpiEvent = typeof kpiEvents.$inferSelect;
+export type InsertUserPersonalization = z.infer<typeof insertUserPersonalizationSchema>;
+export type UserPersonalization = typeof userPersonalization.$inferSelect;

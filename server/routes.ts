@@ -17,7 +17,7 @@ import {
   insertUserPreferencesSchema,
   insertUserInteractionSchema
 } from "@shared/schema";
-import { recommendationService } from "./ml/recommendationService";
+import { enhancedRecommendationService } from "./ml/enhancedRecommendationService";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -615,7 +615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (maxPrice) filters.maxPrice = parseFloat(maxPrice);
       if (date) filters.date = new Date(date);
 
-      const recommendations = await recommendationService.getPersonalizedRecommendations(
+      const recommendations = await enhancedRecommendationService.getPersonalizedRecommendations(
         userId, 
         parseInt(limit), 
         filters
@@ -660,13 +660,184 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const { tripId, interactionType, duration } = req.body;
       
-      // Track interaction via ML service (which also updates trip features)
-      await recommendationService.trackUserInteraction(userId, tripId, interactionType, duration);
+      // Track interaction via enhanced ML service (which also updates trip features)
+      await enhancedRecommendationService.trackUserInteraction(userId, tripId, interactionType, duration);
       
       res.json({ message: "Interaction tracked successfully" });
     } catch (error) {
       console.error("Error tracking user interaction:", error);
       res.status(500).json({ message: "Failed to track interaction" });
+    }
+  });
+
+  // Enhanced recommendation routes with A/B testing support
+  app.get('/api/recommendations/enhanced', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { 
+        limit = 10, 
+        region, 
+        minPrice, 
+        maxPrice, 
+        date, 
+        abTestGroup 
+      } = req.query;
+      
+      const filters: any = {};
+      if (region) filters.region = region;
+      if (minPrice) filters.minPrice = parseFloat(minPrice);
+      if (maxPrice) filters.maxPrice = parseFloat(maxPrice);
+      if (date) filters.date = new Date(date);
+      if (abTestGroup) filters.abTestGroup = abTestGroup;
+
+      const recommendations = await enhancedRecommendationService.getPersonalizedRecommendations(
+        userId, 
+        parseInt(limit), 
+        filters
+      );
+      
+      res.json(recommendations);
+    } catch (error) {
+      console.error("Error getting enhanced recommendations:", error);
+      res.status(500).json({ message: "Failed to get recommendations" });
+    }
+  });
+
+  // User personalization controls
+  app.get('/api/user/personalization', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const personalization = await storage.getUserPersonalization(userId);
+      res.json(personalization || { isPaused: false, abTestGroup: 'personalized' });
+    } catch (error) {
+      console.error("Error getting personalization settings:", error);
+      res.status(500).json({ message: "Failed to get personalization settings" });
+    }
+  });
+
+  app.put('/api/user/personalization/toggle', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { isPaused } = req.body;
+      
+      await enhancedRecommendationService.togglePersonalization(userId, isPaused);
+      
+      res.json({ message: "Personalization settings updated" });
+    } catch (error) {
+      console.error("Error updating personalization:", error);
+      res.status(500).json({ message: "Failed to update personalization" });
+    }
+  });
+
+  app.post('/api/user/personalization/reset', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      await enhancedRecommendationService.resetUserRecommendations(userId);
+      
+      res.json({ message: "Recommendations reset successfully" });
+    } catch (error) {
+      console.error("Error resetting recommendations:", error);
+      res.status(500).json({ message: "Failed to reset recommendations" });
+    }
+  });
+
+  // Enhanced interaction tracking with session support
+  app.post('/api/user/interactions/enhanced', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { 
+        tripId, 
+        interactionType, 
+        duration, 
+        sessionId, 
+        abTestGroup 
+      } = req.body;
+      
+      await enhancedRecommendationService.trackUserInteraction(
+        userId, 
+        tripId, 
+        interactionType, 
+        duration, 
+        sessionId, 
+        abTestGroup
+      );
+      
+      res.json({ message: "Interaction tracked successfully" });
+    } catch (error) {
+      console.error("Error tracking enhanced interaction:", error);
+      res.status(500).json({ message: "Failed to track interaction" });
+    }
+  });
+
+  // KPI tracking endpoints
+  app.post('/api/kpi/event', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { 
+        eventType, 
+        tripId, 
+        abTestGroup, 
+        eventData, 
+        sessionId 
+      } = req.body;
+      
+      await enhancedRecommendationService.trackKpiEvent({
+        userId,
+        sessionId,
+        eventType,
+        tripId,
+        abTestGroup,
+        eventData
+      });
+      
+      res.json({ message: "KPI event tracked successfully" });
+    } catch (error) {
+      console.error("Error tracking KPI event:", error);
+      res.status(500).json({ message: "Failed to track KPI event" });
+    }
+  });
+
+  // Analytics endpoint for admin dashboard
+  app.get('/api/analytics/kpi', authGuard, async (req: any, res) => {
+    try {
+      const { 
+        eventType, 
+        abTestGroup, 
+        startDate, 
+        endDate 
+      } = req.query;
+      
+      const filters: any = {};
+      if (eventType) filters.eventType = eventType;
+      if (abTestGroup) filters.abTestGroup = abTestGroup;
+      if (startDate) filters.startDate = new Date(startDate);
+      if (endDate) filters.endDate = new Date(endDate);
+      
+      const events = await storage.getKpiEvents(filters);
+      
+      // Calculate metrics
+      const totalEvents = events.length;
+      const groupedByType = events.reduce((acc, event) => {
+        acc[event.eventType] = (acc[event.eventType] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const groupedByABTest = events.reduce((acc, event) => {
+        const group = event.abTestGroup || 'unknown';
+        acc[group] = (acc[group] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      res.json({
+        totalEvents,
+        eventsByType: groupedByType,
+        eventsByABTest: groupedByABTest,
+        events: events.slice(0, 100) // Latest 100 events
+      });
+    } catch (error) {
+      console.error("Error getting KPI analytics:", error);
+      res.status(500).json({ message: "Failed to get analytics" });
     }
   });
 
