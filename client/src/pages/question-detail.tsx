@@ -65,7 +65,7 @@ export default function QuestionDetailPage() {
   // Mutations
   const voteMutation = useMutation({
     mutationFn: ({ questionId, answerId, voteType }: { questionId?: string; answerId?: string; voteType: 'up' | 'down' }) =>
-      apiRequest('/api/vote', 'POST', { questionId, answerId, voteType }),
+      apiRequest('POST', '/api/vote', { questionId, answerId, voteType }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/questions/${id}`] });
       toast({ title: "Vote recorded successfully!" });
@@ -74,15 +74,16 @@ export default function QuestionDetailPage() {
 
   const createAnswerMutation = useMutation({
     mutationFn: (data: AnswerFormData) => 
-      apiRequest(`/api/questions/${id}/answers`, 'POST', data),
+      apiRequest('POST', `/api/questions/${id}/answers`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/questions/${id}`] });
       setShowAnswerForm(false);
       form.reset();
       toast({ title: "Answer posted successfully!" });
     },
-    onError: () => {
-      toast({ title: "Failed to post answer", variant: "destructive" });
+    onError: (error) => {
+      console.error("Answer creation error:", error);
+      toast({ title: "Failed to post answer", description: error.message, variant: "destructive" });
     },
   });
 
