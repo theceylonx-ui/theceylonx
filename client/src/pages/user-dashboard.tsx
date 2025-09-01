@@ -59,10 +59,6 @@ export default function UserDashboard() {
     enabled: !!user,
   });
 
-  const { data: myParticipations } = useQuery<(TripParticipant & { trip: TripWithOrganizer })[]>({
-    queryKey: ["/api/users/participations"],
-    enabled: !!user,
-  });
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileFormData) => {
@@ -334,9 +330,8 @@ export default function UserDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-gray-100">
+          <TabsList className="grid w-full grid-cols-2 bg-gray-100">
             <TabsTrigger value="my-trips" data-testid="tab-my-trips">My Trips</TabsTrigger>
-            <TabsTrigger value="joined-trips" data-testid="tab-joined-trips">Joined Trips</TabsTrigger>
             <TabsTrigger value="profile" data-testid="tab-profile">Profile</TabsTrigger>
           </TabsList>
 
@@ -414,43 +409,6 @@ export default function UserDashboard() {
             </Card>
           </TabsContent>
 
-          {/* Joined Trips Tab */}
-          <TabsContent value="joined-trips">
-            <Card>
-              <CardHeader>
-                <CardTitle>Trips I've Joined</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {myParticipations && myParticipations.length > 0 ? (
-                    myParticipations.map((participation) => (
-                      <div key={participation.id} className="bg-gray-50 rounded-lg p-4" data-testid={`joined-trip-${participation.id}`}>
-                        <div className="flex justify-between items-start mb-3">
-                          <h3 className="font-semibold text-gray-800">{participation.trip.title}</h3>
-                          <Badge 
-                            variant={participation.status === "approved" ? "default" : "secondary"}
-                            className={participation.status === "approved" ? "bg-ceylon-green" : ""}
-                          >
-                            {participation.status}
-                          </Badge>
-                        </div>
-                        <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
-                          <div>📍 {participation.trip.fromLocation} → {participation.trip.toLocation}</div>
-                          <div>📅 {new Date(participation.trip.date).toLocaleDateString()} • {participation.trip.time}</div>
-                          <div>👤 Organized by {participation.trip.organizer.firstName} {participation.trip.organizer.lastName}</div>
-                          <div>💰 LKR {participation.trip.price}/person</div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 text-gray-600" data-testid="empty-joined-trips">
-                      You haven't joined any trips yet.
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* Profile Tab */}
           <TabsContent value="profile">

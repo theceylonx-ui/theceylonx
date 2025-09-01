@@ -15,9 +15,9 @@ export default function FAQ() {
       icon: <Users className="h-5 w-5 text-ceylon-blue" />
     },
     {
-      id: "joining-trips",
-      question: "How can I join someone else's trip?",
-      answer: "Browse available trips on the 'Browse Trips' page - no signup required to view them! Use the filters to find trips by location, date, region, or price range. When you find a suitable trip, click on it to view full details. If you want to join, you'll need to log in first. Then you can contact the trip organizer directly via WhatsApp or email, or leave a comment on their trip post to ask questions.",
+      id: "contacting-travelers",
+      question: "How can I contact trip organizers?",
+      answer: "Browse available trips on the 'Browse Trips' page - no signup required to view them! Use the filters to find trips by location, date, region, or price range. When you find a suitable trip, click on it to view full details. To contact the organizer, you'll need to log in first. Then you can contact them directly via WhatsApp or email, or leave a comment on their trip post to ask questions.",
       icon: <MessageCircle className="h-5 w-5 text-ceylon-green" />
     },
     {
@@ -35,13 +35,13 @@ export default function FAQ() {
     {
       id: "trip-cancellation",
       question: "What happens if a trip gets cancelled or changes?",
-      answer: "Trip organizers can update their trip details or delete trips entirely from their dashboard. If you've already contacted an organizer about joining their trip, they'll communicate any changes directly with you via WhatsApp or email. We recommend staying in touch with your trip organizer as the travel date approaches. If a trip organizer behaves inappropriately, you can report them using the report feature.",
+      answer: "Trip organizers can update their trip details or delete trips entirely from their dashboard. If you've already contacted an organizer about their trip, they'll communicate any changes directly with you via WhatsApp or email. We recommend staying in touch with your trip organizer as the travel date approaches. If a trip organizer behaves inappropriately, you can report them using the report feature.",
       icon: <XCircle className="h-5 w-5 text-red-500" />
     },
     {
       id: "marking-completed",
       question: "How do I mark my trip as completed when I find travel partners?",
-      answer: "Once you've found your travel companions and no longer need additional participants, go to your dashboard and click on 'My Trips'. You'll see a green 'Mark Complete' button next to each active trip. Clicking this will mark your trip as completed, remove it from search results, and prevent new people from trying to join. You can reactivate completed trips anytime if your plans change.",
+      answer: "Once you've found your travel companions and no longer need additional participants, go to your dashboard and click on 'My Trips'. You'll see a green 'Mark Complete' button next to each active trip. Clicking this will mark your trip as completed and remove it from search results. You can reactivate completed trips anytime if your plans change.",
       icon: <CheckCircle className="h-5 w-5 text-ceylon-green" />
     },
     {
