@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { User, LogOut, Menu, X } from "lucide-react";
+import { User, LogOut, Menu, X, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import logoImage from "@assets/5_1756417819316.png";
 import { Button } from "@/components/ui/button";
@@ -70,6 +70,21 @@ export default function Navigation() {
                 Post a Trip
               </span>
             </Link>
+            {user && (
+              <Link href="/chat">
+                <span 
+                  className={`transition-colors cursor-pointer flex items-center gap-1 ${
+                    isActive('/chat') || location.startsWith('/chat/') 
+                      ? 'text-ceylon-green font-medium' 
+                      : 'text-gray-600 hover:text-ceylon-green'
+                  }`}
+                  data-testid="nav-chat"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Chat Buddy
+                </span>
+              </Link>
+            )}
             <Link href="/community">
               <span 
                 className={`transition-colors cursor-pointer ${
@@ -200,6 +215,22 @@ export default function Navigation() {
                   Post a Trip
                 </span>
               </Link>
+              {user && (
+                <Link href="/chat">
+                  <span 
+                    className={`block px-3 py-2 text-base transition-colors cursor-pointer flex items-center gap-2 ${
+                      isActive('/chat') || location.startsWith('/chat/') 
+                        ? 'text-ceylon-green font-medium' 
+                        : 'text-gray-600 hover:text-ceylon-green'
+                    }`}
+                    onClick={toggleMobileMenu}
+                    data-testid="mobile-nav-chat"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Chat Buddy
+                  </span>
+                </Link>
+              )}
               <Link href="/community">
                 <span 
                   className={`block px-3 py-2 text-base transition-colors cursor-pointer ${

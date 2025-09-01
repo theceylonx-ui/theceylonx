@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "wouter";
-import { MapPin, Calendar, Users, DollarSign, Phone, MessageCircle, Star, Flag, ArrowLeft, Lock } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { MapPin, Calendar, Users, DollarSign, Phone, MessageCircle, Star, Flag, ArrowLeft, Lock, Trash2 } from "lucide-react";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -9,11 +9,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useTrackInteraction } from "@/hooks/useRecommendations";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
+import { JoinRequestButton } from "@/components/join-request-button";
+import { JoinRequestManager } from "@/components/join-request-manager";
 import type { TripWithOrganizer, CommentWithUser } from "@shared/schema";
 
 interface TripDetailsProps {
@@ -27,6 +30,11 @@ export default function TripDetails({ params }: TripDetailsProps) {
   const queryClient = useQueryClient();
   const [newComment, setNewComment] = useState("");
   const { mutate: trackInteraction } = useTrackInteraction();
+  const [, setLocation] = useLocation();
+  
+  // Get tab from URL params
+  const urlParams = new URLSearchParams(window.location.search);
+  const activeTab = urlParams.get('tab') || 'details';
 
   // Track trip view when component mounts and user is authenticated
   useEffect(() => {
@@ -57,24 +65,18 @@ export default function TripDetails({ params }: TripDetailsProps) {
     },
   });
 
-  const joinTripMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("POST", `/api/trips/${id}/join`);
+  const deleteCommentMutation = useMutation({
+    mutationFn: async (commentId: string) => {
+      return await apiRequest("DELETE", `/api/comments/${commentId}`);
     },
     onSuccess: () => {
-      // Track join request interaction
-      if (user) {
-        trackInteraction({
-          tripId: id,
-          interactionType: 'join_request',
-        });
-      }
       toast({
         title: "Success",
-        description: "Your request to join this trip has been sent!",
+        description: "Comment deleted successfully",
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/trips", id, "comments"] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -88,7 +90,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
       }
       toast({
         title: "Error",
-        description: "Failed to join trip. Please try again.",
+        description: "Failed to delete comment. Please try again.",
         variant: "destructive",
       });
     },
@@ -160,12 +162,20 @@ export default function TripDetails({ params }: TripDetailsProps) {
     },
   });
 
-  const handleJoinTrip = () => {
-    if (!isAuthenticated) {
-      window.location.href = "/auth/signin";
-      return;
-    }
-    joinTripMutation.mutate();
+  const handleTabChange = (newTab: string) => {
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('tab', newTab);
+    window.history.pushState({}, '', newUrl.toString());
+  };
+
+  const canDeleteComment = (comment: CommentWithUser) => {
+    if (!user) return false;
+    // User can delete their own comment or trip owner can delete any comment
+    return comment.userId === user.id || (trip && trip.organizerId === user.id);
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    deleteCommentMutation.mutate(commentId);
   };
 
   const handleAddComment = () => {
@@ -345,10 +355,10 @@ export default function TripDetails({ params }: TripDetailsProps) {
                   </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="space-y-2">
                   <Button 
                     onClick={isAuthenticated ? handleContact : () => window.location.href = '/auth/signin'}
-                    className={`flex-1 ${
+                    className={`w-full ${
                       isAuthenticated 
                         ? 'bg-ceylon-green hover:bg-ceylon-green/90' 
                         : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
@@ -368,28 +378,12 @@ export default function TripDetails({ params }: TripDetailsProps) {
                     )}
                   </Button>
                   
-                  {isAuthenticated && user && trip && user.id !== trip.organizerId && (
-                    <>
-                      {trip.status === "active" ? (
-                        <Button 
-                          onClick={handleJoinTrip}
-                          disabled={joinTripMutation.isPending}
-                          className="flex-1 bg-ceylon-blue hover:bg-ceylon-blue/90"
-                          data-testid="button-join"
-                        >
-                          <Users className="h-4 w-4 mr-2" />
-                          {joinTripMutation.isPending ? "Joining..." : "Join Trip"}
-                        </Button>
-                      ) : (
-                        <Button 
-                          disabled
-                          className="flex-1 bg-gray-400 cursor-not-allowed"
-                          data-testid="button-trip-unavailable"
-                        >
-                          Trip Completed
-                        </Button>
-                      )}
-                    </>
+                  {trip.status === "active" && (
+                    <JoinRequestButton
+                      tripId={id}
+                      isAuthenticated={isAuthenticated}
+                      isOwner={user?.id === trip.organizerId}
+                    />
                   )}
                 </div>
               </div>
@@ -405,66 +399,96 @@ export default function TripDetails({ params }: TripDetailsProps) {
           </CardContent>
         </Card>
 
-        {/* Comments Section */}
+        {/* Tabbed Interface for Comments and Join Requests */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <MessageCircle className="h-5 w-5" />
-              <span>Comments & Questions</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Add Comment */}
-            {isAuthenticated && (
-              <div className="mb-6" data-testid="comment-form">
-                <Textarea
-                  placeholder="Ask a question or leave a comment..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  className="mb-3"
-                  data-testid="textarea-comment"
-                />
-                <Button 
-                  onClick={handleAddComment}
-                  disabled={!newComment.trim() || addCommentMutation.isPending}
-                  className="bg-ceylon-green hover:bg-ceylon-green/90"
-                  data-testid="button-add-comment"
-                >
-                  {addCommentMutation.isPending ? "Adding..." : "Add Comment"}
-                </Button>
+          <CardContent className="p-0">
+            <Tabs value={activeTab} onValueChange={handleTabChange}>
+              <div className="px-6 py-4 border-b">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="details">Comments & Questions</TabsTrigger>
+                  {user?.id === trip.organizerId && (
+                    <TabsTrigger value="joins">Join Requests</TabsTrigger>
+                  )}
+                </TabsList>
               </div>
-            )}
 
-            {/* Comments List */}
-            <div className="space-y-4">
-              {comments && comments.length > 0 ? (
-                comments.map((comment) => (
-                  <div key={comment.id} className="flex space-x-3 p-4 bg-gray-50 rounded-lg" data-testid={`comment-${comment.id}`}>
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={comment.user.profileImageUrl || ""} />
-                      <AvatarFallback>
-                        {comment.user.firstName?.[0]}{comment.user.lastName?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <span className="font-medium text-gray-800">
-                          {comment.user.firstName} {comment.user.lastName}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          {new Date(comment.createdAt!).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <p className="text-gray-700">{comment.content}</p>
-                    </div>
+              <TabsContent value="details" className="px-6 py-4">
+                {/* Add Comment */}
+                {isAuthenticated && (
+                  <div className="mb-6" data-testid="comment-form">
+                    <Textarea
+                      placeholder="Ask a question or leave a comment..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      className="mb-3"
+                      data-testid="textarea-comment"
+                    />
+                    <Button 
+                      onClick={handleAddComment}
+                      disabled={!newComment.trim() || addCommentMutation.isPending}
+                      className="bg-ceylon-green hover:bg-ceylon-green/90"
+                      data-testid="button-add-comment"
+                    >
+                      {addCommentMutation.isPending ? "Adding..." : "Add Comment"}
+                    </Button>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-600" data-testid="empty-comments">
-                  No comments yet. Be the first to ask a question!
+                )}
+
+                {/* Comments List */}
+                <div className="space-y-4">
+                  {comments && comments.length > 0 ? (
+                    comments.map((comment) => (
+                      <div key={comment.id} className="flex space-x-3 p-4 bg-gray-50 rounded-lg" data-testid={`comment-${comment.id}`}>
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={comment.user.profileImageUrl || ""} />
+                          <AvatarFallback>
+                            {comment.user.firstName?.[0]}{comment.user.lastName?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium text-gray-800">
+                                {comment.user.firstName} {comment.user.lastName}
+                              </span>
+                              <span className="text-sm text-gray-500">
+                                {new Date(comment.createdAt!).toLocaleDateString()}
+                              </span>
+                            </div>
+                            {canDeleteComment(comment) && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteComment(comment.id)}
+                                disabled={deleteCommentMutation.isPending}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                data-testid={`button-delete-comment-${comment.id}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                          <p className="text-gray-700">{comment.content}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-600" data-testid="empty-comments">
+                      No comments yet. Be the first to ask a question!
+                    </div>
+                  )}
                 </div>
+              </TabsContent>
+
+              {user?.id === trip.organizerId && (
+                <TabsContent value="joins" className="px-6 py-4">
+                  <JoinRequestManager
+                    tripId={id}
+                    isOwner={user?.id === trip.organizerId}
+                  />
+                </TabsContent>
               )}
-            </div>
+            </Tabs>
           </CardContent>
         </Card>
       </div>

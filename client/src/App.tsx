@@ -26,6 +26,7 @@ import DestinationPage from "@/pages/destination";
 import PreferencesPage from "@/pages/preferences";
 import AdminDashboardPage from "@/pages/admin-dashboard";
 import ReportTripPage from "@/pages/report-trip";
+import ChatPage from "@/pages/chat";
 import { FloatingActionMenu } from "@/components/floating-action-menu";
 
 function Router() {
@@ -63,6 +64,8 @@ function Router() {
             <Route path="/auth/callback" component={AuthCallbackPage} />
             <Route path="/destination/:city" component={DestinationPage} />
             <Route path="/preferences" component={PreferencesPage} />
+            <Route path="/chat" component={ChatPage} />
+            <Route path="/chat/:threadId" component={ChatPage} />
             <Route path="/post" component={SignInRequired} />
             <Route path="/dashboard" component={SignInRequired} />
           </>
@@ -83,6 +86,8 @@ function Router() {
             <Route path="/auth/signin" component={AuthSignInPage} />
             <Route path="/destination/:city" component={DestinationPage} />
             <Route path="/preferences" component={PreferencesPage} />
+            <Route path="/chat" component={ChatPage} />
+            <Route path="/chat/:threadId" component={ChatPage} />
             <Route path="/admin" component={AdminDashboardPage} />
             <Route path="/report-trip/:id" component={ReportTripPage} />
           </>
