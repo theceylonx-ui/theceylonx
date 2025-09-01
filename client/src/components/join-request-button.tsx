@@ -43,8 +43,8 @@ export function JoinRequestButton({
     },
     onSuccess: () => {
       toast({
-        title: "Join Request Sent!",
-        description: "Your request has been sent to the trip organizer. They'll be notified and can approve or decline your request.",
+        title: "Interest Sent!",
+        description: "Your interest has been sent to the trip organizer. They'll be notified and can approve or decline your request.",
       });
       setIsOpen(false);
       setMessage("");
@@ -57,7 +57,7 @@ export function JoinRequestButton({
       if (isUnauthorizedError(error)) {
         toast({
           title: "Authentication Required",
-          description: "Please sign in to join trips. Redirecting...",
+          description: "Please sign in to show interest in trips. Redirecting...",
           variant: "destructive",
         });
         setTimeout(() => {
@@ -66,7 +66,7 @@ export function JoinRequestButton({
         return;
       }
       
-      const errorMessage = error?.message || "Failed to send join request. Please try again.";
+      const errorMessage = error?.message || "Failed to send interest request. Please try again.";
       toast({
         title: "Error",
         description: errorMessage,
@@ -93,7 +93,7 @@ export function JoinRequestButton({
         data-testid="button-signin-to-join"
       >
         <UserPlus className="w-4 h-4 mr-2" />
-        Sign In to Join Trip
+        Sign In to Show Interest
       </Button>
     );
   }
@@ -120,19 +120,19 @@ export function JoinRequestButton({
           data-testid="button-join-trip"
         >
           <UserPlus className="w-4 h-4 mr-2" />
-          Join This Trip
+          Interested
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Request to Join Trip</DialogTitle>
+          <DialogTitle>Express Interest in Trip</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
             <Label htmlFor="message">Message to Organizer (Optional)</Label>
             <Textarea
               id="message"
-              placeholder="Tell the organizer why you'd like to join this trip..."
+              placeholder="Tell the organizer why you're interested in this trip..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={4}
