@@ -16,6 +16,9 @@ import {
   userPersonalization,
   notifications,
   tripViews,
+  authSessions,
+  emailTokens,
+  phoneOtps,
   type User,
   type UpsertUser,
   type InsertTrip,
@@ -79,6 +82,7 @@ export interface IStorage {
   createUser(user: Partial<UpsertUser>): Promise<User>;
   updateUser(id: string, user: Partial<UpsertUser>): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
+  deleteUser(id: string): Promise<void>;
   
   // Trip operations
   createTrip(trip: InsertTrip): Promise<Trip>;
@@ -258,6 +262,83 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    // Delete user data in correct order to respect foreign key constraints
+    // Start with dependent records first
+    
+    // Delete notifications
+    await db.delete(notifications).where(eq(notifications.userId, id));
+    
+    // Delete user personalization
+    await db.delete(userPersonalization).where(eq(userPersonalization.userId, id));
+    
+    // Delete user interactions
+    await db.delete(userInteractions).where(eq(userInteractions.userId, id));
+    
+    // Delete user preferences
+    await db.delete(userPreferences).where(eq(userPreferences.userId, id));
+    
+    // Delete votes
+    await db.delete(votes).where(eq(votes.userId, id));
+    
+    // Delete answers
+    await db.delete(answers).where(eq(answers.userId, id));
+    
+    // Delete questions
+    await db.delete(questions).where(eq(questions.userId, id));
+    
+    // Delete reports (both reported by and reported user)
+    await db.delete(reports).where(or(eq(reports.reporterId, id), eq(reports.userId, id)));
+    
+    // Delete ratings (both given and received)
+    await db.delete(ratings).where(or(eq(ratings.raterId, id), eq(ratings.ratedId, id)));
+    
+    // Delete comments
+    await db.delete(comments).where(eq(comments.userId, id));
+    
+    // Delete messages
+    await db.delete(messages).where(eq(messages.authorId, id));
+    
+    // Remove user from chat threads
+    await db.delete(threadUsers).where(eq(threadUsers.userId, id));
+    
+    // Delete join requests
+    await db.delete(joinRequests).where(eq(joinRequests.requesterId, id));
+    
+    // Delete trip participants
+    await db.delete(tripParticipants).where(eq(tripParticipants.userId, id));
+    
+    // Delete trip views
+    await db.delete(tripViews).where(eq(tripViews.userId, id));
+    
+    // Delete trips organized by user
+    await db.delete(trips).where(eq(trips.organizerId, id));
+    
+    // Delete auth sessions
+    await db.delete(authSessions).where(eq(authSessions.userId, id));
+    
+    // Get user data for cleaning up related records
+    const userData = await db.select({ email: users.email, phone: users.phoneNumber })
+      .from(users).where(eq(users.id, id));
+    
+    if (userData.length > 0) {
+      const { email, phone } = userData[0];
+      
+      // Delete email tokens
+      if (email) {
+        await db.delete(emailTokens).where(eq(emailTokens.email, email));
+      }
+      
+      // Delete phone OTPs
+      if (phone) {
+        await db.delete(phoneOtps).where(eq(phoneOtps.phone, phone));
+      }
+    }
+    
+    // Finally, delete the user record
+    await db.delete(users).where(eq(users.id, id));
   }
 
   // Trip operations

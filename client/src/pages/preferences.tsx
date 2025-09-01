@@ -2,9 +2,13 @@ import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import { UserPreferences } from "@/components/UserPreferences";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, Settings, Trash2 } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function PreferencesPage() {
+  const [, setLocation] = useLocation();
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
@@ -69,6 +73,33 @@ export default function PreferencesPage() {
                 <p>
                   All data is stored securely and is never shared with third parties.
                 </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-red-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg text-red-700">
+                  <Trash2 className="h-5 w-5" />
+                  Account Deletion
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm text-gray-600">
+                <p>
+                  Need to delete your account? You can permanently remove all your data from Ceylon Expand.
+                </p>
+                <p className="text-red-600 font-medium">
+                  Warning: This action cannot be undone and all your data will be permanently deleted.
+                </p>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setLocation("/user/delete")}
+                  className="mt-3"
+                  data-testid="button-delete-account-link"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Account
+                </Button>
               </CardContent>
             </Card>
           </div>
