@@ -44,11 +44,12 @@ router.get('/google/callback',
       query: req.query
     });
     
-    // Use localhost for development, production URL for production
-    // Since NODE_ENV might not be set, also check if we're running on localhost
-    const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.APP_URL || req.get('host')?.includes('localhost');
+    // Force development mode for Replit environment
+    // In Replit, we want to use localhost even if APP_URL is set to production
+    const isReplit = process.env.REPL_ID !== undefined;
+    const isDevelopment = process.env.NODE_ENV === 'development' || isReplit || req.get('host')?.includes('localhost');
     const baseUrl = isDevelopment ? 'http://localhost:5000' : (process.env.APP_URL || 'https://www.theceylonx.com');
-    console.log('🌐 Base URL determined:', baseUrl);
+    console.log('🌐 Base URL determined:', baseUrl, '(isReplit:', isReplit, ', isDevelopment:', isDevelopment, ')');
     
     if (!req.user) {
       console.log('❌ Google OAuth failed - no user object received');
@@ -79,9 +80,10 @@ router.get('/facebook/callback',
   async (req: any, res: Response) => {
     console.log('🔄 Facebook OAuth callback received');
     
-    // Use localhost for development, production URL for production
-    // Since NODE_ENV might not be set, also check if we're running on localhost
-    const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.APP_URL || req.get('host')?.includes('localhost');
+    // Force development mode for Replit environment
+    // In Replit, we want to use localhost even if APP_URL is set to production
+    const isReplit = process.env.REPL_ID !== undefined;
+    const isDevelopment = process.env.NODE_ENV === 'development' || isReplit || req.get('host')?.includes('localhost');
     const baseUrl = isDevelopment ? 'http://localhost:5000' : (process.env.APP_URL || 'https://www.theceylonx.com');
     
     if (!req.user) {

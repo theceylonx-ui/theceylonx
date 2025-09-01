@@ -9,8 +9,9 @@ import { JWTUser } from './jwt';
 
 // Google OAuth Strategy
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  // Dynamic callback URL based on environment
-  const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.APP_URL?.includes('theceylonx.com');
+  // Dynamic callback URL based on environment - force localhost in Replit
+  const isReplit = process.env.REPL_ID !== undefined;
+  const isDevelopment = process.env.NODE_ENV === 'development' || isReplit;
   const googleCallbackURL = isDevelopment 
     ? 'http://localhost:5000/api/auth/google/callback'
     : 'https://www.theceylonx.com/api/auth/google/callback';
@@ -74,8 +75,9 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 
 // Facebook OAuth Strategy
 if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
-  // Dynamic callback URL based on environment
-  const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.APP_URL?.includes('theceylonx.com');
+  // Dynamic callback URL based on environment - force localhost in Replit
+  const isReplit = process.env.REPL_ID !== undefined;
+  const isDevelopment = process.env.NODE_ENV === 'development' || isReplit;
   const facebookCallbackURL = isDevelopment 
     ? 'http://localhost:5000/api/auth/facebook/callback'
     : 'https://www.theceylonx.com/api/auth/facebook/callback';
