@@ -434,35 +434,50 @@ export default function TripDetails({ params }: TripDetailsProps) {
                   </Button>
 
                   {/* I'm Interested Button */}
-                  {user && user.id !== trip.organizerId && (
+                  {isAuthenticated ? (
+                    user && user.id !== trip.organizerId ? (
+                      <Button 
+                        onClick={handleSendInterest}
+                        disabled={!!existingInterestRequest || sendInterestMutation.isPending}
+                        className={`w-full ${
+                          existingInterestRequest 
+                            ? 'bg-gray-200 text-gray-600 cursor-not-allowed'
+                            : 'bg-ceylon-blue hover:bg-ceylon-blue/90 text-white'
+                        }`}
+                        data-testid="button-interest"
+                      >
+                        {sendInterestMutation.isPending ? (
+                          <>
+                            <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
+                            Sending...
+                          </>
+                        ) : existingInterestRequest ? (
+                          <>
+                            <Heart className="h-4 w-4 mr-2 fill-current" />
+                            {existingInterestRequest.status === 'pending' && 'Interest Sent'}
+                            {existingInterestRequest.status === 'accepted' && 'Interest Accepted'}
+                            {existingInterestRequest.status === 'rejected' && 'Interest Declined'}
+                          </>
+                        ) : (
+                          <>
+                            <Heart className="h-4 w-4 mr-2" />
+                            I'm Interested
+                          </>
+                        )}
+                      </Button>
+                    ) : user?.id === trip.organizerId ? (
+                      <div className="w-full text-center text-sm text-gray-500 p-3 bg-gray-100 rounded-md">
+                        This is your trip
+                      </div>
+                    ) : null
+                  ) : (
                     <Button 
-                      onClick={handleSendInterest}
-                      disabled={!!existingInterestRequest || sendInterestMutation.isPending}
-                      className={`w-full ${
-                        existingInterestRequest 
-                          ? 'bg-gray-200 text-gray-600 cursor-not-allowed'
-                          : 'bg-ceylon-blue hover:bg-ceylon-blue/90 text-white'
-                      }`}
-                      data-testid="button-interest"
+                      onClick={() => window.location.href = '/auth/signin'}
+                      className="w-full bg-ceylon-blue hover:bg-ceylon-blue/90 text-white"
+                      data-testid="button-signin-interest"
                     >
-                      {sendInterestMutation.isPending ? (
-                        <>
-                          <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
-                          Sending...
-                        </>
-                      ) : existingInterestRequest ? (
-                        <>
-                          <Heart className="h-4 w-4 mr-2 fill-current" />
-                          {existingInterestRequest.status === 'pending' && 'Interest Sent'}
-                          {existingInterestRequest.status === 'accepted' && 'Interest Accepted'}
-                          {existingInterestRequest.status === 'rejected' && 'Interest Declined'}
-                        </>
-                      ) : (
-                        <>
-                          <Heart className="h-4 w-4 mr-2" />
-                          I'm Interested
-                        </>
-                      )}
+                      <Heart className="h-4 w-4 mr-2" />
+                      Sign in to Show Interest
                     </Button>
                   )}
 
