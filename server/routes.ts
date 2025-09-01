@@ -22,7 +22,9 @@ import {
   insertAnswerSchema,
   insertVoteSchema,
   insertUserPreferencesSchema,
-  insertUserInteractionSchema
+  insertUserInteractionSchema,
+  insertJoinRequestSchema,
+  insertMessageSchema
 } from "@shared/schema";
 import { enhancedRecommendationService } from "./ml/enhancedRecommendationService";
 import { z } from "zod";
@@ -286,10 +288,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Trip participation routes
+  // Enhanced join request workflow
   app.post('/api/trips/:id/join', authGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const tripId = req.params.id;
+      const { message } = req.body;
       
       // Get trip details to find organizer
       const trip = await storage.getTrip(tripId);
@@ -297,30 +301,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Trip not found" });
       }
       
-      const participation = await storage.joinTrip({
+      // Check if user already has pending join request
+      const existingRequest = await storage.getExistingJoinRequest(tripId, userId);
+      if (existingRequest) {
+        return res.status(400).json({ message: "You already have a pending join request for this trip" });
+      }
+      
+      // Create join request
+      const joinRequest = await storage.createJoinRequest({
         tripId,
-        userId,
-        status: "pending",
+        requesterId: userId,
+        message: message || undefined,
       });
       
       // Create notification for trip organizer
       await storage.createNotification({
         userId: trip.organizerId,
-        type: "trip_join_request",
+        type: "join_request",
         category: "trips",
         priority: "normal",
         title: "New Join Request",
         message: `Someone wants to join your trip "${trip.title}"`,
         relatedTripId: tripId,
         relatedUserId: userId,
-        actionUrl: `/trips/${tripId}`,
+        joinRequestId: joinRequest.id,
+        actionUrl: `/trips/${tripId}?tab=joins`,
         isRead: false,
       });
       
-      res.json(participation);
+      res.json(joinRequest);
     } catch (error) {
-      console.error("Error joining trip:", error);
-      res.status(500).json({ message: "Failed to join trip" });
+      console.error("Error creating join request:", error);
+      res.status(500).json({ message: "Failed to create join request" });
     }
   });
 
@@ -334,42 +346,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/participants/:id/status', authGuard, async (req: any, res) => {
+  // Get join requests for a trip (trip owner only)
+  app.get('/api/trips/:id/joins', authGuard, async (req: any, res) => {
     try {
-      const { status } = req.body;
-      const participation = await storage.updateParticipationStatus(req.params.id, status);
+      const userId = req.user.id;
+      const tripId = req.params.id;
       
-      if (participation) {
-        // Get trip details
-        const trip = await storage.getTrip(participation.tripId);
-        if (trip) {
-          const notificationType = status === "approved" ? "trip_join_approved" : "trip_join_declined";
-          const title = status === "approved" ? "Trip Join Approved!" : "Trip Join Declined";
-          const message = status === "approved" 
-            ? `Your request to join "${trip.title}" has been approved!`
-            : `Your request to join "${trip.title}" was declined.`;
-          const priority = status === "approved" ? "normal" : "critical";
-          
-          // Create notification for the participant
-          await storage.createNotification({
-            userId: participation.userId,
-            type: notificationType,
-            category: "trips",
-            priority: priority,
-            title: title,
-            message: message,
-            relatedTripId: participation.tripId,
-            relatedUserId: trip.organizerId,
-            actionUrl: `/trips/${participation.tripId}`,
-            isRead: false,
-          });
-        }
+      // Verify user is trip owner
+      const trip = await storage.getTrip(tripId);
+      if (!trip) {
+        return res.status(404).json({ message: "Trip not found" });
       }
       
-      res.json(participation);
+      if (trip.organizerId !== userId) {
+        return res.status(403).json({ message: "Only trip owner can view join requests" });
+      }
+      
+      const joinRequests = await storage.getTripJoinRequests(tripId);
+      res.json(joinRequests);
     } catch (error) {
-      console.error("Error updating participation status:", error);
-      res.status(500).json({ message: "Failed to update participation status" });
+      console.error("Error fetching join requests:", error);
+      res.status(500).json({ message: "Failed to fetch join requests" });
+    }
+  });
+
+  // Accept/decline join requests
+  app.post('/api/joins/:joinId/accept', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const joinId = req.params.joinId;
+      
+      const joinRequest = await storage.getJoinRequest(joinId);
+      if (!joinRequest) {
+        return res.status(404).json({ message: "Join request not found" });
+      }
+      
+      const trip = await storage.getTrip(joinRequest.tripId);
+      if (!trip || trip.organizerId !== userId) {
+        return res.status(403).json({ message: "Only trip owner can accept join requests" });
+      }
+      
+      // Update join request status
+      const updatedJoinRequest = await storage.updateJoinRequestStatus(joinId, "accepted");
+      
+      // Create or get existing chat thread between owner and requester
+      const chatThread = await storage.getOrCreateChatThread(
+        joinRequest.tripId, 
+        trip.organizerId, 
+        joinRequest.requesterId
+      );
+      
+      // Create notification for requester
+      await storage.createNotification({
+        userId: joinRequest.requesterId,
+        type: "join_accepted",
+        category: "trips",
+        priority: "normal",
+        title: "Join Request Accepted!",
+        message: `Your request to join "${trip.title}" has been accepted! You can now chat with the trip owner.`,
+        relatedTripId: joinRequest.tripId,
+        relatedUserId: trip.organizerId,
+        joinRequestId: joinRequest.id,
+        threadId: chatThread.id,
+        actionUrl: `/chat/${chatThread.id}`,
+        isRead: false,
+      });
+      
+      res.json({ joinRequest: updatedJoinRequest, chatThreadId: chatThread.id });
+    } catch (error) {
+      console.error("Error accepting join request:", error);
+      res.status(500).json({ message: "Failed to accept join request" });
+    }
+  });
+
+  app.post('/api/joins/:joinId/decline', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const joinId = req.params.joinId;
+      
+      const joinRequest = await storage.getJoinRequest(joinId);
+      if (!joinRequest) {
+        return res.status(404).json({ message: "Join request not found" });
+      }
+      
+      const trip = await storage.getTrip(joinRequest.tripId);
+      if (!trip || trip.organizerId !== userId) {
+        return res.status(403).json({ message: "Only trip owner can decline join requests" });
+      }
+      
+      // Update join request status
+      const updatedJoinRequest = await storage.updateJoinRequestStatus(joinId, "declined");
+      
+      // Create notification for requester
+      await storage.createNotification({
+        userId: joinRequest.requesterId,
+        type: "join_declined",
+        category: "trips",
+        priority: "critical",
+        title: "Join Request Declined",
+        message: `Your request to join "${trip.title}" was declined.`,
+        relatedTripId: joinRequest.tripId,
+        relatedUserId: trip.organizerId,
+        joinRequestId: joinRequest.id,
+        actionUrl: `/trips/${joinRequest.tripId}?tab=joins`,
+        isRead: false,
+      });
+      
+      res.json(updatedJoinRequest);
+    } catch (error) {
+      console.error("Error declining join request:", error);
+      res.status(500).json({ message: "Failed to decline join request" });
+    }
+  });
+
+  // Cancel join request (requester only)
+  app.post('/api/joins/:joinId/cancel', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const joinId = req.params.joinId;
+      
+      const joinRequest = await storage.getJoinRequest(joinId);
+      if (!joinRequest) {
+        return res.status(404).json({ message: "Join request not found" });
+      }
+      
+      if (joinRequest.requesterId !== userId) {
+        return res.status(403).json({ message: "Only requester can cancel join request" });
+      }
+      
+      const updatedJoinRequest = await storage.updateJoinRequestStatus(joinId, "cancelled");
+      res.json(updatedJoinRequest);
+    } catch (error) {
+      console.error("Error cancelling join request:", error);
+      res.status(500).json({ message: "Failed to cancel join request" });
     }
   });
 
@@ -424,9 +533,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced comment deletion with trip owner moderation
   app.delete('/api/comments/:id', authGuard, async (req: any, res) => {
     try {
-      await storage.deleteComment(req.params.id);
+      const userId = req.user.id;
+      const commentId = req.params.id;
+      
+      // Get comment details to check ownership and trip ownership
+      const comments = await storage.getTripComments(""); // We need a better way to get a single comment
+      const comment = comments.find(c => c.id === commentId);
+      
+      if (!comment) {
+        return res.status(404).json({ message: "Comment not found" });
+      }
+      
+      // Get trip details to check if user is trip owner
+      const trip = await storage.getTrip(comment.tripId);
+      
+      // Allow deletion if user is comment author OR trip owner
+      if (comment.userId !== userId && trip?.organizerId !== userId) {
+        return res.status(403).json({ message: "You can only delete your own comments or comments on your trips" });
+      }
+      
+      await storage.deleteComment(commentId);
       res.json({ message: "Comment deleted successfully" });
     } catch (error) {
       console.error("Error deleting comment:", error);
@@ -1248,6 +1377,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting notification:", error);
       res.status(500).json({ message: "Failed to delete notification" });
+    }
+  });
+
+  // Chat Buddy inbox routes
+  app.get('/api/threads', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const threads = await storage.getUserChatThreads(userId);
+      res.json(threads);
+    } catch (error) {
+      console.error("Error fetching chat threads:", error);
+      res.status(500).json({ message: "Failed to fetch chat threads" });
+    }
+  });
+
+  app.get('/api/threads/:threadId/messages', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const threadId = req.params.threadId;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const cursor = req.query.cursor as string;
+
+      // Verify user is in the thread
+      const isInThread = await storage.isUserInThread(threadId, userId);
+      if (!isInThread) {
+        return res.status(403).json({ message: "You are not a member of this chat thread" });
+      }
+
+      const messages = await storage.getThreadMessages(threadId, limit, cursor);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching thread messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  app.post('/api/threads/:threadId/messages', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const threadId = req.params.threadId;
+      const { body } = req.body;
+
+      if (!body || body.trim().length === 0) {
+        return res.status(400).json({ message: "Message body is required" });
+      }
+
+      // Verify user is in the thread
+      const isInThread = await storage.isUserInThread(threadId, userId);
+      if (!isInThread) {
+        return res.status(403).json({ message: "You are not a member of this chat thread" });
+      }
+
+      // Create message
+      const message = await storage.createMessage({
+        threadId,
+        authorId: userId,
+        body: body.trim()
+      });
+
+      // Get other users in thread for notifications
+      const threadUsers = await storage.getThreadUsers(threadId);
+      const otherUsers = threadUsers.filter(user => user.id !== userId);
+
+      // Create notifications for other users
+      const currentUser = await storage.getUser(userId);
+      for (const otherUser of otherUsers) {
+        await storage.createNotification({
+          userId: otherUser.id,
+          type: "chat_message",
+          category: "social",
+          priority: "normal",
+          title: "New Message",
+          message: `${currentUser?.firstName || 'Someone'}: ${body.substring(0, 60)}${body.length > 60 ? '...' : ''}`,
+          threadId: threadId,
+          relatedUserId: userId,
+          actionUrl: `/chat/${threadId}`,
+          isRead: false,
+        });
+      }
+
+      res.json(message);
+    } catch (error) {
+      console.error("Error creating message:", error);
+      res.status(500).json({ message: "Failed to create message" });
+    }
+  });
+
+  app.get('/api/threads/:threadId', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const threadId = req.params.threadId;
+
+      // Verify user is in the thread
+      const isInThread = await storage.isUserInThread(threadId, userId);
+      if (!isInThread) {
+        return res.status(403).json({ message: "You are not a member of this chat thread" });
+      }
+
+      const thread = await storage.getChatThread(threadId);
+      if (!thread) {
+        return res.status(404).json({ message: "Chat thread not found" });
+      }
+
+      const threadUsers = await storage.getThreadUsers(threadId);
+      res.json({ ...thread, users: threadUsers });
+    } catch (error) {
+      console.error("Error fetching chat thread:", error);
+      res.status(500).json({ message: "Failed to fetch chat thread" });
     }
   });
 

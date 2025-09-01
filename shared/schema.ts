@@ -10,6 +10,8 @@ import {
   integer,
   boolean,
   decimal,
+  pgEnum,
+  unique,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -137,6 +139,10 @@ export const notifications = pgTable("notifications", {
   relatedUserId: varchar("related_user_id"), // optional: who triggered the notification
   actionUrl: varchar("action_url"), // optional: where to navigate when clicked
   metadata: jsonb("metadata").default({}), // additional data for weather alerts, view counts, etc.
+  // Deep-link context for notifications
+  commentId: varchar("comment_id"), // For comment-related notifications
+  joinRequestId: varchar("join_request_id"), // For join request notifications  
+  threadId: varchar("thread_id"), // For chat message notifications
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -156,6 +162,53 @@ export const tripViews = pgTable("trip_views", {
   userId: varchar("user_id"), // Optional - can be null for anonymous views
   viewerIp: varchar("viewer_ip"), // For anonymous tracking
   userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Join Request Status enum
+export const joinStatusEnum = pgEnum("join_status", [
+  "pending",
+  "accepted", 
+  "declined",
+  "cancelled"
+]);
+
+// Join Requests table for trip participation requests
+export const joinRequests = pgTable("join_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  tripId: varchar("trip_id").notNull(),
+  requesterId: varchar("requester_id").notNull(),
+  message: text("message"), // Optional message from requester
+  status: joinStatusEnum("status").default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Chat Threads table for private messaging
+export const chatThreads = pgTable("chat_threads", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  tripId: varchar("trip_id"), // Optional - link to trip that created this chat
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Thread Users junction table (many-to-many between users and threads)
+export const threadUsers = pgTable("thread_users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  threadId: varchar("thread_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  joinedAt: timestamp("joined_at").defaultNow(),
+}, (table) => ({
+  // Unique constraint to prevent duplicate memberships
+  uniqueThreadUser: unique().on(table.threadId, table.userId),
+}));
+
+// Messages table for chat conversations
+export const messages = pgTable("messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  threadId: varchar("thread_id").notNull(),
+  authorId: varchar("author_id").notNull(),
+  body: text("body").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -557,7 +610,14 @@ export const notificationTypeSchema = z.enum([
   "trip_completed",           // Trip marked as complete
   "trip_cancelled",           // Trip was cancelled
   "new_trip_in_region",       // New trip in preferred region
-  "system_update"             // System announcements
+  "system_update",            // System announcements
+  
+  // New Chat and Join features
+  "comment_on_trip",          // New comment on your trip
+  "join_request",             // Someone wants to join your trip
+  "join_accepted",            // Your join request was accepted
+  "join_declined",            // Your join request was declined
+  "chat_message"              // New chat message received
 ]);
 
 export const notificationCategorySchema = z.enum([
@@ -661,6 +721,37 @@ export type PhoneOtp = typeof phoneOtps.$inferSelect;
 export type EmailAuth = z.infer<typeof emailAuthSchema>;
 export type PhoneStart = z.infer<typeof phoneStartSchema>;
 export type PhoneVerify = z.infer<typeof phoneVerifySchema>;
+
+// New types for join requests, chat threads, and messages
+export const insertJoinRequestSchema = createInsertSchema(joinRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertJoinRequest = z.infer<typeof insertJoinRequestSchema>;
+export type JoinRequest = typeof joinRequests.$inferSelect;
+
+export const insertChatThreadSchema = createInsertSchema(chatThreads).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertChatThread = z.infer<typeof insertChatThreadSchema>;
+export type ChatThread = typeof chatThreads.$inferSelect;
+
+export const insertThreadUserSchema = createInsertSchema(threadUsers).omit({
+  id: true,
+  joinedAt: true,
+});
+export type InsertThreadUser = z.infer<typeof insertThreadUserSchema>;
+export type ThreadUser = typeof threadUsers.$inferSelect;
+
+export const insertMessageSchema = createInsertSchema(messages).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type Message = typeof messages.$inferSelect;
 export type InsertTrip = z.infer<typeof insertTripSchema>;
 export type Trip = typeof trips.$inferSelect;
 export type TripWithOrganizer = Trip & { organizer: User };

@@ -54,6 +54,18 @@ import {
   type UserPersonalization,
   type Notification,
   type InsertNotification,
+  joinRequests,
+  type JoinRequest,
+  type InsertJoinRequest,
+  chatThreads,
+  type ChatThread,
+  type InsertChatThread,
+  threadUsers,
+  type ThreadUser,
+  type InsertThreadUser,
+  messages,
+  type Message,
+  type InsertMessage,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, ilike, desc, asc, gte, lte, count, sql } from "drizzle-orm";
@@ -173,6 +185,28 @@ export interface IStorage {
   createTripView(tripView: InsertTripView): Promise<TripView>;
   getTripViewCount(tripId: string): Promise<number>;
   getTripViewCountSince(tripId: string, since: Date): Promise<number>;
+  
+  // Join request operations
+  createJoinRequest(joinRequest: InsertJoinRequest): Promise<JoinRequest>;
+  getJoinRequest(id: string): Promise<JoinRequest | undefined>;
+  getTripJoinRequests(tripId: string): Promise<(JoinRequest & { requester: User })[]>;
+  getUserJoinRequests(userId: string): Promise<(JoinRequest & { trip: Trip })[]>;
+  updateJoinRequestStatus(id: string, status: "pending" | "accepted" | "declined" | "cancelled"): Promise<JoinRequest>;
+  getExistingJoinRequest(tripId: string, requesterId: string): Promise<JoinRequest | undefined>;
+  
+  // Chat thread operations
+  createChatThread(thread: InsertChatThread): Promise<ChatThread>;
+  getChatThread(id: string): Promise<ChatThread | undefined>;
+  getUserChatThreads(userId: string): Promise<(ChatThread & { lastMessage?: Message, unreadCount: number, otherUser?: User })[]>;
+  addUserToThread(threadUser: InsertThreadUser): Promise<ThreadUser>;
+  removeUserFromThread(threadId: string, userId: string): Promise<void>;
+  isUserInThread(threadId: string, userId: string): Promise<boolean>;
+  getOrCreateChatThread(tripId: string, user1Id: string, user2Id: string): Promise<ChatThread>;
+  
+  // Message operations
+  createMessage(message: InsertMessage): Promise<Message>;
+  getThreadMessages(threadId: string, limit?: number, cursor?: string): Promise<(Message & { author: User })[]>;
+  getThreadUsers(threadId: string): Promise<User[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1121,6 +1155,259 @@ export class DatabaseStorage implements IStorage {
         gte(tripViews.createdAt, since)
       ));
     return result?.count || 0;
+  }
+
+  // Join request implementation
+  async createJoinRequest(joinRequest: InsertJoinRequest): Promise<JoinRequest> {
+    const [newJoinRequest] = await db
+      .insert(joinRequests)
+      .values(joinRequest)
+      .returning();
+    return newJoinRequest;
+  }
+
+  async getJoinRequest(id: string): Promise<JoinRequest | undefined> {
+    const [joinRequest] = await db
+      .select()
+      .from(joinRequests)
+      .where(eq(joinRequests.id, id));
+    return joinRequest;
+  }
+
+  async getTripJoinRequests(tripId: string): Promise<(JoinRequest & { requester: User })[]> {
+    const result = await db
+      .select()
+      .from(joinRequests)
+      .leftJoin(users, eq(joinRequests.requesterId, users.id))
+      .where(eq(joinRequests.tripId, tripId))
+      .orderBy(desc(joinRequests.createdAt));
+    
+    return result.map(({ join_requests: jr, users: user }) => ({
+      ...jr,
+      requester: user!
+    }));
+  }
+
+  async getUserJoinRequests(userId: string): Promise<(JoinRequest & { trip: Trip })[]> {
+    const result = await db
+      .select()
+      .from(joinRequests)
+      .leftJoin(trips, eq(joinRequests.tripId, trips.id))
+      .where(eq(joinRequests.requesterId, userId))
+      .orderBy(desc(joinRequests.createdAt));
+    
+    return result.map(({ join_requests: jr, trips: trip }) => ({
+      ...jr,
+      trip: trip!
+    }));
+  }
+
+  async updateJoinRequestStatus(id: string, status: "pending" | "accepted" | "declined" | "cancelled"): Promise<JoinRequest> {
+    const [updatedJoinRequest] = await db
+      .update(joinRequests)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(joinRequests.id, id))
+      .returning();
+    return updatedJoinRequest;
+  }
+
+  async getExistingJoinRequest(tripId: string, requesterId: string): Promise<JoinRequest | undefined> {
+    const [joinRequest] = await db
+      .select()
+      .from(joinRequests)
+      .where(and(
+        eq(joinRequests.tripId, tripId),
+        eq(joinRequests.requesterId, requesterId),
+        eq(joinRequests.status, "pending")
+      ));
+    return joinRequest;
+  }
+
+  // Chat thread implementation
+  async createChatThread(thread: InsertChatThread): Promise<ChatThread> {
+    const [newThread] = await db
+      .insert(chatThreads)
+      .values(thread)
+      .returning();
+    return newThread;
+  }
+
+  async getChatThread(id: string): Promise<ChatThread | undefined> {
+    const [thread] = await db
+      .select()
+      .from(chatThreads)
+      .where(eq(chatThreads.id, id));
+    return thread;
+  }
+
+  async getUserChatThreads(userId: string): Promise<(ChatThread & { lastMessage?: Message, unreadCount: number, otherUser?: User })[]> {
+    // Get all threads user is in
+    const threadUserResult = await db
+      .select()
+      .from(threadUsers)
+      .leftJoin(chatThreads, eq(threadUsers.threadId, chatThreads.id))
+      .where(eq(threadUsers.userId, userId))
+      .orderBy(desc(chatThreads.updatedAt));
+
+    const threads: (ChatThread & { lastMessage?: Message, unreadCount: number, otherUser?: User })[] = [];
+    
+    for (const { thread_users: tu, chat_threads: thread } of threadUserResult) {
+      if (!thread) continue;
+      
+      // Get last message
+      const [lastMessage] = await db
+        .select()
+        .from(messages)
+        .where(eq(messages.threadId, thread.id))
+        .orderBy(desc(messages.createdAt))
+        .limit(1);
+
+      // Get other user in thread
+      const otherUsers = await db
+        .select()
+        .from(threadUsers)
+        .leftJoin(users, eq(threadUsers.userId, users.id))
+        .where(and(
+          eq(threadUsers.threadId, thread.id),
+          sql`${threadUsers.userId} != ${userId}`
+        ));
+      
+      const otherUser = otherUsers[0]?.users || undefined;
+
+      // Simple unread count (in real app, you'd track read status per user)
+      const [unreadResult] = await db
+        .select({ count: count() })
+        .from(messages)
+        .where(and(
+          eq(messages.threadId, thread.id),
+          sql`${messages.authorId} != ${userId}`
+        ));
+
+      threads.push({
+        ...thread,
+        lastMessage,
+        unreadCount: unreadResult?.count || 0,
+        otherUser
+      });
+    }
+
+    return threads;
+  }
+
+  async addUserToThread(threadUser: InsertThreadUser): Promise<ThreadUser> {
+    const [newThreadUser] = await db
+      .insert(threadUsers)
+      .values(threadUser)
+      .returning();
+    return newThreadUser;
+  }
+
+  async removeUserFromThread(threadId: string, userId: string): Promise<void> {
+    await db
+      .delete(threadUsers)
+      .where(and(
+        eq(threadUsers.threadId, threadId),
+        eq(threadUsers.userId, userId)
+      ));
+  }
+
+  async isUserInThread(threadId: string, userId: string): Promise<boolean> {
+    const [result] = await db
+      .select()
+      .from(threadUsers)
+      .where(and(
+        eq(threadUsers.threadId, threadId),
+        eq(threadUsers.userId, userId)
+      ));
+    return !!result;
+  }
+
+  async getOrCreateChatThread(tripId: string, user1Id: string, user2Id: string): Promise<ChatThread> {
+    // First, try to find existing thread for this trip between these users
+    const existingThreadResult = await db
+      .select()
+      .from(chatThreads)
+      .leftJoin(threadUsers, eq(chatThreads.id, threadUsers.threadId))
+      .where(eq(chatThreads.tripId, tripId));
+
+    // Check if both users are in any of these threads
+    for (const { chat_threads: thread } of existingThreadResult) {
+      if (!thread) continue;
+      
+      const threadUserIds = await db
+        .select({ userId: threadUsers.userId })
+        .from(threadUsers)
+        .where(eq(threadUsers.threadId, thread.id));
+      
+      const userIds = threadUserIds.map(tu => tu.userId);
+      if (userIds.includes(user1Id) && userIds.includes(user2Id)) {
+        return thread;
+      }
+    }
+
+    // Create new thread
+    const [newThread] = await db
+      .insert(chatThreads)
+      .values({ tripId })
+      .returning();
+
+    // Add both users to the thread
+    await db.insert(threadUsers).values([
+      { threadId: newThread.id, userId: user1Id },
+      { threadId: newThread.id, userId: user2Id }
+    ]);
+
+    return newThread;
+  }
+
+  // Message implementation
+  async createMessage(message: InsertMessage): Promise<Message> {
+    const [newMessage] = await db
+      .insert(messages)
+      .values(message)
+      .returning();
+    
+    // Update thread's updatedAt timestamp
+    await db
+      .update(chatThreads)
+      .set({ updatedAt: new Date() })
+      .where(eq(chatThreads.id, message.threadId));
+    
+    return newMessage;
+  }
+
+  async getThreadMessages(threadId: string, limit: number = 50, cursor?: string): Promise<(Message & { author: User })[]> {
+    let whereConditions = eq(messages.threadId, threadId);
+    
+    if (cursor) {
+      whereConditions = and(
+        eq(messages.threadId, threadId),
+        sql`${messages.createdAt} < (SELECT created_at FROM messages WHERE id = ${cursor})`
+      ) as any;
+    }
+
+    const result = await db
+      .select()
+      .from(messages)
+      .leftJoin(users, eq(messages.authorId, users.id))
+      .where(whereConditions)
+      .orderBy(desc(messages.createdAt))
+      .limit(limit);
+    
+    return result.map(({ messages: msg, users: user }) => ({
+      ...msg,
+      author: user!
+    }));
+  }
+
+  async getThreadUsers(threadId: string): Promise<User[]> {
+    const result = await db
+      .select()
+      .from(threadUsers)
+      .leftJoin(users, eq(threadUsers.userId, users.id))
+      .where(eq(threadUsers.threadId, threadId));
+    
+    return result.map(({ users: user }) => user!);
   }
 }
 
