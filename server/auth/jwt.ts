@@ -29,8 +29,9 @@ const REFRESH_TOKEN_EXPIRY = '30d';
 const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN;
 const COOKIE_SECURE = process.env.COOKIE_SECURE === 'true';
 
-// For development, don't use domain/secure settings
-const isDevelopment = process.env.NODE_ENV === 'development';
+// For development, don't use domain/secure settings - force localhost in Replit
+const isReplit = process.env.REPL_ID !== undefined;
+const isDevelopment = process.env.NODE_ENV === 'development' || isReplit;
 const effectiveCookieDomain = isDevelopment ? undefined : COOKIE_DOMAIN;
 const effectiveCookieSecure = isDevelopment ? false : COOKIE_SECURE;
 
