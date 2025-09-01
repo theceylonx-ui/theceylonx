@@ -99,12 +99,21 @@ export function setAuthCookies(res: Response, tokens: AuthTokens): void {
     delete cookieOptions.domain;
   }
 
+  console.log('🍪 Setting auth cookies with options:', { 
+    secure: cookieOptions.secure, 
+    domain: cookieOptions.domain,
+    isDevelopment,
+    hasTokens: { accessToken: !!tokens.accessToken, refreshToken: !!tokens.refreshToken }
+  });
+
   res.cookie('accessToken', tokens.accessToken, {
     ...cookieOptions,
     maxAge: 15 * 60 * 1000, // 15 minutes
   });
 
   res.cookie('refreshToken', tokens.refreshToken, cookieOptions);
+  
+  console.log('✅ Auth cookies set successfully');
 }
 
 export function clearAuthCookies(res: Response): void {
