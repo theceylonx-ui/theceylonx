@@ -192,7 +192,20 @@ export default function TripDetails({ params }: TripDetailsProps) {
     if (trip.contactInfo.includes("@")) {
       window.open(`mailto:${trip.contactInfo}`, "_blank");
     } else {
-      window.open(`https://wa.me/${trip.contactInfo.replace(/\D/g, "")}`, "_blank");
+      // Normalize phone number for WhatsApp
+      let phoneNumber = trip.contactInfo.replace(/\D/g, "");
+      
+      // Handle Sri Lankan numbers - if starts with 0, replace with 94
+      if (phoneNumber.startsWith('0')) {
+        phoneNumber = '94' + phoneNumber.substring(1);
+      }
+      // If doesn't start with country code, assume Sri Lankan
+      else if (phoneNumber.length === 9) {
+        phoneNumber = '94' + phoneNumber;
+      }
+      
+      console.log(`Opening WhatsApp for number: ${phoneNumber}`);
+      window.open(`https://wa.me/${phoneNumber}`, "_blank");
     }
   };
 
