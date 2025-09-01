@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Footer from "@/components/Footer";
+import { Link } from "wouter";
 import { UserPlus, MapPin, Handshake, PiggyBank, Users, Compass, Heart, Shield, Flag, Star, UserCheck, Route } from "lucide-react";
 import logoImage from "@assets/5_1756417819316.png";
 import backgroundImage from "@assets/11_1756417976014.png";
@@ -8,6 +9,14 @@ import backgroundImage from "@assets/11_1756417976014.png";
 export default function Landing() {
   const handleLogin = () => {
     window.location.href = '/auth/signin';
+  };
+
+  const handleBrowseTrips = () => {
+    window.location.href = '/browse-trips';
+  };
+
+  const handlePostTrip = () => {
+    window.location.href = '/post';
   };
 
   return (
@@ -21,9 +30,15 @@ export default function Landing() {
               <span className="text-xl font-bold text-ceylon-dark" data-testid="logo-text">Ceylon Expand</span>
             </div>
             <div className="hidden md:flex items-center space-x-6">
-              <a href="/browse-trips" className="text-gray-600 hover:text-ceylon-green transition-colors font-medium" data-testid="nav-browse">Browse Trips</a>
-              <a href="/post" className="text-gray-600 hover:text-ceylon-green transition-colors font-medium" data-testid="nav-post">Post a Trip</a>
-              <a href="/community" className="text-gray-600 hover:text-ceylon-green transition-colors font-medium" data-testid="nav-community">CeylonX Tribes</a>
+              <Link href="/browse-trips">
+                <span className="text-gray-600 hover:text-ceylon-green transition-colors font-medium cursor-pointer" data-testid="nav-browse">Browse Trips</span>
+              </Link>
+              <Link href="/post">
+                <span className="text-gray-600 hover:text-ceylon-green transition-colors font-medium cursor-pointer" data-testid="nav-post">Post a Trip</span>
+              </Link>
+              <Link href="/community">
+                <span className="text-gray-600 hover:text-ceylon-green transition-colors font-medium cursor-pointer" data-testid="nav-community">CeylonX Tribes</span>
+              </Link>
             </div>
             <div className="flex items-center space-x-3">
               <Button 
@@ -65,22 +80,24 @@ export default function Landing() {
             Find rides, buddies, and unique experiences across Sri Lanka. Post your trip or join one today.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
-            <Button 
-              size="lg"
-              className="bg-ceylon-green text-white hover:bg-ceylon-green/90 text-base sm:text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:scale-105 px-6 py-3"
-              onClick={() => window.location.href = '/browse-trips'}
-              data-testid="button-browse-trips"
-            >
-              Browse Trips
-            </Button>
-            <Button 
-              size="lg"
-              className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-base sm:text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:scale-105 px-6 py-3"
-              onClick={() => window.location.href = '/post'}
-              data-testid="button-post-trip"
-            >
-              Post a Trip
-            </Button>
+            <Link href="/browse-trips">
+              <Button 
+                size="lg"
+                className="bg-ceylon-green text-white hover:bg-ceylon-green/90 text-base sm:text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:scale-105 px-6 py-3"
+                data-testid="button-browse-trips"
+              >
+                Browse Trips
+              </Button>
+            </Link>
+            <Link href="/post">
+              <Button 
+                size="lg"
+                className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-base sm:text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:scale-105 px-6 py-3"
+                data-testid="button-post-trip"
+              >
+                Post a Trip
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
