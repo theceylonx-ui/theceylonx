@@ -37,17 +37,22 @@ router.get('/google', passport.authenticate('google', {
 router.get('/google/callback', 
   passport.authenticate('google', { session: false }),
   async (req: any, res: Response) => {
+    console.log('🔄 Google OAuth callback received');
+    
     if (!req.user) {
-      return res.redirect('https://www.theceylonx.com/auth/signin?error=oauth_failed');
+      console.log('❌ Google OAuth failed - no user object received');
+      return res.redirect(`${process.env.APP_URL || 'https://www.theceylonx.com'}/auth/signin?error=oauth_failed`);
     }
 
     try {
+      console.log('✅ Google OAuth success for user:', req.user.email || req.user.id);
       const tokens = await generateAuthTokens(req.user);
       setAuthCookies(res, tokens);
-      res.redirect('https://www.theceylonx.com/auth/callback?success=1');
+      console.log('🍪 Auth cookies set, redirecting to callback page');
+      res.redirect(`${process.env.APP_URL || 'https://www.theceylonx.com'}/auth/callback?success=1`);
     } catch (error) {
-      console.error('OAuth callback error:', error);
-      res.redirect('https://www.theceylonx.com/auth/signin?error=callback_failed');
+      console.error('❌ Google OAuth callback error:', error);
+      res.redirect(`${process.env.APP_URL || 'https://www.theceylonx.com'}/auth/signin?error=callback_failed`);
     }
   }
 );
@@ -60,17 +65,22 @@ router.get('/facebook', passport.authenticate('facebook', {
 router.get('/facebook/callback',
   passport.authenticate('facebook', { session: false }),
   async (req: any, res: Response) => {
+    console.log('🔄 Facebook OAuth callback received');
+    
     if (!req.user) {
-      return res.redirect('https://www.theceylonx.com/auth/signin?error=oauth_failed');
+      console.log('❌ Facebook OAuth failed - no user object received');
+      return res.redirect(`${process.env.APP_URL || 'https://www.theceylonx.com'}/auth/signin?error=oauth_failed`);
     }
 
     try {
+      console.log('✅ Facebook OAuth success for user:', req.user.name || req.user.id);
       const tokens = await generateAuthTokens(req.user);
       setAuthCookies(res, tokens);
-      res.redirect('https://www.theceylonx.com/auth/callback?success=1');
+      console.log('🍪 Auth cookies set, redirecting to callback page');
+      res.redirect(`${process.env.APP_URL || 'https://www.theceylonx.com'}/auth/callback?success=1`);
     } catch (error) {
-      console.error('OAuth callback error:', error);
-      res.redirect('https://www.theceylonx.com/auth/signin?error=callback_failed');
+      console.error('❌ Facebook OAuth callback error:', error);
+      res.redirect(`${process.env.APP_URL || 'https://www.theceylonx.com'}/auth/signin?error=callback_failed`);
     }
   }
 );
