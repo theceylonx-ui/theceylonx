@@ -18,6 +18,7 @@ import {
   authSessions,
   emailTokens,
   phoneOtps,
+  tripInterestRequests,
   type User,
   type UpsertUser,
   type InsertTrip,
@@ -54,6 +55,8 @@ import {
   type UserPersonalization,
   type Notification,
   type InsertNotification,
+  type TripInterestRequest,
+  type InsertTripInterestRequest,
   chatThreads,
   type ChatThread,
   type InsertChatThread,
@@ -101,6 +104,12 @@ export interface IStorage {
   createComment(comment: InsertComment): Promise<Comment>;
   getTripComments(tripId: string): Promise<CommentWithUser[]>;
   deleteComment(id: string): Promise<void>;
+
+  // Trip interest request operations
+  createTripInterestRequest(request: InsertTripInterestRequest): Promise<TripInterestRequest>;
+  getTripInterestRequestByUserAndTrip(userId: string, tripId: string): Promise<TripInterestRequest | undefined>;
+  getTripInterestRequests(tripId: string): Promise<TripInterestRequest[]>;
+  updateTripInterestRequestStatus(requestId: string, status: 'accepted' | 'rejected'): Promise<TripInterestRequest>;
   
   // Rating operations
   createRating(rating: InsertRating): Promise<Rating>;
@@ -1413,6 +1422,44 @@ export class DatabaseStorage implements IStorage {
       .where(eq(threadUsers.threadId, threadId));
     
     return result.map(({ users: user }) => user!);
+  }
+
+  // Trip interest request operations
+  async createTripInterestRequest(request: InsertTripInterestRequest): Promise<TripInterestRequest> {
+    const [newRequest] = await db
+      .insert(tripInterestRequests)
+      .values(request)
+      .returning();
+    return newRequest;
+  }
+
+  async getTripInterestRequestByUserAndTrip(userId: string, tripId: string): Promise<TripInterestRequest | undefined> {
+    const [request] = await db
+      .select()
+      .from(tripInterestRequests)
+      .where(and(
+        eq(tripInterestRequests.userId, userId),
+        eq(tripInterestRequests.tripId, tripId)
+      ));
+    return request;
+  }
+
+  async getTripInterestRequests(tripId: string): Promise<TripInterestRequest[]> {
+    const requests = await db
+      .select()
+      .from(tripInterestRequests)
+      .where(eq(tripInterestRequests.tripId, tripId))
+      .orderBy(desc(tripInterestRequests.createdAt));
+    return requests;
+  }
+
+  async updateTripInterestRequestStatus(requestId: string, status: 'accepted' | 'rejected'): Promise<TripInterestRequest> {
+    const [updatedRequest] = await db
+      .update(tripInterestRequests)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(tripInterestRequests.id, requestId))
+      .returning();
+    return updatedRequest;
   }
 }
 

@@ -277,6 +277,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Interest request routes
+  app.post('/api/trips/:id/interest', authGuard, async (req, res) => {
+    try {
+      const userId = (req.user as JWTUser).id;
+      const tripId = req.params.id;
+      const { message } = req.body;
+
+      // Check if trip exists
+      const trip = await storage.getTrip(tripId);
+      if (!trip) {
+        return res.status(404).json({ message: "Trip not found" });
+      }
+
+      // Cannot send interest to own trip
+      if (trip.organizerId === userId) {
+        return res.status(400).json({ message: "Cannot send interest to your own trip" });
+      }
+
+      // Check if user already has a pending/accepted request
+      const existingRequest = await storage.getTripInterestRequestByUserAndTrip(userId, tripId);
+      if (existingRequest) {
+        return res.status(400).json({ message: "You have already sent an interest request for this trip" });
+      }
+
+      // Create interest request
+      const interestRequest = await storage.createTripInterestRequest({
+        tripId,
+        userId,
+        message: message || "I'm interested in joining this trip!",
+        status: 'pending'
+      });
+
+      // Create notification for trip organizer
+      await storage.createNotification({
+        userId: trip.organizerId,
+        type: "interest_request",
+        category: "trips",
+        priority: "high",
+        title: "New Interest Request",
+        message: `Someone is interested in your trip "${trip.title}"`,
+        relatedTripId: tripId,
+        actionUrl: `/trips/${tripId}`,
+        isRead: false,
+      });
+
+      res.status(201).json(interestRequest);
+    } catch (error) {
+      console.error("Error creating interest request:", error);
+      res.status(500).json({ message: "Failed to send interest request" });
+    }
+  });
+
+  app.get('/api/trips/:id/interest-request', authGuard, async (req, res) => {
+    try {
+      const userId = (req.user as JWTUser).id;
+      const tripId = req.params.id;
+
+      const interestRequest = await storage.getTripInterestRequestByUserAndTrip(userId, tripId);
+      if (!interestRequest) {
+        return res.status(404).json({ message: "No interest request found" });
+      }
+
+      res.json(interestRequest);
+    } catch (error) {
+      console.error("Error fetching interest request:", error);
+      res.status(500).json({ message: "Failed to fetch interest request" });
+    }
+  });
+
   // Update trip status (mark as completed/inactive)
   app.patch('/api/trips/:id/status', authGuard, async (req: any, res) => {
     try {

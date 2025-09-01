@@ -185,6 +185,21 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Trip Interest Requests table for "I'm Interested" functionality
+export const tripInterestRequests = pgTable("trip_interest_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  tripId: varchar("trip_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  status: varchar("status").default("pending"), // pending, accepted, declined
+  message: text("message"), // Optional message from interested user
+  chatThreadId: varchar("chat_thread_id"), // Created when accepted
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  // Prevent duplicate interest requests for same user+trip
+  uniqueUserTrip: unique().on(table.tripId, table.userId),
+}));
+
 // Ratings table
 export const ratings = pgTable("ratings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -330,6 +345,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   receivedRatings: many(ratings, { relationName: "ratedRatings" }),
   reports: many(reports),
   authSessions: many(authSessions),
+  interestRequests: many(tripInterestRequests),
 }));
 
 export const authSessionsRelations = relations(authSessions, ({ one }) => ({
@@ -347,6 +363,7 @@ export const tripsRelations = relations(trips, ({ one, many }) => ({
   comments: many(comments),
   ratings: many(ratings),
   reports: many(reports),
+  interestRequests: many(tripInterestRequests),
 }));
 
 
@@ -390,6 +407,21 @@ export const reportsRelations = relations(reports, ({ one }) => ({
   reporter: one(users, {
     fields: [reports.reporterId],
     references: [users.id],
+  }),
+}));
+
+export const tripInterestRequestsRelations = relations(tripInterestRequests, ({ one }) => ({
+  trip: one(trips, {
+    fields: [tripInterestRequests.tripId],
+    references: [trips.id],
+  }),
+  user: one(users, {
+    fields: [tripInterestRequests.userId],
+    references: [users.id],
+  }),
+  chatThread: one(chatThreads, {
+    fields: [tripInterestRequests.chatThreadId],
+    references: [chatThreads.id],
   }),
 }));
 
@@ -670,8 +702,6 @@ export type EmailAuth = z.infer<typeof emailAuthSchema>;
 export type PhoneStart = z.infer<typeof phoneStartSchema>;
 export type PhoneVerify = z.infer<typeof phoneVerifySchema>;
 
-export type InsertJoinRequest = z.infer<typeof insertJoinRequestSchema>;
-export type JoinRequest = typeof joinRequests.$inferSelect;
 
 export const insertChatThreadSchema = createInsertSchema(chatThreads).omit({
   id: true,
@@ -694,11 +724,21 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
 });
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Message = typeof messages.$inferSelect;
+
+export const insertTripInterestRequestSchema = createInsertSchema(tripInterestRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertTripInterestRequest = z.infer<typeof insertTripInterestRequestSchema>;
+export type TripInterestRequest = typeof tripInterestRequests.$inferSelect;
+export type TripInterestRequestWithDetails = TripInterestRequest & { 
+  user: User;
+  trip: TripWithOrganizer;
+};
 export type InsertTrip = z.infer<typeof insertTripSchema>;
 export type Trip = typeof trips.$inferSelect;
 export type TripWithOrganizer = Trip & { organizer: User };
-export type InsertTripParticipant = z.infer<typeof insertTripParticipantSchema>;
-export type TripParticipant = typeof tripParticipants.$inferSelect;
 
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = typeof notifications.$inferSelect;

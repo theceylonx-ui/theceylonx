@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
-import { MapPin, Calendar, Users, DollarSign, Phone, MessageCircle, Star, Flag, ArrowLeft, Lock, Trash2 } from "lucide-react";
+import { MapPin, Calendar, Users, DollarSign, Phone, MessageCircle, Star, Flag, ArrowLeft, Lock, Trash2, Heart } from "lucide-react";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTrackInteraction } from "@/hooks/useRecommendations";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import type { TripWithOrganizer, CommentWithUser } from "@shared/schema";
+import type { TripWithOrganizer, CommentWithUser, TripInterestRequest } from "@shared/schema";
 
 interface TripDetailsProps {
   params: { id: string };
@@ -61,6 +61,19 @@ export default function TripDetails({ params }: TripDetailsProps) {
       if (!response.ok) throw new Error("Failed to fetch comments");
       return response.json();
     },
+  });
+
+  // Check if user has already sent an interest request for this trip
+  const { data: existingInterestRequest } = useQuery<TripInterestRequest | null>({
+    queryKey: ["/api/trips", id, "interest-request"],
+    queryFn: async () => {
+      if (!isAuthenticated || !user) return null;
+      const response = await fetch(`/api/trips/${id}/interest-request`);
+      if (response.status === 404) return null;
+      if (!response.ok) throw new Error("Failed to fetch interest request");
+      return response.json();
+    },
+    enabled: !!isAuthenticated && !!user && !!id,
   });
 
   const deleteCommentMutation = useMutation({
@@ -160,6 +173,38 @@ export default function TripDetails({ params }: TripDetailsProps) {
     },
   });
 
+  // Interest request mutation
+  const sendInterestMutation = useMutation({
+    mutationFn: async (message: string = "") => {
+      return await apiRequest("POST", `/api/trips/${id}/interest`, { message });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Interest Sent!",
+        description: "Your interest has been sent to the trip organizer. They will review and respond soon.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/trips", id, "interest-request"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/auth/signin";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to send interest. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleTabChange = (newTab: string) => {
     const newUrl = new URL(window.location.href);
     newUrl.searchParams.set('tab', newTab);
@@ -222,6 +267,18 @@ export default function TripDetails({ params }: TripDetailsProps) {
       console.log(`Opening WhatsApp for number: ${phoneNumber}`);
       window.open(`https://wa.me/${phoneNumber}`, "_blank");
     }
+  };
+
+  const handleSendInterest = () => {
+    if (!isAuthenticated) {
+      window.location.href = "/auth/signin";
+      return;
+    }
+    if (existingInterestRequest) {
+      // Already sent request
+      return;
+    }
+    sendInterestMutation.mutate("I'm interested in joining this trip!");
   };
 
   if (tripLoading) {
@@ -375,6 +432,54 @@ export default function TripDetails({ params }: TripDetailsProps) {
                       </>
                     )}
                   </Button>
+
+                  {/* I'm Interested Button */}
+                  {user && user.id !== trip.organizerId && (
+                    <Button 
+                      onClick={handleSendInterest}
+                      disabled={!!existingInterestRequest || sendInterestMutation.isPending}
+                      className={`w-full ${
+                        existingInterestRequest 
+                          ? 'bg-gray-200 text-gray-600 cursor-not-allowed'
+                          : 'bg-ceylon-blue hover:bg-ceylon-blue/90 text-white'
+                      }`}
+                      data-testid="button-interest"
+                    >
+                      {sendInterestMutation.isPending ? (
+                        <>
+                          <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
+                          Sending...
+                        </>
+                      ) : existingInterestRequest ? (
+                        <>
+                          <Heart className="h-4 w-4 mr-2 fill-current" />
+                          {existingInterestRequest.status === 'pending' && 'Interest Sent'}
+                          {existingInterestRequest.status === 'accepted' && 'Interest Accepted'}
+                          {existingInterestRequest.status === 'rejected' && 'Interest Declined'}
+                        </>
+                      ) : (
+                        <>
+                          <Heart className="h-4 w-4 mr-2" />
+                          I'm Interested
+                        </>
+                      )}
+                    </Button>
+                  )}
+
+                  {/* Show status message for existing requests */}
+                  {existingInterestRequest && (
+                    <div className={`text-sm text-center p-2 rounded-md ${
+                      existingInterestRequest.status === 'accepted' 
+                        ? 'bg-green-100 text-green-800'
+                        : existingInterestRequest.status === 'rejected'
+                        ? 'bg-red-100 text-red-800' 
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`} data-testid="interest-status">
+                      {existingInterestRequest.status === 'pending' && 'Your interest request is pending review by the organizer.'}
+                      {existingInterestRequest.status === 'accepted' && 'Great! Your interest has been accepted. You can now chat with the organizer.'}
+                      {existingInterestRequest.status === 'rejected' && 'Your interest request was not accepted for this trip.'}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
