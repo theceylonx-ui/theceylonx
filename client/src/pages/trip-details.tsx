@@ -494,7 +494,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
           </CardContent>
         </Card>
 
-        {/* Tabbed Interface for Comments and Join Requests */}
+        {/* Tabbed Interface for Comments */}
         <Card>
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={handleTabChange}>

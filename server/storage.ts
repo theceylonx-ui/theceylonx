@@ -188,13 +188,6 @@ export interface IStorage {
   getTripViewCount(tripId: string): Promise<number>;
   getTripViewCountSince(tripId: string, since: Date): Promise<number>;
   
-  // Join request operations
-  createJoinRequest(joinRequest: InsertJoinRequest): Promise<JoinRequest>;
-  getJoinRequest(id: string): Promise<JoinRequest | undefined>;
-  getTripJoinRequests(tripId: string): Promise<(JoinRequest & { requester: User })[]>;
-  getUserJoinRequests(userId: string): Promise<(JoinRequest & { trip: Trip })[]>;
-  updateJoinRequestStatus(id: string, status: "pending" | "accepted" | "declined" | "cancelled"): Promise<JoinRequest>;
-  getExistingJoinRequest(tripId: string, requesterId: string): Promise<JoinRequest | undefined>;
   
   // Chat thread operations
   createChatThread(thread: InsertChatThread): Promise<ChatThread>;
