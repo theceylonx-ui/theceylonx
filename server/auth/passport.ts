@@ -9,8 +9,11 @@ import { JWTUser } from './jwt';
 
 // Google OAuth Strategy
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  // Use custom domain for OAuth callbacks
-  const googleCallbackURL = 'https://www.theceylonx.com/api/auth/google/callback';
+  // Dynamic callback URL based on environment
+  const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.APP_URL?.includes('theceylonx.com');
+  const googleCallbackURL = isDevelopment 
+    ? 'http://localhost:5000/api/auth/google/callback'
+    : 'https://www.theceylonx.com/api/auth/google/callback';
     
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
@@ -71,8 +74,11 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 
 // Facebook OAuth Strategy
 if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
-  // Use custom domain for OAuth callbacks
-  const facebookCallbackURL = 'https://www.theceylonx.com/api/auth/facebook/callback';
+  // Dynamic callback URL based on environment
+  const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.APP_URL?.includes('theceylonx.com');
+  const facebookCallbackURL = isDevelopment 
+    ? 'http://localhost:5000/api/auth/facebook/callback'
+    : 'https://www.theceylonx.com/api/auth/facebook/callback';
     
   passport.use(new FacebookStrategy({
     clientID: process.env.FACEBOOK_APP_ID,
