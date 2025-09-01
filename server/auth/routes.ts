@@ -40,7 +40,8 @@ router.get('/google/callback',
     console.log('🔄 Google OAuth callback received');
     
     // Use localhost for development, production URL for production
-    const isDevelopment = process.env.NODE_ENV === 'development';
+    // Since NODE_ENV might not be set, also check if we're running on localhost
+    const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.APP_URL || req.get('host')?.includes('localhost');
     const baseUrl = isDevelopment ? 'http://localhost:5000' : (process.env.APP_URL || 'https://www.theceylonx.com');
     
     if (!req.user) {
@@ -72,7 +73,8 @@ router.get('/facebook/callback',
     console.log('🔄 Facebook OAuth callback received');
     
     // Use localhost for development, production URL for production
-    const isDevelopment = process.env.NODE_ENV === 'development';
+    // Since NODE_ENV might not be set, also check if we're running on localhost
+    const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.APP_URL || req.get('host')?.includes('localhost');
     const baseUrl = isDevelopment ? 'http://localhost:5000' : (process.env.APP_URL || 'https://www.theceylonx.com');
     
     if (!req.user) {
@@ -99,28 +101,28 @@ router.get('/facebook/callback',
 
 // Email Magic Link Routes - DISABLED (using Phone and Google OAuth only)
 router.post('/email/start', authRateLimit, async (req: Request, res: Response) => {
-  res.status(503).json({ 
+  return res.status(503).json({ 
     error: 'Email authentication is currently disabled. Please use Phone or Google sign-in.' 
   });
 });
 
 router.get('/email/verify', async (req: Request, res: Response) => {
-  res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=email_auth_disabled`);
+  return res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=email_auth_disabled`);
 });
 
 // Phone authentication removed - Google OAuth only
 router.post('/phone/send', authRateLimit, async (req: Request, res: Response) => {
-  res.status(503).json({ error: 'Phone authentication has been disabled. Please use Google sign-in.' });
+  return res.status(503).json({ error: 'Phone authentication has been disabled. Please use Google sign-in.' });
 });
 
 router.post('/phone/verify', authRateLimit, async (req: Request, res: Response) => {
-  res.status(503).json({ error: 'Phone authentication has been disabled. Please use Google sign-in.' });
+  return res.status(503).json({ error: 'Phone authentication has been disabled. Please use Google sign-in.' });
 });
 
 // Session Management Routes
 router.post('/logout', (req: Request, res: Response) => {
   clearAuthCookies(res);
-  res.json({ success: true, message: 'Logged out successfully' });
+  return res.json({ success: true, message: 'Logged out successfully' });
 });
 
 router.get('/me', async (req: Request, res: Response) => {
@@ -164,7 +166,7 @@ router.get('/me', async (req: Request, res: Response) => {
     'Expires': '0'
   });
   
-  res.json(responseUser);
+  return res.json(responseUser);
 });
 
 // Get available authentication providers
@@ -178,7 +180,7 @@ router.get('/providers', (req: Request, res: Response) => {
     phone: false, // Disabled
   };
 
-  res.json(providers);
+  return res.json(providers);
 });
 
 export { router as authRouter };
