@@ -44,15 +44,16 @@ export function JoinRequestButton({
       queryClient.invalidateQueries({ queryKey: ["/api/trips", tripId] });
     },
     onError: (error: any) => {
+      console.error("Join request error:", error);
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: "Authentication Required",
+          description: "Please sign in to join trips. Redirecting...",
           variant: "destructive",
         });
         setTimeout(() => {
           window.location.href = "/auth/signin";
-        }, 500);
+        }, 1000);
         return;
       }
       

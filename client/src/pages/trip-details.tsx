@@ -109,20 +109,22 @@ export default function TripDetails({ params }: TripDetailsProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/trips", id, "comments"] });
     },
     onError: (error) => {
+      console.error("Comment creation error:", error);
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized", 
-          description: "You are logged out. Logging in again...",
+          title: "Authentication Required", 
+          description: "Please sign in to add comments. Redirecting...",
           variant: "destructive",
         });
         setTimeout(() => {
           window.location.href = "/auth/signin";
-        }, 500);
+        }, 1000);
         return;
       }
+      const errorMsg = error?.message || "Failed to add comment. Please try again.";
       toast({
         title: "Error",
-        description: "Failed to add comment. Please try again.",
+        description: errorMsg,
         variant: "destructive",
       });
     },
