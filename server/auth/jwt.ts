@@ -203,7 +203,18 @@ export async function authGuard(req: Request & { user?: JWTUser }, res: Response
 
 export async function getCurrentUser(req: Request): Promise<JWTUser | null> {
   const accessToken = req.cookies.accessToken;
-  if (!accessToken) return null;
+  console.log("🔍 Checking auth cookies:", { 
+    hasAccessToken: !!accessToken, 
+    cookies: Object.keys(req.cookies || {}),
+    userAgent: req.get('User-Agent')?.slice(0, 50)
+  });
+  
+  if (!accessToken) {
+    console.log("❌ No access token found in cookies");
+    return null;
+  }
 
-  return verifyAccessToken(accessToken);
+  const user = verifyAccessToken(accessToken);
+  console.log("🔑 Token verification result:", { success: !!user, userId: user?.id });
+  return user;
 }

@@ -23,6 +23,7 @@ export function useAuth() {
       });
       
       if (res.status === 401) {
+        console.log("🚫 Auth request returned 401 - user not authenticated");
         return null;
       }
       
