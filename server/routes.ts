@@ -335,6 +335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enhanced join request workflow
   app.post('/api/trips/:id/join', authGuard, async (req: any, res) => {
     try {
+      console.log("Join request received:", { tripId: req.params.id, userId: req.user?.id, body: req.body });
       const userId = req.user.id;
       const tripId = req.params.id;
       const { message } = req.body;

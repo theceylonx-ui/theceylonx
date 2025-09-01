@@ -29,9 +29,17 @@ export function JoinRequestButton({
 
   const joinRequestMutation = useMutation({
     mutationFn: async (requestMessage: string) => {
-      return await apiRequest("POST", `/api/trips/${tripId}/join`, { 
-        message: requestMessage 
-      });
+      console.log("Attempting to join trip:", tripId, "with message:", requestMessage);
+      try {
+        const response = await apiRequest("POST", `/api/trips/${tripId}/join`, { 
+          message: requestMessage 
+        });
+        console.log("Join request successful:", response);
+        return response;
+      } catch (error) {
+        console.error("Join request failed:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
