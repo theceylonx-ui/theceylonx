@@ -390,6 +390,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check if user has existing join request for trip
+  app.get('/api/trips/:id/existing-request', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const tripId = req.params.id;
+      const existingRequest = await storage.getExistingJoinRequest(tripId, userId);
+      res.json({ hasExistingRequest: !!existingRequest });
+    } catch (error) {
+      console.error("Error checking existing join request:", error);
+      res.status(500).json({ message: "Failed to check existing request" });
+    }
+  });
+
   // Get join requests for a trip (trip owner only)
   app.get('/api/trips/:id/joins', authGuard, async (req: any, res) => {
     try {

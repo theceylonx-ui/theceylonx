@@ -42,6 +42,7 @@ export function JoinRequestButton({
       setMessage("");
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["/api/trips", tripId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trips", tripId, "existing-request"] });
     },
     onError: (error: any) => {
       console.error("Join request error:", error);

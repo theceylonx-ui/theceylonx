@@ -65,6 +65,16 @@ export default function TripDetails({ params }: TripDetailsProps) {
     },
   });
 
+  // Check if user has existing join request
+  const { data: existingRequestData } = useQuery<{ hasExistingRequest: boolean }>({
+    queryKey: ["/api/trips", id, "existing-request"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/trips/${id}/existing-request`);
+      return response.json();
+    },
+    enabled: isAuthenticated && !!user && user.id !== trip?.organizerId, // Only check if user is authenticated and not the trip owner
+  });
+
   const deleteCommentMutation = useMutation({
     mutationFn: async (commentId: string) => {
       return await apiRequest("DELETE", `/api/comments/${commentId}`);
@@ -385,6 +395,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
                       tripId={id}
                       isAuthenticated={isAuthenticated}
                       isOwner={user?.id === trip.organizerId}
+                      hasExistingRequest={existingRequestData?.hasExistingRequest || false}
                     />
                   )}
                 </div>
