@@ -86,6 +86,7 @@ function Router() {
             <Route path="/contact-us" component={ContactUs} />
             <Route path="/faq" component={FAQ} />
             <Route path="/auth/signin" component={AuthSignInPage} />
+            <Route path="/auth/callback" component={AuthCallbackPage} />
             <Route path="/destination/:city" component={DestinationPage} />
             <Route path="/preferences" component={PreferencesPage} />
             <Route path="/chat" component={ChatPage} />
