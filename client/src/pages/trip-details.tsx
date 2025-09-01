@@ -15,8 +15,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTrackInteraction } from "@/hooks/useRecommendations";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { JoinRequestButton } from "@/components/join-request-button";
-import { JoinRequestManager } from "@/components/join-request-manager";
 import type { TripWithOrganizer, CommentWithUser } from "@shared/schema";
 
 interface TripDetailsProps {
@@ -377,14 +375,6 @@ export default function TripDetails({ params }: TripDetailsProps) {
                       </>
                     )}
                   </Button>
-                  
-                  {trip.status === "active" && (
-                    <JoinRequestButton
-                      tripId={id}
-                      isAuthenticated={isAuthenticated}
-                      isOwner={user?.id === trip.organizerId}
-                    />
-                  )}
                 </div>
               </div>
             </div>
@@ -404,11 +394,8 @@ export default function TripDetails({ params }: TripDetailsProps) {
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <div className="px-6 py-4 border-b">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-1">
                   <TabsTrigger value="details">Comments & Questions</TabsTrigger>
-                  {user?.id === trip.organizerId && (
-                    <TabsTrigger value="joins">Join Requests</TabsTrigger>
-                  )}
                 </TabsList>
               </div>
 
@@ -480,14 +467,6 @@ export default function TripDetails({ params }: TripDetailsProps) {
                 </div>
               </TabsContent>
 
-              {user?.id === trip.organizerId && (
-                <TabsContent value="joins" className="px-6 py-4">
-                  <JoinRequestManager
-                    tripId={id}
-                    isOwner={user?.id === trip.organizerId}
-                  />
-                </TabsContent>
-              )}
             </Tabs>
           </CardContent>
         </Card>

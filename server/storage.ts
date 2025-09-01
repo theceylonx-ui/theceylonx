@@ -1,7 +1,6 @@
 import {
   users,
   trips,
-  tripParticipants,
   comments,
   ratings,
   reports,
@@ -24,8 +23,6 @@ import {
   type InsertTrip,
   type Trip,
   type TripWithOrganizer,
-  type InsertTripParticipant,
-  type TripParticipant,
   type InsertComment,
   type Comment,
   type CommentWithUser,
@@ -57,9 +54,6 @@ import {
   type UserPersonalization,
   type Notification,
   type InsertNotification,
-  joinRequests,
-  type JoinRequest,
-  type InsertJoinRequest,
   chatThreads,
   type ChatThread,
   type InsertChatThread,
@@ -102,11 +96,6 @@ export interface IStorage {
     offset?: number;
   }): Promise<{ trips: TripWithOrganizer[], total: number }>;
   
-  // Trip participation operations
-  joinTrip(participation: InsertTripParticipant): Promise<TripParticipant>;
-  getTripParticipants(tripId: string): Promise<(TripParticipant & { user: User })[]>;
-  getUserParticipations(userId: string): Promise<(TripParticipant & { trip: TripWithOrganizer })[]>;
-  updateParticipationStatus(id: string, status: string): Promise<TripParticipant>;
   
   // Comment operations
   createComment(comment: InsertComment): Promise<Comment>;
@@ -1238,71 +1227,6 @@ export class DatabaseStorage implements IStorage {
     return result?.count || 0;
   }
 
-  // Join request implementation
-  async createJoinRequest(joinRequest: InsertJoinRequest): Promise<JoinRequest> {
-    const [newJoinRequest] = await db
-      .insert(joinRequests)
-      .values(joinRequest)
-      .returning();
-    return newJoinRequest;
-  }
-
-  async getJoinRequest(id: string): Promise<JoinRequest | undefined> {
-    const [joinRequest] = await db
-      .select()
-      .from(joinRequests)
-      .where(eq(joinRequests.id, id));
-    return joinRequest;
-  }
-
-  async getTripJoinRequests(tripId: string): Promise<(JoinRequest & { requester: User })[]> {
-    const result = await db
-      .select()
-      .from(joinRequests)
-      .leftJoin(users, eq(joinRequests.requesterId, users.id))
-      .where(eq(joinRequests.tripId, tripId))
-      .orderBy(desc(joinRequests.createdAt));
-    
-    return result.map(({ join_requests: jr, users: user }) => ({
-      ...jr,
-      requester: user!
-    }));
-  }
-
-  async getUserJoinRequests(userId: string): Promise<(JoinRequest & { trip: Trip })[]> {
-    const result = await db
-      .select()
-      .from(joinRequests)
-      .leftJoin(trips, eq(joinRequests.tripId, trips.id))
-      .where(eq(joinRequests.requesterId, userId))
-      .orderBy(desc(joinRequests.createdAt));
-    
-    return result.map(({ join_requests: jr, trips: trip }) => ({
-      ...jr,
-      trip: trip!
-    }));
-  }
-
-  async updateJoinRequestStatus(id: string, status: "pending" | "accepted" | "declined" | "cancelled"): Promise<JoinRequest> {
-    const [updatedJoinRequest] = await db
-      .update(joinRequests)
-      .set({ status, updatedAt: new Date() })
-      .where(eq(joinRequests.id, id))
-      .returning();
-    return updatedJoinRequest;
-  }
-
-  async getExistingJoinRequest(tripId: string, requesterId: string): Promise<JoinRequest | undefined> {
-    const [joinRequest] = await db
-      .select()
-      .from(joinRequests)
-      .where(and(
-        eq(joinRequests.tripId, tripId),
-        eq(joinRequests.requesterId, requesterId),
-        eq(joinRequests.status, "pending")
-      ));
-    return joinRequest;
-  }
 
   // Chat thread implementation
   async createChatThread(thread: InsertChatThread): Promise<ChatThread> {

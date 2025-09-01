@@ -496,7 +496,7 @@ export class EnhancedRecommendationService {
 
     const tripInteractions = interactions.filter(i => i.tripId === trip.id);
     const positiveInteractions = tripInteractions.filter(i => 
-      ['click', 'bookmark', 'share', 'join_request'].includes(i.interactionType)
+      ['click', 'bookmark', 'share'].includes(i.interactionType)
     );
 
     if (positiveInteractions.length > 0) return 0.9;
@@ -505,7 +505,7 @@ export class EnhancedRecommendationService {
     const userTagPreferences: Record<string, number> = {};
     interactions.forEach(interaction => {
       // This would need trip data - simplified for now
-      if (['click', 'bookmark', 'join_request'].includes(interaction.interactionType)) {
+      if (['click', 'bookmark'].includes(interaction.interactionType)) {
         // Add logic to track preferred tags from user's positive interactions
       }
     });
@@ -522,7 +522,7 @@ export class EnhancedRecommendationService {
       .where(and(
         eq(userInteractions.tripId, trip.id),
         ne(userInteractions.userId, userId),
-        inArray(userInteractions.interactionType, ['click', 'bookmark', 'join_request'])
+        inArray(userInteractions.interactionType, ['click', 'bookmark'])
       ));
 
     if (tripInteractions.length === 0) return 0.3;
@@ -680,7 +680,7 @@ export class EnhancedRecommendationService {
   async trackUserInteraction(
     userId: string, 
     tripId: string, 
-    interactionType: 'view' | 'click' | 'bookmark' | 'share' | 'join_request' | 'not_interested',
+    interactionType: 'view' | 'click' | 'bookmark' | 'share' | 'not_interested',
     duration?: number,
     sessionId?: string,
     abTestGroup?: string
@@ -700,12 +700,8 @@ export class EnhancedRecommendationService {
         .update(trips)
         .set({ viewCount: sql`${trips.viewCount} + 1` })
         .where(eq(trips.id, tripId));
-    } else if (interactionType === 'join_request') {
-      await db
-        .update(trips)
-        .set({ bookingCount: sql`${trips.bookingCount} + 1` })
-        .where(eq(trips.id, tripId));
     }
+    // join_request interaction removed
 
     // Update trip features for ML
     await this.updateTripFeatures(tripId);

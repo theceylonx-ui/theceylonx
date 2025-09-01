@@ -116,14 +116,6 @@ export const trips = pgTable("trips", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Trip participants table
-export const tripParticipants = pgTable("trip_participants", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  tripId: varchar("trip_id").notNull(),
-  userId: varchar("user_id").notNull(),
-  status: varchar("status").default("pending"), // pending, approved, declined
-  createdAt: timestamp("created_at").defaultNow(),
-});
 
 // Notifications table
 export const notifications = pgTable("notifications", {
@@ -141,7 +133,6 @@ export const notifications = pgTable("notifications", {
   metadata: jsonb("metadata").default({}), // additional data for weather alerts, view counts, etc.
   // Deep-link context for notifications
   commentId: varchar("comment_id"), // For comment-related notifications
-  joinRequestId: varchar("join_request_id"), // For join request notifications  
   threadId: varchar("thread_id"), // For chat message notifications
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -165,24 +156,6 @@ export const tripViews = pgTable("trip_views", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Join Request Status enum
-export const joinStatusEnum = pgEnum("join_status", [
-  "pending",
-  "accepted", 
-  "declined",
-  "cancelled"
-]);
-
-// Join Requests table for trip participation requests
-export const joinRequests = pgTable("join_requests", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  tripId: varchar("trip_id").notNull(),
-  requesterId: varchar("requester_id").notNull(),
-  message: text("message"), // Optional message from requester
-  status: joinStatusEnum("status").default("pending"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
 
 // Chat Threads table for private messaging
 export const chatThreads = pgTable("chat_threads", {
@@ -304,7 +277,7 @@ export const userInteractions = pgTable("user_interactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),
   tripId: varchar("trip_id").notNull(),
-  interactionType: varchar("interaction_type").notNull(), // 'view', 'click', 'bookmark', 'share', 'join_request', 'not_interested'
+  interactionType: varchar("interaction_type").notNull(), // 'view', 'click', 'bookmark', 'share', 'not_interested'
   duration: integer("duration"), // Duration in seconds for views (dwell_ms for quality signals)
   sessionId: varchar("session_id"), // anon_session_id for first-time visitors
   abTestGroup: varchar("ab_test_group"), // 'baseline' | 'personalized' for A/B testing
@@ -352,7 +325,6 @@ export const userPersonalization = pgTable("user_personalization", {
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   organizedTrips: many(trips),
-  participations: many(tripParticipants),
   comments: many(comments),
   givenRatings: many(ratings, { relationName: "raterRatings" }),
   receivedRatings: many(ratings, { relationName: "ratedRatings" }),
@@ -372,22 +344,11 @@ export const tripsRelations = relations(trips, ({ one, many }) => ({
     fields: [trips.organizerId],
     references: [users.id],
   }),
-  participants: many(tripParticipants),
   comments: many(comments),
   ratings: many(ratings),
   reports: many(reports),
 }));
 
-export const tripParticipantsRelations = relations(tripParticipants, ({ one }) => ({
-  trip: one(trips, {
-    fields: [tripParticipants.tripId],
-    references: [trips.id],
-  }),
-  user: one(users, {
-    fields: [tripParticipants.userId],
-    references: [users.id],
-  }),
-}));
 
 export const commentsRelations = relations(comments, ({ one }) => ({
   trip: one(trips, {
@@ -563,10 +524,6 @@ export const insertTripSchema = z.object({
   status: z.string().optional(),
 });
 
-export const insertTripParticipantSchema = createInsertSchema(tripParticipants).omit({
-  id: true,
-  createdAt: true,
-});
 
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
   id: true,
@@ -574,12 +531,6 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
 });
 
 export const notificationTypeSchema = z.enum([
-  // Trip Participation
-  "trip_join_request",        // Someone wants to join your trip
-  "trip_join_approved",       // Your join request was accepted
-  "trip_join_declined",       // Your join request was rejected
-  "trip_join_pending_reminder", // Reminder for pending join request
-  
   // My Posted Trips
   "trip_viewed",              // Someone viewed your trip (threshold-based)
   "trip_commented",           // Someone commented on your trip
@@ -612,11 +563,8 @@ export const notificationTypeSchema = z.enum([
   "new_trip_in_region",       // New trip in preferred region
   "system_update",            // System announcements
   
-  // New Chat and Join features
+  // Chat features
   "comment_on_trip",          // New comment on your trip
-  "join_request",             // Someone wants to join your trip
-  "join_accepted",            // Your join request was accepted
-  "join_declined",            // Your join request was declined
   "chat_message"              // New chat message received
 ]);
 
@@ -722,12 +670,6 @@ export type EmailAuth = z.infer<typeof emailAuthSchema>;
 export type PhoneStart = z.infer<typeof phoneStartSchema>;
 export type PhoneVerify = z.infer<typeof phoneVerifySchema>;
 
-// New types for join requests, chat threads, and messages
-export const insertJoinRequestSchema = createInsertSchema(joinRequests).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
 export type InsertJoinRequest = z.infer<typeof insertJoinRequestSchema>;
 export type JoinRequest = typeof joinRequests.$inferSelect;
 

@@ -328,7 +328,7 @@ export class RecommendationService {
           score += interaction.interactionType === 'view' ? 0.3 : 0.5;
           relevantInteractions++;
         }
-      } else if (interaction.interactionType === 'bookmark' || interaction.interactionType === 'join_request') {
+      } else if (interaction.interactionType === 'bookmark') {
         if (this.areTripsSimilar(trip, interaction.tripId)) {
           score += 0.8;
           relevantInteractions++;
@@ -358,11 +358,11 @@ export class RecommendationService {
       .where(and(
         inArray(userInteractions.userId, similarUsers),
         eq(userInteractions.tripId, trip.id),
-        inArray(userInteractions.interactionType, ['view', 'bookmark', 'join_request'])
+        inArray(userInteractions.interactionType, ['view', 'bookmark'])
       ));
 
     const positiveInteractions = interactions.filter(i => 
-      i.interactionType === 'bookmark' || i.interactionType === 'join_request'
+      i.interactionType === 'bookmark'
     ).length;
 
     const totalInteractions = interactions.length;
@@ -482,7 +482,7 @@ export class RecommendationService {
   async trackUserInteraction(
     userId: string,
     tripId: string,
-    interactionType: 'view' | 'click' | 'bookmark' | 'share' | 'join_request',
+    interactionType: 'view' | 'click' | 'bookmark' | 'share',
     duration?: number
   ): Promise<void> {
     await db.insert(userInteractions).values({
