@@ -9,10 +9,8 @@ import { JWTUser } from './jwt';
 
 // Google OAuth Strategy
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  // Use production domain for OAuth callbacks
-  const googleCallbackURL = process.env.NODE_ENV === 'production' 
-    ? 'https://theceylonx.replit.app/api/auth/google/callback'
-    : `https://${process.env.REPLIT_DOMAINS}/api/auth/google/callback`;
+  // Always use production domain for OAuth callbacks to match provider settings
+  const googleCallbackURL = 'https://theceylonx.replit.app/api/auth/google/callback';
     
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
@@ -73,10 +71,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 
 // Facebook OAuth Strategy
 if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
-  // Use production domain for OAuth callbacks
-  const facebookCallbackURL = process.env.NODE_ENV === 'production' 
-    ? 'https://theceylonx.replit.app/api/auth/facebook/callback'
-    : `https://${process.env.REPLIT_DOMAINS}/api/auth/facebook/callback`;
+  // Always use production domain for OAuth callbacks to match provider settings
+  const facebookCallbackURL = 'https://theceylonx.replit.app/api/auth/facebook/callback';
     
   passport.use(new FacebookStrategy({
     clientID: process.env.FACEBOOK_APP_ID,
