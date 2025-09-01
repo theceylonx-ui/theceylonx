@@ -38,16 +38,16 @@ router.get('/google/callback',
   passport.authenticate('google', { session: false }),
   async (req: any, res: Response) => {
     if (!req.user) {
-      return res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=oauth_failed`);
+      return res.redirect('https://www.theceylonx.com/auth/signin?error=oauth_failed');
     }
 
     try {
       const tokens = await generateAuthTokens(req.user);
       setAuthCookies(res, tokens);
-      res.redirect(`${process.env.APP_URL || ''}/auth/callback?success=1`);
+      res.redirect('https://www.theceylonx.com/auth/callback?success=1');
     } catch (error) {
       console.error('OAuth callback error:', error);
-      res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=callback_failed`);
+      res.redirect('https://www.theceylonx.com/auth/signin?error=callback_failed');
     }
   }
 );
@@ -61,16 +61,16 @@ router.get('/facebook/callback',
   passport.authenticate('facebook', { session: false }),
   async (req: any, res: Response) => {
     if (!req.user) {
-      return res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=oauth_failed`);
+      return res.redirect('https://www.theceylonx.com/auth/signin?error=oauth_failed');
     }
 
     try {
       const tokens = await generateAuthTokens(req.user);
       setAuthCookies(res, tokens);
-      res.redirect(`${process.env.APP_URL || ''}/auth/callback?success=1`);
+      res.redirect('https://www.theceylonx.com/auth/callback?success=1');
     } catch (error) {
       console.error('OAuth callback error:', error);
-      res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=callback_failed`);
+      res.redirect('https://www.theceylonx.com/auth/signin?error=callback_failed');
     }
   }
 );
