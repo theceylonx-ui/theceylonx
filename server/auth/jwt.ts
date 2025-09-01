@@ -29,6 +29,11 @@ const REFRESH_TOKEN_EXPIRY = '30d';
 const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN;
 const COOKIE_SECURE = process.env.COOKIE_SECURE === 'true';
 
+// For development, don't use domain/secure settings
+const isDevelopment = process.env.NODE_ENV === 'development';
+const effectiveCookieDomain = isDevelopment ? undefined : COOKIE_DOMAIN;
+const effectiveCookieSecure = isDevelopment ? false : COOKIE_SECURE;
+
 export function signAccessToken(user: JWTUser): string {
   return jwt.sign(user, ACCESS_TOKEN_SECRET, { 
     expiresIn: ACCESS_TOKEN_EXPIRY,
@@ -83,14 +88,14 @@ export async function generateAuthTokens(user: JWTUser): Promise<AuthTokens> {
 export function setAuthCookies(res: Response, tokens: AuthTokens): void {
   const cookieOptions = {
     httpOnly: true,
-    secure: COOKIE_SECURE,
+    secure: effectiveCookieSecure,
     sameSite: 'lax' as const,
-    domain: COOKIE_DOMAIN,
+    domain: effectiveCookieDomain,
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   };
 
-  // Remove domain for localhost
-  if (COOKIE_DOMAIN === 'localhost') {
+  // Remove undefined domain
+  if (!cookieOptions.domain) {
     delete cookieOptions.domain;
   }
 
@@ -105,15 +110,21 @@ export function setAuthCookies(res: Response, tokens: AuthTokens): void {
 export function clearAuthCookies(res: Response): void {
   const cookieOptions = {
     httpOnly: true,
-    secure: COOKIE_SECURE,
+    secure: effectiveCookieSecure,
     sameSite: 'lax' as const,
-    domain: COOKIE_DOMAIN,
+    domain: effectiveCookieDomain,
   };
 
-  // Remove domain for localhost
-  if (COOKIE_DOMAIN === 'localhost') {
+  // Remove undefined domain
+  if (!cookieOptions.domain) {
     delete cookieOptions.domain;
   }
+
+  console.log('🍪 Clearing auth cookies with options:', { 
+    secure: cookieOptions.secure, 
+    domain: cookieOptions.domain,
+    isDevelopment 
+  });
 
   res.clearCookie('accessToken', cookieOptions);
   res.clearCookie('refreshToken', cookieOptions);
