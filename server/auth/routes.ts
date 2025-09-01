@@ -38,18 +38,11 @@ router.get('/google/callback',
   passport.authenticate('google', { session: false }),
   async (req: any, res: Response) => {
     console.log('🔄 Google OAuth callback received');
-    console.log('🔍 Request details:', { 
-      user: req.user ? 'USER_OBJECT_EXISTS' : 'NO_USER', 
-      host: req.get('host'),
-      query: req.query
-    });
     
-    // Force development mode for Replit environment
-    // In Replit, we want to use localhost even if APP_URL is set to production
-    const isReplit = process.env.REPL_ID !== undefined;
-    const isDevelopment = process.env.NODE_ENV === 'development' || isReplit || req.get('host')?.includes('localhost');
+    // Use localhost for development, production URL for production
+    // Since NODE_ENV might not be set, also check if we're running on localhost
+    const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.APP_URL || req.get('host')?.includes('localhost');
     const baseUrl = isDevelopment ? 'http://localhost:5000' : (process.env.APP_URL || 'https://www.theceylonx.com');
-    console.log('🌐 Base URL determined:', baseUrl, '(isReplit:', isReplit, ', isDevelopment:', isDevelopment, ')');
     
     if (!req.user) {
       console.log('❌ Google OAuth failed - no user object received');
@@ -59,7 +52,6 @@ router.get('/google/callback',
     try {
       console.log('✅ Google OAuth success for user:', req.user.email || req.user.id);
       const tokens = await generateAuthTokens(req.user);
-      console.log('🔑 Tokens generated successfully');
       setAuthCookies(res, tokens);
       console.log('🍪 Auth cookies set, redirecting to callback page');
       res.redirect(`${baseUrl}/auth/callback?success=1`);
@@ -80,10 +72,9 @@ router.get('/facebook/callback',
   async (req: any, res: Response) => {
     console.log('🔄 Facebook OAuth callback received');
     
-    // Force development mode for Replit environment
-    // In Replit, we want to use localhost even if APP_URL is set to production
-    const isReplit = process.env.REPL_ID !== undefined;
-    const isDevelopment = process.env.NODE_ENV === 'development' || isReplit || req.get('host')?.includes('localhost');
+    // Use localhost for development, production URL for production
+    // Since NODE_ENV might not be set, also check if we're running on localhost
+    const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.APP_URL || req.get('host')?.includes('localhost');
     const baseUrl = isDevelopment ? 'http://localhost:5000' : (process.env.APP_URL || 'https://www.theceylonx.com');
     
     if (!req.user) {

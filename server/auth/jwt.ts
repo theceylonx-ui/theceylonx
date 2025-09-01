@@ -29,9 +29,8 @@ const REFRESH_TOKEN_EXPIRY = '30d';
 const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN;
 const COOKIE_SECURE = process.env.COOKIE_SECURE === 'true';
 
-// For development, don't use domain/secure settings - force localhost in Replit
-const isReplit = process.env.REPL_ID !== undefined;
-const isDevelopment = process.env.NODE_ENV === 'development' || isReplit;
+// For development, don't use domain/secure settings
+const isDevelopment = process.env.NODE_ENV === 'development';
 const effectiveCookieDomain = isDevelopment ? undefined : COOKIE_DOMAIN;
 const effectiveCookieSecure = isDevelopment ? false : COOKIE_SECURE;
 
@@ -100,21 +99,12 @@ export function setAuthCookies(res: Response, tokens: AuthTokens): void {
     delete cookieOptions.domain;
   }
 
-  console.log('🍪 Setting auth cookies with options:', { 
-    secure: cookieOptions.secure, 
-    domain: cookieOptions.domain,
-    isDevelopment,
-    hasTokens: { accessToken: !!tokens.accessToken, refreshToken: !!tokens.refreshToken }
-  });
-
   res.cookie('accessToken', tokens.accessToken, {
     ...cookieOptions,
     maxAge: 15 * 60 * 1000, // 15 minutes
   });
 
   res.cookie('refreshToken', tokens.refreshToken, cookieOptions);
-  
-  console.log('✅ Auth cookies set successfully');
 }
 
 export function clearAuthCookies(res: Response): void {
@@ -213,18 +203,7 @@ export async function authGuard(req: Request & { user?: JWTUser }, res: Response
 
 export async function getCurrentUser(req: Request): Promise<JWTUser | null> {
   const accessToken = req.cookies.accessToken;
-  console.log("🔍 Checking auth cookies:", { 
-    hasAccessToken: !!accessToken, 
-    cookies: Object.keys(req.cookies || {}),
-    userAgent: req.get('User-Agent')?.slice(0, 50)
-  });
-  
-  if (!accessToken) {
-    console.log("❌ No access token found in cookies");
-    return null;
-  }
+  if (!accessToken) return null;
 
-  const user = verifyAccessToken(accessToken);
-  console.log("🔑 Token verification result:", { success: !!user, userId: user?.id });
-  return user;
+  return verifyAccessToken(accessToken);
 }

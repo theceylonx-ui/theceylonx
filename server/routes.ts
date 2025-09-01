@@ -42,7 +42,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/auth', authRouter);
 
   // User profile routes
-  app.patch('/api/user', authGuard, async (req: any, res) => {
+  app.patch('/api/user', authGuard, async (req, res) => {
     try {
       const userId = (req.user as JWTUser).id;
       const { username, phoneNumber, bio, profileImageUrl } = req.body;
@@ -90,7 +90,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User data deletion endpoint for OAuth compliance
-  app.delete('/api/user/delete', authGuard, async (req: any, res) => {
+  app.delete('/api/user/delete', authGuard, async (req, res) => {
     try {
       const userId = (req.user as JWTUser).id;
       console.log("User deletion request for user:", userId);
@@ -107,7 +107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User deletion confirmation page (for OAuth providers)
-  app.post('/api/user/deletion-request', async (req: any, res) => {
+  app.post('/api/user/deletion-request', async (req, res) => {
     try {
       const { userId, confirmationToken } = req.body;
       
@@ -134,7 +134,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Trip routes
-  app.post('/api/trips', authGuard, async (req: any, res) => {
+  app.post('/api/trips', authGuard, async (req, res) => {
     try {
       const userId = (req.user as JWTUser).id;
       console.log("Creating trip with data:", { ...req.body, organizerId: userId });
@@ -154,7 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/trips', async (req: any, res) => {
+  app.get('/api/trips', async (req, res) => {
     try {
       const page = req.query.page ? Number(req.query.page) : 1;
       const limit = req.query.limit ? Number(req.query.limit) : 8;
@@ -188,7 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/trips/:id', async (req: any, res) => {
+  app.get('/api/trips/:id', async (req, res) => {
     try {
       const trip = await storage.getTrip(req.params.id);
       if (!trip) {
@@ -240,7 +240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/trips/:id', authGuard, async (req: any, res) => {
+  app.patch('/api/trips/:id', authGuard, async (req, res) => {
     try {
       const userId = (req.user as JWTUser).id;
       const tripId = req.params.id;
@@ -259,7 +259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/trips/:id', authGuard, async (req: any, res) => {
+  app.delete('/api/trips/:id', authGuard, async (req, res) => {
     try {
       const userId = (req.user as JWTUser).id;
       const tripId = req.params.id;
@@ -335,7 +335,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enhanced join request workflow
   app.post('/api/trips/:id/join', authGuard, async (req: any, res) => {
     try {
-      console.log("Join request received:", { tripId: req.params.id, userId: req.user?.id, body: req.body });
       const userId = req.user.id;
       const tripId = req.params.id;
       const { message } = req.body;
@@ -381,26 +380,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/trips/:id/participants', authGuard, async (req: any, res) => {
+  app.get('/api/trips/:id/participants', authGuard, async (req, res) => {
     try {
       const participants = await storage.getTripParticipants(req.params.id);
       res.json(participants);
     } catch (error) {
       console.error("Error fetching trip participants:", error);
       res.status(500).json({ message: "Failed to fetch participants" });
-    }
-  });
-
-  // Check if user has existing join request for trip
-  app.get('/api/trips/:id/existing-request', authGuard, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const tripId = req.params.id;
-      const existingRequest = await storage.getExistingJoinRequest(tripId, userId);
-      res.json({ hasExistingRequest: !!existingRequest });
-    } catch (error) {
-      console.error("Error checking existing join request:", error);
-      res.status(500).json({ message: "Failed to check existing request" });
     }
   });
 
@@ -460,8 +446,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: "join_accepted",
         category: "trips",
         priority: "normal",
-        title: "Trip organizer accepted your offer!",
-        message: `The trip organizer accepted your interest in "${trip.title}"! You can now chat with them.`,
+        title: "Join Request Accepted!",
+        message: `Your request to join "${trip.title}" has been accepted! You can now chat with the trip owner.`,
         relatedTripId: joinRequest.tripId,
         relatedUserId: trip.organizerId,
         joinRequestId: joinRequest.id,
@@ -581,7 +567,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/trips/:id/comments', async (req: any, res) => {
+  app.get('/api/trips/:id/comments', async (req, res) => {
     try {
       const comments = await storage.getTripComments(req.params.id);
       res.json(comments);
@@ -643,7 +629,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/trips/:id/ratings', async (req: any, res) => {
+  app.get('/api/trips/:id/ratings', async (req, res) => {
     try {
       const ratings = await storage.getTripRatings(req.params.id);
       res.json(ratings);
@@ -653,7 +639,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/users/:id/ratings', async (req: any, res) => {
+  app.get('/api/users/:id/ratings', async (req, res) => {
     try {
       const ratings = await storage.getUserRatings(req.params.id);
       res.json(ratings);
@@ -856,7 +842,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/topics', async (req: any, res) => {
+  app.get('/api/topics', async (req, res) => {
     try {
       const topics = await storage.getTopics();
       res.json(topics);
@@ -866,7 +852,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/topics/:slug', async (req: any, res) => {
+  app.get('/api/topics/:slug', async (req, res) => {
     try {
       const topic = await storage.getTopic(req.params.slug);
       if (!topic) {
@@ -895,7 +881,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/questions', async (req: any, res) => {
+  app.get('/api/questions', async (req, res) => {
     try {
       const filters = {
         search: req.query.q as string,
@@ -912,7 +898,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/questions/:id', async (req: any, res) => {
+  app.get('/api/questions/:id', async (req, res) => {
     try {
       const question = await storage.getQuestion(req.params.id);
       if (!question) {
@@ -991,7 +977,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/questions/:questionId/answers', async (req: any, res) => {
+  app.get('/api/questions/:questionId/answers', async (req, res) => {
     try {
       const answers = await storage.getQuestionAnswers(req.params.questionId);
       res.json(answers);
@@ -1119,7 +1105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Popular destinations endpoint
-  app.get('/api/popular-destinations', async (req: any, res) => {
+  app.get('/api/popular-destinations', async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 5;
       const destinations = await storage.getPopularDestinations(limit);
@@ -1382,7 +1368,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Notification routes
-  app.get('/api/notifications', authGuard, async (req: any, res) => {
+  app.get('/api/notifications', authGuard, async (req, res) => {
     try {
       const userId = (req.user as JWTUser).id;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
@@ -1394,7 +1380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/notifications/unread-count', authGuard, async (req: any, res) => {
+  app.get('/api/notifications/unread-count', authGuard, async (req, res) => {
     try {
       const userId = (req.user as JWTUser).id;
       const count = await storage.getUnreadNotificationCount(userId);
@@ -1405,7 +1391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/notifications/:id/read', authGuard, async (req: any, res) => {
+  app.patch('/api/notifications/:id/read', authGuard, async (req, res) => {
     try {
       const { id } = req.params;
       await storage.markNotificationAsRead(id);
@@ -1416,7 +1402,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/notifications/read-all', authGuard, async (req: any, res) => {
+  app.patch('/api/notifications/read-all', authGuard, async (req, res) => {
     try {
       const userId = (req.user as JWTUser).id;
       await storage.markAllNotificationsAsRead(userId);
@@ -1427,7 +1413,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/notifications/:id', authGuard, async (req: any, res) => {
+  app.delete('/api/notifications/:id', authGuard, async (req, res) => {
     try {
       const { id } = req.params;
       await storage.deleteNotification(id);

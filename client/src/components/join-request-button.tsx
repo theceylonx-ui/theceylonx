@@ -29,44 +29,34 @@ export function JoinRequestButton({
 
   const joinRequestMutation = useMutation({
     mutationFn: async (requestMessage: string) => {
-      console.log("Attempting to join trip:", tripId, "with message:", requestMessage);
-      try {
-        const response = await apiRequest("POST", `/api/trips/${tripId}/join`, { 
-          message: requestMessage 
-        });
-        console.log("Join request successful:", response);
-        return response;
-      } catch (error) {
-        console.error("Join request failed:", error);
-        throw error;
-      }
+      return await apiRequest("POST", `/api/trips/${tripId}/join`, { 
+        message: requestMessage 
+      });
     },
     onSuccess: () => {
       toast({
-        title: "Interest Sent!",
-        description: "Your interest has been sent to the trip organizer. They'll be notified and can approve or decline your request.",
+        title: "Join Request Sent!",
+        description: "Your request has been sent to the trip organizer. They'll be notified and can approve or decline your request.",
       });
       setIsOpen(false);
       setMessage("");
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["/api/trips", tripId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/trips", tripId, "existing-request"] });
     },
     onError: (error: any) => {
-      console.error("Join request error:", error);
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Authentication Required",
-          description: "Please sign in to show interest in trips. Redirecting...",
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
           variant: "destructive",
         });
         setTimeout(() => {
           window.location.href = "/auth/signin";
-        }, 1000);
+        }, 500);
         return;
       }
       
-      const errorMessage = error?.message || "Failed to send interest request. Please try again.";
+      const errorMessage = error?.message || "Failed to send join request. Please try again.";
       toast({
         title: "Error",
         description: errorMessage,
@@ -93,7 +83,7 @@ export function JoinRequestButton({
         data-testid="button-signin-to-join"
       >
         <UserPlus className="w-4 h-4 mr-2" />
-        Sign In to Show Interest
+        Sign In to Join Trip
       </Button>
     );
   }
@@ -120,19 +110,19 @@ export function JoinRequestButton({
           data-testid="button-join-trip"
         >
           <UserPlus className="w-4 h-4 mr-2" />
-          Interested
+          Join This Trip
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Express Interest in Trip</DialogTitle>
+          <DialogTitle>Request to Join Trip</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
             <Label htmlFor="message">Message to Organizer (Optional)</Label>
             <Textarea
               id="message"
-              placeholder="Tell the organizer why you're interested in this trip..."
+              placeholder="Tell the organizer why you'd like to join this trip..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={4}
