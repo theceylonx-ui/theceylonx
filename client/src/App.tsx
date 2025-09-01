@@ -95,6 +95,10 @@ function Router() {
             <Route path="/report-trip/:id" component={ReportTripPage} />
           </>
         )}
+        
+        {/* Auth callback route - available for both authenticated and unauthenticated users */}
+        <Route path="/auth/callback" component={AuthCallbackPage} />
+        
         <Route component={NotFound} />
       </Switch>
       
