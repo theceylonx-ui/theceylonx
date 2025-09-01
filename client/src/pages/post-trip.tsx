@@ -332,13 +332,13 @@ export default function PostTrip() {
                         <FormLabel>Contact Information</FormLabel>
                         <FormControl>
                           <Input 
-                            placeholder="WhatsApp number or email" 
+                            placeholder="e.g., +94771234567 or user@email.com" 
                             {...field} 
                             data-testid="input-contact"
                           />
                         </FormControl>
                         <FormDescription>
-                          This will be visible to interested travelers
+                          For international numbers, include country code (e.g., +1, +44, +91, +94). This will be visible to interested travelers.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

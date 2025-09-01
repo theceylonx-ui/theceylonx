@@ -195,14 +195,21 @@ export default function TripDetails({ params }: TripDetailsProps) {
       // Normalize phone number for WhatsApp
       let phoneNumber = trip.contactInfo.replace(/\D/g, "");
       
-      // Handle Sri Lankan numbers - if starts with 0, replace with 94
+      // If number starts with 0, it's likely a local number
       if (phoneNumber.startsWith('0')) {
-        phoneNumber = '94' + phoneNumber.substring(1);
+        // For Sri Lankan numbers (typical length after removing 0 is 9)
+        if (phoneNumber.length === 10) {
+          phoneNumber = '94' + phoneNumber.substring(1);
+        }
+        // For other countries, user should include country code manually
+        // We'll just remove the leading 0 and let them specify
+        else {
+          phoneNumber = phoneNumber.substring(1);
+        }
       }
-      // If doesn't start with country code, assume Sri Lankan
-      else if (phoneNumber.length === 9) {
-        phoneNumber = '94' + phoneNumber;
-      }
+      
+      // If number is very short (less than 10 digits), likely missing country code
+      // But we won't assume - user should provide complete international number
       
       console.log(`Opening WhatsApp for number: ${phoneNumber}`);
       window.open(`https://wa.me/${phoneNumber}`, "_blank");
