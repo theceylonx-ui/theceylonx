@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MapPin, Clock, Plus, Search } from "lucide-react";
+import { MapPin, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Link } from "wouter";
@@ -166,28 +166,6 @@ const EventCalendar = ({ className }: EventCalendarProps) => {
   
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Header with Quick Actions - unchanged */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Calendar</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            <Link href="/trips">
-              <Button size="sm" variant="outline" className="flex items-center gap-2" data-testid="quick-browse-trips">
-                <Search className="w-4 h-4" />
-                Browse Trips
-              </Button>
-            </Link>
-            <Link href="/post-trip">
-              <Button size="sm" variant="outline" className="flex items-center gap-2" data-testid="quick-post-trip">
-                <Plus className="w-4 h-4" />
-                Post a Trip
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
       
       {/* View Dropdown and Legend Row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
