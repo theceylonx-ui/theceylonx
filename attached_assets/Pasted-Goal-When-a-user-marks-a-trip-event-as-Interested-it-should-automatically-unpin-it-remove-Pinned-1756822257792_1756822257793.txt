@@ -1,0 +1,55 @@
+Goal:
+When a user marks a trip/event as Interested, it should automatically unpin it (remove “Pinned”) so only Interested remains. The Calendar must show the Interested icon.
+Rules
+Toggle buttons on Browse Trips & Event detail:
+Pin (📌) / Pinned — regular toggle.
+Interested (⭐) / Interested — when set to true, force pinned=false for the same user+trip.
+Precedence: Interested > Pinned.
+If user clicks Interested = true, set pinned = false.
+If user later clicks Pin = true while Interested = true, either:
+Option A (recommended): disallow and show tooltip “This trip is marked Interested. Unmark to Pin.”
+Option B: allow Pin and set interested = false. (If you choose B, keep behavior consistent across UI.)
+Use Option A unless otherwise specified.
+Data Model
+user_trip_flags (user_id, trip_id, pinned:boolean, interested:boolean, updated_at)
+On update to interested=true, run:
+UPDATE user_trip_flags
+SET interested = TRUE, pinned = FALSE, updated_at = now()
+WHERE user_id = :currentUser AND trip_id = :tripId;
+API (adjust to your stack)
+POST /api/trips/:id/interest { interested: boolean }
+If interested === true: also force pinned = false.
+Response returns the normalized flags:
+{ "trip_id": "t_123", "user_id": "u_abc", "pinned": false, "interested": true }
+POST /api/trips/:id/pin { pinned: boolean }
+If using Option A: when pinned=true and interested=true, return 409 with { "error": "INTERESTED_ACTIVE" }.
+If using Option B: when pinned=true, set interested=false.
+UI Behavior
+On Interested click:
+Set local state: { interested: true, pinned: false }.
+Update button label to Interested (⭐).
+If the card was Pinned, immediately switch its visual state to Interested.
+On Pin click while already Interested:
+Option A: prevent, show tooltip/toast: “Marked as Interested. Unmark to Pin.”
+Button labels:
+Pin → Pinned (📌)
+Interested → Interested (⭐)
+Calendar Rendering
+Event title adornments:
+Interested: prefix ⭐ (or suffix “(Interested)” on narrow screens)
+Pinned: prefix 📌
+If both flags are true due to legacy data, show only ⭐ (Interested takes precedence) and run a one-time cleanup to set pinned=false wherever interested=true.
+Calendar Filters (existing views)
+Pinned Trips: return trips with pinned = true AND interested = false.
+Interested Trips: return trips with interested = true (ignore pinned state).
+Other views unchanged.
+Edge Cases & QA
+Race-clicks: make updates idempotent with a single UPSERT/transaction.
+Legacy rows where both flags were true: migration script:
+UPDATE user_trip_flags SET pinned = FALSE
+WHERE interested = TRUE AND pinned = TRUE;
+Ensure Calendar and Browse Trips revalidate after flag changes (optimistic UI + re-fetch).
+Acceptance Criteria
+Clicking Interested instantly unpins and shows ⭐ in both the card and Calendar.
+Pinned view never shows trips that are Interested.
+Attempting to Pin an Interested trip (Option A) is blocked with clear feedback.
