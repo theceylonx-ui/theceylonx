@@ -49,11 +49,11 @@ export default function CalendarPage() {
               <CardContent className="p-6">
                 <h3 className="font-semibold text-blue-900 mb-2">How to Use Your Calendar</h3>
                 <div className="text-sm text-blue-800 space-y-1">
-                  <p>• <strong>Green highlights</strong> indicate dates with events</p>
-                  <p>• <strong>Click any date</strong> to see events for that day</p>
-                  <p>• <strong>Trip events</strong> show your posted and joined trips</p>
-                  <p>• <strong>Community events</strong> show your Q&A activity</p>
-                  <p>• <strong>Click "View Details"</strong> to navigate to the full page</p>
+                  <p>• <strong>Select a view</strong> from the dropdown: All Events, Pinned Trips, Interested Trips, My Trips, or Free Trips</p>
+                  <p>• <strong>Click any date</strong> on the calendar to see events for that specific day</p>
+                  <p>• <strong>Event icons</strong> show status: ⭐ Interested, 📌 Pinned, 👤 Your Trip, 💚 Free</p>
+                  <p>• <strong>Day preview panel</strong> automatically updates when you change dates or views</p>
+                  <p>• <strong>Click "View Details"</strong> on any event to see the full trip information</p>
                 </div>
               </CardContent>
             </Card>
