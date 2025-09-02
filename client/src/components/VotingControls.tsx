@@ -92,20 +92,20 @@ export default function VotingControls({
   };
 
   return (
-    <div className={`flex flex-col items-center gap-1 ${className}`} data-testid="voting-controls">
+    <div className={`flex items-center gap-1 ${className}`} data-testid="voting-controls">
       <Button
         variant={currentVote?.value === 1 ? "default" : "outline"}
         size="sm"
         onClick={() => handleVote(1)}
         disabled={voteMutation.isPending}
-        className="p-2 h-8 w-8"
+        className="p-1.5 h-7 w-7"
         data-testid="upvote-button"
       >
-        <ThumbsUp className="h-4 w-4" />
+        <ThumbsUp className="h-3.5 w-3.5" />
       </Button>
       
       <span 
-        className={`font-semibold text-sm px-2 ${
+        className={`font-semibold text-sm min-w-[20px] text-center ${
           optimisticScore > 0 
             ? 'text-green-600 dark:text-green-400' 
             : optimisticScore < 0 
@@ -122,10 +122,10 @@ export default function VotingControls({
         size="sm"
         onClick={() => handleVote(-1)}
         disabled={voteMutation.isPending}
-        className="p-2 h-8 w-8"
+        className="p-1.5 h-7 w-7"
         data-testid="downvote-button"
       >
-        <ThumbsDown className="h-4 w-4" />
+        <ThumbsDown className="h-3.5 w-3.5" />
       </Button>
     </div>
   );

@@ -296,7 +296,7 @@ export default function QuestionDetailPage() {
                   votableType="question"
                   votableId={question.id}
                   currentScore={question.score || question.votesCount || 0}
-                  className="flex-row gap-2"
+                  className=""
                 />
                 <div className="flex items-center text-sm text-gray-500">
                   <MessageSquare className="w-4 h-4 mr-1" />
@@ -525,7 +525,7 @@ export default function QuestionDetailPage() {
                       votableType="answer"
                       votableId={answer.id}
                       currentScore={answer.score || answer.votesCount || 0}
-                      className="flex-row gap-2"
+                      className=""
                     />
                   </div>
                 ))
