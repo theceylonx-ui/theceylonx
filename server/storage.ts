@@ -946,112 +946,94 @@ export class DatabaseStorage implements IStorage {
       .where(eq(questions.id, questionId));
   }
 
-  // Votes
-  async createVote(voteData: InsertVote): Promise<Vote> {
-    const [vote] = await db.insert(votes).values(voteData).returning();
+  // Enhanced Votes API
+  async upsertVote(userId: string, votableType: 'question' | 'answer', votableId: string, value: number): Promise<{ vote: Vote | null; score: number }> {
+    // First, try to find existing vote
+    const existingVote = await this.getUserVote(userId, votableType, votableId);
     
-    // Update vote counts
-    if (voteData.questionId) {
-      const upVoteCount = await db
-        .select({ count: count() })
-        .from(votes)
-        .where(and(
-          eq(votes.questionId, voteData.questionId),
-          eq(votes.voteType, 'up')
+    if (value === 0) {
+      // Clear vote (delete if exists)
+      if (existingVote) {
+        await db.delete(votes).where(and(
+          eq(votes.userId, userId),
+          eq(votes.votableType, votableType),
+          eq(votes.votableId, votableId)
         ));
-      
-      const downVoteCount = await db
-        .select({ count: count() })
-        .from(votes)
-        .where(and(
-          eq(votes.questionId, voteData.questionId),
-          eq(votes.voteType, 'down')
-        ));
-      
-      await db
-        .update(questions)
-        .set({ votesCount: upVoteCount[0].count - downVoteCount[0].count })
-        .where(eq(questions.id, voteData.questionId));
+      }
+    } else {
+      // Create or update vote
+      if (existingVote) {
+        await db.update(votes)
+          .set({ value, updatedAt: new Date() })
+          .where(eq(votes.id, existingVote.id));
+      } else {
+        await db.insert(votes).values({
+          userId,
+          votableType,
+          votableId,
+          value
+        });
+      }
     }
     
-    if (voteData.answerId) {
-      const upVoteCount = await db
-        .select({ count: count() })
-        .from(votes)
-        .where(and(
-          eq(votes.answerId, voteData.answerId),
-          eq(votes.voteType, 'up')
-        ));
-      
-      const downVoteCount = await db
-        .select({ count: count() })
-        .from(votes)
-        .where(and(
-          eq(votes.answerId, voteData.answerId),
-          eq(votes.voteType, 'down')
-        ));
-      
-      await db
-        .update(answers)
-        .set({ votesCount: upVoteCount[0].count - downVoteCount[0].count })
-        .where(eq(answers.id, voteData.answerId));
-    }
+    // Calculate new score and update denormalized counter
+    const newScore = await this.calculateScore(votableType, votableId);
+    await this.updateScore(votableType, votableId, newScore);
     
-    return vote;
+    // Get current vote after upsert
+    const currentVote = value === 0 ? null : await this.getUserVote(userId, votableType, votableId);
+    
+    return { vote: currentVote, score: newScore };
   }
 
-  async getUserVote(userId: string, questionId?: string, answerId?: string): Promise<Vote | undefined> {
-    const conditions = [eq(votes.userId, userId)];
+  private async calculateScore(votableType: 'question' | 'answer', votableId: string): Promise<number> {
+    const result = await db
+      .select({ totalScore: sql<number>`COALESCE(SUM(${votes.value}), 0)` })
+      .from(votes)
+      .where(and(
+        eq(votes.votableType, votableType),
+        eq(votes.votableId, votableId)
+      ));
     
-    if (questionId) {
-      conditions.push(eq(votes.questionId, questionId));
+    return result[0]?.totalScore || 0;
+  }
+
+  private async updateScore(votableType: 'question' | 'answer', votableId: string, score: number): Promise<void> {
+    if (votableType === 'question') {
+      await db.update(questions)
+        .set({ score, votesCount: Math.abs(score) }) // Keep backward compatibility
+        .where(eq(questions.id, votableId));
+    } else {
+      await db.update(answers)
+        .set({ score, votesCount: Math.abs(score) }) // Keep backward compatibility
+        .where(eq(answers.id, votableId));
     }
-    
-    if (answerId) {
-      conditions.push(eq(votes.answerId, answerId));
-    }
-    
+  }
+
+  async getUserVote(userId: string, votableType: 'question' | 'answer', votableId: string): Promise<Vote | undefined> {
     const [vote] = await db
       .select()
       .from(votes)
-      .where(and(...conditions));
+      .where(and(
+        eq(votes.userId, userId),
+        eq(votes.votableType, votableType),
+        eq(votes.votableId, votableId)
+      ));
     
     return vote;
   }
 
-  async updateVote(userId: string, questionId: string | undefined, answerId: string | undefined, voteType: 'up' | 'down'): Promise<Vote> {
-    const conditions = [eq(votes.userId, userId)];
+  // Legacy method for backward compatibility
+  async getUserVoteLegacy(userId: string, questionId?: string, answerId?: string): Promise<Vote | undefined> {
+    const votableType = questionId ? 'question' : 'answer';
+    const votableId = questionId || answerId;
     
-    if (questionId) {
-      conditions.push(eq(votes.questionId, questionId));
-    }
+    if (!votableId) return undefined;
     
-    if (answerId) {
-      conditions.push(eq(votes.answerId, answerId));
-    }
-    
-    const [vote] = await db
-      .update(votes)
-      .set({ voteType })
-      .where(and(...conditions))
-      .returning();
-    
-    return vote;
+    return this.getUserVote(userId, votableType, votableId);
   }
 
-  async deleteVote(userId: string, questionId?: string, answerId?: string): Promise<void> {
-    const conditions = [eq(votes.userId, userId)];
-    
-    if (questionId) {
-      conditions.push(eq(votes.questionId, questionId));
-    }
-    
-    if (answerId) {
-      conditions.push(eq(votes.answerId, answerId));
-    }
-    
-    await db.delete(votes).where(and(...conditions));
-  }
+  // Legacy methods - will be removed in future versions
 
   // ML Recommendations implementation
   async getUserPreferences(userId: string): Promise<UserPreferences | undefined> {

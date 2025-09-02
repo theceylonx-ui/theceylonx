@@ -34,6 +34,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type { QuestionWithDetails, Answer, User as UserType } from "@shared/schema";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
+import VotingControls from "@/components/VotingControls";
 
 const answerSchema = z.object({
   body: z.string().min(10, "Answer must be at least 10 characters"),
@@ -69,14 +70,6 @@ export default function QuestionDetailPage() {
   });
 
   // Mutations
-  const voteMutation = useMutation({
-    mutationFn: ({ questionId, answerId, voteType }: { questionId?: string; answerId?: string; voteType: 'up' | 'down' }) =>
-      apiRequest('POST', '/api/vote', { questionId, answerId, voteType }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/questions/${id}`] });
-      toast({ title: "Vote recorded successfully!" });
-    },
-  });
 
   const createAnswerMutation = useMutation({
     mutationFn: (data: AnswerFormData) => 
@@ -121,17 +114,7 @@ export default function QuestionDetailPage() {
     },
   });
 
-  const handleVote = (voteType: 'up' | 'down', questionId?: string, answerId?: string) => {
-    if (!user) {
-      toast({ 
-        title: "Sign in required", 
-        description: "Please sign in to vote",
-        variant: "destructive" 
-      });
-      return;
-    }
-    voteMutation.mutate({ questionId, answerId, voteType });
-  };
+  // Vote handling is now done by VotingControls component
 
   const onSubmitAnswer = (data: AnswerFormData) => {
     if (!user) {
@@ -309,29 +292,12 @@ export default function QuestionDetailPage() {
 
             <div className="flex items-center justify-between border-t pt-4">
               <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleVote('up', question.id, undefined)}
-                    disabled={!user || voteMutation.isPending}
-                    title={!user ? "Sign in to vote" : ""}
-                    data-testid="button-upvote-question"
-                  >
-                    <ThumbsUp className="w-4 h-4 mr-1" />
-                    {question.votesCount || 0}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleVote('down', question.id, undefined)}
-                    disabled={!user || voteMutation.isPending}
-                    title={!user ? "Sign in to vote" : ""}
-                    data-testid="button-downvote-question"
-                  >
-                    <ThumbsDown className="w-4 h-4" />
-                  </Button>
-                </div>
+                <VotingControls 
+                  votableType="question"
+                  votableId={question.id}
+                  currentScore={question.score || question.votesCount || 0}
+                  className="flex-row gap-2"
+                />
                 <div className="flex items-center text-sm text-gray-500">
                   <MessageSquare className="w-4 h-4 mr-1" />
                   {question.answersCount || 0} {(question.answersCount || 0) === 1 ? 'answer' : 'answers'}
@@ -555,29 +521,12 @@ export default function QuestionDetailPage() {
                       )}
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleVote('up', undefined, answer.id)}
-                        disabled={!user || voteMutation.isPending}
-                        title={!user ? "Sign in to vote" : ""}
-                        data-testid={`button-upvote-answer-${answer.id}`}
-                      >
-                        <ThumbsUp className="w-4 h-4 mr-1" />
-                        {answer.votesCount || 0}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleVote('down', undefined, answer.id)}
-                        disabled={!user || voteMutation.isPending}
-                        title={!user ? "Sign in to vote" : ""}
-                        data-testid={`button-downvote-answer-${answer.id}`}
-                      >
-                        <ThumbsDown className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    <VotingControls 
+                      votableType="answer"
+                      votableId={answer.id}
+                      currentScore={answer.score || answer.votesCount || 0}
+                      className="flex-row gap-2"
+                    />
                   </div>
                 ))
               )}

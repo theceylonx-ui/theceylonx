@@ -1,0 +1,130 @@
+Goal
+Upgrade the existing Q&A so users can easily ask/answer, vote, discover, and get notified about activity.
+1) Data Model (extend or map to current schema)
+questions
+id, title, body, author_id, category_id, tags:string[]
+slug, created_at, updated_at, is_deleted:false, deleted_at:null
+views:int (default 0), score:int (denormalized votes), answers_count:int (denormalized)
+accepted_answer_id:null | answer_id
+answers
+id, question_id, body, author_id, created_at, updated_at, is_deleted:false, deleted_at:null
+score:int
+is_accepted:boolean (mirror of accepted_answer_id)
+votes (single source of truth for both Q & A)
+id, user_id, votable_type:('question'|'answer'), votable_id, value:(-1|0|+1), created_at, updated_at
+Unique composite index: (user_id, votable_type, votable_id)
+categories
+id, name, slug, description, sort_order
+question_tags (optional pivot if not using array)
+question_id, tag:string
+notifications
+id, user_id (recipient), type:('answer_posted'|'answer_accepted'|'vote_received'), payload:jsonb, is_read:boolean, created_at
+follows (optional: watch questions/categories/tags)
+id, user_id, follow_type:('question'|'category'|'tag'), follow_id_or_value, created_at
+2) Voting Functionality
+Rules
+Users can upvote (+1), downvote (−1), or clear vote (0) on questions and answers.
+A user has at most one active vote per item (update in place).
+Update denormalized score on the votable row in a transaction.
+API
+POST /api/votes
+Body: { votableType:'question'|'answer', votableId:string, value: -1|0|1 }
+Auth: logged-in only.
+Response: { score: number, myVote: -1|0|1 }
+UI
+Vote controls on both question and each answer (▲ / ▼ with count).
+Immediate optimistic update; re-fetch on success to confirm.
+Tooltips: “Upvote”, “Downvote”, “Clear vote”.
+3) Notifications
+Triggers
+On new answer to a question: notify question author + followers of the question.
+On answer accepted: notify that answer’s author.
+On vote received: optional, send only for first vote or for threshold milestones (e.g., +5, +10) to avoid spam.
+API
+GET /api/notifications?unreadOnly=true
+POST /api/notifications/:id/read (mark single)
+POST /api/notifications/read-all
+UI
+Header bell icon with unread count badge.
+Dropdown list with time, type, linked item (question/answer).
+“Mark all as read”.
+4) Q&A User Interface Improvements
+Question Page
+Layout: Title → metadata (author, category, tags, score, views) → body → actions (Edit/Delete if owner) → answer list.
+Sorting answers: Accepted first, then by score desc, then by newest.
+Answer composer with live markdown preview.
+Show “(edited)” with tooltip over updated_at if edited.
+Owner/admin controls: Accept Answer toggle (sets accepted_answer_id) and badges the answer (“Accepted ✓”).
+Shareable link with slug.
+Ask a Question Page
+Fields: Title, Body (markdown), Category (select), Tags (chips), Preview.
+Inline suggestions: similar questions by title as user types (prevent duplicates).
+Validation: min lengths, profanity filter (basic).
+List / Feed Page
+Tabs/filters: Newest, Active, Unanswered, Top (week/month/all).
+Cards show: Title, score, answers_count, category, tags, snippet, author, time.
+Infinite scroll or paginated.
+Category and tag chips are clickable filters.
+Global UI Niceties
+Mobile responsive.
+Skeleton loaders for lists.
+Toasts for actions (posted, updated, deleted, voted).
+5) Categorization & Search
+Categories
+Management UI (admin): create/edit/sort.
+Category view: /q/category/<slug>.
+Tags
+Autocomplete from existing tags; limit 5 per question.
+Tag view: /q/tag/<tag>.
+Search
+Endpoint: GET /api/search?q=<text>&category=<slug?>&tag=<tag?>&sort=<relevance|newest|top>
+Scope: questions (title+body), tags; optional answers (body) for deep match.
+Ranking: text relevance, then score, then recency.
+Quick search bar in Q&A header.
+Similar Questions (Ask form)
+GET /api/questions/similar?title=<text> → return top 5.
+6) Permissions & Moderation
+Owners can edit/delete their own questions/answers (soft delete).
+Admins/Moderators can edit/delete any post; can lock or feature a question.
+Soft delete: is_deleted=true, hidden from feeds/search; admins can restore.
+Rate-limit:
+Ask: e.g., 1/min & 5/hr per user.
+Answers: 2/min & 20/hr.
+Votes: 30/min.
+Basic abuse filters: block obvious spam (links count, banned words).
+7) API (summary list)
+Questions
+GET /api/questions?sort=<newest|active|unanswered|top>&page=<n>&category=<slug?>&tag=<tag?>
+GET /api/questions/:slug
+POST /api/questions (auth)
+PUT /api/questions/:id (owner/admin)
+DELETE /api/questions/:id (soft delete, owner/admin)
+POST /api/questions/:id/accept { answerId } (owner)
+Answers
+POST /api/questions/:id/answers
+PUT /api/answers/:id (owner/admin)
+DELETE /api/answers/:id (soft delete, owner/admin)
+Votes (as above)
+Notifications (as above)
+Search (as above)
+8) Denormalized Counters & Events
+Maintain questions.score, questions.answers_count, answers.score.
+On answer create/delete → update answers_count.
+On vote change → recalc score (SUM(votes.value) or incrementally adjust).
+Optional events table for audit logs.
+9) Performance & Indexing
+Indexes:
+questions (slug), (category_id), (created_at desc), (score desc)
+answers (question_id), (created_at)
+votes (user_id, votable_type, votable_id) unique
+notifications (user_id, is_read, created_at)
+Full-text index on questions(title, body) and optional on answers(body)
+Use cursor pagination for lists.
+10) Acceptance Criteria
+Users can vote on Q & A; score updates instantly (optimistic) and persists.
+Notifications arrive for: new answers (to question owner/followers), accepted answer (to answer owner), and vote milestones if enabled.
+Question page shows accepted answer on top and clear vote controls.
+Ask page suggests similar questions live to reduce duplicates.
+Category & tag filters work; search returns relevant results with ranking.
+Edit/Delete permissions enforced; soft-deleted posts are hidden from public views.
+Lists: Newest/Active/Unanswered/Top all sort correctly.

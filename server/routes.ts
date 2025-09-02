@@ -1362,71 +1362,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Votes
-  app.post('/api/vote', isAuthenticated, async (req: any, res) => {
+  // Enhanced Voting System
+  app.post('/api/votes', unifiedAuthGuard, async (req: any, res) => {
     try {
-      const userId = (req.user as any)?.claims?.sub;
-      const voteData = insertVoteSchema.parse({ ...req.body, userId });
+      const userId = req.user.id;
+      const { votableType, votableId, value } = req.body;
       
-      // Check if user already voted
-      const existingVote = await storage.getUserVote(userId, voteData.questionId || undefined, voteData.answerId || undefined);
+      // Validate input
+      if (!['question', 'answer'].includes(votableType)) {
+        return res.status(400).json({ message: "Invalid votable type" });
+      }
+      if (!votableId) {
+        return res.status(400).json({ message: "Votable ID is required" });
+      }
+      if (![1, -1, 0].includes(value)) {
+        return res.status(400).json({ message: "Vote value must be 1 (upvote), -1 (downvote), or 0 (clear)" });
+      }
       
-      if (existingVote) {
-        if (existingVote.voteType === voteData.voteType) {
-          // Same vote type - remove vote
-          await storage.deleteVote(userId, voteData.questionId || undefined, voteData.answerId || undefined);
-          res.json({ message: "Vote removed" });
-        } else {
-          // Different vote type - update vote
-          const vote = await storage.updateVote(userId, voteData.questionId || undefined, voteData.answerId || undefined, voteData.voteType as 'up' | 'down');
-          
-          // Create notification for vote on question or answer (only for upvotes to reduce spam)
-          if (voteData.voteType === 'up') {
-            if (voteData.questionId) {
-              const question = await storage.getQuestion(voteData.questionId);
-              if (question && question.userId !== userId) {
-                const voter = await storage.getUser(userId);
-                await storage.createNotification({
-                  userId: question.userId,
-                  type: "question_voted",
-                  category: "social",
-                  priority: "low",
-                  title: "Your Question Received an Upvote!",
-                  message: `${voter?.firstName || 'Someone'} upvoted your question "${question.title}".`,
-                  relatedUserId: userId,
-                  actionUrl: `/community/questions/${question.id}`,
-                  isRead: false,
-                });
-              }
-            } else if (voteData.answerId) {
-              const answer = await storage.getAnswer(voteData.answerId);
-              if (answer && answer.userId !== userId) {
-                const voter = await storage.getUser(userId);
-                await storage.createNotification({
-                  userId: answer.userId,
-                  type: "answer_voted",
-                  category: "social", 
-                  priority: "low",
-                  title: "Your Answer Received an Upvote!",
-                  message: `${voter?.firstName || 'Someone'} upvoted your answer.`,
-                  relatedUserId: userId,
-                  actionUrl: `/community/questions/${answer.questionId}#answer-${answer.id}`,
-                  isRead: false,
-                });
-              }
-            }
-          }
-          
-          res.json(vote);
-        }
-      } else {
-        // New vote
-        const vote = await storage.createVote(voteData);
-        
-        // Create notification for new vote (only for upvotes to reduce spam)
-        if (voteData.voteType === 'up') {
-          if (voteData.questionId) {
-            const question = await storage.getQuestion(voteData.questionId);
+      const result = await storage.upsertVote(userId, votableType, votableId, value);
+      
+      // Create notification for upvotes only (to reduce spam)
+      if (value === 1) {
+        try {
+          if (votableType === 'question') {
+            const question = await storage.getQuestion(votableId);
             if (question && question.userId !== userId) {
               const voter = await storage.getUser(userId);
               await storage.createNotification({
@@ -1441,15 +1400,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 isRead: false,
               });
             }
-          } else if (voteData.answerId) {
-            const answer = await storage.getAnswer(voteData.answerId);
+          } else if (votableType === 'answer') {
+            const answer = await storage.getAnswer(votableId);
             if (answer && answer.userId !== userId) {
               const voter = await storage.getUser(userId);
               await storage.createNotification({
                 userId: answer.userId,
                 type: "answer_voted",
                 category: "social",
-                priority: "low", 
+                priority: "low",
                 title: "Your Answer Received an Upvote!",
                 message: `${voter?.firstName || 'Someone'} upvoted your answer.`,
                 relatedUserId: userId,
@@ -1458,29 +1417,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
             }
           }
+        } catch (notificationError) {
+          console.error("Error creating vote notification:", notificationError);
+          // Don't fail the vote due to notification error
         }
-        
-        res.json(vote);
       }
+      
+      res.json({
+        vote: result.vote,
+        score: result.score,
+        message: value === 0 ? "Vote cleared" : value === 1 ? "Upvoted" : "Downvoted"
+      });
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid vote data", errors: error.errors });
-      }
       console.error("Error processing vote:", error);
       res.status(500).json({ message: "Failed to process vote" });
     }
   });
 
-  app.get('/api/vote/:type/:id', isAuthenticated, async (req: any, res) => {
+  // Get current user's vote for an item
+  app.get('/api/votes/:type/:id', unifiedAuthGuard, async (req: any, res) => {
     try {
-      const userId = (req.user as any)?.claims?.sub;
+      const userId = req.user.id;
       const { type, id } = req.params;
       
-      const questionId = type === 'question' ? id : undefined;
-      const answerId = type === 'answer' ? id : undefined;
+      if (!['question', 'answer'].includes(type)) {
+        return res.status(400).json({ message: "Invalid type" });
+      }
       
-      const vote = await storage.getUserVote(userId, questionId, answerId);
-      res.json(vote);
+      const vote = await storage.getUserVote(userId, type as 'question' | 'answer', id);
+      res.json({ vote });
     } catch (error) {
       console.error("Error fetching user vote:", error);
       res.status(500).json({ message: "Failed to fetch vote" });

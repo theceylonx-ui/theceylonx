@@ -250,7 +250,17 @@ export const reports = pgTable("reports", {
 
 // Community Q&A Tables
 
-// Topics table for categorizing questions
+// Categories table for categorizing questions (renamed from topics for clarity)
+export const categories = pgTable("categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  slug: varchar("slug").notNull().unique(),
+  description: text("description"),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Topics table (keep for backward compatibility, but use categories for new features)
 export const topics = pgTable("topics", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name").notNull(),
@@ -264,11 +274,15 @@ export const questions = pgTable("questions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   title: varchar("title").notNull(),
   body: text("body").notNull(),
+  slug: varchar("slug").notNull().unique(),
   tags: text("tags").array(),
-  userId: varchar("user_id").notNull(),
-  topicId: varchar("topic_id"),
+  userId: varchar("user_id").notNull(), // author_id
+  topicId: varchar("topic_id"), // Keep for backward compatibility
+  categoryId: varchar("category_id"), // New category system
   isAnonymous: boolean("is_anonymous").default(false),
-  votesCount: integer("votes_count").default(0),
+  views: integer("views").default(0),
+  score: integer("score").default(0), // denormalized votes sum
+  votesCount: integer("votes_count").default(0), // Keep for backward compatibility
   answersCount: integer("answers_count").default(0),
   acceptedAnswerId: varchar("accepted_answer_id"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -282,22 +296,49 @@ export const answers = pgTable("answers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   body: text("body").notNull(),
   questionId: varchar("question_id").notNull(),
-  userId: varchar("user_id").notNull(),
-  votesCount: integer("votes_count").default(0),
+  userId: varchar("user_id").notNull(), // author_id
+  score: integer("score").default(0), // denormalized votes sum
+  votesCount: integer("votes_count").default(0), // Keep for backward compatibility
   isAccepted: boolean("is_accepted").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  isDeleted: boolean("is_deleted").default(false),
+  deletedAt: timestamp("deleted_at"),
 });
 
-// Votes table for questions and answers
+// Votes table for questions and answers - single source of truth
 export const votes = pgTable("votes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),
-  questionId: varchar("question_id"),
-  answerId: varchar("answer_id"),
-  voteType: varchar("vote_type").notNull(), // 'up' or 'down'
+  votableType: varchar("votable_type").notNull(), // 'question' | 'answer'
+  votableId: varchar("votable_id").notNull(), // ID of the question or answer
+  value: integer("value").notNull(), // -1 (downvote), 0 (no vote), +1 (upvote)
   createdAt: timestamp("created_at").defaultNow(),
-});
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  // Unique constraint: one vote per user per item
+  uniqueUserVote: unique().on(table.userId, table.votableType, table.votableId),
+}));
+
+// Question tags pivot table (optional if not using array)
+export const questionTags = pgTable("question_tags", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  questionId: varchar("question_id").notNull(),
+  tag: varchar("tag").notNull(),
+}, (table) => ({
+  uniqueQuestionTag: unique().on(table.questionId, table.tag),
+}));
+
+// Follows table for watching questions/categories/tags
+export const follows = pgTable("follows", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  followType: varchar("follow_type").notNull(), // 'question' | 'category' | 'tag'
+  followIdOrValue: varchar("follow_id_or_value").notNull(), // ID for question/category, value for tag
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  uniqueUserFollow: unique().on(table.userId, table.followType, table.followIdOrValue),
+}));
 
 // User preferences table for ML recommendations
 export const userPreferences = pgTable("user_preferences", {
@@ -521,14 +562,8 @@ export const votesRelations = relations(votes, ({ one }) => ({
     fields: [votes.userId],
     references: [users.id],
   }),
-  question: one(questions, {
-    fields: [votes.questionId],
-    references: [questions.id],
-  }),
-  answer: one(answers, {
-    fields: [votes.answerId],
-    references: [answers.id],
-  }),
+  // Note: Can't directly relate to question/answer since votableType and votableId are dynamic
+  // These relationships will be handled in queries
 }));
 
 // ML recommendation relations
@@ -744,6 +779,29 @@ export const insertAnswerSchema = createInsertSchema(answers).omit({
 export const insertVoteSchema = createInsertSchema(votes).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
+});
+
+// New schemas for enhanced Q&A system
+export const insertCategorySchema = createInsertSchema(categories).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertQuestionTagSchema = createInsertSchema(questionTags).omit({
+  id: true,
+});
+
+export const insertFollowSchema = createInsertSchema(follows).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Vote request schema for API
+export const voteRequestSchema = z.object({
+  votableType: z.enum(['question', 'answer']),
+  votableId: z.string(),
+  value: z.number().min(-1).max(1), // -1, 0, or 1
 });
 
 // ML recommendation schemas
@@ -871,6 +929,29 @@ export type Answer = typeof answers.$inferSelect;
 export type AnswerWithUser = Answer & { user: User };
 export type InsertVote = z.infer<typeof insertVoteSchema>;
 export type Vote = typeof votes.$inferSelect;
+export type VoteRequest = z.infer<typeof voteRequestSchema>;
+
+// New Q&A types
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type Category = typeof categories.$inferSelect;
+export type InsertQuestionTag = z.infer<typeof insertQuestionTagSchema>;
+export type QuestionTag = typeof questionTags.$inferSelect;
+export type InsertFollow = z.infer<typeof insertFollowSchema>;
+export type Follow = typeof follows.$inferSelect;
+
+// Enhanced Q&A types
+export type QuestionWithDetailsEnhanced = Question & {
+  user: User;
+  category?: Category;
+  answers?: AnswerWithUserEnhanced[];
+  myVote?: number; // -1, 0, or 1
+  isFollowed?: boolean;
+};
+
+export type AnswerWithUserEnhanced = Answer & { 
+  user: User;
+  myVote?: number; // -1, 0, or 1
+};
 
 // ML recommendation types
 export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
