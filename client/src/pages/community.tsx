@@ -27,7 +27,7 @@ const questionSchema = z.object({
   body: z.string().min(20, "Description must be at least 20 characters"),
   topicId: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  isAnonymous: z.boolean().default(false),
+  isAnonymous: z.boolean(),
 });
 
 type QuestionFormData = z.infer<typeof questionSchema>;
@@ -101,7 +101,13 @@ export default function CommunityPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
       setIsCreateDialogOpen(false);
-      form.reset();
+      form.reset({
+        title: "",
+        body: "",
+        topicId: "",
+        tags: [],
+        isAnonymous: false,
+      });
       toast({ title: "Question posted successfully!" });
     },
     onError: (error) => {
@@ -126,7 +132,13 @@ export default function CommunityPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
       setIsCreateDialogOpen(false);
       setEditingQuestionId(null);
-      form.reset();
+      form.reset({
+        title: "",
+        body: "",
+        topicId: "",
+        tags: [],
+        isAnonymous: false,
+      });
       toast({ title: "Question updated successfully!" });
     },
     onError: (error: Error) => {
@@ -143,6 +155,7 @@ export default function CommunityPage() {
   });
 
   const onSubmit = (data: QuestionFormData) => {
+    console.log("🔍 Form submission data:", JSON.stringify(data, null, 2));
     if (editingQuestionId) {
       editQuestionMutation.mutate({ id: editingQuestionId, data });
     } else {
@@ -420,7 +433,13 @@ export default function CommunityPage() {
                         onClick={() => {
                           setIsCreateDialogOpen(false);
                           setEditingQuestionId(null);
-                          form.reset();
+                          form.reset({
+                            title: "",
+                            body: "",
+                            topicId: "",
+                            tags: [],
+                            isAnonymous: false,
+                          });
                         }}
                         data-testid="button-cancel-question"
                       >
