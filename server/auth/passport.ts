@@ -9,11 +9,11 @@ import { JWTUser } from './jwt';
 
 // Google OAuth Strategy
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  // Use the Replit development URL for OAuth callbacks
-  const replitDevUrl = process.env.REPLIT_DOMAINS ? 
-    `https://${process.env.REPLIT_DOMAINS}` : 
-    'http://localhost:5000';
-  const googleCallbackURL = `${replitDevUrl}/api/auth/google/callback`;
+  // Use proper deployment URL for OAuth callbacks
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const googleCallbackURL = isDevelopment 
+    ? 'http://localhost:5000/api/auth/google/callback'
+    : 'https://theceylonx.replit.app/api/auth/google/callback';
     
   console.log('🔧 Google OAuth callback URL configured:', {
     REPLIT_DOMAINS: process.env.REPLIT_DOMAINS,
@@ -81,10 +81,10 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 // Facebook OAuth Strategy
 if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
   // Dynamic callback URL based on environment
-  const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.APP_URL?.includes('theceylonx.com');
+  const isDevelopment = process.env.NODE_ENV === 'development';
   const facebookCallbackURL = isDevelopment 
     ? 'http://localhost:5000/api/auth/facebook/callback'
-    : 'https://www.theceylonx.com/api/auth/facebook/callback';
+    : 'https://theceylonx.replit.app/api/auth/facebook/callback';
     
   passport.use(new FacebookStrategy({
     clientID: process.env.FACEBOOK_APP_ID,
