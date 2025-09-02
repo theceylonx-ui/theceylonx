@@ -295,11 +295,8 @@ export class DatabaseStorage implements IStorage {
     // Remove user from chat threads
     await db.delete(threadUsers).where(eq(threadUsers.userId, id));
     
-    // Delete join requests
-    await db.delete(joinRequests).where(eq(joinRequests.requesterId, id));
-    
-    // Delete trip participants
-    await db.delete(tripParticipants).where(eq(tripParticipants.userId, id));
+    // Delete trip interest requests  
+    await db.delete(tripInterestRequests).where(eq(tripInterestRequests.requesterId, id));
     
     // Delete trip views
     await db.delete(tripViews).where(eq(tripViews.userId, id));
@@ -458,50 +455,7 @@ export class DatabaseStorage implements IStorage {
     return { trips: tripsWithOrganizers, total };
   }
 
-  // Trip participation operations
-  async joinTrip(participation: InsertTripParticipant): Promise<TripParticipant> {
-    const [newParticipation] = await db
-      .insert(tripParticipants)
-      .values(participation)
-      .returning();
-    return newParticipation;
-  }
-
-  async getTripParticipants(tripId: string): Promise<(TripParticipant & { user: User })[]> {
-    const result = await db
-      .select()
-      .from(tripParticipants)
-      .leftJoin(users, eq(tripParticipants.userId, users.id))
-      .where(eq(tripParticipants.tripId, tripId));
-    
-    return result.map(({ trip_participants, users: user }) => ({
-      ...trip_participants,
-      user: user!,
-    }));
-  }
-
-  async getUserParticipations(userId: string): Promise<(TripParticipant & { trip: TripWithOrganizer })[]> {
-    const result = await db
-      .select()
-      .from(tripParticipants)
-      .leftJoin(trips, eq(tripParticipants.tripId, trips.id))
-      .leftJoin(users, eq(trips.organizerId, users.id))
-      .where(eq(tripParticipants.userId, userId));
-    
-    return result.map(({ trip_participants, trips: trip, users: organizer }) => ({
-      ...trip_participants,
-      trip: { ...trip!, organizer: organizer! },
-    }));
-  }
-
-  async updateParticipationStatus(id: string, status: string): Promise<TripParticipant> {
-    const [updatedParticipation] = await db
-      .update(tripParticipants)
-      .set({ status })
-      .where(eq(tripParticipants.id, id))
-      .returning();
-    return updatedParticipation;
-  }
+  // Legacy join trip functionality removed - replaced with interest request system
 
   // Comment operations
   async createComment(comment: InsertComment): Promise<Comment> {

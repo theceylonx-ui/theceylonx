@@ -77,11 +77,11 @@ export function NotificationDropdown() {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case "trip_join_request":
+      case "trip_interest_request":
         return "👋";
-      case "trip_join_approved":
+      case "trip_interest_approved":
         return "✅";
-      case "trip_join_declined":
+      case "trip_interest_declined":
         return "❌";
       case "trip_reported":
         return "⚠️";

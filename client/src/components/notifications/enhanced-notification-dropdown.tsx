@@ -93,10 +93,10 @@ export function EnhancedNotificationDropdown() {
   const getNotificationIcon = (type: string) => {
     const icons: Record<string, string> = {
       // Trip Participation
-      "trip_join_request": "👋",
-      "trip_join_approved": "✅",
-      "trip_join_declined": "❌",
-      "trip_join_pending_reminder": "🕒",
+      "trip_interest_request": "👋",
+      "trip_interest_approved": "✅", 
+      "trip_interest_declined": "❌",
+      "trip_interest_pending_reminder": "🕒",
       
       // My Posted Trips
       "trip_viewed": "👀",
