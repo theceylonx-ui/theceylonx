@@ -2079,8 +2079,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
       });
       
-      // Get custom calendar events
-      const calendarEvents = await storage.getUserCalendarEvents(userId, start, end);
+      // Get custom calendar events - disabled due to schema mismatch
+      // const calendarEvents = await storage.getUserCalendarEvents(userId, start, end);
+      const calendarEvents: any[] = [];
       
       // Combine all events, filter by date range, and sort
       const allEvents = [...tripEvents, ...calendarEvents]
