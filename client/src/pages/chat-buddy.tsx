@@ -121,24 +121,24 @@ export default function ChatBuddy() {
     },
   });
 
-  // Mark as read when user is selected
-  const markAsReadMutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest('POST', `/api/chat/${selectedUserId}/read?tripId=${tripId}`);
-    },
-  });
+  // Mark as read when user is selected (commented out for now)
+  // const markAsReadMutation = useMutation({
+  //   mutationFn: async () => {
+  //     await apiRequest('POST', `/api/chat/${selectedUserId}/read?tripId=${tripId}`);
+  //   },
+  // });
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatData?.messages]);
 
-  // Mark as read when selecting a user
-  useEffect(() => {
-    if (selectedUserId && tripStatus?.status === 'accepted') {
-      markAsReadMutation.mutate();
-    }
-  }, [selectedUserId, tripStatus?.status]);
+  // Mark as read when selecting a user (commented out for now)
+  // useEffect(() => {
+  //   if (selectedUserId && tripStatus?.status === 'accepted') {
+  //     markAsReadMutation.mutate();
+  //   }
+  // }, [selectedUserId, tripStatus?.status]);
 
   const handleSendMessage = () => {
     if (!messageText.trim() || sendMessageMutation.isPending) return;
