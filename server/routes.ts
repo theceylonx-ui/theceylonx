@@ -2033,6 +2033,140 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Day-specific calendar endpoint with view filtering  
+  app.get('/api/calendar/day', unifiedAuthGuard, async (req: any, res: any) => {
+    try {
+      const userId = req.user.id;
+      const { date, view = 'all', tz = 'Asia/Colombo' } = req.query;
+      
+      if (!date || typeof date !== 'string') {
+        return res.status(400).json({ message: 'Date parameter is required (YYYY-MM-DD format)' });
+      }
+      
+      // Parse the date and create day boundaries in user timezone
+      const targetDate = new Date(date + 'T00:00:00');
+      if (isNaN(targetDate.getTime())) {
+        return res.status(400).json({ message: 'Invalid date format' });
+      }
+      
+      // Create start and end of day boundaries
+      const startOfDay = new Date(targetDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(targetDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      let events: any[] = [];
+      
+      // Helper function to format trip events with proper flags
+      const formatTripEventForDay = (trip: any, flags: { pinned: boolean; interested: boolean; mine: boolean; free: boolean }) => ({
+        id: `trip_${trip.id}`,
+        title: trip.title,
+        start: trip.startAt || trip.start_at,
+        end: trip.endAt || trip.end_at,
+        location: `${trip.fromLocation} → ${trip.toLocation}`,
+        flags
+      });
+      
+      // Filter trips that overlap with the selected date
+      const filterByDate = (trips: any[]) => {
+        return trips.filter(trip => {
+          const tripStart = new Date(trip.startAt || trip.start_at);
+          const tripEnd = new Date(trip.endAt || trip.end_at);
+          
+          // Include if trip overlaps with the selected day
+          return tripStart <= endOfDay && tripEnd >= startOfDay;
+        });
+      };
+      
+      switch (view) {
+        case 'all': {
+          const trips = await storage.getUserTrips(userId);
+          const pinnedTripIds = new Set((await storage.getUserPinnedTrips(userId)).map(trip => trip.id));
+          const interestedTripIds = new Set((await storage.getUserInterestedTrips(userId)).map(trip => trip.id));
+          
+          const filteredTrips = filterByDate(trips);
+          events = filteredTrips.map(trip => formatTripEventForDay(trip, {
+            pinned: pinnedTripIds.has(trip.id),
+            interested: interestedTripIds.has(trip.id),
+            mine: trip.created_by_user_id === userId,
+            free: !trip.price || Number(trip.price) === 0
+          }));
+          break;
+        }
+
+        case 'pinned': {
+          const pinnedTrips = await storage.getUserPinnedTrips(userId);
+          const interestedTripIds = new Set((await storage.getUserInterestedTrips(userId)).map(trip => trip.id));
+          
+          const filteredTrips = filterByDate(pinnedTrips);
+          events = filteredTrips.map(trip => formatTripEventForDay(trip, {
+            pinned: true,
+            interested: interestedTripIds.has(trip.id),
+            mine: trip.created_by_user_id === userId,
+            free: !trip.price || Number(trip.price) === 0
+          }));
+          break;
+        }
+
+        case 'interested': {
+          const interestedTrips = await storage.getUserInterestedTrips(userId);
+          const pinnedTripIds = new Set((await storage.getUserPinnedTrips(userId)).map(trip => trip.id));
+          
+          const filteredTrips = filterByDate(interestedTrips);
+          events = filteredTrips.map(trip => formatTripEventForDay(trip, {
+            pinned: pinnedTripIds.has(trip.id),
+            interested: true,
+            mine: trip.created_by_user_id === userId,
+            free: !trip.price || Number(trip.price) === 0
+          }));
+          break;
+        }
+
+        case 'mine': {
+          const myTrips = await storage.getUserTrips(userId);
+          const pinnedTripIds = new Set((await storage.getUserPinnedTrips(userId)).map(trip => trip.id));
+          const interestedTripIds = new Set((await storage.getUserInterestedTrips(userId)).map(trip => trip.id));
+          
+          const filteredTrips = filterByDate(myTrips.filter(trip => trip.created_by_user_id === userId));
+          events = filteredTrips.map(trip => formatTripEventForDay(trip, {
+            pinned: pinnedTripIds.has(trip.id),
+            interested: interestedTripIds.has(trip.id),
+            mine: true,
+            free: !trip.price || Number(trip.price) === 0
+          }));
+          break;
+        }
+
+        case 'free': {
+          const trips = await storage.getUserTrips(userId);
+          const pinnedTripIds = new Set((await storage.getUserPinnedTrips(userId)).map(trip => trip.id));
+          const interestedTripIds = new Set((await storage.getUserInterestedTrips(userId)).map(trip => trip.id));
+          
+          const freeTrips = trips.filter(trip => !trip.price || Number(trip.price) === 0);
+          const filteredTrips = filterByDate(freeTrips);
+          events = filteredTrips.map(trip => formatTripEventForDay(trip, {
+            pinned: pinnedTripIds.has(trip.id),
+            interested: interestedTripIds.has(trip.id),
+            mine: trip.created_by_user_id === userId,
+            free: true
+          }));
+          break;
+        }
+
+        default:
+          return res.status(400).json({ message: "Invalid view parameter" });
+      }
+      
+      // Sort events by start time
+      events.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+      
+      res.json(events);
+    } catch (error) {
+      console.error("Failed to get calendar day events:", error);
+      res.status(500).json({ message: "Failed to get calendar day events" });
+    }
+  });
+
   app.get("/api/calendar/aggregate", unifiedAuthGuard, async (req: any, res: any) => {
     try {
       const userId = req.user.id;

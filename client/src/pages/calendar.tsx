@@ -1,4 +1,4 @@
-import { EventCalendar } from "@/components/EventCalendar";
+import EventCalendar from "@/components/EventCalendar";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";

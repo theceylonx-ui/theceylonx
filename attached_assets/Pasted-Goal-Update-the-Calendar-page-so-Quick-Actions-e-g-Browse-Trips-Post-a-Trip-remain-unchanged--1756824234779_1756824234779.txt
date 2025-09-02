@@ -1,0 +1,82 @@
+Goal
+Update the Calendar page so:
+Quick Actions (e.g., Browse Trips, Post a Trip) remain unchanged.
+Replace the “Upcoming (This Week)” tab with a Dropdown View Selector.
+Convert the current Event Calendar into a general month calendar (date picker).
+Clicking a date opens a day preview panel listing that date’s events with the correct icons for each of the 5 views.
+Views (Dropdown Selector)
+Add a dropdown labeled View with these options:
+Pinned Trips (by me)
+Interested Trips (by me)
+My Trips (I’m organizer)
+Free Trips (price null or 0)
+All Events (default; shows everything on the selected date)
+Note: We no longer show “Upcoming (This Week)” as a tab. The dropdown controls the view; the month calendar controls the date.
+UI / UX
+Layout (top → bottom):
+Header + Quick Actions (unchanged)
+Row with: View Dropdown (left) and optional legend (right):
+⭐ Interested 📌 Pinned 👤 My Trip 💚 Free
+Month Calendar (date picker). Default to current month and today selected.
+Day Preview Panel (drawer/side panel or modal) that opens when a date is clicked or selected.
+Day Preview Panel content:
+Title: Events on <Weekday, DD Mon YYYY>
+List each event with icons in this order: ⭐, 📌, 👤, 💚
+Show title, time range (start–end in user TZ), location (if any).
+Empty state: “No events for this date.” + context CTA (e.g., “Browse Trips” or “Post a Trip”).
+Data Model (reuse)
+trips (id, title, start_at, end_at, location, created_by_user_id, price_amount, …)
+user_trip_flags (user_id, trip_id, pinned:boolean, interested:boolean, updated_at)
+Filtering Logic (server-side)
+Input params: date (YYYY-MM-DD, user TZ), view (one of all|pinned|interested|mine|free)
+All Events: trips overlapping the selected date.
+Pinned Trips: trips for currentUserId with pinned = true (and not soft-deleted).
+Interested Trips: trips for currentUserId with interested = true.
+My Trips: created_by_user_id = currentUserId.
+Free Trips: price_amount IS NULL OR price_amount = 0.
+Always restrict to events occurring on the selected date (see overlap rules below).
+Date overlap rules (include multi-day):
+Include an event if (start_at <= endOfDay(date, userTZ)) AND (end_at >= startOfDay(date, userTZ)).
+API
+Create/extend endpoint to power the day preview:
+GET /api/calendar/day?date=<YYYY-MM-DD>&view=<all|pinned|interested|mine|free>&tz=<IANA>
+Response (normalized):
+[
+  {
+    "id": "trip_123",
+    "title": "Ella Sunrise Hike",
+    "start": "2025-09-05T06:30:00+05:30",
+    "end": "2025-09-05T10:30:00+05:30",
+    "location": "Ella",
+    "flags": { "pinned": true, "interested": false, "mine": false, "free": true }
+  }
+]
+Rendering Rules (icons & labels)
+Prefix icons to the title in this order:
+⭐ if interested
+📌 if pinned (note: your existing “Interested > Pinned” rule remains)
+👤 if created_by_user_id = currentUserId
+💚 if free (price_amount null/0)
+On narrow screens, you may suffix text like (Interested) or (Free) if icons are clipped.
+Behavior
+Selecting a View updates the day preview for the currently selected date.
+Clicking a date fetches and shows events for that date + current view.
+Default state on load:
+view = all
+date = today
+Open the day preview automatically for today.
+Performance
+Add indexes: start_at, end_at, created_by_user_id, price_amount, and user_trip_flags(user_id, trip_id).
+Keep payload small: only return records for that single date (overlap rule).
+Edge Cases
+Multi-day/all-day events appear on each covered date.
+Timezone safety: use tz for startOfDay/endOfDay boundaries.
+Soft-deleted or past-cancelled events: exclude.
+If both interested and pinned exist in legacy rows, display only ⭐ (your existing cleanup can keep pinned=false where interested=true).
+Acceptance Criteria
+“Upcoming (This Week)” tab is removed; View Dropdown is present.
+The calendar is a month date picker; clicking dates updates the Day Preview Panel.
+Day Preview shows correct events for the selected date + view, with correct icons.
+Default load: today’s date, All Events, preview open.
+Empty states and CTAs appear correctly.
+No leakage of other users’ flags or private data.
