@@ -75,10 +75,10 @@ export function EventCalendar({ className }: EventCalendarProps) {
 
   const getEventNavigationUrl = (event: CalendarEvent): string => {
     if (event.entityType === 'trip' && event.entityId) {
-      return `/trip/${event.entityId}`;
+      return `/trips/${event.entityId}`;
     }
     if (event.entityType === 'question' && event.entityId) {
-      return `/question/${event.entityId}`;
+      return `/questions/${event.entityId}`;
     }
     return '#';
   };
