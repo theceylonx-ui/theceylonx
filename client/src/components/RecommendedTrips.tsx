@@ -121,10 +121,11 @@ export function RecommendedTrips({ limit = 6, region, className, enhanced = fals
                   <CardTitle className="text-base line-clamp-2" data-testid={`trip-title-${trip.id}`}>
                     {trip.title}
                   </CardTitle>
-                  <div className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                    <Star className="h-3 w-3 fill-current" />
-                    {Math.round(score * 100)}%
-                  </div>
+                  {reasons.length > 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      {reasons[0]}
+                    </Badge>
+                  )}
                 </div>
                 
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">

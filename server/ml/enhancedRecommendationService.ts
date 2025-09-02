@@ -43,9 +43,7 @@ interface TripRecommendation {
 
 interface RecommendationWeights {
   preferences: number;
-  behavior: number;
   collaborative: number;
-  popularity: number;
   freshness: number;
   seasonality: number;
   safety: number;
@@ -64,9 +62,7 @@ interface RecommendationFilters {
 export class EnhancedRecommendationService {
   private weights: RecommendationWeights = {
     preferences: 0.1,        // User preferences: 10%
-    behavior: 0.0,          // Merge into collaborative (removed)
     collaborative: 0.35,    // Popularity (pins, interested, questions): 35%
-    popularity: 0.0,        // Merged into collaborative
     freshness: 0.1,         // Freshness (newly posted trips): 10%
     seasonality: 0.2,       // Seasonality (peak/off-peak per region): 20%
     safety: 0.1,            // Safety & quality flags: 10%
