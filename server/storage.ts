@@ -1487,16 +1487,22 @@ export class DatabaseStorage implements IStorage {
     // If accepting the request and no chat thread exists, create one
     if (status === 'accepted' && !chatThreadId) {
       console.log('🆕 Creating chat thread for accepted interest request');
+      console.log('🔍 Trip ID:', requestData.tripId);
       
       const newThread = await this.createChatThread({
         tripId: requestData.tripId
       });
       
+      console.log('✅ Chat thread created:', newThread);
       chatThreadId = newThread.id;
+      console.log('📋 Thread ID:', chatThreadId);
+      console.log('👥 Adding users:', { organizerId, userId: requestData.userId });
       
       // Add both organizer and requester as participants
-      await this.addUserToThread(chatThreadId, organizerId);
-      await this.addUserToThread(chatThreadId, requestData.userId);
+      await this.addUserToThread({ threadId: chatThreadId, userId: organizerId });
+      console.log('✅ Organizer added to thread');
+      await this.addUserToThread({ threadId: chatThreadId, userId: requestData.userId });
+      console.log('✅ Requester added to thread');
       
       console.log('✅ Chat thread created with participants:', chatThreadId);
     }
