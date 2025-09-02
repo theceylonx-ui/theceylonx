@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { authRouter, authGuard } from "./auth/routes";
 import { JWTUser } from "./auth/jwt";
-import { isAuthenticated } from "./auth";
+import { setupAuth, isAuthenticated } from "./auth";
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import passport from 'passport';
@@ -36,9 +36,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     credentials: true
   }));
   app.use(cookieParser());
-  app.use(passport.initialize());
+  
+  // Setup Replit Auth first
+  await setupAuth(app);
 
-  // Mount auth routes
+  // Mount JWT auth routes for fallback
   app.use('/api/auth', authRouter);
 
   // User profile routes

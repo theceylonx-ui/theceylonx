@@ -131,6 +131,19 @@ export async function setupAuth(app: Express) {
       );
     });
   });
+
+  // Add the user endpoint that frontend expects
+  app.get('/api/auth/me', isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const userId = user.claims.sub;
+      const userData = await storage.getUser(userId);
+      res.json(userData);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
