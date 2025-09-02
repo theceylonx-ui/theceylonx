@@ -2001,7 +2001,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           icons,
           meta: {
             price_amount: trip.price || 0,
-            created_by_user_id: trip.organizerId,
+            organizerId: trip.organizerId,
             user_flags: { pinned: isPinned, interested: isInterested }
           }
         };
@@ -2130,7 +2130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           events = filteredTrips.map(trip => formatTripEventForDay(trip, {
             pinned: pinnedTripIds.has(trip.id),
             interested: interestedTripIds.has(trip.id),
-            mine: trip.created_by_user_id === userId,
+            mine: trip.organizerId === userId,
             free: !trip.price || Number(trip.price) === 0
           }));
           break;
@@ -2144,7 +2144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           events = filteredTrips.map(trip => formatTripEventForDay(trip, {
             pinned: true,
             interested: interestedTripIds.has(trip.id),
-            mine: trip.created_by_user_id === userId,
+            mine: trip.organizerId === userId,
             free: !trip.price || Number(trip.price) === 0
           }));
           break;
@@ -2158,7 +2158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           events = filteredTrips.map(trip => formatTripEventForDay(trip, {
             pinned: pinnedTripIds.has(trip.id),
             interested: true,
-            mine: trip.created_by_user_id === userId,
+            mine: trip.organizerId === userId,
             free: !trip.price || Number(trip.price) === 0
           }));
           break;
@@ -2169,7 +2169,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const pinnedTripIds = new Set((await storage.getUserPinnedTrips(userId)).map(trip => trip.id));
           const interestedTripIds = new Set((await storage.getUserInterestedTrips(userId)).map(trip => trip.id));
           
-          const filteredTrips = filterByDate(myTrips.filter(trip => trip.created_by_user_id === userId));
+          const filteredTrips = filterByDate(myTrips.filter(trip => trip.organizerId === userId));
           events = filteredTrips.map(trip => formatTripEventForDay(trip, {
             pinned: pinnedTripIds.has(trip.id),
             interested: interestedTripIds.has(trip.id),
@@ -2189,7 +2189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           events = filteredTrips.map(trip => formatTripEventForDay(trip, {
             pinned: pinnedTripIds.has(trip.id),
             interested: interestedTripIds.has(trip.id),
-            mine: trip.created_by_user_id === userId,
+            mine: trip.organizerId === userId,
             free: true
           }));
           break;
