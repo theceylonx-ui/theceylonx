@@ -43,8 +43,15 @@ export default function CommunityPage() {
   const { toast } = useToast();
 
   // Queries
-  const { data: topics = [] } = useQuery<Topic[]>({
+  const { data: topicsData = [] } = useQuery<Topic[]>({
     queryKey: ['/api/topics'],
+  });
+
+  // Sort topics with "Others" at the end
+  const topics = topicsData.sort((a, b) => {
+    if (a.name === "Others") return 1;
+    if (b.name === "Others") return -1;
+    return a.name.localeCompare(b.name);
   });
 
   const { data: questionsResponse, isLoading } = useQuery<{questions: QuestionWithDetails[], total: number}>({
@@ -342,11 +349,15 @@ export default function CommunityPage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {topics.map((topic) => (
-                                <SelectItem key={topic.id} value={topic.id}>
-                                  {topic.name}
-                                </SelectItem>
-                              ))}
+                              {topics.length === 0 ? (
+                                <SelectItem value="loading" disabled>Loading topics...</SelectItem>
+                              ) : (
+                                topics.map((topic) => (
+                                  <SelectItem key={topic.id} value={topic.id}>
+                                    {topic.name}
+                                  </SelectItem>
+                                ))
+                              )}
                             </SelectContent>
                           </Select>
                         </FormItem>
