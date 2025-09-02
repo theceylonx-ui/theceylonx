@@ -39,6 +39,7 @@ export default function CommunityPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const questionsPerPage = 10;
   
   const queryClient = useQueryClient();
@@ -120,9 +121,12 @@ export default function CommunityPage() {
 
   const editQuestionMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: QuestionFormData }) => 
-      apiRequest('PUT', `/api/questions/${id}`, data),
+      apiRequest('PATCH', `/api/questions/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
+      setIsCreateDialogOpen(false);
+      setEditingQuestionId(null);
+      form.reset();
       toast({ title: "Question updated successfully!" });
     },
     onError: (error: Error) => {
@@ -139,7 +143,11 @@ export default function CommunityPage() {
   });
 
   const onSubmit = (data: QuestionFormData) => {
-    createQuestionMutation.mutate(data);
+    if (editingQuestionId) {
+      editQuestionMutation.mutate({ id: editingQuestionId, data });
+    } else {
+      createQuestionMutation.mutate(data);
+    }
   };
 
   const handlePageChange = (page: number) => {
@@ -310,7 +318,7 @@ export default function CommunityPage() {
                   </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Ask a Question</DialogTitle>
+                  <DialogTitle>{editingQuestionId ? "Edit Question" : "Ask a Question"}</DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -366,7 +374,7 @@ export default function CommunityPage() {
                             <SelectContent>
                               {topicsLoading ? (
                                 <SelectItem value="loading" disabled>Loading topics...</SelectItem>
-                              ) : topics.length === 0 ? (
+                              ) : topicsData.length === 0 ? (
                                 <SelectItem value="no-topics" disabled>No topics available</SelectItem>
                               ) : (
                                 topics.map((topic) => (
@@ -409,17 +417,23 @@ export default function CommunityPage() {
                       <Button 
                         type="button" 
                         variant="outline" 
-                        onClick={() => setIsCreateDialogOpen(false)}
+                        onClick={() => {
+                          setIsCreateDialogOpen(false);
+                          setEditingQuestionId(null);
+                          form.reset();
+                        }}
                         data-testid="button-cancel-question"
                       >
                         Cancel
                       </Button>
                       <Button 
                         type="submit" 
-                        disabled={createQuestionMutation.isPending}
+                        disabled={createQuestionMutation.isPending || editQuestionMutation.isPending}
                         data-testid="button-submit-question"
                       >
-                        {createQuestionMutation.isPending ? "Posting..." : "Post Question"}
+                        {editingQuestionId 
+                          ? (editQuestionMutation.isPending ? "Updating..." : "Update Question")
+                          : (createQuestionMutation.isPending ? "Posting..." : "Post Question")}
                       </Button>
                     </div>
                   </form>
@@ -572,6 +586,8 @@ export default function CommunityPage() {
                                   form.setValue('title', question.title);
                                   form.setValue('body', question.body);
                                   form.setValue('topicId', question.topic?.id || '');
+                                  form.setValue('isAnonymous', question.isAnonymous || false);
+                                  setEditingQuestionId(question.id);
                                   setIsCreateDialogOpen(true);
                                 }}
                                 data-testid={`button-edit-question-${question.id}`}

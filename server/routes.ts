@@ -944,9 +944,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/questions/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/questions/:id', async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      console.log("📝 PATCH /api/questions/:id - attempting to update question");
+      
+      // Use the same authentication logic as /api/questions POST
+      let userId = null;
+      
+      // First try JWT authentication (for Google/Facebook OAuth users)
+      const { getCurrentUser } = await import('./auth/jwt');
+      const jwtUser = await getCurrentUser(req);
+      
+      if (jwtUser) {
+        userId = jwtUser.id;
+        console.log("✅ Question update - JWT auth successful:", jwtUser.email);
+      } else {
+        // Fallback to Replit Auth
+        if (req.isAuthenticated && req.isAuthenticated()) {
+          const user = req.user as any;
+          if (user?.claims?.sub) {
+            userId = user.claims.sub;
+            console.log("✅ Question update - Replit Auth successful:", userId);
+          }
+        }
+      }
+      
+      if (!userId) {
+        console.log("❌ Question update - No authentication found");
+        return res.status(401).json({ message: "Authentication required" });
+      }
       
       // First check if the question exists and belongs to the user
       const existingQuestion = await storage.getQuestion(req.params.id);
@@ -958,13 +984,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const questionData = insertQuestionSchema.partial().parse(req.body);
+      console.log("📝 Updating question:", { id: req.params.id, isAnonymous: questionData.isAnonymous });
+      
       const question = await storage.updateQuestion(req.params.id, questionData);
+      console.log("✅ Question updated successfully:", question.id);
       res.json(question);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.log("❌ Question update validation error:", error.errors);
         return res.status(400).json({ message: "Invalid question data", errors: error.errors });
       }
-      console.error("Error updating question:", error);
+      console.error("❌ Error updating question:", error);
       res.status(500).json({ message: "Failed to update question" });
     }
   });
