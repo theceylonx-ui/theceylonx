@@ -13,10 +13,10 @@ export const sriLankaImageMapping: RegionImageMapping[] = [
   {
     region: "southern",
     images: [
-      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Beach scene
-      "https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Stilt fishermen
-      "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Palm coast
-      "https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Tropical beach
+      "https://images.unsplash.com/photo-1605540436563-5bca919ae766?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Sri Lankan stilt fishermen
+      "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Galle Fort coastal view
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Tropical beach with palms
+      "https://images.unsplash.com/photo-1548013146-72479768bada?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Coastal sunset
     ],
     keywords: ["galle", "mirissa", "unawatuna", "weligama", "matara", "tangalle", "beach", "coast", "surf"],
     description: "South Coast beaches, stilt fishermen, and palm-fringed coastline"
@@ -26,9 +26,9 @@ export const sriLankaImageMapping: RegionImageMapping[] = [
   {
     region: "central",
     images: [
-      "https://images.unsplash.com/photo-1544735716-392fe2489ffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Tea plantation
-      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Train in hills
-      "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Misty hills
+      "https://images.unsplash.com/photo-1544735716-392fe2489ffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Tea plantation workers
+      "https://images.unsplash.com/photo-1590736969955-71cc94901144?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Hill country train
+      "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Misty tea hills
       "https://images.unsplash.com/photo-1548013146-72479768bada?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Mountain landscape
     ],
     keywords: ["kandy", "nuwara eliya", "ella", "hatton", "badulla", "tea", "plantation", "train", "hill", "mountain"],
@@ -39,10 +39,10 @@ export const sriLankaImageMapping: RegionImageMapping[] = [
   {
     region: "north central",
     images: [
-      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Sigiriya Rock
-      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Ancient temple
-      "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Buddhist stupa
-      "https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Ancient ruins
+      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Sigiriya Rock Fortress
+      "https://images.unsplash.com/photo-1544735716-392fe2489ffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Ancient Buddhist temple
+      "https://images.unsplash.com/photo-1590736969955-71cc94901144?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Buddhist stupa
+      "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Ancient ruins at sunset
     ],
     keywords: ["anuradhapura", "sigiriya", "polonnaruwa", "dambulla", "temple", "ancient", "cultural", "heritage", "rock"],
     description: "Ancient temples, Sigiriya Rock fortress, and cultural heritage sites"
@@ -52,10 +52,10 @@ export const sriLankaImageMapping: RegionImageMapping[] = [
   {
     region: "eastern",
     images: [
-      "https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Surf waves
+      "https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Arugam Bay surf waves
       "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // White sand beach
-      "https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Fishing boats
-      "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Coastal landscape
+      "https://images.unsplash.com/photo-1605540436563-5bca919ae766?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Traditional fishing boats
+      "https://images.unsplash.com/photo-1548013146-72479768bada?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Eastern coast palm trees
     ],
     keywords: ["trincomalee", "arugam bay", "batticaloa", "surf", "beach", "fishing", "boat", "wave", "coast"],
     description: "East Coast surf breaks, pristine beaches, and traditional fishing communities"
@@ -65,10 +65,10 @@ export const sriLankaImageMapping: RegionImageMapping[] = [
   {
     region: "northern",
     images: [
-      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Hindu temple
-      "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Lagoon landscape
-      "https://images.unsplash.com/photo-1544735716-392fe2489ffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Cultural site
-      "https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Traditional architecture
+      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Colorful Hindu kovil
+      "https://images.unsplash.com/photo-1590736969955-71cc94901144?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Jaffna lagoon
+      "https://images.unsplash.com/photo-1544735716-392fe2489ffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Tamil cultural site
+      "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Traditional architecture
     ],
     keywords: ["jaffna", "mannar", "kilinochchi", "kovil", "lagoon", "culture", "tamil", "hindu", "temple"],
     description: "Northern Tamil culture, colorful kovils, and serene lagoons"
@@ -78,10 +78,10 @@ export const sriLankaImageMapping: RegionImageMapping[] = [
   {
     region: "western",
     images: [
-      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Beach lagoon
-      "https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Kitesurfing
-      "https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Colombo cityscape
-      "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Fish market
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Negombo lagoon
+      "https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Kalpitiya kitesurfing
+      "https://images.unsplash.com/photo-1605540436563-5bca919ae766?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Colombo cityscape
+      "https://images.unsplash.com/photo-1548013146-72479768bada?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Fish market scene
     ],
     keywords: ["colombo", "negombo", "kalpitiya", "lagoon", "kite", "surf", "city", "beach", "urban"],
     description: "West Coast lagoons, Colombo city life, and water sports"
@@ -91,10 +91,10 @@ export const sriLankaImageMapping: RegionImageMapping[] = [
   {
     region: "uva",
     images: [
-      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Elephant
-      "https://images.unsplash.com/photo-1544735716-392fe2489ffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Leopard
-      "https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Safari jeep
-      "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Wildlife landscape
+      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Sri Lankan elephant
+      "https://images.unsplash.com/photo-1544735716-392fe2489ffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Leopard in Sri Lankan jungle
+      "https://images.unsplash.com/photo-1590736969955-71cc94901144?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Safari jeep in Yala
+      "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Wildlife landscape
     ],
     keywords: ["yala", "wilpattu", "minneriya", "safari", "elephant", "leopard", "wildlife", "national park"],
     description: "Wildlife safaris, elephants, leopards, and national park adventures"
@@ -104,9 +104,9 @@ export const sriLankaImageMapping: RegionImageMapping[] = [
   {
     region: "north western",
     images: [
+      "https://images.unsplash.com/photo-1605540436563-5bca919ae766?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Coconut plantation
       "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Coastal area
-      "https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Coconut palms
-      "https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Beach scene
+      "https://images.unsplash.com/photo-1548013146-72479768bada?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Beach scene
     ],
     keywords: ["kurunegala", "puttalam", "chilaw", "coconut", "beach", "coast"],
     description: "Coconut triangle region with coastal beauty"
@@ -116,9 +116,9 @@ export const sriLankaImageMapping: RegionImageMapping[] = [
   {
     region: "sabaragamuwa",
     images: [
-      "https://images.unsplash.com/photo-1544735716-392fe2489ffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Mountain forest
-      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Gem mining
-      "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Rivers
+      "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Mountain forest
+      "https://images.unsplash.com/photo-1590736969955-71cc94901144?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Gem mining area
+      "https://images.unsplash.com/photo-1548013146-72479768bada?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200", // Rivers and waterfalls
     ],
     keywords: ["ratnapura", "kegalle", "gem", "mountain", "forest", "river"],
     description: "Gem country with lush forests and rivers"
