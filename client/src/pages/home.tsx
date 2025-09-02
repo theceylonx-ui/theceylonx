@@ -10,13 +10,11 @@ import type { TripWithOrganizer } from "@shared/schema";
 import backgroundImage from "@assets/11_1756417976014.png";
 import { RecommendedTrips } from "@/components/RecommendedTrips";
 import { useAuth } from "@/hooks/useAuth";
-import TravelPreferencesOnboarding from "@/components/TravelPreferencesOnboarding";
 import { useState, useEffect } from "react";
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
-  const [showOnboarding, setShowOnboarding] = useState(false);
   
   // Get trending trips with badges instead of regular trips
   const { data: trendingData, isLoading } = useQuery<any[]>({
@@ -24,35 +22,7 @@ export default function Home() {
     queryFn: () => fetch('/api/recommendations/trending?limit=6').then(res => res.json()),
   });
 
-  // Check if user has preferences set up
-  const { data: userPreferences } = useQuery({
-    queryKey: ["/api/user/preferences"],
-    enabled: !!user,
-  });
-
   const trendingTrips = trendingData || [];
-
-  // Show onboarding for authenticated users without preferences
-  useEffect(() => {
-    if (user && userPreferences !== undefined) {
-      // Check if user has completed onboarding before (stored in localStorage)
-      const hasCompletedOnboarding = localStorage.getItem(`onboarding-completed-${user.id}`) === 'true';
-      
-      // Also check if they have any preferences data (fallback check)
-      const hasPreferences = userPreferences && (
-        (userPreferences as any).vibe || 
-        (userPreferences as any).whenTravel || 
-        (userPreferences as any).travelStyle ||
-        (userPreferences as any).preferredRegions?.length > 0 ||
-        (userPreferences as any).interests?.length > 0
-      );
-      
-      // Show onboarding only if they haven't completed it and don't have preferences
-      if (!hasCompletedOnboarding && !hasPreferences) {
-        setShowOnboarding(true);
-      }
-    }
-  }, [user, userPreferences]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -204,17 +174,6 @@ export default function Home() {
       </section>
       
       <Footer />
-      
-      {/* Onboarding modal for new users */}
-      <TravelPreferencesOnboarding 
-        isOpen={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
-        onComplete={() => {
-          setShowOnboarding(false);
-          // Optionally refresh recommendations after preferences are set
-          // queryClient.invalidateQueries({ queryKey: ["/api/recommendations/trending"] });
-        }}
-      />
     </div>
   );
 }
