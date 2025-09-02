@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Check, X, RefreshCw, User as UserIcon, Heart, Clock, MessageSquare, Edit } from "lucide-react";
+import { Check, X, RefreshCw, User as UserIcon, Heart, Clock, MessageSquare, Edit, Trash2 } from "lucide-react";
 import { generateRandomProfilePicture, getDisplayName, getInitials } from "@/lib/profileUtils";
 import type { User, TripWithOrganizer, QuestionWithDetails } from "@shared/schema";
 
@@ -220,6 +220,37 @@ export default function UserDashboard() {
     },
   });
 
+  const deleteQuestionMutation = useMutation({
+    mutationFn: async (questionId: string) => {
+      return await apiRequest("DELETE", `/api/questions/${questionId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Question deleted successfully!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/questions"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/auth/signin";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to delete question. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Mutation for handling interest request responses
   const updateInterestRequestMutation = useMutation({
     mutationFn: async ({ requestId, status }: { requestId: string; status: 'accepted' | 'rejected' }) => {
@@ -339,6 +370,12 @@ export default function UserDashboard() {
     }
   };
 
+  const handleDeleteQuestion = (questionId: string) => {
+    if (confirm("Are you sure you want to delete this question?")) {
+      deleteQuestionMutation.mutate(questionId);
+    }
+  };
+
   const handleMarkCompleted = (tripId: string) => {
     if (confirm("Mark this trip as completed? It will no longer appear in search results and new people won't be able to join.")) {
       updateTripStatusMutation.mutate({ tripId, status: "completed" });
@@ -401,15 +438,27 @@ export default function UserDashboard() {
                             <h4 className="font-medium text-gray-900 dark:text-gray-100">
                               {question.title}
                             </h4>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="ml-2"
-                              data-testid={`button-edit-question-${question.id}`}
-                            >
-                              <Edit className="w-4 h-4 mr-1" />
-                              Edit
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                data-testid={`button-edit-question-${question.id}`}
+                              >
+                                <Edit className="w-4 h-4 mr-1" />
+                                Edit
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteQuestion(question.id)}
+                                disabled={deleteQuestionMutation.isPending}
+                                data-testid={`button-delete-question-${question.id}`}
+                                className="text-red-600 border-red-300 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4 mr-1" />
+                                Delete
+                              </Button>
+                            </div>
                           </div>
                           <p className="text-gray-600 dark:text-gray-300 text-sm mb-3 line-clamp-2">
                             {question.body.replace(/<[^>]*>/g, '')}

@@ -361,8 +361,10 @@ export default function CommunityPage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {topicsLoading || topics.length === 0 ? (
+                              {topicsLoading ? (
                                 <SelectItem value="loading" disabled>Loading topics...</SelectItem>
+                              ) : topics.length === 0 ? (
+                                <SelectItem value="no-topics" disabled>No topics available</SelectItem>
                               ) : (
                                 topics.map((topic) => (
                                   <SelectItem key={topic.id} value={topic.id}>
