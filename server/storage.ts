@@ -375,7 +375,7 @@ export class DatabaseStorage implements IStorage {
   async updateTrip(id: string, trip: Partial<InsertTrip>): Promise<Trip> {
     const tripData = {
       ...trip,
-      price: trip.price && typeof trip.price === 'number' ? trip.price.toString() : trip.price,
+      price: trip.price !== undefined ? (typeof trip.price === 'number' ? trip.price.toString() : trip.price) : undefined,
       updatedAt: new Date()
     };
     const [updatedTrip] = await db

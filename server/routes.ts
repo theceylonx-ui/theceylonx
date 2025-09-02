@@ -82,7 +82,8 @@ import {
   insertVoteSchema,
   insertUserPreferencesSchema,
   insertUserInteractionSchema,
-  insertMessageSchema
+  insertMessageSchema,
+  User
 } from "@shared/schema";
 import { enhancedRecommendationService } from "./ml/enhancedRecommendationService";
 import { z } from "zod";
