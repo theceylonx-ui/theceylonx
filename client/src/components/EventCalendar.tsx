@@ -140,8 +140,26 @@ export function EventCalendar({ className }: EventCalendarProps) {
   const FilteredEventCard = ({ event }: { event: FilteredCalendarEvent }) => {
     const tripId = event.id.replace('trip_', '');
     const navigationUrl = `/trips/${tripId}`;
-    const eventDate = new Date(event.start);
-    const eventTime = format(eventDate, 'HH:mm');
+    
+    // Safely parse date and handle invalid dates
+    let eventDate: Date;
+    let eventTime: string;
+    let displayDate: string;
+    
+    try {
+      eventDate = new Date(event.start);
+      if (isNaN(eventDate.getTime())) {
+        throw new Error('Invalid date');
+      }
+      eventTime = format(eventDate, 'HH:mm');
+      displayDate = format(eventDate, 'MMM dd, yyyy');
+    } catch (error) {
+      // Fallback for invalid dates
+      eventDate = new Date();
+      eventTime = 'TBD';
+      displayDate = 'TBD';
+      console.warn('Invalid date in event:', event.start, error);
+    }
     
     return (
       <Card className="mb-3 hover:shadow-md transition-shadow">
@@ -178,7 +196,7 @@ export function EventCalendar({ className }: EventCalendarProps) {
               LKR {event.meta.price_amount}/person
             </Badge>
             <Badge variant="outline" className="text-xs">
-              {format(eventDate, 'MMM dd, yyyy')}
+              {displayDate}
             </Badge>
           </div>
           
