@@ -263,6 +263,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return { ...trip, isPinned };
           })
         );
+      } else {
+        // For non-authenticated users, set isPinned to false
+        tripsWithPinStatus = result.trips.map(trip => ({ ...trip, isPinned: false }));
       }
       
       res.json({
@@ -1863,52 +1866,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const start = startDate ? new Date(startDate as string) : new Date();
       const end = endDate ? new Date(endDate as string) : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
       
-      // Get user's trips as calendar events
+      // Get user's trips as calendar events with pin status
       const trips = await storage.getUserTrips(userId);
-      const tripEvents = trips.map(trip => ({
-        id: `trip-${trip.id}`,
-        title: trip.title,
-        description: `${trip.fromLocation} → ${trip.toLocation}`,
-        eventDate: trip.date,
-        eventType: 'trip' as const,
-        entityId: trip.id,
-        entityType: 'trip' as const,
-        location: `${trip.fromLocation} - ${trip.toLocation}`,
-        isAllDay: false,
-        startTime: trip.time,
-        metadata: {
-          price: trip.price,
-          seatsAvailable: trip.seatsAvailable,
-          region: trip.region
-        }
-      }));
-
-      // Get user's pinned trips as calendar events  
-      const pinnedTrips = await storage.getUserPinnedTrips(userId);
-      const pinnedTripEvents = pinnedTrips.map(trip => ({
-        id: `pinned-trip-${trip.id}`,
-        title: `📌 ${trip.title}`,
-        description: `${trip.fromLocation} → ${trip.toLocation}`,
-        eventDate: trip.date,
-        eventType: 'pinned_trip' as const,
-        entityId: trip.id,
-        entityType: 'trip' as const,
-        location: `${trip.fromLocation} - ${trip.toLocation}`,
-        isAllDay: false,
-        startTime: trip.time,
-        metadata: {
-          price: trip.price,
-          seatsAvailable: trip.seatsAvailable,
-          region: trip.region,
-          isPinned: true
-        }
-      }));
+      const pinnedTripIds = new Set((await storage.getUserPinnedTrips(userId)).map(trip => trip.id));
+      
+      const tripEvents = trips.map(trip => {
+        const isPinned = pinnedTripIds.has(trip.id);
+        return {
+          id: `trip-${trip.id}`,
+          title: isPinned ? `📌 ${trip.title}` : trip.title,
+          description: `${trip.fromLocation} → ${trip.toLocation}`,
+          eventDate: trip.date,
+          eventType: 'trip' as const,
+          entityId: trip.id,
+          entityType: 'trip' as const,
+          location: `${trip.fromLocation} - ${trip.toLocation}`,
+          isAllDay: false,
+          startTime: trip.time,
+          metadata: {
+            price: trip.price,
+            seatsAvailable: trip.seatsAvailable,
+            region: trip.region,
+            isPinned: isPinned
+          }
+        };
+      });
       
       // Get custom calendar events
       const calendarEvents = await storage.getUserCalendarEvents(userId, start, end);
       
       // Combine all events, filter by date range, and sort
-      const allEvents = [...tripEvents, ...pinnedTripEvents, ...calendarEvents]
+      const allEvents = [...tripEvents, ...calendarEvents]
         .filter(event => {
           const eventDate = new Date(event.eventDate);
           return eventDate >= start && eventDate <= end;
