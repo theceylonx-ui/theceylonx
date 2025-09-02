@@ -19,7 +19,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { Check, X, RefreshCw, User as UserIcon, Heart, Clock } from "lucide-react";
 import { generateRandomProfilePicture, getDisplayName, getInitials } from "@/lib/profileUtils";
-import type { User, TripWithOrganizer, TripParticipant } from "@shared/schema";
+import type { User, TripWithOrganizer } from "@shared/schema";
 
 const profileSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username must be less than 20 characters").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores").optional().or(z.literal('')),
@@ -60,7 +60,7 @@ export default function UserDashboard() {
   });
 
   // Query for interest requests on my trips
-  const { data: interestRequests, refetch: refetchInterestRequests } = useQuery({
+  const { data: interestRequests = [], refetch: refetchInterestRequests } = useQuery({
     queryKey: ["/api/my-trips/interest-requests"],
     enabled: !!user,
   });
@@ -465,7 +465,15 @@ export default function UserDashboard() {
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex-1">
                             <h3 className="font-semibold text-gray-800">{request.tripTitle}</h3>
-                            <p className="text-sm text-gray-600 mt-1">From: {request.requesterName}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <UserIcon className="h-4 w-4 text-gray-400" />
+                              <p className="text-sm text-gray-600">
+                                {request.requesterName} {request.requesterLastName}
+                                {request.requesterEmail && (
+                                  <span className="text-gray-500"> ({request.requesterEmail})</span>
+                                )}
+                              </p>
+                            </div>
                             <p className="text-sm text-gray-500 mt-1">{request.message}</p>
                           </div>
                           <div className="flex items-center gap-2 ml-4">

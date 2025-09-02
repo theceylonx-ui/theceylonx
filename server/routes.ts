@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { authRouter, authGuard } from "./auth/routes";
 import { JWTUser } from "./auth/jwt";
+import { isAuthenticated } from "./auth";
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import passport from 'passport';
@@ -278,11 +279,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Interest request routes
-  app.post('/api/trips/:id/interest', authGuard, async (req, res) => {
+  app.post('/api/trips/:id/interest', isAuthenticated, async (req, res) => {
     try {
-      const userId = (req.user as JWTUser).id;
+      const userId = req.user?.claims?.sub;
       const tripId = req.params.id;
       const { message } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
 
       // Check if trip exists
       const trip = await storage.getTrip(tripId);
@@ -329,10 +334,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/trips/:id/interest-request', authGuard, async (req, res) => {
+  app.get('/api/trips/:id/interest-request', isAuthenticated, async (req, res) => {
     try {
-      const userId = (req.user as JWTUser).id;
+      const userId = req.user?.claims?.sub;
       const tripId = req.params.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
 
       const interestRequest = await storage.getTripInterestRequestByUserAndTrip(userId, tripId);
       if (!interestRequest) {
@@ -347,9 +356,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all interest requests for trips organized by the current user
-  app.get('/api/my-trips/interest-requests', authGuard, async (req, res) => {
+  app.get('/api/my-trips/interest-requests', isAuthenticated, async (req, res) => {
     try {
-      const userId = (req.user as JWTUser).id;
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
       const requests = await storage.getInterestRequestsForOrganizer(userId);
       res.json(requests);
     } catch (error) {
@@ -359,11 +372,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update interest request status (accept/reject)
-  app.put('/api/interest-requests/:requestId', authGuard, async (req, res) => {
+  app.put('/api/interest-requests/:requestId', isAuthenticated, async (req, res) => {
     try {
       const { requestId } = req.params;
       const { status } = req.body;
-      const userId = (req.user as JWTUser).id;
+      const userId = req.user?.claims?.sub;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
 
       if (!["accepted", "rejected"].includes(status)) {
         return res.status(400).json({ message: "Invalid status" });

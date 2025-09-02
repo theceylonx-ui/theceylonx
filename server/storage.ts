@@ -1409,7 +1409,7 @@ export class DatabaseStorage implements IStorage {
     return updatedRequest;
   }
 
-  async getInterestRequestsForOrganizer(userId: string): Promise<TripInterestRequest[]> {
+  async getInterestRequestsForOrganizer(userId: string): Promise<any[]> {
     const result = await db
       .select({
         id: tripInterestRequests.id,
@@ -1419,8 +1419,12 @@ export class DatabaseStorage implements IStorage {
         status: tripInterestRequests.status,
         createdAt: tripInterestRequests.createdAt,
         updatedAt: tripInterestRequests.updatedAt,
+        chatThreadId: tripInterestRequests.chatThreadId,
         tripTitle: trips.title,
-        requesterName: users.firstName
+        requesterName: users.firstName,
+        requesterLastName: users.lastName,
+        requesterEmail: users.email,
+        requesterProfileImage: users.profileImageUrl
       })
       .from(tripInterestRequests)
       .leftJoin(trips, eq(tripInterestRequests.tripId, trips.id))
