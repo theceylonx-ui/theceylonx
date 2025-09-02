@@ -478,7 +478,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ? 'Your interest request has been accepted. You can now chat with the organizer!'
           : 'Your interest request was not accepted for this trip.',
         relatedTripId: updatedRequest.tripId,
-        actionUrl: status === 'accepted' ? '/chat' : `/trips/${updatedRequest.tripId}`,
+        threadId: updatedRequest.chatThreadId,
+        actionUrl: status === 'accepted' && updatedRequest.chatThreadId 
+          ? `/chat/${updatedRequest.chatThreadId}` 
+          : `/trips/${updatedRequest.tripId}`,
         isRead: false
       });
 

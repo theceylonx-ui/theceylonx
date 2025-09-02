@@ -1481,12 +1481,37 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Interest request not found or you don't have permission to update it");
     }
 
+    const requestData = request.trip_interest_requests;
+    let chatThreadId = requestData.chatThreadId;
+
+    // If accepting the request and no chat thread exists, create one
+    if (status === 'accepted' && !chatThreadId) {
+      console.log('🆕 Creating chat thread for accepted interest request');
+      
+      const newThread = await this.createChatThread({
+        tripId: requestData.tripId
+      });
+      
+      chatThreadId = newThread.id;
+      
+      // Add both organizer and requester as participants
+      await this.addUserToThread(chatThreadId, organizerId);
+      await this.addUserToThread(chatThreadId, requestData.userId);
+      
+      console.log('✅ Chat thread created with participants:', chatThreadId);
+    }
+
     const [updatedRequest] = await db
       .update(tripInterestRequests)
-      .set({ status, updatedAt: new Date() })
+      .set({ 
+        status, 
+        chatThreadId: chatThreadId || requestData.chatThreadId,
+        updatedAt: new Date() 
+      })
       .where(eq(tripInterestRequests.id, requestId))
       .returning();
     
+    console.log('🔄 Interest request updated:', { requestId, status, chatThreadId });
     return updatedRequest;
   }
 }
