@@ -15,6 +15,7 @@ import {
   getABTestGroup 
 } from "@/hooks/useEnhancedRecommendations";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "wouter";
 import { 
   MapPin, 
   Calendar, 
@@ -63,6 +64,7 @@ interface EnhancedRecommendation {
 export default function EnhancedRecommendedTrips() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [location, setLocation] = useLocation();
   const [sessionId] = useState(() => generateSessionId());
   const [abTestGroup] = useState(() => getABTestGroup(user?.id));
   const [viewedTrips, setViewedTrips] = useState<Set<string>>(new Set());
@@ -128,6 +130,9 @@ export default function EnhancedRecommendedTrips() {
       abTestGroup,
       sessionId,
     });
+
+    // Navigate to trip details page
+    setLocation(`/trips/${tripId}`);
   };
 
   const handleBookmark = (tripId: string, e: React.MouseEvent) => {
