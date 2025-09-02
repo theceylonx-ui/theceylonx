@@ -1808,29 +1808,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }));
       
-      // Get user's questions as calendar events (when created)
-      const questions = await storage.getUserQuestions(userId);
-      const questionEvents = questions.map(question => ({
-        id: `question-${question.id}`,
-        title: question.title,
-        description: 'Community Q&A Discussion',
-        eventDate: question.createdAt || new Date(),
-        eventType: 'community_event' as const,
-        entityId: question.id,
-        entityType: 'question' as const,
-        location: question.topic?.name || 'General',
-        isAllDay: true,
-        metadata: {
-          votesCount: question.votesCount,
-          answersCount: question.answersCount
-        }
-      }));
-      
       // Get custom calendar events
       const calendarEvents = await storage.getUserCalendarEvents(userId, start, end);
       
-      // Combine and filter by date range
-      const allEvents = [...tripEvents, ...questionEvents, ...calendarEvents]
+      // Combine and filter by date range (only trips and custom calendar events)
+      const allEvents = [...tripEvents, ...calendarEvents]
         .filter(event => {
           const eventDate = new Date(event.eventDate);
           return eventDate >= start && eventDate <= end;
