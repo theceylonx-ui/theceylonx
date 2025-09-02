@@ -42,9 +42,9 @@ export default function TravelPreferencesOnboarding({
 }: TravelPreferencesOnboardingProps) {
   const [step, setStep] = useState(1);
   const [preferences, setPreferences] = useState({
-    vibe: '' as VibeOption | '',
-    whenTravel: '' as WhenOption | '',
-    travelStyle: '' as StyleOption | '',
+    vibe: [] as VibeOption[],
+    whenTravel: [] as WhenOption[],
+    travelStyle: [] as StyleOption[],
   });
   
   const { toast } = useToast();
@@ -83,9 +83,9 @@ export default function TravelPreferencesOnboarding({
 
   const canProceed = () => {
     switch (step) {
-      case 1: return !!preferences.vibe;
-      case 2: return !!preferences.whenTravel;
-      case 3: return !!preferences.travelStyle;
+      case 1: return preferences.vibe.length > 0;
+      case 2: return preferences.whenTravel.length > 0;
+      case 3: return preferences.travelStyle.length > 0;
       default: return false;
     }
   };
@@ -97,27 +97,36 @@ export default function TravelPreferencesOnboarding({
           <div className="space-y-6">
             <div className="text-center">
               <h3 className="text-lg font-semibold mb-2">What's your vibe?</h3>
-              <p className="text-sm text-gray-600">Choose the type of experiences you love most</p>
+              <p className="text-sm text-gray-600">Choose one or more types of experiences you love (tap to select multiple)</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              {vibeOptions.map((option) => (
-                <Card 
-                  key={option.value}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    preferences.vibe === option.value 
-                      ? 'ring-2 ring-ceylon-green bg-green-50' 
-                      : 'hover:bg-gray-50'
-                  }`}
-                  onClick={() => setPreferences({ ...preferences, vibe: option.value })}
-                  data-testid={`vibe-option-${option.value}`}
-                >
-                  <CardContent className="p-4 text-center">
-                    <div className="text-3xl mb-2">{option.emoji}</div>
-                    <div className="font-medium text-sm">{option.label}</div>
-                    <div className="text-xs text-gray-500 mt-1">{option.description}</div>
-                  </CardContent>
-                </Card>
-              ))}
+              {vibeOptions.map((option) => {
+                const isSelected = preferences.vibe.includes(option.value);
+                return (
+                  <Card 
+                    key={option.value}
+                    className={`cursor-pointer transition-all hover:shadow-md ${
+                      isSelected
+                        ? 'ring-2 ring-ceylon-green bg-green-50' 
+                        : 'hover:bg-gray-50'
+                    }`}
+                    onClick={() => {
+                      const newVibe = isSelected 
+                        ? preferences.vibe.filter(v => v !== option.value)
+                        : [...preferences.vibe, option.value];
+                      setPreferences({ ...preferences, vibe: newVibe });
+                    }}
+                    data-testid={`vibe-option-${option.value}`}
+                  >
+                    <CardContent className="p-4 text-center">
+                      <div className="text-3xl mb-2">{option.emoji}</div>
+                      <div className="font-medium text-sm">{option.label}</div>
+                      <div className="text-xs text-gray-500 mt-1">{option.description}</div>
+                      {isSelected && <div className="text-xs text-ceylon-green font-medium mt-1">✓ Selected</div>}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         );
@@ -127,26 +136,35 @@ export default function TravelPreferencesOnboarding({
           <div className="space-y-6">
             <div className="text-center">
               <h3 className="text-lg font-semibold mb-2">When do you travel?</h3>
-              <p className="text-sm text-gray-600">Tell us about your preferred travel timing</p>
+              <p className="text-sm text-gray-600">Choose one or more travel timing preferences (tap to select multiple)</p>
             </div>
             <div className="space-y-3">
-              {whenOptions.map((option) => (
-                <Card 
-                  key={option.value}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    preferences.whenTravel === option.value 
-                      ? 'ring-2 ring-ceylon-green bg-green-50' 
-                      : 'hover:bg-gray-50'
-                  }`}
-                  onClick={() => setPreferences({ ...preferences, whenTravel: option.value })}
-                  data-testid={`when-option-${option.value}`}
-                >
-                  <CardContent className="p-4">
-                    <div className="font-medium">{option.label}</div>
-                    <div className="text-sm text-gray-500">{option.description}</div>
-                  </CardContent>
-                </Card>
-              ))}
+              {whenOptions.map((option) => {
+                const isSelected = preferences.whenTravel.includes(option.value);
+                return (
+                  <Card 
+                    key={option.value}
+                    className={`cursor-pointer transition-all hover:shadow-md ${
+                      isSelected
+                        ? 'ring-2 ring-ceylon-green bg-green-50' 
+                        : 'hover:bg-gray-50'
+                    }`}
+                    onClick={() => {
+                      const newWhenTravel = isSelected 
+                        ? preferences.whenTravel.filter(w => w !== option.value)
+                        : [...preferences.whenTravel, option.value];
+                      setPreferences({ ...preferences, whenTravel: newWhenTravel });
+                    }}
+                    data-testid={`when-option-${option.value}`}
+                  >
+                    <CardContent className="p-4">
+                      <div className="font-medium">{option.label}</div>
+                      <div className="text-sm text-gray-500">{option.description}</div>
+                      {isSelected && <div className="text-xs text-ceylon-green font-medium mt-1">✓ Selected</div>}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         );
@@ -156,26 +174,35 @@ export default function TravelPreferencesOnboarding({
           <div className="space-y-6">
             <div className="text-center">
               <h3 className="text-lg font-semibold mb-2">How do you travel?</h3>
-              <p className="text-sm text-gray-600">Choose your preferred travel style</p>
+              <p className="text-sm text-gray-600">Choose one or more travel styles that suit you (tap to select multiple)</p>
             </div>
             <div className="space-y-3">
-              {styleOptions.map((option) => (
-                <Card 
-                  key={option.value}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    preferences.travelStyle === option.value 
-                      ? 'ring-2 ring-ceylon-green bg-green-50' 
-                      : 'hover:bg-gray-50'
-                  }`}
-                  onClick={() => setPreferences({ ...preferences, travelStyle: option.value })}
-                  data-testid={`style-option-${option.value}`}
-                >
-                  <CardContent className="p-4">
-                    <div className="font-medium">{option.label}</div>
-                    <div className="text-sm text-gray-500">{option.description}</div>
-                  </CardContent>
-                </Card>
-              ))}
+              {styleOptions.map((option) => {
+                const isSelected = preferences.travelStyle.includes(option.value);
+                return (
+                  <Card 
+                    key={option.value}
+                    className={`cursor-pointer transition-all hover:shadow-md ${
+                      isSelected
+                        ? 'ring-2 ring-ceylon-green bg-green-50' 
+                        : 'hover:bg-gray-50'
+                    }`}
+                    onClick={() => {
+                      const newTravelStyle = isSelected 
+                        ? preferences.travelStyle.filter(s => s !== option.value)
+                        : [...preferences.travelStyle, option.value];
+                      setPreferences({ ...preferences, travelStyle: newTravelStyle });
+                    }}
+                    data-testid={`style-option-${option.value}`}
+                  >
+                    <CardContent className="p-4">
+                      <div className="font-medium">{option.label}</div>
+                      <div className="text-sm text-gray-500">{option.description}</div>
+                      {isSelected && <div className="text-xs text-ceylon-green font-medium mt-1">✓ Selected</div>}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         );
