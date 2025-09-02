@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,6 +27,7 @@ const questionSchema = z.object({
   body: z.string().min(20, "Description must be at least 20 characters"),
   topicId: z.string().optional(),
   tags: z.array(z.string()).optional(),
+  isAnonymous: z.boolean().default(false),
 });
 
 type QuestionFormData = z.infer<typeof questionSchema>;
@@ -88,6 +90,7 @@ export default function CommunityPage() {
       body: "",
       topicId: "",
       tags: [],
+      isAnonymous: false,
     },
   });
 
@@ -378,6 +381,30 @@ export default function CommunityPage() {
                       )}
                     />
                     
+                    <FormField
+                      control={form.control}
+                      name="isAnonymous"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              data-testid="checkbox-anonymous"
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>
+                              Post anonymously
+                            </FormLabel>
+                            <p className="text-sm text-muted-foreground">
+                              Your name will be hidden and shown as "Anonymous" instead
+                            </p>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                    
                     <div className="flex justify-end space-x-3">
                       <Button 
                         type="button" 
@@ -561,7 +588,7 @@ export default function CommunityPage() {
                           <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
                             <div className="flex items-center">
                               <User className="w-4 h-4 mr-1" />
-                              {question.user?.firstName || 'Anonymous'}
+                              {question.isAnonymous ? 'Anonymous' : (question.user?.firstName || 'Anonymous')}
                             </div>
                             <div className="flex items-center">
                               <Calendar className="w-4 h-4 mr-1" />

@@ -242,6 +242,7 @@ export const questions = pgTable("questions", {
   tags: text("tags").array(),
   userId: varchar("user_id").notNull(),
   topicId: varchar("topic_id"),
+  isAnonymous: boolean("is_anonymous").default(false),
   votesCount: integer("votes_count").default(0),
   answersCount: integer("answers_count").default(0),
   acceptedAnswerId: varchar("accepted_answer_id"),

@@ -467,8 +467,11 @@ export default function UserDashboard() {
                             {question.topic && (
                               <Badge variant="secondary">{question.topic.name}</Badge>
                             )}
-                            <span>{question.answerCount || 0} answers</span>
+                            <span>{question.answers?.length || 0} answers</span>
                             <span>{question.votesCount || 0} votes</span>
+                            <Badge variant="outline" className={question.isAnonymous ? "text-orange-600 border-orange-300" : "text-blue-600 border-blue-300"}>
+                              {question.isAnonymous ? "Anonymous" : "Public"}
+                            </Badge>
                             <span>Asked {new Date(question.createdAt || '').toLocaleDateString()}</span>
                           </div>
                         </div>
@@ -565,7 +568,7 @@ export default function UserDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {interestRequests && interestRequests.length > 0 ? (
+                  {Array.isArray(interestRequests) && interestRequests.length > 0 ? (
                     interestRequests.map((request: any) => (
                       <div key={request.id} className="bg-gray-50 rounded-lg p-4 border" data-testid={`interest-request-${request.id}`}>
                         <div className="flex justify-between items-start mb-3">
