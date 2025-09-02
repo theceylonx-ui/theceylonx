@@ -293,9 +293,13 @@ export default function TripCard({ trip, badges }: TripCardProps) {
   };
 
   const getTripImage = () => {
+    // Debug log to see the complete trip object
+    console.log('TripCard Debug - Full trip object:', trip);
+    console.log('TripCard Debug - imageUrl field specifically:', trip.imageUrl);
+    
     // Use assigned image from database first - this should contain the Sri Lankan regional photos
     if (trip.imageUrl) {
-      console.log('Using database imageUrl:', trip.imageUrl); // Debug log
+      console.log('✅ Using database imageUrl:', trip.imageUrl);
       return trip.imageUrl;
     }
     
@@ -311,8 +315,10 @@ export default function TripCard({ trip, badges }: TripCardProps) {
       'sabaragamuwa': 'https://images.unsplash.com/photo-1571115764595-644a1f56a55c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Mountain forest
     };
     
-    console.log('No database image, using regional fallback for region:', trip.region); // Debug log
-    return sriLankanImages[trip.region.toLowerCase()] || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
+    console.log('❌ No database image found, using regional fallback for region:', trip.region);
+    const fallbackImage = sriLankanImages[trip.region.toLowerCase()] || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
+    console.log('Fallback image selected:', fallbackImage);
+    return fallbackImage;
   };
 
   return (
