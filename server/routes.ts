@@ -1512,9 +1512,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update preferences using the new format
       const preferences = await storage.updateTravelStyleSettings(userId, validatedData);
       
-      // Invalidate recommendation caches after preferences update
-      await enhancedRecommendationService.invalidateUserCaches(userId);
-      
       res.json(preferences);
     } catch (error) {
       if (error instanceof z.ZodError) {
