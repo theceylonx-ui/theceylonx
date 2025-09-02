@@ -448,8 +448,8 @@ export default function EnhancedRecommendedTrips() {
           return (
             <Card 
               key={trip.id} 
-              className={`group cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                isViewed ? 'ring-2 ring-blue-200' : ''
+              className={`group cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border-2 hover:border-purple-200 ${
+                isViewed ? 'ring-2 ring-purple-200 bg-purple-50' : 'hover:bg-gradient-to-br hover:from-white hover:to-purple-50'
               }`}
               onMouseEnter={() => handleTripView(trip.id)}
               onClick={() => handleTripClick(trip.id)}
@@ -467,17 +467,17 @@ export default function EnhancedRecommendedTrips() {
                         <MapPin className="h-3 w-3" />
                         {trip.fromLocation} → {trip.toLocation}
                       </CardDescription>
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-xs bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 border-purple-200">
                         {getRegionChip(trip)}
                       </Badge>
                     </div>
                   </div>
                   
-                  {/* Why tooltip */}
+                  {/* Why tooltip - positioned to not interfere with clicks */}
                   <div className="relative group ml-2">
-                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                    <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-black text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10 max-w-[200px]">
-                      Why you're seeing this: {getWhyReason(recommendation)}
+                    <Info className="h-4 w-4 text-purple-500 cursor-help hover:text-purple-700" />
+                    <div className="absolute top-full right-0 mt-2 px-3 py-2 bg-black text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50 max-w-[200px] pointer-events-none">
+                      Why: {getWhyReason(recommendation)}
                     </div>
                   </div>
                 </div>
@@ -517,14 +517,14 @@ export default function EnhancedRecommendedTrips() {
                   </div>
                 </div>
 
-                {/* Sri Lankan Badges */}
+                {/* Sri Lankan Badges - More Eye-Catching */}
                 <div className="mb-4">
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-2">
                     {getSriLankanBadges(recommendation).map((badge, idx) => (
                       <Badge 
                         key={idx} 
                         variant={badge.variant as any}
-                        className="text-xs px-2 py-1 flex items-center gap-1"
+                        className="text-xs px-3 py-1.5 flex items-center gap-1 font-medium shadow-sm hover:shadow-md transition-shadow bg-gradient-to-r from-green-50 to-blue-50 text-green-800 border-green-200"
                       >
                         {badge.icon}
                         {badge.text}
@@ -534,31 +534,31 @@ export default function EnhancedRecommendedTrips() {
                 </div>
 
                 {/* Footer Actions: 📌 Pin · ⭐ Interested · ↔ Share · 💬 Ask */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <div className="flex items-center justify-between border-t pt-3 bg-gradient-to-r from-gray-50 to-purple-50 -mx-6 px-6 -mb-6 pb-4 rounded-b-lg">
+                  <div className="flex items-center gap-4 text-sm">
                     <button 
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      className="flex items-center gap-1 text-purple-600 hover:text-purple-800 hover:bg-purple-100 px-2 py-1 rounded-md transition-colors font-medium"
                       onClick={(e) => {e.stopPropagation(); handleBookmark(trip.id, e);}}
                       data-testid={`button-pin-${trip.id}`}
                     >
                       📌 Pin
                     </button>
                     <button 
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      className="flex items-center gap-1 text-orange-600 hover:text-orange-800 hover:bg-orange-100 px-2 py-1 rounded-md transition-colors font-medium"
                       onClick={(e) => {e.stopPropagation(); /* Handle interested */}}
                       data-testid={`button-interested-${trip.id}`}
                     >
                       ⭐ Interested
                     </button>
                     <button 
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 px-2 py-1 rounded-md transition-colors font-medium"
                       onClick={(e) => {e.stopPropagation(); handleShare(trip.id, e);}}
                       data-testid={`button-share-${trip.id}`}
                     >
                       ↔ Share
                     </button>
                     <button 
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      className="flex items-center gap-1 text-green-600 hover:text-green-800 hover:bg-green-100 px-2 py-1 rounded-md transition-colors font-medium"
                       onClick={(e) => {e.stopPropagation(); /* Handle ask */}}
                       data-testid={`button-ask-${trip.id}`}
                     >
@@ -567,7 +567,7 @@ export default function EnhancedRecommendedTrips() {
                   </div>
                   
                   {isViewed && (
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-800 border-purple-200">
                       <Eye className="h-3 w-3 mr-1" />
                       Viewed
                     </Badge>
