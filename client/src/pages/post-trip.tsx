@@ -17,6 +17,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ArrowLeft } from "lucide-react";
+import { Link } from "wouter";
 
 const postTripSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -143,6 +145,14 @@ export default function PostTrip() {
       <Navigation />
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Back Button */}
+        <Link href="/">
+          <Button variant="outline" className="mb-6" data-testid="button-back">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Home
+          </Button>
+        </Link>
+        
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-4" data-testid="page-title">
             Post Your Trip

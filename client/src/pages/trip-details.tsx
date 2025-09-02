@@ -311,7 +311,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Trip Not Found</h2>
             <p className="text-gray-600 mb-4">The trip you're looking for doesn't exist or has been removed.</p>
-            <Link href="/browse">
+            <Link href="/browse-trips">
               <Button className="bg-ceylon-green hover:bg-ceylon-green/90">Browse Other Trips</Button>
             </Link>
           </div>
@@ -327,7 +327,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}
-        <Link href="/browse">
+        <Link href="/browse-trips">
           <Button variant="outline" className="mb-6" data-testid="button-back">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Browse

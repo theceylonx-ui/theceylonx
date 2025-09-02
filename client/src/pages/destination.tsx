@@ -4,7 +4,7 @@ import { useRoute, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Calendar, Users, MessageSquare, ArrowRight } from "lucide-react";
+import { MapPin, Calendar, Users, MessageSquare, ArrowRight, ArrowLeft } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
@@ -88,6 +88,13 @@ export default function DestinationPage() {
       
       <div className="py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Back Button */}
+          <Link href="/">
+            <Button variant="outline" className="mb-6" data-testid="button-back">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Home
+            </Button>
+          </Link>
           {/* Header */}
           <div className="mb-8">
             <div className="bg-gradient-to-r from-ceylon-green to-ceylon-blue rounded-2xl p-8 text-white shadow-xl">
