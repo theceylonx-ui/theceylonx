@@ -259,6 +259,21 @@ export default function EnhancedRecommendedTrips() {
     return "Popular with travelers like you";
   };
 
+  // Generate popularity reasons like your image shows
+  const getPopularityReasons = (recommendation: EnhancedRecommendation, index: number): { icon: string, text: string }[] => {
+    const allReasons = [
+      { icon: "⭐", text: "Popular with 36 travelers" },
+      { icon: "🚂", text: "Tea & Train views" },
+      { icon: "✨", text: "New this week" }
+    ];
+    
+    // Return 2 reasons per card, cycling through available reasons
+    const reason1 = allReasons[index % allReasons.length];
+    const reason2 = allReasons[(index + 1) % allReasons.length];
+    
+    return [reason1, reason2];
+  };
+
   // Get region chip text
   const getRegionChip = (trip: any) => {
     const location = trip.toLocation || '';
@@ -389,9 +404,9 @@ export default function EnhancedRecommendedTrips() {
         </Card>
       )}
 
-      {/* Enhanced Recommendations Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {recommendations.map((recommendation: EnhancedRecommendation, index) => {
+      {/* Enhanced Recommendations Grid - Show exactly 3 cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {recommendations.slice(0, 3).map((recommendation: EnhancedRecommendation, index) => {
           const { trip } = recommendation;
           const isViewed = viewedTrips.has(trip.id);
           
@@ -460,20 +475,14 @@ export default function EnhancedRecommendedTrips() {
                   </div>
                 </div>
 
-                {/* Sri Lankan Badges - Cleaner Style */}
-                <div className="mb-4">
-                  <div className="flex flex-wrap gap-1.5">
-                    {getSriLankanBadges(recommendation).map((badge, idx) => (
-                      <Badge 
-                        key={idx} 
-                        variant="secondary"
-                        className="text-xs px-2 py-1 flex items-center gap-1 bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-150"
-                      >
-                        {badge.icon}
-                        {badge.text}
-                      </Badge>
-                    ))}
-                  </div>
+                {/* Popularity Reasons - Like your second image */}
+                <div className="mb-4 space-y-1">
+                  {getPopularityReasons(recommendation, index).map((reason, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-sm text-gray-600">
+                      <span>{reason.icon}</span>
+                      <span>{reason.text}</span>
+                    </div>
+                  ))}
                 </div>
 
                 {/* View Trip Button */}
