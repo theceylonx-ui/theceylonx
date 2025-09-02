@@ -1,0 +1,76 @@
+Goal:
+Implement a dropdown on the Calendar page to switch between 5 views:
+Upcoming Events (This Week)
+Pinned Trips (by the user)
+Interested Trips (by the user)
+My Trips (Trip Organizer)
+Free Trips (price is null or 0)
+UI / UX
+Add a labeled dropdown at the top of the Calendar: View: [ Upcoming | Pinned | Interested | My Trips | Free ]
+Default selection: Upcoming Events (This Week).
+Calendar should refresh instantly when the dropdown changes (no page reload).
+Show a small legend (optional):
+📌 Pinned ⭐ Interested 👤 My Trip 💚 Free
+Empty state: “No items to show yet.” + context CTA
+Upcoming → “Browse Trips”
+Pinned/Interested → “Browse Trips”
+My Trips → “Post a Trip”
+Free → “Post a Trip”
+Data Model (map to existing schema)
+trips (id, title, start_at, end_at, location, created_by_user_id, price_amount, …)
+user_trip_flags (user_id, trip_id, pinned:boolean, interested:boolean, updated_at)
+Filtering Logic (server-side)
+Upcoming (This Week):
+start_at between startOfWeek(now, userTZ) and endOfWeek(now, userTZ).
+Pinned Trips (by the user):
+Join on user_trip_flags where user_id = currentUserId AND pinned = true.
+Interested Trips (by the user):
+Join on user_trip_flags where user_id = currentUserId AND interested = true.
+My Trips (Trip Organizer):
+created_by_user_id = currentUserId.
+Free Trips:
+price_amount IS NULL OR price_amount = 0.
+API (create or adapt)
+GET /api/calendar?view=<upcoming|pinned|interested|mine|free>&tz=<IANA>
+Return normalized events:
+[
+  {
+    "id": "trip_123",
+    "title": "Ella Sunrise Hike",
+    "start": "2025-09-05T06:30:00+05:30",
+    "end": "2025-09-05T10:30:00+05:30",
+    "location": "Ella",
+    "icons": ["📌","⭐","👤","💚"],
+    "meta": {
+      "price_amount": 0,
+      "created_by_user_id": "user_abc",
+      "user_flags": { "pinned": true, "interested": false }
+    }
+  }
+]
+Rendering Rules
+Prefix icons to event titles based on flags/context:
+Pinned: 📌
+Interested: ⭐
+My Trips: 👤 (if event creator = current user)
+Free: 💚 or append “(Free)”
+If multiple apply, show multiple icons in a stable order: ⭐, 📌, 👤, 💚.
+Auth / Privacy
+Views that are user-scoped (Pinned, Interested, My Trips) must be filtered by currentUserId.
+Never expose other users’ flags.
+Performance
+Index fields: start_at, created_by_user_id, price_amount, and (user_trip_flags.user_id, trip_id).
+Support pagination or lazy loading if needed.
+Edge Cases
+Multi-day/all-day trips must span correctly.
+Timezone: use tz query param; compute week boundaries per userTZ.
+Exclude soft-deleted trips or past events when in Upcoming (beyond the current week window).
+Acceptance Criteria
+Dropdown switches views within 250ms after response.
+Correct results per view:
+Upcoming = only events in current week (user TZ).
+Pinned/Interested = only the logged-in user’s flags.
+My Trips = only trips created by the current user.
+Free = only trips with null or 0 price.
+Icons render consistently on calendar items and tooltips/popovers.
+Empty state + CTA appear appropriately.

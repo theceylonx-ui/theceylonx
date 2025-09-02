@@ -5,11 +5,28 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MapPin, Clock, Users, MessageCircle, Calendar as CalendarIcon, ArrowRight } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MapPin, Clock, Users, MessageCircle, Calendar as CalendarIcon, ArrowRight, Plus, Search } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { format, isSameDay, startOfMonth, endOfMonth } from "date-fns";
 import { Link } from "wouter";
 
+// New interface for the filtered calendar API
+interface FilteredCalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  location: string;
+  icons: string[];
+  meta: {
+    price_amount: number;
+    created_by_user_id: string;
+    user_flags: { pinned: boolean; interested: boolean };
+  };
+}
+
+// Keep the old interface for backward compatibility with aggregate API
 interface CalendarEvent {
   id: string;
   title: string;
@@ -23,6 +40,24 @@ interface CalendarEvent {
   startTime?: string;
   metadata?: any;
 }
+
+type ViewType = 'upcoming' | 'pinned' | 'interested' | 'mine' | 'free';
+
+const viewLabels: Record<ViewType, string> = {
+  upcoming: 'Upcoming Events',
+  pinned: 'Pinned Trips',
+  interested: 'Interested Trips', 
+  mine: 'My Trips',
+  free: 'Free Trips'
+};
+
+const emptyStateConfig: Record<ViewType, { message: string; ctaText: string; ctaLink: string }> = {
+  upcoming: { message: 'No upcoming events this week.', ctaText: 'Browse Trips', ctaLink: '/trips' },
+  pinned: { message: 'No pinned trips yet.', ctaText: 'Browse Trips', ctaLink: '/trips' },
+  interested: { message: 'No trips marked as interested yet.', ctaText: 'Browse Trips', ctaLink: '/trips' },
+  mine: { message: 'No trips created yet.', ctaText: 'Post a Trip', ctaLink: '/post-trip' },
+  free: { message: 'No free trips available.', ctaText: 'Post a Trip', ctaLink: '/post-trip' }
+};
 
 interface EventCalendarProps {
   className?: string;
@@ -45,10 +80,26 @@ const eventTypeIcons = {
 };
 
 export function EventCalendar({ className }: EventCalendarProps) {
+  const [selectedView, setSelectedView] = useState<ViewType>('upcoming');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
 
-  // Fetch calendar events for the current month
+  // Fetch filtered calendar events based on view
+  const { data: filteredEvents = [], isLoading: isLoadingFiltered } = useQuery<FilteredCalendarEvent[]>({
+    queryKey: ['/api/calendar', selectedView],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/calendar?view=${selectedView}&tz=${Intl.DateTimeFormat().resolvedOptions().timeZone}`,
+        { credentials: 'include' }
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch calendar events');
+      }
+      return response.json();
+    },
+  });
+
+  // Still fetch aggregate events for calendar highlighting (legacy)
   const { data: events = [], isLoading } = useQuery<CalendarEvent[]>({
     queryKey: ['/api/calendar/aggregate', format(startOfMonth(currentMonth), 'yyyy-MM-dd'), format(endOfMonth(currentMonth), 'yyyy-MM-dd')],
     queryFn: async () => {
@@ -85,6 +136,64 @@ export function EventCalendar({ className }: EventCalendarProps) {
     return '#';
   };
 
+  // New component for filtered events
+  const FilteredEventCard = ({ event }: { event: FilteredCalendarEvent }) => {
+    const tripId = event.id.replace('trip_', '');
+    const navigationUrl = `/trips/${tripId}`;
+    const eventDate = new Date(event.start);
+    const eventTime = format(eventDate, 'HH:mm');
+    
+    return (
+      <Card className="mb-3 hover:shadow-md transition-shadow">
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-gray-600" />
+              <div className="flex items-center gap-1">
+                {event.icons.map((icon, index) => (
+                  <span key={index} className="text-sm">{icon}</span>
+                ))}
+              </div>
+              <Badge className="text-xs bg-ceylon-green text-white">
+                Trip
+              </Badge>
+            </div>
+            <span className="text-xs text-gray-500 flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              {eventTime}
+            </span>
+          </div>
+          
+          <h4 className="font-semibold text-sm mb-1" data-testid={`event-title-${event.id}`}>
+            {event.title}
+          </h4>
+          
+          <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
+            <MapPin className="w-3 h-3" />
+            {event.location}
+          </div>
+          
+          <div className="flex flex-wrap gap-1 mb-2">
+            <Badge variant="outline" className="text-xs">
+              LKR {event.meta.price_amount}/person
+            </Badge>
+            <Badge variant="outline" className="text-xs">
+              {format(eventDate, 'MMM dd, yyyy')}
+            </Badge>
+          </div>
+          
+          <Link href={navigationUrl}>
+            <Button size="sm" variant="outline" className="w-full text-xs" data-testid={`event-view-${event.id}`}>
+              View Details
+              <ArrowRight className="w-3 h-3 ml-1" />
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Legacy EventCard for backward compatibility with selected date events
   const EventCard = ({ event }: { event: CalendarEvent }) => {
     const IconComponent = eventTypeIcons[event.eventType];
     const navigationUrl = getEventNavigationUrl(event);
@@ -179,16 +288,63 @@ export function EventCalendar({ className }: EventCalendarProps) {
     );
   };
 
+  // Empty state component
+  const EmptyState = () => {
+    const config = emptyStateConfig[selectedView];
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+          <CalendarIcon className="w-8 h-8 text-gray-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">No items to show yet</h3>
+        <p className="text-sm text-gray-500 mb-4">{config.message}</p>
+        <Link href={config.ctaLink}>
+          <Button size="sm" className="bg-ceylon-green text-white hover:bg-ceylon-green/90">
+            <Plus className="w-4 h-4 mr-2" />
+            {config.ctaText}
+          </Button>
+        </Link>
+      </div>
+    );
+  };
+
   return (
     <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 ${className}`}>
       {/* Calendar */}
       <div className="lg:col-span-2">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5 text-ceylon-green" />
-              Event Calendar
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="w-5 h-5 text-ceylon-green" />
+                Event Calendar
+              </div>
+              
+              {/* View Selector */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600">View:</span>
+                <Select value={selectedView} onValueChange={(value: ViewType) => setSelectedView(value)}>
+                  <SelectTrigger className="w-48" data-testid="calendar-view-selector">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="upcoming">Upcoming Events</SelectItem>
+                    <SelectItem value="pinned">Pinned Trips</SelectItem>
+                    <SelectItem value="interested">Interested Trips</SelectItem>
+                    <SelectItem value="mine">My Trips</SelectItem>
+                    <SelectItem value="free">Free Trips</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </CardTitle>
+            
+            {/* Optional Legend */}
+            <div className="flex items-center gap-4 text-xs text-gray-500 pt-2">
+              <span className="flex items-center gap-1">📌 Pinned</span>
+              <span className="flex items-center gap-1">⭐ Interested</span>
+              <span className="flex items-center gap-1">👤 My Trip</span>
+              <span className="flex items-center gap-1">💚 Free</span>
+            </div>
           </CardHeader>
           <CardContent>
             <Calendar
@@ -213,35 +369,29 @@ export function EventCalendar({ className }: EventCalendarProps) {
         </Card>
       </div>
 
-      {/* Events for Selected Date */}
+      {/* Events Display */}
       <div>
         <Card className="sticky top-4">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">
-              {format(selectedDate, 'MMMM d, yyyy')}
+              {viewLabels[selectedView]}
             </CardTitle>
             <p className="text-sm text-gray-600">
-              {selectedDateEvents.length} event{selectedDateEvents.length !== 1 ? 's' : ''}
+              {filteredEvents.length} trip{filteredEvents.length !== 1 ? 's' : ''}
             </p>
           </CardHeader>
           <CardContent className="pt-0">
             <ScrollArea className="h-[400px]">
-              {isLoading ? (
+              {isLoadingFiltered ? (
                 <div className="text-center py-8">
                   <div className="text-sm text-gray-500">Loading events...</div>
                 </div>
-              ) : selectedDateEvents.length > 0 ? (
-                selectedDateEvents.map(event => (
-                  <EventCard key={event.id} event={event} />
+              ) : filteredEvents.length > 0 ? (
+                filteredEvents.map(event => (
+                  <FilteredEventCard key={event.id} event={event} />
                 ))
               ) : (
-                <div className="text-center py-8">
-                  <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-500">No events on this date</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Select a date with events highlighted in green
-                  </p>
-                </div>
+                <EmptyState />
               )}
             </ScrollArea>
           </CardContent>

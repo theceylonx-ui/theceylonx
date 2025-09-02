@@ -1914,6 +1914,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // New unified calendar endpoint with view filtering
+  app.get("/api/calendar", unifiedAuthGuard, async (req: any, res: any) => {
+    try {
+      const userId = req.user.id;
+      const { view = 'upcoming', tz = 'UTC' } = req.query;
+      
+      // Helper function to get week boundaries based on timezone
+      const getWeekBoundaries = (timezone: string) => {
+        const now = new Date();
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay()); // Start of current week (Sunday)
+        startOfWeek.setHours(0, 0, 0, 0);
+        
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6); // End of current week (Saturday)
+        endOfWeek.setHours(23, 59, 59, 999);
+        
+        return { startOfWeek, endOfWeek };
+      };
+
+      // Helper function to generate event icons based on flags and context
+      const generateEventIcons = (trip: any, isMyTrip: boolean, isPinned: boolean, isInterested: boolean, isFree: boolean) => {
+        const icons: string[] = [];
+        if (isInterested) icons.push('⭐');
+        if (isPinned) icons.push('📌');  
+        if (isMyTrip) icons.push('👤');
+        if (isFree) icons.push('💚');
+        return icons;
+      };
+
+      // Helper function to format event data
+      const formatTripEvent = (trip: any, isPinned: boolean, isInterested: boolean) => {
+        const isMyTrip = trip.organizerId === userId;
+        const isFree = !trip.price || trip.price === 0;
+        const icons = generateEventIcons(trip, isMyTrip, isPinned, isInterested, isFree);
+        
+        return {
+          id: `trip_${trip.id}`,
+          title: trip.title,
+          start: `${trip.date}T${trip.time || '00:00'}:00`,
+          end: `${trip.date}T${trip.time ? (trip.time.split(':').map((n: string) => n === '23' ? '23' : String(Number(n) + 1).padStart(2, '0')).join(':')) : '01:00'}:00`,
+          location: `${trip.fromLocation} → ${trip.toLocation}`,
+          icons,
+          meta: {
+            price_amount: trip.price || 0,
+            created_by_user_id: trip.organizerId,
+            user_flags: { pinned: isPinned, interested: isInterested }
+          }
+        };
+      };
+
+      let events: any[] = [];
+
+      switch (view) {
+        case 'upcoming': {
+          const { startOfWeek, endOfWeek } = getWeekBoundaries(tz);
+          const trips = await storage.getUserTrips(userId);
+          const pinnedTripIds = new Set((await storage.getUserPinnedTrips(userId)).map(trip => trip.id));
+          const interestedTripIds = new Set((await storage.getUserInterestedTrips(userId)).map(trip => trip.id));
+          
+          events = trips
+            .filter(trip => {
+              const tripDate = new Date(trip.date);
+              return tripDate >= startOfWeek && tripDate <= endOfWeek;
+            })
+            .map(trip => formatTripEvent(trip, pinnedTripIds.has(trip.id), interestedTripIds.has(trip.id)));
+          break;
+        }
+
+        case 'pinned': {
+          const pinnedTrips = await storage.getUserPinnedTrips(userId);
+          const interestedTripIds = new Set((await storage.getUserInterestedTrips(userId)).map(trip => trip.id));
+          
+          events = pinnedTrips.map(trip => formatTripEvent(trip, true, interestedTripIds.has(trip.id)));
+          break;
+        }
+
+        case 'interested': {
+          const interestedTrips = await storage.getUserInterestedTrips(userId);
+          const pinnedTripIds = new Set((await storage.getUserPinnedTrips(userId)).map(trip => trip.id));
+          
+          events = interestedTrips.map(trip => formatTripEvent(trip, pinnedTripIds.has(trip.id), true));
+          break;
+        }
+
+        case 'mine': {
+          const myTrips = await storage.getUserTrips(userId);
+          const pinnedTripIds = new Set((await storage.getUserPinnedTrips(userId)).map(trip => trip.id));
+          const interestedTripIds = new Set((await storage.getUserInterestedTrips(userId)).map(trip => trip.id));
+          
+          events = myTrips.map((trip: any) => formatTripEvent(trip, pinnedTripIds.has(trip.id), interestedTripIds.has(trip.id)));
+          break;
+        }
+
+        case 'free': {
+          const trips = await storage.getUserTrips(userId);
+          const pinnedTripIds = new Set((await storage.getUserPinnedTrips(userId)).map(trip => trip.id));
+          const interestedTripIds = new Set((await storage.getUserInterestedTrips(userId)).map(trip => trip.id));
+          
+          events = trips
+            .filter((trip: any) => !trip.price || trip.price === 0)
+            .map(trip => formatTripEvent(trip, pinnedTripIds.has(trip.id), interestedTripIds.has(trip.id)));
+          break;
+        }
+
+        default:
+          return res.status(400).json({ message: "Invalid view parameter" });
+      }
+
+      // Sort events by start time
+      events.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+      
+      res.json(events);
+    } catch (error) {
+      console.error("Failed to get calendar events:", error);
+      res.status(500).json({ message: "Failed to get calendar events" });
+    }
+  });
+
   app.get("/api/calendar/aggregate", unifiedAuthGuard, async (req: any, res: any) => {
     try {
       const userId = req.user.id;
