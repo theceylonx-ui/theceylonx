@@ -929,8 +929,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
       
+      console.log("📝 Received question data:", JSON.stringify(req.body, null, 2));
+      
       const questionData = insertQuestionSchema.parse({ ...req.body, userId });
-      console.log("📝 Creating question:", { title: questionData.title, topicId: questionData.topicId });
+      console.log("📝 Creating question:", { 
+        title: questionData.title, 
+        topicId: questionData.topicId, 
+        isAnonymous: questionData.isAnonymous,
+        userId: questionData.userId 
+      });
       
       const question = await storage.createQuestion(questionData);
       console.log("✅ Question created successfully:", question.id);

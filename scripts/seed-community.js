@@ -311,6 +311,7 @@ async function seedQA() {
         slug,
         topicId: topic.id,
         userId: seedUserId,
+        isAnonymous: false,
         votesCount: item.votes ?? 0,
         answersCount: 0
       }).returning();
