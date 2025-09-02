@@ -444,53 +444,56 @@ export default function TripDetails({ params }: TripDetailsProps) {
                     )}
                   </Button>
 
-                  {/* NEW INTEREST REQUEST SYSTEM - NO MORE JOIN */}
-                  <div className="w-full p-4 bg-green-100 border-2 border-green-300 rounded-lg text-center">
-                    <p className="text-green-800 font-bold text-lg mb-2">✨ NEW FEATURE ✨</p>
+                  {/* 🚨 COMPLETELY NEW SYSTEM - JOIN BUTTON REMOVED FOREVER 🚨 */}
+                  <div className="w-full p-6 bg-gradient-to-r from-pink-100 to-blue-100 border-4 border-dashed border-pink-500 rounded-xl text-center shadow-xl">
+                    <div className="bg-yellow-300 text-black p-2 rounded-lg mb-4 font-black text-xl animate-pulse">
+                      🔥 NO MORE "JOIN THIS TRIP" BUTTON! 🔥
+                    </div>
+                    <p className="text-purple-800 font-bold text-2xl mb-4">✨ INTEREST REQUEST SYSTEM ✨</p>
                     {isAuthenticated ? (
                       user && user.id !== trip.organizerId ? (
                         <Button 
                           onClick={handleSendInterest}
                           disabled={!!existingInterestRequest || sendInterestMutation.isPending}
-                          className={`w-full ${
+                          className={`w-full text-xl py-4 ${
                             existingInterestRequest 
-                              ? 'bg-yellow-500 text-black cursor-not-allowed'
-                              : 'bg-purple-600 hover:bg-purple-700 text-white'
+                              ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-black cursor-not-allowed'
+                              : 'bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white shadow-lg transform hover:scale-105'
                           }`}
                           data-testid="button-interest"
                         >
                           {sendInterestMutation.isPending ? (
                             <>
-                              <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
-                              Sending Interest Request...
+                              <div className="animate-spin h-6 w-6 mr-3 border-4 border-white border-t-transparent rounded-full" />
+                              SENDING INTEREST REQUEST...
                             </>
                           ) : existingInterestRequest ? (
                             <>
-                              <Heart className="h-4 w-4 mr-2 fill-current" />
-                              {existingInterestRequest.status === 'pending' && 'Interest Request Pending'}
-                              {existingInterestRequest.status === 'accepted' && 'Interest Request Accepted!'}
-                              {existingInterestRequest.status === 'rejected' && 'Interest Request Declined'}
+                              <Heart className="h-6 w-6 mr-3 fill-current" />
+                              {existingInterestRequest.status === 'pending' && '⏳ INTEREST REQUEST PENDING'}
+                              {existingInterestRequest.status === 'accepted' && '✅ INTEREST REQUEST ACCEPTED!'}
+                              {existingInterestRequest.status === 'rejected' && '❌ INTEREST REQUEST DECLINED'}
                             </>
                           ) : (
                             <>
-                              <Heart className="h-4 w-4 mr-2" />
-                              💜 EXPRESS INTEREST (NEW!)
+                              <Heart className="h-6 w-6 mr-3" />
+                              💖 SEND INTEREST REQUEST (NOT JOIN!)
                             </>
                           )}
                         </Button>
                       ) : user?.id === trip.organizerId ? (
-                        <div className="w-full text-center text-sm text-gray-700 p-3 bg-blue-100 rounded-md border border-blue-300">
-                          👑 This is your trip - you're the organizer
+                        <div className="w-full text-center text-lg text-blue-800 p-4 bg-gradient-to-r from-blue-100 to-green-100 rounded-lg border-2 border-blue-400">
+                          👑 YOU ARE THE TRIP ORGANIZER
                         </div>
                       ) : null
                     ) : (
                       <Button 
                         onClick={() => window.location.href = '/auth/signin'}
-                        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold"
+                        className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold text-xl py-4 shadow-lg transform hover:scale-105"
                         data-testid="button-signin-interest"
                       >
-                        <Heart className="h-4 w-4 mr-2" />
-                        🔐 SIGN IN TO EXPRESS INTEREST
+                        <Heart className="h-6 w-6 mr-3" />
+                        🔐 SIGN IN TO SEND INTEREST REQUEST
                       </Button>
                     )}
                   </div>
