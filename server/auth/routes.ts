@@ -141,6 +141,52 @@ router.post('/phone/verify', authRateLimit, async (req: Request, res: Response) 
   return res.status(503).json({ error: 'Phone authentication has been disabled. Please use Google sign-in.' });
 });
 
+// Development Login Route
+router.post('/dev-login', async (req: Request, res: Response) => {
+  if (process.env.NODE_ENV !== 'development') {
+    return res.status(404).json({ message: 'Not found' });
+  }
+  
+  try {
+    console.log('🔧 Development login attempt');
+    
+    // Import storage here to avoid circular dependencies
+    const { storage } = await import('../storage');
+    
+    // Create or get test user
+    let testUser = await storage.getUserByEmail('test@example.com');
+    
+    if (!testUser) {
+      console.log('🔧 Creating test user');
+      testUser = await storage.createUser({
+        email: 'test@example.com',
+        name: 'Test User',
+        provider: 'dev',
+        emailVerified: true,
+      });
+      console.log('✅ Test user created:', testUser.id);
+    } else {
+      console.log('✅ Test user found:', testUser.id);
+    }
+    
+    const jwtUser: JWTUser = {
+      id: testUser.id,
+      email: testUser.email!,
+      name: testUser.name!,
+      provider: 'dev'
+    };
+    
+    const tokens = await generateAuthTokens(jwtUser);
+    setAuthCookies(res, tokens);
+    
+    console.log('🔧 Development login successful, tokens set');
+    res.json({ success: true, user: { id: testUser.id, email: testUser.email, name: testUser.name } });
+  } catch (error) {
+    console.error('❌ Dev login error:', error);
+    res.status(500).json({ message: 'Dev login failed', error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
 // Session Management Routes
 router.post('/logout', (req: Request, res: Response) => {
   clearAuthCookies(res);
