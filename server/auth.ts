@@ -134,7 +134,7 @@ export async function setupAuth(app: Express) {
   });
 
   // Add the user endpoint that frontend expects - check both auth systems
-  app.get('/api/auth/me', async (req, res) => {
+  app.get('/api/auth/me', async (req: any, res) => {
     try {
       console.log("🔍 /api/auth/me called - checking auth methods");
       
@@ -181,7 +181,7 @@ export async function setupAuth(app: Express) {
 }
 
 // Unified authentication middleware that checks both JWT and Replit Auth
-export const isAuthenticated: RequestHandler = async (req, res, next) => {
+export const isAuthenticated: RequestHandler = async (req: any, res, next) => {
   try {
     // First try JWT authentication (for Google/Facebook OAuth users)
     const { getCurrentUser } = await import('./auth/jwt');

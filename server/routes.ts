@@ -3,14 +3,72 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { authRouter, authGuard } from "./auth/routes";
 import { JWTUser } from "./auth/jwt";
+
+// Unified auth helper function
+async function getAuthenticatedUser(req: any): Promise<UnifiedUser | null> {
+  try {
+    // First try JWT authentication (for Google/Facebook OAuth users)
+    const { getCurrentUser } = await import('./auth/jwt');
+    const jwtUser = await getCurrentUser(req);
+    
+    if (jwtUser) {
+      return {
+        id: jwtUser.id,
+        email: jwtUser.email,
+        phone: jwtUser.phone,
+        name: jwtUser.name,
+        provider: jwtUser.provider || 'jwt'
+      };
+    }
+    
+    // Fallback to Replit Auth
+    if (req.isAuthenticated && req.isAuthenticated()) {
+      const user = req.user as any;
+      if ((user as any)?.claims?.sub) {
+        return {
+          id: user.claims.sub,
+          email: user.claims.email,
+          name: user.claims.first_name || user.claims.profile?.name,
+          provider: 'replit',
+          claims: user.claims
+        };
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Auth error:", error);
+    return null;
+  }
+}
+
+// Unified auth guard middleware
+const unifiedAuthGuard = async (req: any, res: any, next: any) => {
+  const user = await getAuthenticatedUser(req);
+  if (!user) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  req.user = user;
+  next();
+};
 import { setupAuth, isAuthenticated } from "./auth";
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import passport from 'passport';
 
+// Unified user interface for both JWT and Replit Auth
+interface UnifiedUser {
+  id: string;
+  email?: string;
+  phone?: string;
+  name?: string;
+  provider?: string;
+  claims?: any; // For Replit Auth compatibility
+}
+
 declare module 'express' {
   interface Request {
-    user?: JWTUser;
+    user?: UnifiedUser;
   }
 }
 import { 
@@ -45,54 +103,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // User profile routes
   app.get('/api/user', async (req, res) => {
-    // Delegate to the existing auth endpoint that handles both JWT and Replit Auth
     try {
-      console.log("🔄 GET /api/user - delegating to /api/auth/me logic");
-      
-      // First try JWT authentication (for Google/Facebook OAuth users)
-      const { getCurrentUser } = await import('./auth/jwt');
-      const jwtUser = await getCurrentUser(req);
-      
-      if (jwtUser) {
-        // User is authenticated via JWT (Google/Facebook)
-        const userData = await storage.getUser(jwtUser.id);
-        if (userData) {
-          console.log("✅ /api/user - JWT auth successful:", userData.email);
-          return res.json(userData);
-        }
+      const user = await getAuthenticatedUser(req);
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
       }
       
-      // Fallback to Replit Auth
-      console.log("🔍 /api/user - trying Replit Auth fallback, isAuthenticated:", typeof req.isAuthenticated);
-      if (req.isAuthenticated && req.isAuthenticated()) {
-        const user = req.user as any;
-        console.log("🔍 /api/user - Replit Auth user claims:", user?.claims ? "present" : "missing", user?.claims?.sub);
-        if (user?.claims?.sub) {
-          const userId = user.claims.sub;
-          const userData = await storage.getUser(userId);
-          if (userData) {
-            console.log("✅ /api/user - Replit Auth successful:", userData.email);
-            return res.json(userData);
-          } else {
-            console.log("⚠️ /api/user - Replit Auth user ID found but no database record:", userId);
-          }
-        }
-      } else {
-        console.log("🔍 /api/user - req.isAuthenticated() returned:", req.isAuthenticated ? req.isAuthenticated() : 'not a function');
+      const userData = await storage.getUser(user.id);
+      if (!userData) {
+        return res.status(404).json({ message: "User not found" });
       }
       
-      // No authentication found
-      console.log("❌ /api/user - No authentication method worked");
-      return res.status(401).json({ message: "Unauthorized" });
+      res.json(userData);
     } catch (error) {
       console.error("❌ Error in /api/user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });
 
-  app.patch('/api/user', authGuard, async (req, res) => {
+  app.patch('/api/user', unifiedAuthGuard, async (req, res) => {
     try {
-      const userId = (req.user as JWTUser).id;
+      const userId = req.user!.id;
       const { username, phoneNumber, bio, profileImageUrl } = req.body;
       
       console.log("Profile update request:", { userId, username, phoneNumber: phoneNumber ? "***" : null, bio: bio ? bio.substring(0, 50) : null });
@@ -138,9 +169,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User data deletion endpoint for OAuth compliance
-  app.delete('/api/user/delete', authGuard, async (req, res) => {
+  app.delete('/api/user/delete', unifiedAuthGuard, async (req, res) => {
     try {
-      const userId = (req.user as JWTUser).id;
+      const userId = req.user!.id;
       console.log("User deletion request for user:", userId);
       
       // Perform comprehensive user data deletion
@@ -182,9 +213,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Trip routes
-  app.post('/api/trips', authGuard, async (req, res) => {
+  app.post('/api/trips', unifiedAuthGuard, async (req, res) => {
     try {
-      const userId = (req.user as JWTUser).id;
+      const userId = req.user!.id;
       console.log("Creating trip with data:", { ...req.body, organizerId: userId });
       
       const tripData = insertTripSchema.parse({ ...req.body, organizerId: userId });
@@ -288,9 +319,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/trips/:id', authGuard, async (req, res) => {
+  app.patch('/api/trips/:id', unifiedAuthGuard, async (req, res) => {
     try {
-      const userId = (req.user as JWTUser).id;
+      const userId = req.user!.id;
       const tripId = req.params.id;
       
       // Check if user is the organizer
@@ -307,9 +338,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/trips/:id', authGuard, async (req, res) => {
+  app.delete('/api/trips/:id', unifiedAuthGuard, async (req, res) => {
     try {
-      const userId = (req.user as JWTUser).id;
+      const userId = req.user!.id;
       const tripId = req.params.id;
       
       // Check if user is the organizer
@@ -329,7 +360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Interest request routes
   app.post('/api/trips/:id/interest', isAuthenticated, async (req, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.claims?.sub;
       const tripId = req.params.id;
       const { message } = req.body;
 
@@ -384,7 +415,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/trips/:id/interest-request', isAuthenticated, async (req, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.claims?.sub;
       const tripId = req.params.id;
 
       if (!userId) {
@@ -406,7 +437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all interest requests for trips organized by the current user
   app.get('/api/my-trips/interest-requests', isAuthenticated, async (req, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.claims?.sub;
       if (!userId) {
         return res.status(401).json({ message: "Not authenticated" });
       }
@@ -424,7 +455,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { requestId } = req.params;
       const { status } = req.body;
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.claims?.sub;
 
       if (!userId) {
         return res.status(401).json({ message: "Not authenticated" });
@@ -459,7 +490,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update trip status (mark as completed/inactive)
-  app.patch('/api/trips/:id/status', authGuard, async (req: any, res) => {
+  app.patch('/api/trips/:id/status', unifiedAuthGuard, async (req: any, res) => {
     try {
       const { id } = req.params;
       const { status } = req.body;
@@ -490,7 +521,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // User trip routes
   // Get user's questions
-  app.get('/api/users/questions', authGuard, async (req: any, res) => {
+  app.get('/api/users/questions', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const questions = await storage.getUserQuestions(userId);
@@ -501,7 +532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/users/trips', authGuard, async (req: any, res) => {
+  app.get('/api/users/trips', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const trips = await storage.getUserTrips(userId);
@@ -522,7 +553,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Comment routes
   app.post('/api/trips/:id/comments', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.claims?.sub;
       const tripId = req.params.id;
 
       if (!userId) {
@@ -578,7 +609,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enhanced comment deletion with trip owner moderation
   app.delete('/api/comments/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.claims?.sub;
       const commentId = req.params.id;
 
       if (!userId) {
@@ -610,9 +641,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Rating routes
-  app.post('/api/trips/:id/ratings', authGuard, async (req: any, res) => {
+  app.post('/api/trips/:id/ratings', unifiedAuthGuard, async (req: any, res) => {
     try {
-      const raterId = req.user.claims.sub;
+      const raterId = req.user!.id;
       const tripId = req.params.id;
       const ratingData = insertRatingSchema.parse({
         ...req.body,
@@ -652,7 +683,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Report routes
-  app.post('/api/reports', authGuard, async (req: any, res) => {
+  app.post('/api/reports', unifiedAuthGuard, async (req: any, res) => {
     try {
       const reporterId = req.user.id; // Fixed: use req.user.id instead of req.user.claims.sub
       const reportData = insertReportSchema.parse({
@@ -692,7 +723,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin route to get all reports
-  app.get('/api/admin/reports', authGuard, async (req: any, res) => {
+  app.get('/api/admin/reports', unifiedAuthGuard, async (req: any, res) => {
     try {
       // Check if user is admin (add your admin user IDs here)
       const adminUserIds = [
@@ -713,7 +744,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin route to update report status with enhanced actions
-  app.patch('/api/admin/reports/:id/status', authGuard, async (req: any, res) => {
+  app.patch('/api/admin/reports/:id/status', unifiedAuthGuard, async (req: any, res) => {
     try {
       const { id } = req.params;
       const { status, action } = req.body; // action: 'resolve' | 'dismiss' | 'delete_trip' | 'suspend_user' | 'edit_trip'
@@ -782,7 +813,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin route to delete trip
-  app.delete('/api/admin/trips/:id', authGuard, async (req: any, res) => {
+  app.delete('/api/admin/trips/:id', unifiedAuthGuard, async (req: any, res) => {
     try {
       // Check if user is admin
       const adminUserIds = [
@@ -804,7 +835,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin route to edit trip
-  app.patch('/api/admin/trips/:id', authGuard, async (req: any, res) => {
+  app.patch('/api/admin/trips/:id', unifiedAuthGuard, async (req: any, res) => {
     try {
       // Check if user is admin
       const adminUserIds = [
@@ -830,7 +861,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Community Q&A Routes
   
   // Topics
-  app.post('/api/topics', authGuard, async (req: any, res) => {
+  app.post('/api/topics', unifiedAuthGuard, async (req: any, res) => {
     try {
       const topicData = insertTopicSchema.parse(req.body);
       const topic = await storage.createTopic(topicData);
@@ -886,8 +917,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Fallback to Replit Auth
         if (req.isAuthenticated && req.isAuthenticated()) {
           const user = req.user as any;
-          if (user?.claims?.sub) {
-            userId = user.claims.sub;
+          if ((user as any)?.claims?.sub) {
+            userId = (user as any).claims.sub;
             console.log("✅ Question creation - Replit Auth successful:", userId);
           }
         }
@@ -962,8 +993,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Fallback to Replit Auth
         if (req.isAuthenticated && req.isAuthenticated()) {
           const user = req.user as any;
-          if (user?.claims?.sub) {
-            userId = user.claims.sub;
+          if ((user as any)?.claims?.sub) {
+            userId = (user as any).claims.sub;
             console.log("✅ Question update - Replit Auth successful:", userId);
           }
         }
@@ -1001,7 +1032,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/questions/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.claims?.sub;
       
       // First check if the question exists and belongs to the user
       const existingQuestion = await storage.getQuestion(req.params.id);
@@ -1023,7 +1054,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Answers
   app.post('/api/questions/:questionId/answers', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.claims?.sub;
       const answerData = insertAnswerSchema.parse({ 
         ...req.body, 
         userId, 
@@ -1052,7 +1083,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/questions/:questionId/accept/:answerId', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.claims?.sub;
       
       // Check if the user owns the question
       const question = await storage.getQuestion(req.params.questionId);
@@ -1071,7 +1102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update answer
   app.patch('/api/answers/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.claims?.sub;
       const answerId = req.params.id;
       
       // First check if the answer exists and belongs to the user
@@ -1098,7 +1129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete answer
   app.delete('/api/answers/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.claims?.sub;
       const answerId = req.params.id;
       
       // First check if the answer exists and belongs to the user
@@ -1121,7 +1152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Votes
   app.post('/api/vote', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.claims?.sub;
       const voteData = insertVoteSchema.parse({ ...req.body, userId });
       
       // Check if user already voted
@@ -1153,7 +1184,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/vote/:type/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.claims?.sub;
       const { type, id } = req.params;
       
       const questionId = type === 'question' ? id : undefined;
@@ -1180,7 +1211,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ML Recommendation endpoints
-  app.get('/api/recommendations/trips', authGuard, async (req: any, res) => {
+  app.get('/api/recommendations/trips', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { limit = 10, region, minPrice, maxPrice, date } = req.query;
@@ -1204,7 +1235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/user/preferences', authGuard, async (req: any, res) => {
+  app.get('/api/user/preferences', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const preferences = await storage.getUserPreferences(userId);
@@ -1215,7 +1246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/user/preferences', authGuard, async (req: any, res) => {
+  app.put('/api/user/preferences', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const preferencesData = insertUserPreferencesSchema.parse(req.body);
@@ -1231,7 +1262,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/user/interactions', authGuard, async (req: any, res) => {
+  app.post('/api/user/interactions', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { tripId, interactionType, duration } = req.body;
@@ -1247,7 +1278,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced recommendation routes with A/B testing support
-  app.get('/api/recommendations/enhanced', authGuard, async (req: any, res) => {
+  app.get('/api/recommendations/enhanced', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { 
@@ -1280,7 +1311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User personalization controls
-  app.get('/api/user/personalization', authGuard, async (req: any, res) => {
+  app.get('/api/user/personalization', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const personalization = await storage.getUserPersonalization(userId);
@@ -1291,7 +1322,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/user/personalization/toggle', authGuard, async (req: any, res) => {
+  app.put('/api/user/personalization/toggle', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { isPaused } = req.body;
@@ -1305,7 +1336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/user/personalization/reset', authGuard, async (req: any, res) => {
+  app.post('/api/user/personalization/reset', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       
@@ -1319,7 +1350,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced interaction tracking with session support
-  app.post('/api/user/interactions/enhanced', authGuard, async (req: any, res) => {
+  app.post('/api/user/interactions/enhanced', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { 
@@ -1347,7 +1378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // KPI tracking endpoints
-  app.post('/api/kpi/event', authGuard, async (req: any, res) => {
+  app.post('/api/kpi/event', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { 
@@ -1375,7 +1406,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Analytics endpoint for admin dashboard
-  app.get('/api/analytics/kpi', authGuard, async (req: any, res) => {
+  app.get('/api/analytics/kpi', unifiedAuthGuard, async (req: any, res) => {
     try {
       const { 
         eventType, 
@@ -1417,7 +1448,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/user/interactions', authGuard, async (req: any, res) => {
+  app.get('/api/user/interactions', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { limit = 50 } = req.query;
@@ -1431,9 +1462,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Notification routes
-  app.get('/api/notifications', authGuard, async (req, res) => {
+  app.get('/api/notifications', unifiedAuthGuard, async (req, res) => {
     try {
-      const userId = (req.user as JWTUser).id;
+      const userId = req.user!.id;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
       const notifications = await storage.getUserNotifications(userId, limit);
       res.json(notifications);
@@ -1443,9 +1474,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/notifications/unread-count', authGuard, async (req, res) => {
+  app.get('/api/notifications/unread-count', unifiedAuthGuard, async (req, res) => {
     try {
-      const userId = (req.user as JWTUser).id;
+      const userId = req.user!.id;
       const count = await storage.getUnreadNotificationCount(userId);
       res.json({ count });
     } catch (error) {
@@ -1454,7 +1485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/notifications/:id/read', authGuard, async (req, res) => {
+  app.patch('/api/notifications/:id/read', unifiedAuthGuard, async (req, res) => {
     try {
       const { id } = req.params;
       await storage.markNotificationAsRead(id);
@@ -1465,9 +1496,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/notifications/read-all', authGuard, async (req, res) => {
+  app.patch('/api/notifications/read-all', unifiedAuthGuard, async (req, res) => {
     try {
-      const userId = (req.user as JWTUser).id;
+      const userId = req.user!.id;
       await storage.markAllNotificationsAsRead(userId);
       res.json({ message: "All notifications marked as read" });
     } catch (error) {
@@ -1476,7 +1507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/notifications/:id', authGuard, async (req, res) => {
+  app.delete('/api/notifications/:id', unifiedAuthGuard, async (req, res) => {
     try {
       const { id } = req.params;
       await storage.deleteNotification(id);
@@ -1488,7 +1519,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Chat Buddy inbox routes
-  app.get('/api/threads', authGuard, async (req: any, res) => {
+  app.get('/api/threads', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const threads = await storage.getUserChatThreads(userId);
@@ -1499,7 +1530,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/threads/:threadId/messages', authGuard, async (req: any, res) => {
+  app.get('/api/threads/:threadId/messages', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const threadId = req.params.threadId;
@@ -1520,7 +1551,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/threads/:threadId/messages', authGuard, async (req: any, res) => {
+  app.post('/api/threads/:threadId/messages', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const threadId = req.params.threadId;
@@ -1571,7 +1602,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/threads/:threadId', authGuard, async (req: any, res) => {
+  app.get('/api/threads/:threadId', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const threadId = req.params.threadId;
