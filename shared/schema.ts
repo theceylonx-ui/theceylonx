@@ -88,7 +88,7 @@ export const trips = pgTable("trips", {
   date: timestamp("date").notNull(),
   time: varchar("time").notNull(),
   seatsAvailable: integer("seats_available").notNull(),
-  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }),
   region: varchar("region").notNull(),
   contactInfo: varchar("contact_info").notNull(),
   notes: text("notes"),
@@ -627,7 +627,14 @@ export const insertTripSchema = z.object({
   date: z.union([z.string(), z.date()]).transform(val => typeof val === 'string' ? new Date(val) : val),
   time: z.string().min(1, "Time is required"),
   seatsAvailable: z.union([z.number(), z.string()]).transform(val => typeof val === 'string' ? parseInt(val) : val),
-  price: z.union([z.number(), z.string()]).transform(val => typeof val === 'string' ? parseFloat(val) : val),
+  price: z.union([z.number(), z.string(), z.null(), z.undefined()]).optional().transform(val => {
+    if (val === null || val === undefined || val === '') return null;
+    if (typeof val === 'string') {
+      const parsed = parseFloat(val);
+      return isNaN(parsed) ? null : parsed;
+    }
+    return val;
+  }),
   region: z.string().min(1, "Region is required"),
   contactInfo: z.string().min(1, "Contact information is required"),
   notes: z.string().optional(),

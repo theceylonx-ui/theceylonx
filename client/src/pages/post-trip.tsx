@@ -27,7 +27,7 @@ const postTripSchema = z.object({
   date: z.string().min(1, "Date is required"),
   time: z.string().min(1, "Time is required"),
   seatsAvailable: z.number().min(1, "At least 1 seat is required").max(10, "Maximum 10 seats allowed"),
-  price: z.string().min(1, "Price is required"),
+  price: z.string().optional(),
   region: z.string().min(1, "Region is required"),
   contactInfo: z.string().min(1, "Contact information is required"),
   notes: z.string().optional(),
@@ -329,6 +329,9 @@ export default function PostTrip() {
                             data-testid="input-price"
                           />
                         </FormControl>
+                        <FormDescription className="text-sm text-muted-foreground">
+                          Type 0 or leave blank if this trip is free.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

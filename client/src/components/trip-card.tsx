@@ -350,8 +350,17 @@ export default function TripCard({ trip }: TripCardProps) {
             </div>
             
             <div className="flex items-center" data-testid={`trip-price-${trip.id}`}>
-              <DollarSign className="h-4 w-4 mr-2 text-ceylon-blue flex-shrink-0" />
-              <span className="font-semibold text-ceylon-green">LKR {trip.price}/person</span>
+              {!trip.price || Number(trip.price) === 0 ? (
+                <>
+                  <span className="text-lg mr-2">💚</span>
+                  <span className="font-semibold text-ceylon-green">Free Trip</span>
+                </>
+              ) : (
+                <>
+                  <DollarSign className="h-4 w-4 mr-2 text-ceylon-blue flex-shrink-0" />
+                  <span className="font-semibold text-ceylon-green">LKR {trip.price}/person</span>
+                </>
+              )}
             </div>
           </div>
           
