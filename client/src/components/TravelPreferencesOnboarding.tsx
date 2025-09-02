@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
 
 interface TravelPreferencesOnboardingProps {
   isOpen: boolean;
@@ -49,10 +50,16 @@ export default function TravelPreferencesOnboarding({
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const savePreferencesMutation = useMutation({
     mutationFn: (data: any) => apiRequest('POST', '/api/user/preferences', data),
     onSuccess: () => {
+      // Mark onboarding as completed in localStorage
+      if (user?.id) {
+        localStorage.setItem(`onboarding-completed-${user.id}`, 'true');
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       queryClient.invalidateQueries({ queryKey: ['/api/user/preferences'] });
       toast({ title: "Travel preferences saved!" });
@@ -78,6 +85,10 @@ export default function TravelPreferencesOnboarding({
   };
 
   const handleSkip = () => {
+    // Also mark as completed when user skips (they've seen the onboarding)
+    if (user?.id) {
+      localStorage.setItem(`onboarding-completed-${user.id}`, 'true');
+    }
     onClose();
   };
 

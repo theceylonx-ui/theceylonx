@@ -35,10 +35,20 @@ export default function Home() {
   // Show onboarding for authenticated users without preferences
   useEffect(() => {
     if (user && userPreferences !== undefined) {
-      const hasPreferences = userPreferences && 
-        (userPreferences.vibe || userPreferences.whenTravel || userPreferences.travelStyle);
+      // Check if user has completed onboarding before (stored in localStorage)
+      const hasCompletedOnboarding = localStorage.getItem(`onboarding-completed-${user.id}`) === 'true';
       
-      if (!hasPreferences) {
+      // Also check if they have any preferences data (fallback check)
+      const hasPreferences = userPreferences && (
+        userPreferences.vibe || 
+        userPreferences.whenTravel || 
+        userPreferences.travelStyle ||
+        userPreferences.preferredRegions?.length > 0 ||
+        userPreferences.interests?.length > 0
+      );
+      
+      // Show onboarding only if they haven't completed it and don't have preferences
+      if (!hasCompletedOnboarding && !hasPreferences) {
         setShowOnboarding(true);
       }
     }
