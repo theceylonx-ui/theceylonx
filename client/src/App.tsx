@@ -30,6 +30,7 @@ import ChatPage from "@/pages/chat";
 import UserDeletion from "@/pages/user-deletion";
 import CalendarPage from "@/pages/calendar";
 import TravelStyleSettings from "@/pages/travel-style-settings";
+import ChatBuddy from "@/pages/chat-buddy";
 import { FloatingActionMenu } from "@/components/floating-action-menu";
 
 function Router() {
@@ -95,6 +96,7 @@ function Router() {
             <Route path="/travel-style-settings" component={TravelStyleSettings} />
             <Route path="/chat" component={ChatPage} />
             <Route path="/chat/:threadId" component={ChatPage} />
+            <Route path="/chat-buddy" component={ChatBuddy} />
             <Route path="/user/delete" component={UserDeletion} />
             <Route path="/admin" component={AdminDashboardPage} />
             <Route path="/report-trip/:id" component={ReportTripPage} />

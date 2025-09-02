@@ -195,6 +195,8 @@ export const threadUsers = pgTable("thread_users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   threadId: varchar("thread_id").notNull(),
   userId: varchar("user_id").notNull(),
+  unreadCount: integer("unread_count").default(0),
+  lastReadAt: timestamp("last_read_at"),
   joinedAt: timestamp("joined_at").defaultNow(),
 }, (table) => ({
   // Unique constraint to prevent duplicate memberships

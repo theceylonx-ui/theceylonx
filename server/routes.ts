@@ -1935,6 +1935,174 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // NEW: Trip-specific chat endpoints for Chat Buddy functionality
+  
+  // Get trip participation status for current user
+  app.get('/api/trips/:tripId/status', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const tripId = req.params.tripId;
+
+      const interestRequest = await storage.getTripInterestRequestByUserAndTrip(userId, tripId);
+      const status = interestRequest?.status || 'none';
+      
+      res.json({ status, chatThreadId: interestRequest?.chatThreadId || null });
+    } catch (error) {
+      console.error("Error fetching trip status:", error);
+      res.status(500).json({ message: "Failed to fetch trip status" });
+    }
+  });
+
+  // Get chat-eligible users for a trip (only for accepted participants)
+  app.get('/api/chat/users', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const tripId = req.query.tripId as string;
+
+      if (!tripId) {
+        return res.status(400).json({ message: "tripId is required" });
+      }
+
+      // Check if user has accepted status for this trip
+      const userRequest = await storage.getTripInterestRequestByUserAndTrip(userId, tripId);
+      if (userRequest?.status !== 'accepted') {
+        return res.status(403).json({ message: "Access denied. Trip request not accepted." });
+      }
+
+      // Get all accepted participants for this trip
+      const acceptedUsers = await storage.getAcceptedTripParticipants(tripId);
+      res.json(acceptedUsers);
+    } catch (error) {
+      console.error("Error fetching chat users:", error);
+      res.status(500).json({ message: "Failed to fetch chat users" });
+    }
+  });
+
+  // Get chat thread for a specific user within a trip context
+  app.get('/api/chat/:userId', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const currentUserId = req.user.id;
+      const otherUserId = req.params.userId;
+      const tripId = req.query.tripId as string;
+
+      if (!tripId) {
+        return res.status(400).json({ message: "tripId is required" });
+      }
+
+      // Verify both users are accepted participants
+      const [currentUserRequest, otherUserRequest] = await Promise.all([
+        storage.getTripInterestRequestByUserAndTrip(currentUserId, tripId),
+        storage.getTripInterestRequestByUserAndTrip(otherUserId, tripId)
+      ]);
+
+      if (currentUserRequest?.status !== 'accepted' || otherUserRequest?.status !== 'accepted') {
+        return res.status(403).json({ message: "Access denied. Both users must have accepted trip requests." });
+      }
+
+      // Find or create chat thread for this trip + user pair
+      let chatThread = await storage.getTripChatThread(tripId, currentUserId, otherUserId);
+      
+      if (!chatThread) {
+        // Create new thread
+        chatThread = await storage.createChatThread({ tripId });
+        await storage.addUserToThread({ threadId: chatThread.id, userId: currentUserId });
+        await storage.addUserToThread({ threadId: chatThread.id, userId: otherUserId });
+      }
+
+      const messages = await storage.getThreadMessages(chatThread.id);
+      res.json({ thread: chatThread, messages });
+    } catch (error) {
+      console.error("Error fetching chat thread:", error);
+      res.status(500).json({ message: "Failed to fetch chat thread" });
+    }
+  });
+
+  // Send message with trip context validation
+  app.post('/api/chat/:userId', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const currentUserId = req.user.id;
+      const otherUserId = req.params.userId;
+      const tripId = req.query.tripId as string;
+      const { message } = req.body;
+
+      if (!tripId || !message?.trim()) {
+        return res.status(400).json({ message: "tripId and message are required" });
+      }
+
+      // Verify both users are accepted participants
+      const [currentUserRequest, otherUserRequest] = await Promise.all([
+        storage.getTripInterestRequestByUserAndTrip(currentUserId, tripId),
+        storage.getTripInterestRequestByUserAndTrip(otherUserId, tripId)
+      ]);
+
+      if (currentUserRequest?.status !== 'accepted' || otherUserRequest?.status !== 'accepted') {
+        return res.status(403).json({ message: "Access denied. Both users must have accepted trip requests." });
+      }
+
+      // Get or create chat thread
+      let chatThread = await storage.getTripChatThread(tripId, currentUserId, otherUserId);
+      
+      if (!chatThread) {
+        chatThread = await storage.createChatThread({ tripId });
+        await storage.addUserToThread({ threadId: chatThread.id, userId: currentUserId });
+        await storage.addUserToThread({ threadId: chatThread.id, userId: otherUserId });
+      }
+
+      // Create message
+      const newMessage = await storage.createMessage({
+        threadId: chatThread.id,
+        authorId: currentUserId,
+        body: message.trim()
+      });
+
+      // Update unread count for other user
+      await storage.incrementUnreadCount(chatThread.id, otherUserId);
+
+      // Create notification for other user
+      const currentUser = await storage.getUser(currentUserId);
+      await storage.createNotification({
+        userId: otherUserId,
+        type: "chat_message",
+        category: "social", 
+        priority: "normal",
+        title: "New Trip Message",
+        message: `${currentUser?.firstName || 'Someone'}: ${message.substring(0, 60)}${message.length > 60 ? '...' : ''}`,
+        threadId: chatThread.id,
+        relatedUserId: currentUserId,
+        actionUrl: `/chat-buddy?tripId=${tripId}&userId=${currentUserId}`,
+        isRead: false,
+      });
+
+      res.json(newMessage);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  // Mark thread as read (reset unread count)
+  app.post('/api/chat/:userId/read', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const currentUserId = req.user.id;
+      const otherUserId = req.params.userId;
+      const tripId = req.query.tripId as string;
+
+      if (!tripId) {
+        return res.status(400).json({ message: "tripId is required" });
+      }
+
+      const chatThread = await storage.getTripChatThread(tripId, currentUserId, otherUserId);
+      if (chatThread) {
+        await storage.resetUnreadCount(chatThread.id, currentUserId);
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking as read:", error);
+      res.status(500).json({ message: "Failed to mark as read" });
+    }
+  });
+
   // Calendar Events API
   app.get("/api/calendar/events", unifiedAuthGuard, async (req: any, res: any) => {
     try {

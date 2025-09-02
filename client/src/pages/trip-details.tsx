@@ -506,9 +506,9 @@ export default function TripDetails({ params }: TripDetailsProps) {
                           <Button 
                             size="sm" 
                             className="mt-2 bg-green-600 hover:bg-green-700 text-white"
-                            onClick={() => window.location.href = '/chat'}
+                            onClick={() => window.location.href = `/chat-buddy?tripId=${trip.id}`}
                           >
-                            Chat with Organizer
+                            Chat with Trip Members
                           </Button>
                         </div>
                       )}

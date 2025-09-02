@@ -1,0 +1,70 @@
+Goal
+Fix and redesign Chat Buddy so it only becomes usable after the trip organizer accepts the user’s request. Before acceptance, show a clear empty state with tips. After acceptance, show a 2-panel chat UI. Include quick UX enhancements (typing indicator, canned messages, unread counts).
+Functional Rules
+Gating & Visibility
+If trip_status !== 'accepted' for (currentUser, tripId):
+Hide user list and message input.
+Render Empty State (see copy below) inside the chat panel.
+If trip_status === 'accepted':
+Show Left panel = chat users/threads scoped to tripId.
+Show Right panel = conversation history + composer.
+Conversation Start
+Chat thread is created on first message after acceptance.
+If a thread exists but has zero messages → show “No chat available yet.” and tips.
+Notifications
+On acceptance, send an in-app notification:
+Title: “Your chat is unlocked”
+Body: “The organizer accepted your request. You can now message them.”
+Deep link: app://chat?tripId=<id>&userId=<organizerId>
+UI / UX
+Layout (accepted state):
+Left panel (Threads): avatar, name, last message snippet, unread count badge.
+Right panel (Chat): message list (time-stamped, left/right aligned), composer with text input + Send.
+Empty State (not accepted yet):
+Headline: “Chat will unlock after acceptance”
+Body: “You can message the organizer once they accept your request for this trip.”
+Tips (below):
+“Use ⭐ Interested on trips you like; the organizer will review your request.”
+“Once accepted, coordinate routes, costs, and meeting points here.”
+“Be respectful and keep messages trip-focused.”
+Optional CTA: “View trip details”
+No-messages state (accepted but empty):
+Show: “No chat available yet.” + the same Tips block.
+Optional Nice-to-Haves (implement if quick)
+Typing indicator (post-acceptance): show “Typing…” in the thread header when the other user is composing.
+Canned quick messages (buttons above the composer), e.g.:
+“Hi! Thanks for accepting. Where shall we meet?”
+“Can we confirm the cost and split?”
+“What time should we start?”
+Unread counts per thread:
+Increment on incoming messages.
+Reset unread to 0 when the thread is opened (focus event).
+API & Guards
+GET /api/trips/:tripId/status → { status: 'pending'|'accepted'|'rejected' }
+GET /api/chat/users?tripId=... → list of chat-eligible participants (accepted only)
+GET /api/chat/:userId?tripId=... → message history (accepted only)
+POST /api/chat/:userId?tripId=... { message } → send message (server must validate accepted)
+Realtime: WebSocket (preferred) or short polling for:
+new messages
+typing events
+unread updates
+Server-side guards:
+Deny read/write unless:
+user is a participant on tripId, and
+status is accepted for that pair.
+Data model notes:
+Threads are scoped by tripId to avoid mixing multiple trips with the same user.
+Store unread_count per thread per user; update atomically.
+Error & Edge Handling
+Rejected/Cancelled: lock thread; banner “Chat unavailable — request not accepted.”
+Trip closed: make history read-only; banner “Trip closed; chat is read-only.”
+Network errors: show non-blocking toast; keep local draft.
+Acceptance Criteria
+Before acceptance → Empty State + Tips; no user list or composer visible.
+After acceptance → two-panel UI appears; sending/receiving works in real time.
+No-messages threads show “No chat available yet.” + Tips.
+Typing indicator shows when the peer is composing (if implemented).
+Canned messages insert text into the composer instantly (if implemented).
+Unread counts show on left panel, and reset to 0 on thread open (if implemented).
+All sends blocked server-side when not accepted; user gets a friendly error toast.
+Threads and messages are correctly scoped by tripId.

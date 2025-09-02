@@ -1832,6 +1832,67 @@ export class DatabaseStorage implements IStorage {
       organizer,
     }));
   }
+
+  // Additional chat-related methods for Chat Buddy functionality
+  async getAcceptedTripParticipants(tripId: string): Promise<User[]> {
+    const result = await db
+      .select()
+      .from(tripInterestRequests)
+      .leftJoin(users, eq(tripInterestRequests.userId, users.id))
+      .where(and(
+        eq(tripInterestRequests.tripId, tripId),
+        eq(tripInterestRequests.status, 'accepted')
+      ));
+    
+    return result.map(({ users: user }) => user!).filter(Boolean);
+  }
+
+  async getTripChatThread(tripId: string, user1Id: string, user2Id: string): Promise<ChatThread | undefined> {
+    // Find existing thread for this trip between these users
+    const existingThreadResult = await db
+      .select()
+      .from(chatThreads)
+      .where(eq(chatThreads.tripId, tripId));
+
+    for (const thread of existingThreadResult) {
+      const threadUserIds = await db
+        .select({ userId: threadUsers.userId })
+        .from(threadUsers)
+        .where(eq(threadUsers.threadId, thread.id));
+      
+      const userIds = threadUserIds.map(tu => tu.userId);
+      if (userIds.includes(user1Id) && userIds.includes(user2Id)) {
+        return thread;
+      }
+    }
+
+    return undefined;
+  }
+
+  async incrementUnreadCount(threadId: string, userId: string): Promise<void> {
+    await db
+      .update(threadUsers)
+      .set({ 
+        unreadCount: sql`${threadUsers.unreadCount} + 1`
+      })
+      .where(and(
+        eq(threadUsers.threadId, threadId),
+        eq(threadUsers.userId, userId)
+      ));
+  }
+
+  async resetUnreadCount(threadId: string, userId: string): Promise<void> {
+    await db
+      .update(threadUsers)
+      .set({ 
+        unreadCount: 0,
+        lastReadAt: new Date()
+      })
+      .where(and(
+        eq(threadUsers.threadId, threadId),
+        eq(threadUsers.userId, userId)
+      ));
+  }
 }
 
 export const storage = new DatabaseStorage();
