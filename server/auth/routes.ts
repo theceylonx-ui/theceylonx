@@ -41,8 +41,15 @@ router.get('/google/callback',
     
     // Use localhost for development, production URL for production
     // Since NODE_ENV might not be set, also check if we're running on localhost
-    const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.APP_URL || req.get('host')?.includes('localhost');
+    const isDevelopment = process.env.NODE_ENV === 'development' || req.get('host')?.includes('localhost');
     const baseUrl = isDevelopment ? 'http://localhost:5000' : (process.env.APP_URL || 'https://www.theceylonx.com');
+    
+    console.log('🔍 Google OAuth callback URL detection:', {
+      NODE_ENV: process.env.NODE_ENV,
+      host: req.get('host'),
+      isDevelopment,
+      baseUrl
+    });
     
     if (!req.user) {
       console.log('❌ Google OAuth failed - no user object received');
@@ -74,8 +81,15 @@ router.get('/facebook/callback',
     
     // Use localhost for development, production URL for production
     // Since NODE_ENV might not be set, also check if we're running on localhost
-    const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.APP_URL || req.get('host')?.includes('localhost');
+    const isDevelopment = process.env.NODE_ENV === 'development' || req.get('host')?.includes('localhost');
     const baseUrl = isDevelopment ? 'http://localhost:5000' : (process.env.APP_URL || 'https://www.theceylonx.com');
+    
+    console.log('🔍 Facebook OAuth callback URL detection:', {
+      NODE_ENV: process.env.NODE_ENV,
+      host: req.get('host'),
+      isDevelopment,
+      baseUrl
+    });
     
     if (!req.user) {
       console.log('❌ Facebook OAuth failed - no user object received');
