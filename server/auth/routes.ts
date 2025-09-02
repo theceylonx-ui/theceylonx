@@ -129,7 +129,11 @@ router.post('/email/start', authRateLimit, async (req: Request, res: Response) =
 });
 
 router.get('/email/verify', async (req: Request, res: Response) => {
-  return res.redirect(`${process.env.APP_URL || ''}/auth/signin?error=email_auth_disabled`);
+  const baseUrl = process.env.APP_URL || 
+    (process.env.NODE_ENV === 'production' 
+      ? 'https://theceylonx.com' 
+      : 'http://localhost:5000');
+  return res.redirect(`${baseUrl}/auth/signin?error=email_auth_disabled`);
 });
 
 // Phone authentication removed - Google OAuth only
