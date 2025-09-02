@@ -106,7 +106,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/auth/signin";
+          window.location.href = "/api/login";
         }, 500);
         return;
       }
@@ -138,7 +138,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/auth/signin";
+          window.location.href = "/api/login";
         }, 500);
         return;
       }
@@ -172,7 +172,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/auth/signin";
+          window.location.href = "/api/login";
         }, 500);
         return;
       }
@@ -204,7 +204,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/auth/signin";
+          window.location.href = "/api/login";
         }, 500);
         return;
       }
@@ -234,7 +234,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
 
   const handleAddComment = () => {
     if (!isAuthenticated) {
-      window.location.href = "/auth/signin";
+      window.location.href = "/api/login";
       return;
     }
     if (newComment.trim()) {
@@ -244,7 +244,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
 
   const handleReport = () => {
     if (!isAuthenticated) {
-      window.location.href = "/auth/signin";
+      window.location.href = "/api/login";
       return;
     }
     // Navigate to dedicated report page
@@ -282,7 +282,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
 
   const handleSendInterest = () => {
     if (!isAuthenticated) {
-      window.location.href = "/auth/signin";
+      window.location.href = "/api/login";
       return;
     }
     if (existingInterestRequest) {

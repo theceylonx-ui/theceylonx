@@ -460,10 +460,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Comment routes
-  app.post('/api/trips/:id/comments', authGuard, async (req: any, res) => {
+  app.post('/api/trips/:id/comments', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.claims?.sub;
       const tripId = req.params.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
       const commentData = insertCommentSchema.parse({
         ...req.body,
         tripId,
@@ -511,10 +516,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced comment deletion with trip owner moderation
-  app.delete('/api/comments/:id', authGuard, async (req: any, res) => {
+  app.delete('/api/comments/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.claims?.sub;
       const commentId = req.params.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
       
       // Get comment details to check ownership and trip ownership
       const comments = await storage.getTripComments(""); // We need a better way to get a single comment
