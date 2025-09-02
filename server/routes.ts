@@ -66,7 +66,8 @@ interface UnifiedUser {
   claims?: any; // For Replit Auth compatibility
 }
 
-declare module 'express' {
+// Extend Express Request to include our unified user
+declare module 'express-serve-static-core' {
   interface Request {
     user?: UnifiedUser;
   }
@@ -82,8 +83,7 @@ import {
   insertVoteSchema,
   insertUserPreferencesSchema,
   insertUserInteractionSchema,
-  insertMessageSchema,
-  User
+  insertMessageSchema
 } from "@shared/schema";
 import { enhancedRecommendationService } from "./ml/enhancedRecommendationService";
 import { z } from "zod";
@@ -855,20 +855,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         switch (action) {
           case 'delete_trip':
             // Delete the reported trip
-            await storage.deleteTrip(report.tripId);
+            if (report.tripId) {
+              await storage.deleteTrip(report.tripId);
+            }
             console.log(`Admin deleted trip ${report.tripId} due to report ${id}`);
             break;
           
           case 'suspend_user':
             // In a real app, you'd implement user suspension
             // For now, we'll just log it
-            console.log(`Admin would suspend user ${report.tripOrganizerId} due to report ${id}`);
+            // Get the trip to find the organizer ID
+            if (report.tripId) {
+              const reportedTrip = await storage.getTrip(report.tripId);
+              console.log(`Admin would suspend user ${reportedTrip?.organizerId} due to report ${id}`);
+            }
             // TODO: Implement user suspension logic
             break;
           
           case 'edit_trip':
             // This would redirect to trip edit interface
-            console.log(`Admin initiated edit for trip ${report.tripId} due to report ${id}`);
+            if (report.tripId) {
+              console.log(`Admin initiated edit for trip ${report.tripId} due to report ${id}`);
+            }
             break;
         }
       }
@@ -1830,7 +1838,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Calendar Events API
-  app.get("/api/calendar/events", unifiedAuthGuard, async (req, res) => {
+  app.get("/api/calendar/events", unifiedAuthGuard, async (req: any, res: any) => {
     try {
       const userId = req.user.id;
       const { startDate, endDate } = req.query;
@@ -1846,7 +1854,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post("/api/calendar/events", unifiedAuthGuard, async (req, res) => {
+  app.post("/api/calendar/events", unifiedAuthGuard, async (req: any, res: any) => {
     try {
       const userId = req.user.id;
       const eventData = { ...req.body, userId };
@@ -1859,7 +1867,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/calendar/aggregate", unifiedAuthGuard, async (req, res) => {
+  app.get("/api/calendar/aggregate", unifiedAuthGuard, async (req: any, res: any) => {
     try {
       const userId = req.user.id;
       const { startDate, endDate } = req.query;
