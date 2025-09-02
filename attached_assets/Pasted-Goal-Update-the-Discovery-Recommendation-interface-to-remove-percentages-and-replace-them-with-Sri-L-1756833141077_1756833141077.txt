@@ -1,0 +1,61 @@
+Goal
+Update the Discovery/Recommendation interface to remove percentages and replace them with Sri Lanka–specific badges and clear explanations. Blend Trending (social proof) with For You (personal picks), and make editing preferences simple and visible.
+Changes to Implement
+1. Section & Top Bar
+Rename Smart Travel Picks for You → Trending Trips & For You.
+Subheading: “Discover trips popular with other travelers and tailored to your travel style.”
+Add Dropdown (default = Trending):
+Trending
+Near You
+Fresh Finds
+For You (unlocks after ≥3 actions)
+Keep Personalization toggle (On/Off) with tooltip: “Turn off to see all trips without reordering.”
+Keep Reset button.
+Hide Analytics from end-user (keep only for admin).
+2. Card Layout
+Header: Trip name + small region chip (e.g. “Hill Country”).
+Body:
+Date & time
+Seats available
+Price (💚 Free if 0/null)
+Badges row (max 2–3):
+⭐ Popular with X travelers
+🌞 Best season in Hill Country
+✨ New this week
+🐆 Safari season
+🚂 Tea & Train views
+🧘 Ayurveda retreat
+🌊 Surf season
+Why tooltip:
+Example: “Why you’re seeing this: Matches your Beach + Family preference.”
+Footer actions: 📌 Pin · ⭐ Interested · ↔ Share · 💬 Ask
+3. Missing Features to Add (critical)
+Clear “Why” explanation: Each card must include a tooltip/hover explaining why it was recommended.
+Sri Lanka–specific badges: Seasonal & cultural tags (surf season, safari, Ayurveda, tea & trains, hidden gems).
+Blend Trending + For You: Show both community-based and personalized recommendations.
+Edit Travel Style link: Add CTA above feed → “Fine-tune your Travel Style →” linking to Profile → Travel Style Settings.
+Consistent iconography: Replace all % with icons and badges only.
+4. Empty/Onboarding States
+If no trips: “No trips found. Try Fresh Finds or update your Travel Style Settings.”
+If no preferences set: show nudge banner: “Want better picks? Answer 3 quick questions in Travel Style Settings.”
+Backend & ML Adjustments
+Continue using ML engine with weighted factors (popularity, seasonality, freshness, diversity, safety, novelty, preferences).
+Do not show percentages to user → expose only badges + reasons.
+Ensure “For You” tab blends ML weights + user preferences.
+Badge data to be included in API response:
+{
+  "trip_id": "123",
+  "badges": [
+    "⭐ Popular with 32 travelers",
+    "🌞 Best season in Hill Country"
+  ],
+  "why_reason": "Matches your Beach + Family preference"
+}
+Acceptance Criteria
+No % values in UI.
+All cards display badges (2–3) and tooltip with reason.
+Sri Lanka–specific seasonal/cultural badges integrated.
+Users can easily access Travel Style Settings via CTA.
+Discovery feed blends Trending (social proof) + For You (preferences).
+Empty/onboarding states give clear next steps.
+Consistent iconography across all cards.

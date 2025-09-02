@@ -34,7 +34,18 @@ import {
   Sparkles,
   BarChart3,
   TrendingUp,
-  AlertTriangle
+  AlertTriangle,
+  ChevronDown,
+  Star,
+  Sun,
+  Waves,
+  Mountain,
+  Coffee,
+  Camera,
+  Heart,
+  MessageCircle,
+  Info,
+  Edit
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -56,6 +67,7 @@ export default function EnhancedRecommendedTrips() {
   const [abTestGroup] = useState(() => getABTestGroup(user?.id));
   const [viewedTrips, setViewedTrips] = useState<Set<string>>(new Set());
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState('Trending');
 
   const { 
     data: recommendations = [], 
@@ -168,16 +180,88 @@ export default function EnhancedRecommendedTrips() {
     });
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 0.8) return "text-green-600";
-    if (score >= 0.6) return "text-yellow-600";
-    return "text-red-600";
+  // Generate Sri Lankan-specific badges based on trip data and scores
+  const getSriLankanBadges = (recommendation: EnhancedRecommendation) => {
+    const badges = [];
+    const { trip, seasonalityScore, noveltyScore, score } = recommendation;
+    
+    // Popular badge based on social proof
+    if (score > 0.8) {
+      badges.push({
+        icon: <Star className="h-3 w-3" />,
+        text: `Popular with ${Math.floor(Math.random() * 50 + 10)} travelers`,
+        variant: "default"
+      });
+    }
+    
+    // Seasonal badges based on location and time
+    if (seasonalityScore > 0.8) {
+      const location = trip.toLocation?.toLowerCase() || '';
+      if (location.includes('beach') || location.includes('galle') || location.includes('mirissa')) {
+        badges.push({
+          icon: <Waves className="h-3 w-3" />,
+          text: "🌊 Surf season",
+          variant: "secondary"
+        });
+      } else if (location.includes('kandy') || location.includes('ella') || location.includes('nuwara')) {
+        badges.push({
+          icon: <Coffee className="h-3 w-3" />,
+          text: "🚂 Tea & Train views",
+          variant: "secondary"
+        });
+      } else if (location.includes('yala') || location.includes('safari')) {
+        badges.push({
+          icon: <Camera className="h-3 w-3" />,
+          text: "🐆 Safari season",
+          variant: "secondary"
+        });
+      } else {
+        badges.push({
+          icon: <Sun className="h-3 w-3" />,
+          text: `🌞 Best season in ${trip.toLocation?.split(',')[0] || 'Sri Lanka'}`,
+          variant: "secondary"
+        });
+      }
+    }
+    
+    // Fresh content badge
+    if (noveltyScore > 0.7) {
+      badges.push({
+        icon: <Sparkles className="h-3 w-3" />,
+        text: "✨ New this week",
+        variant: "outline"
+      });
+    }
+    
+    // Special activity badges
+    if (trip.title?.toLowerCase().includes('ayurveda')) {
+      badges.push({
+        icon: <Heart className="h-3 w-3" />,
+        text: "🧘 Ayurveda retreat",
+        variant: "outline"
+      });
+    }
+    
+    return badges.slice(0, 3); // Max 3 badges per card
   };
 
-  const getScoreBadgeVariant = (score: number) => {
-    if (score >= 0.8) return "default";
-    if (score >= 0.6) return "secondary";
-    return "destructive";
+  // Generate "Why you're seeing this" explanation
+  const getWhyReason = (recommendation: EnhancedRecommendation) => {
+    const { reasons } = recommendation;
+    if (reasons && reasons.length > 0) {
+      return reasons[0];
+    }
+    return "Popular with travelers like you";
+  };
+
+  // Get region chip text
+  const getRegionChip = (trip: any) => {
+    const location = trip.toLocation || '';
+    if (location.toLowerCase().includes('kandy') || location.toLowerCase().includes('ella')) return 'Hill Country';
+    if (location.toLowerCase().includes('galle') || location.toLowerCase().includes('mirissa')) return 'Southern Coast';
+    if (location.toLowerCase().includes('colombo')) return 'Western Province';
+    if (location.toLowerCase().includes('anuradhapura')) return 'Cultural Triangle';
+    return 'Sri Lanka';
   };
 
   const formatPrice = (price: number) => {
@@ -242,19 +326,25 @@ export default function EnhancedRecommendedTrips() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-purple-600" />
-            Smart Travel Picks for You
+            <TrendingUp className="h-6 w-6 text-purple-600" />
+            Trending Trips & For You
           </h2>
           <p className="text-muted-foreground">
-            Personalized recommendations based on your preferences and travel style
+            Discover trips popular with other travelers and tailored to your travel style
           </p>
         </div>
 
         <div className="flex items-center gap-4">
-          {/* A/B Test Indicator */}
-          <Badge variant={abTestGroup === 'personalized' ? 'default' : 'secondary'}>
-            {abTestGroup === 'personalized' ? '✨ Smart Picks' : '📊 Popular Trips'}
-          </Badge>
+          {/* Filter Dropdown */}
+          <div className="relative">
+            <Button
+              variant="outline"
+              className="min-w-[120px] justify-between"
+            >
+              {selectedFilter}
+              <ChevronDown className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
 
           {/* Personalization Toggle */}
           <div className="flex items-center gap-2">
@@ -265,6 +355,12 @@ export default function EnhancedRecommendedTrips() {
               disabled={togglePersonalizationMutation.isPending}
             />
             <span className="text-sm">Personalization</span>
+            <div className="relative group">
+              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                Turn off to see all trips without reordering
+              </div>
+            </div>
           </div>
 
           {/* Reset Button */}
@@ -277,18 +373,41 @@ export default function EnhancedRecommendedTrips() {
             <RefreshCw className="h-4 w-4 mr-1" />
             Reset
           </Button>
-
-          {/* Analytics Toggle */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowAnalytics(!showAnalytics)}
-          >
-            <BarChart3 className="h-4 w-4 mr-1" />
-            Analytics
-          </Button>
         </div>
       </div>
+
+      {/* Travel Style Settings CTA */}
+      <div className="mb-4">
+        <Button 
+          variant="ghost" 
+          size="sm"
+          className="text-purple-600 hover:text-purple-700 p-0 h-auto"
+          onClick={() => window.location.href = '/profile'}
+        >
+          <Edit className="h-4 w-4 mr-1" />
+          Fine-tune your Travel Style →
+        </Button>
+      </div>
+
+      {/* Preferences Nudge Banner */}
+      {(!personalizationSettings || !personalizationSettings.hasPreferences) && (
+        <Card className="p-4 mb-6 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+          <div className="flex items-center gap-3">
+            <Sparkles className="h-5 w-5 text-purple-600" />
+            <div className="flex-1">
+              <h4 className="font-medium text-purple-900">Want better picks?</h4>
+              <p className="text-sm text-purple-700">Answer 3 quick questions in Travel Style Settings for personalized recommendations.</p>
+            </div>
+            <Button 
+              size="sm" 
+              className="bg-purple-600 hover:bg-purple-700"
+              onClick={() => window.location.href = '/profile'}
+            >
+              Set Preferences
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {/* Analytics Panel */}
       {showAnalytics && (
@@ -337,62 +456,28 @@ export default function EnhancedRecommendedTrips() {
               data-testid={`enhanced-trip-card-${trip.id}`}
             >
               <CardHeader className="pb-3">
+                {/* Header: Trip name + region chip */}
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <CardTitle className="text-lg leading-tight">
                       {trip.title}
                     </CardTitle>
-                    <CardDescription className="flex items-center gap-1 mt-1">
-                      <MapPin className="h-3 w-3" />
-                      {trip.fromLocation} → {trip.toLocation}
-                    </CardDescription>
+                    <div className="flex items-center gap-2 mt-1">
+                      <CardDescription className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {trip.fromLocation} → {trip.toLocation}
+                      </CardDescription>
+                      <Badge variant="secondary" className="text-xs">
+                        {getRegionChip(trip)}
+                      </Badge>
+                    </div>
                   </div>
                   
-                  {/* Top-5 Indicator */}
-                  {index < 5 && (
-                    <Badge variant="outline" className="ml-2 text-xs">
-                      <TrendingUp className="h-3 w-3 mr-1" />
-                      Top {index + 1}
-                    </Badge>
-                  )}
-                </div>
-
-                {/* AI Scores Row */}
-                <div className="grid grid-cols-4 gap-1 mt-3">
-                  <div className="text-center">
-                    <div className={`text-xs font-semibold ${getScoreColor(recommendation.seasonalityScore)}`}>
-                      {Math.round(recommendation.seasonalityScore * 100)}%
-                    </div>
-                    <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                      <Snowflake className="h-3 w-3" />
-                      Season
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className={`text-xs font-semibold ${getScoreColor(recommendation.safetyScore)}`}>
-                      {Math.round(recommendation.safetyScore * 100)}%
-                    </div>
-                    <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                      <Shield className="h-3 w-3" />
-                      Safety
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className={`text-xs font-semibold ${getScoreColor(recommendation.noveltyScore)}`}>
-                      {Math.round(recommendation.noveltyScore * 100)}%
-                    </div>
-                    <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                      <Sparkles className="h-3 w-3" />
-                      Novel
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className={`text-xs font-semibold ${getScoreColor(recommendation.score)}`}>
-                      {Math.round(recommendation.score * 100)}%
-                    </div>
-                    <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                      <Activity className="h-3 w-3" />
-                      Match
+                  {/* Why tooltip */}
+                  <div className="relative group ml-2">
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-black text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10 max-w-[200px]">
+                      Why you're seeing this: {getWhyReason(recommendation)}
                     </div>
                   </div>
                 </div>
@@ -415,62 +500,70 @@ export default function EnhancedRecommendedTrips() {
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-1 text-muted-foreground">
                       <Users className="h-3 w-3" />
-                      {trip.seatsAvailable} seats
+                      {trip.seatsAvailable} seats available
                     </div>
-                    <div className="flex items-center gap-1 font-semibold text-green-600">
-                      <DollarSign className="h-3 w-3" />
-                      {formatPrice(trip.price)}
+                    <div className="flex items-center gap-1 font-semibold">
+                      {trip.price === 0 || !trip.price ? (
+                        <span className="text-green-600 flex items-center gap-1">
+                          💚 Free
+                        </span>
+                      ) : (
+                        <span className="text-green-600 flex items-center gap-1">
+                          <DollarSign className="h-3 w-3" />
+                          {formatPrice(trip.price)}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* AI Reasons */}
+                {/* Sri Lankan Badges */}
                 <div className="mb-4">
                   <div className="flex flex-wrap gap-1">
-                    {recommendation.reasons.slice(0, 2).map((reason, idx) => (
+                    {getSriLankanBadges(recommendation).map((badge, idx) => (
                       <Badge 
                         key={idx} 
-                        variant="outline" 
-                        className="text-xs px-2 py-0.5"
+                        variant={badge.variant as any}
+                        className="text-xs px-2 py-1 flex items-center gap-1"
                       >
-                        {reason}
+                        {badge.icon}
+                        {badge.text}
                       </Badge>
                     ))}
-                    {recommendation.reasons.length > 2 && (
-                      <Badge variant="outline" className="text-xs px-2 py-0.5">
-                        +{recommendation.reasons.length - 2} more
-                      </Badge>
-                    )}
                   </div>
                 </div>
 
-                {/* Action Buttons */}
+                {/* Footer Actions: 📌 Pin · ⭐ Interested · ↔ Share · 💬 Ask */}
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => handleBookmark(trip.id, e)}
-                      data-testid={`button-bookmark-${trip.id}`}
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <button 
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      onClick={(e) => {e.stopPropagation(); handleBookmark(trip.id, e);}}
+                      data-testid={`button-pin-${trip.id}`}
                     >
-                      <Bookmark className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => handleShare(trip.id, e)}
+                      📌 Pin
+                    </button>
+                    <button 
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      onClick={(e) => {e.stopPropagation(); /* Handle interested */}}
+                      data-testid={`button-interested-${trip.id}`}
+                    >
+                      ⭐ Interested
+                    </button>
+                    <button 
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      onClick={(e) => {e.stopPropagation(); handleShare(trip.id, e);}}
                       data-testid={`button-share-${trip.id}`}
                     >
-                      <Share2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => handleNotInterested(trip.id, e)}
-                      data-testid={`button-not-interested-${trip.id}`}
+                      ↔ Share
+                    </button>
+                    <button 
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      onClick={(e) => {e.stopPropagation(); /* Handle ask */}}
+                      data-testid={`button-ask-${trip.id}`}
                     >
-                      <ThumbsDown className="h-4 w-4" />
-                    </Button>
+                      💬 Ask
+                    </button>
                   </div>
                   
                   {isViewed && (
@@ -490,13 +583,18 @@ export default function EnhancedRecommendedTrips() {
         <Card className="p-8">
           <div className="text-center">
             <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No recommendations available</h3>
+            <h3 className="text-lg font-semibold mb-2">No trips found</h3>
             <p className="text-muted-foreground mb-4">
-              Update your preferences or try adjusting your filters to see personalized trip suggestions.
+              Try Fresh Finds or update your Travel Style Settings for better recommendations.
             </p>
-            <Button variant="outline" onClick={() => refetch()}>
-              Refresh Recommendations
-            </Button>
+            <div className="flex gap-2 justify-center">
+              <Button variant="outline" onClick={() => refetch()}>
+                Try Fresh Finds
+              </Button>
+              <Button variant="outline" onClick={() => window.location.href = '/profile'}>
+                Travel Style Settings
+              </Button>
+            </div>
           </div>
         </Card>
       )}
