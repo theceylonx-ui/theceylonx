@@ -40,8 +40,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup Replit Auth first
   await setupAuth(app);
 
-  // Mount JWT auth routes for fallback
-  app.use('/api/auth', authRouter);
+  // JWT auth routes disabled - using Replit Auth only
+  // app.use('/api/auth', authRouter);
 
   // User profile routes
   app.patch('/api/user', authGuard, async (req, res) => {
