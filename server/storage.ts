@@ -1037,11 +1037,16 @@ export class DatabaseStorage implements IStorage {
 
   // ML Recommendations implementation
   async getUserPreferences(userId: string): Promise<UserPreferences | undefined> {
-    const [preferences] = await db
-      .select()
-      .from(userPreferences)
-      .where(eq(userPreferences.userId, userId));
-    return preferences;
+    try {
+      const [preferences] = await db
+        .select()
+        .from(userPreferences)
+        .where(eq(userPreferences.userId, userId));
+      return preferences;
+    } catch (error) {
+      console.error("Error getting user preferences:", error);
+      return undefined; // Return undefined if table/column doesn't exist yet
+    }
   }
 
   async upsertUserPreferences(userId: string, prefs: Partial<InsertUserPreferences>): Promise<UserPreferences> {

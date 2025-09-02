@@ -496,7 +496,7 @@ export class EnhancedRecommendationService {
 
     // Budget preferences  
     if (preferences.budgetRange) {
-      const tripPrice = parseFloat(trip.price.toString());
+      const tripPrice = parseFloat((trip.price || 0).toString());
       if (tripPrice >= preferences.budgetRange.min && tripPrice <= preferences.budgetRange.max) {
         score += 1;
       } else if (tripPrice < preferences.budgetRange.min) {
@@ -662,20 +662,89 @@ export class EnhancedRecommendationService {
       conditions.push(sql`DATE(${trips.date}) = DATE(${filters.date.toISOString()})`);
     }
 
+    // Apply additional filters to the base query
+    let finalQuery = query;
     if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+      finalQuery = db
+        .select({
+          id: trips.id,
+          title: trips.title,
+          description: trips.description,
+          fromLocation: trips.fromLocation,
+          toLocation: trips.toLocation,
+          date: trips.date,
+          time: trips.time,
+          seatsAvailable: trips.seatsAvailable,
+          price: trips.price,
+          region: trips.region,
+          contactInfo: trips.contactInfo,
+          notes: trips.notes,
+          organizerId: trips.organizerId,
+          status: trips.status,
+          tags: trips.tags,
+          priceMin: trips.priceMin,
+          priceMax: trips.priceMax,
+          duration: trips.duration,
+          difficulty: trips.difficulty,
+          buddyFriendly: trips.buddyFriendly,
+          seasonality: trips.seasonality,
+          safetyFlags: trips.safetyFlags,
+          viewCount: trips.viewCount,
+          bookingCount: trips.bookingCount,
+          freshBoost: trips.freshBoost,
+          createdAt: trips.createdAt,
+          updatedAt: trips.updatedAt,
+          isDeleted: trips.isDeleted,
+          deletedAt: trips.deletedAt,
+          organizer: {
+            id: users.id,
+            email: users.email,
+            phone: users.phone,
+            name: users.name,
+            image: users.image,
+            provider: users.provider,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            username: users.username,
+            profileImageUrl: users.profileImageUrl,
+            phoneNumber: users.phoneNumber,
+            bio: users.bio,
+            googleId: users.googleId,
+            facebookId: users.facebookId,
+            microsoftId: users.microsoftId,
+            appleId: users.appleId,
+            emailVerified: users.emailVerified,
+            createdAt: users.createdAt,
+            updatedAt: users.updatedAt,
+          }
+        })
+        .from(trips)
+        .innerJoin(users, eq(trips.organizerId, users.id))
+        .where(and(
+          eq(trips.status, 'active'),
+          ne(trips.organizerId, userId),
+          sql`${trips.date} >= CURRENT_DATE`,
+          ...conditions
+        ));
     }
 
-    return await query.limit(100); // Get more candidates for better filtering
+    return await finalQuery.limit(100); // Get more candidates for better filtering
   }
 
   // Build comprehensive user profile
   private async buildUserProfile(userId: string): Promise<UserProfile> {
-    // Get user preferences
-    const [preferences] = await db
-      .select()
-      .from(userPreferences)
-      .where(eq(userPreferences.userId, userId));
+    // Get user preferences - handle missing columns gracefully
+    let preferences = null;
+    try {
+      const [prefs] = await db
+        .select()
+        .from(userPreferences)
+        .where(eq(userPreferences.userId, userId));
+      preferences = prefs;
+    } catch (error) {
+      console.error("Error getting user preferences (likely missing columns):", error);
+      preferences = null;
+    }
 
     // Get user interactions (last 90 days)
     const interactions = await db
