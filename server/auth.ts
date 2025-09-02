@@ -133,13 +133,37 @@ export async function setupAuth(app: Express) {
     });
   });
 
-  // Add the user endpoint that frontend expects
-  app.get('/api/auth/me', isAuthenticated, async (req, res) => {
+  // Add the user endpoint that frontend expects - check both auth systems
+  app.get('/api/auth/me', async (req, res) => {
     try {
-      const user = req.user as any;
-      const userId = user.claims.sub;
-      const userData = await storage.getUser(userId);
-      res.json(userData);
+      // First try JWT authentication (for Google/Facebook OAuth users)
+      const { getCurrentUser } = await import('./auth/jwt');
+      const jwtUser = await getCurrentUser(req);
+      
+      if (jwtUser) {
+        // User is authenticated via JWT (Google/Facebook)
+        const userData = await storage.getUser(jwtUser.id);
+        if (userData) {
+          console.log("✅ User authenticated via JWT:", userData.email);
+          return res.json(userData);
+        }
+      }
+      
+      // Fallback to Replit Auth
+      if (req.isAuthenticated()) {
+        const user = req.user as any;
+        if (user?.claims?.sub) {
+          const userId = user.claims.sub;
+          const userData = await storage.getUser(userId);
+          if (userData) {
+            console.log("✅ User authenticated via Replit Auth:", userData.email);
+            return res.json(userData);
+          }
+        }
+      }
+      
+      // No authentication found
+      return res.status(401).json({ message: "Unauthorized" });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
