@@ -488,38 +488,17 @@ export default function EnhancedRecommendedTrips() {
                   </div>
                 </div>
 
-                {/* Footer Actions - Simple Style like your image */}
-                <div className="flex items-center justify-between pt-2">
-                  <div className="flex items-center gap-6 text-sm">
-                    <button 
-                      className="flex items-center gap-1 text-pink-500 hover:text-pink-700 transition-colors"
-                      onClick={(e) => {e.stopPropagation(); handleBookmark(trip.id, e);}}
-                      data-testid={`button-pin-${trip.id}`}
-                    >
-                      📌 Pin
-                    </button>
-                    <button 
-                      className="flex items-center gap-1 text-orange-500 hover:text-orange-700 transition-colors"
-                      onClick={(e) => {e.stopPropagation(); /* Handle interested */}}
-                      data-testid={`button-interested-${trip.id}`}
-                    >
-                      ⭐ Interested
-                    </button>
-                    <button 
-                      className="flex items-center gap-1 text-blue-500 hover:text-blue-700 transition-colors"
-                      onClick={(e) => {e.stopPropagation(); handleShare(trip.id, e);}}
-                      data-testid={`button-share-${trip.id}`}
-                    >
-                      ↔ Share
-                    </button>
-                    <button 
-                      className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors"
-                      onClick={(e) => {e.stopPropagation(); /* Handle ask */}}
-                      data-testid={`button-ask-${trip.id}`}
-                    >
-                      💬 Ask
-                    </button>
-                  </div>
+                {/* View Trip Button */}
+                <div className="flex items-center justify-between pt-3">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                    onClick={() => handleTripClick(trip.id)}
+                    data-testid={`button-view-trip-${trip.id}`}
+                  >
+                    View this trip
+                  </Button>
                   
                   {isViewed && (
                     <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800 border-blue-200">
