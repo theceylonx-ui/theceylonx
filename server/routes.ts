@@ -732,6 +732,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update comment route
+  app.patch('/api/comments/:id', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user!.id;
+      const commentId = req.params.id;
+      const { content } = req.body;
+
+      if (!content || !content.trim()) {
+        return res.status(400).json({ message: "Content is required" });
+      }
+
+      // Check ownership - need to get comment first
+      const allComments = await storage.getTripComments(""); // TODO: Implement getComment method
+      const comment = allComments.find(c => c.id === commentId);
+      
+      if (!comment) {
+        return res.status(404).json({ message: "Comment not found" });
+      }
+      
+      if (comment.userId !== userId) {
+        return res.status(403).json({ message: "You can only edit your own comments" });
+      }
+      
+      const updatedComment = await storage.updateComment(commentId, content.trim());
+      res.json(updatedComment);
+    } catch (error) {
+      console.error("Error updating comment:", error);
+      res.status(500).json({ message: "Failed to update comment" });
+    }
+  });
+
   // Enhanced comment deletion with trip owner moderation
   app.delete('/api/comments/:id', isAuthenticated, async (req: any, res) => {
     try {

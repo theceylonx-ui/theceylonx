@@ -1,0 +1,81 @@
+Goal
+After a user posts a comment, question, or trip, they must be able to Edit and Delete their own item. Admins/moderators can edit/delete any item for moderation.
+Scope & Permissions
+Owner (created_by_user_id === currentUserId)
+Can Edit and Delete their comments, questions, and trips.
+Admin/Moderator
+Can Edit and Delete any item (add role check).
+Other users
+No edit/delete controls visible.
+UI Requirements
+On each item (card or list row), show a 3-dot Actions menu with:
+Edit
+Delete
+After user submits a new item, show inline Edit and Delete buttons on the success state as well.
+Edit opens an inline form or modal with the existing content prefilled.
+Delete opens a confirmation dialog:
+Title: “Delete this {comment/question/trip}?”
+Body: “This action can’t be undone.” (or “You can restore within 7 days” if using soft delete recovery)
+Buttons: Cancel / Delete
+Behavior
+Edit
+Client validates required fields.
+Optimistic update on success (update list/card immediately).
+Keep an updated_at timestamp and show “(edited)” where applicable.
+Delete
+Use soft delete (recommended): set deleted_at (and is_deleted=true) and hide from all user views.
+Optionally add a 7-day restore for admins (not required for v1).
+Data Model (extend if needed)
+Common fields on all three tables:
+id, created_by_user_id, created_at, updated_at
+is_deleted:boolean (default false), deleted_at:datetime|null
+comments: body:text, parent_id?, trip_id?, question_id?
+questions: title, body
+trips: title, description, start_at, end_at, location, price_amount, …
+API Endpoints
+Create/extend REST endpoints with ownership/role checks server-side.
+Comments
+PUT /api/comments/:id
+Body: { body: string }
+Auth: owner OR admin
+DELETE /api/comments/:id
+Soft delete: { is_deleted: true, deleted_at: now() }
+Auth: owner OR admin
+Questions
+PUT /api/questions/:id
+Body: { title?: string, body?: string }
+Auth: owner OR admin
+DELETE /api/questions/:id
+Soft delete
+Auth: owner OR admin
+Trips
+PUT /api/trips/:id
+Body: editable fields (title, description, times, location, price, etc.)
+Auth: owner OR admin
+DELETE /api/trips/:id
+Soft delete
+Auth: owner OR admin
+All DELETEs should return { success: true }.
+All PUTs should return the updated record.
+Server-Side Guards
+Verify currentUserId from session.
+On PUT/DELETE, fetch record; if created_by_user_id !== currentUserId and user not admin → 403.
+Deny edits/deletes on is_deleted = true (return 410 or 400).
+Sanitize/validate inputs (length, XSS).
+Client Integration
+Show actions only if user has permission (owner/admin).
+On success:
+Edit → update UI in place, show toast “Updated.”
+Delete → remove from list/grid and show toast “Deleted.”
+If 403/401 → show toast “You don’t have permission.”
+Optional (Nice-to-Have)
+Version history table to store previous content on Edit.
+Undo snackbar after Delete (if implementing restore).
+Rate-limit edits/deletes to prevent abuse.
+Acceptance Criteria
+Owners see Edit/Delete on their items; others don’t (non-admins).
+Admins see Edit/Delete on all items.
+Edits persist and show “(edited)” with updated_at.
+Deletes are soft and items disappear from feeds, search, and calendar (for trips).
+Proper errors for unauthorized attempts.
+Unit tests for permission checks and soft delete.

@@ -114,6 +114,8 @@ export const trips = pgTable("trips", {
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  isDeleted: boolean("is_deleted").default(false),
+  deletedAt: timestamp("deleted_at"),
 });
 
 // Calendar events for aggregated view
@@ -164,6 +166,9 @@ export const comments = pgTable("comments", {
   userId: varchar("user_id").notNull(),
   content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  isDeleted: boolean("is_deleted").default(false),
+  deletedAt: timestamp("deleted_at"),
 });
 
 // Trip Views table for tracking views and generating notifications
@@ -268,6 +273,8 @@ export const questions = pgTable("questions", {
   acceptedAnswerId: varchar("accepted_answer_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  isDeleted: boolean("is_deleted").default(false),
+  deletedAt: timestamp("deleted_at"),
 });
 
 // Answers table

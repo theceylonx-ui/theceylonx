@@ -112,6 +112,7 @@ export interface IStorage {
   // Comment operations
   createComment(comment: InsertComment): Promise<Comment>;
   getTripComments(tripId: string): Promise<CommentWithUser[]>;
+  updateComment(id: string, content: string): Promise<Comment>;
   deleteComment(id: string): Promise<void>;
 
   // Trip interest request operations
@@ -373,7 +374,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(trips)
       .leftJoin(users, eq(trips.organizerId, users.id))
-      .where(eq(trips.id, id));
+      .where(and(eq(trips.id, id), eq(trips.isDeleted, false)));
     
     if (result.length === 0) return undefined;
     
@@ -396,7 +397,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteTrip(id: string): Promise<void> {
-    await db.delete(trips).where(eq(trips.id, id));
+    await db
+      .update(trips)
+      .set({ isDeleted: true, deletedAt: new Date() })
+      .where(eq(trips.id, id));
   }
 
   async getUserTrips(userId: string): Promise<TripWithOrganizer[]> {
@@ -404,7 +408,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(trips)
       .leftJoin(users, eq(trips.organizerId, users.id))
-      .where(eq(trips.organizerId, userId))
+      .where(and(eq(trips.organizerId, userId), eq(trips.isDeleted, false)))
       .orderBy(desc(trips.createdAt));
     
     return result.map(({ trips: trip, users: organizer }) => ({
@@ -421,7 +425,7 @@ export class DatabaseStorage implements IStorage {
       const result = await db
         .select()
         .from(questions)
-        .where(eq(questions.userId, userId))
+        .where(and(eq(questions.userId, userId), eq(questions.isDeleted, false)))
         .orderBy(desc(questions.createdAt));
 
       console.log('✅ Basic questions query successful, found:', result.length);
@@ -452,7 +456,7 @@ export class DatabaseStorage implements IStorage {
     limit?: number;
     offset?: number;
   }): Promise<{ trips: TripWithOrganizer[], total: number }> {
-    const conditions = [eq(trips.status, "active")];
+    const conditions = [eq(trips.status, "active"), eq(trips.isDeleted, false)];
     
     if (filters.from) {
       conditions.push(ilike(trips.fromLocation, `%${filters.from}%`));
@@ -534,7 +538,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(comments)
       .leftJoin(users, eq(comments.userId, users.id))
-      .where(eq(comments.tripId, tripId))
+      .where(and(eq(comments.tripId, tripId), eq(comments.isDeleted, false)))
       .orderBy(desc(comments.createdAt));
     
     return result.map(({ comments: comment, users: user }) => ({
@@ -543,8 +547,20 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
+  async updateComment(id: string, content: string): Promise<Comment> {
+    const [updatedComment] = await db
+      .update(comments)
+      .set({ content, updatedAt: new Date() })
+      .where(eq(comments.id, id))
+      .returning();
+    return updatedComment;
+  }
+
   async deleteComment(id: string): Promise<void> {
-    await db.delete(comments).where(eq(comments.id, id));
+    await db
+      .update(comments)
+      .set({ isDeleted: true, deletedAt: new Date() })
+      .where(eq(comments.id, id));
   }
 
   // Rating operations
@@ -614,7 +630,7 @@ export class DatabaseStorage implements IStorage {
     const offset = filters?.offset || 0;
     
     // Build where conditions
-    const conditions = [];
+    const conditions = [eq(questions.isDeleted, false)];
     
     if (filters?.search) {
       conditions.push(
@@ -632,7 +648,7 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const whereClause = and(...conditions);
     
     // Build order by
     let orderBy: any;
@@ -756,7 +772,7 @@ export class DatabaseStorage implements IStorage {
       .from(questions)
       .leftJoin(users, eq(questions.userId, users.id))
       .leftJoin(topics, eq(questions.topicId, topics.id))
-      .where(eq(questions.id, id));
+      .where(and(eq(questions.id, id), eq(questions.isDeleted, false)));
     
     const question = questionData[0];
     if (!question) return undefined;
@@ -780,7 +796,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteQuestion(id: string): Promise<void> {
-    await db.delete(questions).where(eq(questions.id, id));
+    await db
+      .update(questions)
+      .set({ isDeleted: true, deletedAt: new Date() })
+      .where(eq(questions.id, id));
   }
 
   async getPopularDestinations(limit: number = 5): Promise<Array<{ destination: string; count: number }>> {

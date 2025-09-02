@@ -10,6 +10,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { TripWithOrganizer } from "@shared/schema";
+import { ActionsMenu } from "@/components/ActionsMenu";
+import { EditContentDialog } from "@/components/EditContentDialog";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { useState } from "react";
 
 interface TripCardProps {
   trip: TripWithOrganizer & { isPinned?: boolean; isInterested?: boolean };
@@ -19,6 +23,10 @@ export default function TripCard({ trip }: TripCardProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // State for edit and delete dialogs
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const pinMutation = useMutation({
     mutationFn: async (pinned: boolean) => {
@@ -139,6 +147,56 @@ export default function TripCard({ trip }: TripCardProps) {
     },
   });
 
+  // Edit trip mutation
+  const editTripMutation = useMutation({
+    mutationFn: async (tripData: any) => {
+      const response = await apiRequest('PATCH', `/api/trips/${trip.id}`, tripData);
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/trips'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/users/trips'] });
+      toast({
+        title: 'Trip Updated',
+        description: 'Your trip has been updated successfully.',
+      });
+      setShowEditDialog(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update trip',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Delete trip mutation
+  const deleteTripMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('DELETE', `/api/trips/${trip.id}`);
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/trips'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/users/trips'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/pinned-trips'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/interested-trips'] });
+      toast({
+        title: 'Trip Deleted',
+        description: 'Your trip has been deleted successfully.',
+      });
+      setShowDeleteDialog(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete trip',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const handlePin = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -198,6 +256,25 @@ export default function TripCard({ trip }: TripCardProps) {
       window.open(`https://wa.me/${phoneNumber}`, "_blank");
     }
   };
+
+  const handleEditTrip = () => {
+    setShowEditDialog(true);
+  };
+
+  const handleDeleteTrip = () => {
+    setShowDeleteDialog(true);
+  };
+
+  const handleSaveEdit = (content: any) => {
+    editTripMutation.mutate(content);
+  };
+
+  const handleConfirmDelete = () => {
+    deleteTripMutation.mutate();
+  };
+
+  // Check if current user is the trip organizer
+  const isOwner = user && user.id === trip.organizerId;
 
   const getRegionColor = (region: string) => {
     const colors: Record<string, string> = {
@@ -340,6 +417,18 @@ export default function TripCard({ trip }: TripCardProps) {
                 </>
               )}
               
+              {/* Owner-only actions */}
+              {isOwner && (
+                <ActionsMenu
+                  onEdit={handleEditTrip}
+                  onDelete={handleDeleteTrip}
+                  canEdit={true}
+                  canDelete={true}
+                  isDeleting={deleteTripMutation.isPending}
+                  size="sm"
+                />
+              )}
+              
               <Button 
                 size="sm"
                 className={`text-xs px-2 py-1 transition-all duration-200 ${user 
@@ -360,6 +449,35 @@ export default function TripCard({ trip }: TripCardProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      <EditContentDialog
+        isOpen={showEditDialog}
+        onClose={() => setShowEditDialog(false)}
+        onSave={handleSaveEdit}
+        isLoading={editTripMutation.isPending}
+        title="Edit Trip"
+        initialContent={{
+          title: trip.title,
+          body: trip.notes || '',
+        }}
+        fields={{
+          title: true,
+          body: true,
+          content: false,
+        }}
+        contentType="trip"
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleConfirmDelete}
+        isLoading={deleteTripMutation.isPending}
+        itemType="trip"
+        itemTitle={trip.title}
+      />
     </Link>
   );
 }
