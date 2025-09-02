@@ -406,7 +406,7 @@ export class DatabaseStorage implements IStorage {
         topic: { id: question.topicId || '', name: 'General', slug: 'general', description: null, createdAt: new Date() },
         answers: [],
         votesCount: 0,
-        answerCount: 0,
+        answersCount: 0,
       }));
     } catch (error) {
       console.error('❌ Error in getUserQuestions:', error);
@@ -1580,19 +1580,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserCalendarEvents(userId: string, startDate?: Date, endDate?: Date): Promise<CalendarEvent[]> {
-    let query = db.select().from(calendarEvents).where(eq(calendarEvents.userId, userId));
-    
-    if (startDate && endDate) {
-      query = query.where(
-        and(
-          gte(calendarEvents.eventDate, startDate),
-          lte(calendarEvents.eventDate, endDate)
-        )
-      );
+    try {
+      let query = db.select().from(calendarEvents).where(eq(calendarEvents.userId, userId));
+      
+      if (startDate && endDate) {
+        query = query.where(
+          and(
+            gte(calendarEvents.eventDate, startDate),
+            lte(calendarEvents.eventDate, endDate)
+          )
+        ) as typeof query;
+      }
+      
+      const events = await query.orderBy(asc(calendarEvents.eventDate));
+      return events;
+    } catch (error) {
+      console.error('Error fetching calendar events:', error);
+      return [];
     }
-    
-    const events = await query.orderBy(asc(calendarEvents.eventDate));
-    return events;
   }
 
   async getCalendarEvent(id: string): Promise<CalendarEvent | undefined> {
