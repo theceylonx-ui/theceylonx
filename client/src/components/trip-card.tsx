@@ -207,7 +207,7 @@ export default function TripCard({ trip }: TripCardProps) {
                     <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   ) : trip.isPinned ? (
                     <>
-                      <Pin className="h-3 w-3 mr-1" />
+                      <span className="mr-1">📌</span>
                       Pinned
                     </>
                   ) : (
