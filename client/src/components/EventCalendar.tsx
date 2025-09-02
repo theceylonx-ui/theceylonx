@@ -30,6 +30,8 @@ interface EventCalendarProps {
 
 const eventTypeColors = {
   trip: "bg-ceylon-green text-white",
+  tripInterested: "bg-yellow-500 text-white",
+  tripPinned: "bg-orange-500 text-white", 
   community_event: "bg-blue-500 text-white", 
   personal_plan: "bg-purple-500 text-white",
   reminder: "bg-orange-500 text-white"
@@ -87,14 +89,37 @@ export function EventCalendar({ className }: EventCalendarProps) {
     const IconComponent = eventTypeIcons[event.eventType];
     const navigationUrl = getEventNavigationUrl(event);
     
+    // Determine the appropriate color and badge text based on trip flags
+    const getEventDisplayProps = () => {
+      if (event.eventType === 'trip' && event.metadata) {
+        if (event.metadata.isInterested) {
+          return {
+            colorClass: eventTypeColors.tripInterested,
+            badgeText: "trip (interested)"
+          };
+        } else if (event.metadata.isPinned) {
+          return {
+            colorClass: eventTypeColors.tripPinned,
+            badgeText: "trip (pinned)"
+          };
+        }
+      }
+      return {
+        colorClass: eventTypeColors[event.eventType as keyof typeof eventTypeColors],
+        badgeText: event.eventType.replace('_', ' ')
+      };
+    };
+    
+    const { colorClass, badgeText } = getEventDisplayProps();
+    
     return (
       <Card className="mb-3 hover:shadow-md transition-shadow">
         <CardContent className="p-4">
           <div className="flex items-start justify-between mb-2">
             <div className="flex items-center gap-2">
               <IconComponent className="w-4 h-4 text-gray-600" />
-              <Badge className={`text-xs ${eventTypeColors[event.eventType]}`}>
-                {event.eventType.replace('_', ' ')}
+              <Badge className={`text-xs ${colorClass}`}>
+                {badgeText}
               </Badge>
             </div>
             {!event.isAllDay && event.startTime && (

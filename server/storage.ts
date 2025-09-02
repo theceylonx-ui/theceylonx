@@ -21,6 +21,7 @@ import {
   tripInterestRequests,
   calendarEvents,
   pinnedTrips,
+  userTripFlags,
   type User,
   type UpsertUser,
   type InsertTrip,
@@ -72,6 +73,8 @@ import {
   type InsertCalendarEvent,
   type PinnedTrip,
   type InsertPinnedTrip,
+  type UserTripFlags,
+  type InsertUserTripFlags,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, ilike, desc, asc, gte, lte, count, sql } from "drizzle-orm";
@@ -222,6 +225,12 @@ export interface IStorage {
   unpinTrip(userId: string, tripId: string): Promise<void>;
   getUserPinnedTrips(userId: string): Promise<TripWithOrganizer[]>;
   getTripPinStatus(userId: string, tripId: string): Promise<boolean>;
+  
+  // User trip flags operations (unified pinned/interested state)
+  upsertUserTripFlags(userId: string, tripId: string, flags: Partial<Pick<UserTripFlags, 'pinned' | 'interested'>>): Promise<UserTripFlags>;
+  getUserTripFlags(userId: string, tripId: string): Promise<UserTripFlags | undefined>;
+  getUserInterestedTrips(userId: string): Promise<TripWithOrganizer[]>;
+  getUserPinnedTripsOnly(userId: string): Promise<TripWithOrganizer[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1678,6 +1687,83 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(pinnedTrips.userId, userId), eq(pinnedTrips.tripId, tripId)))
       .limit(1);
     return !!pinnedTrip;
+  }
+  
+  // User trip flags operations (unified pinned/interested state)
+  async upsertUserTripFlags(userId: string, tripId: string, flags: Partial<Pick<UserTripFlags, 'pinned' | 'interested'>>): Promise<UserTripFlags> {
+    // Handle precedence rule: if interested is true, force pinned to false
+    const updatedFlags = { ...flags };
+    if (updatedFlags.interested === true) {
+      updatedFlags.pinned = false;
+    }
+    
+    const [tripFlags] = await db
+      .insert(userTripFlags)
+      .values({
+        userId,
+        tripId,
+        pinned: updatedFlags.pinned ?? false,
+        interested: updatedFlags.interested ?? false,
+        updatedAt: new Date()
+      })
+      .onConflictDoUpdate({
+        target: [userTripFlags.userId, userTripFlags.tripId],
+        set: {
+          ...updatedFlags,
+          updatedAt: new Date()
+        }
+      })
+      .returning();
+    
+    return tripFlags;
+  }
+
+  async getUserTripFlags(userId: string, tripId: string): Promise<UserTripFlags | undefined> {
+    const [tripFlags] = await db
+      .select()
+      .from(userTripFlags)
+      .where(and(eq(userTripFlags.userId, userId), eq(userTripFlags.tripId, tripId)));
+    return tripFlags;
+  }
+
+  async getUserInterestedTrips(userId: string): Promise<TripWithOrganizer[]> {
+    const interestedTripsWithDetails = await db
+      .select({
+        trip: trips,
+        organizer: users,
+      })
+      .from(userTripFlags)
+      .innerJoin(trips, eq(userTripFlags.tripId, trips.id))
+      .innerJoin(users, eq(trips.organizerId, users.id))
+      .where(and(eq(userTripFlags.userId, userId), eq(userTripFlags.interested, true)))
+      .orderBy(desc(userTripFlags.updatedAt));
+
+    return interestedTripsWithDetails.map(({ trip, organizer }) => ({
+      ...trip,
+      organizer,
+    }));
+  }
+
+  async getUserPinnedTripsOnly(userId: string): Promise<TripWithOrganizer[]> {
+    const pinnedOnlyTripsWithDetails = await db
+      .select({
+        trip: trips,
+        organizer: users,
+      })
+      .from(userTripFlags)
+      .innerJoin(trips, eq(userTripFlags.tripId, trips.id))
+      .innerJoin(users, eq(trips.organizerId, users.id))
+      .where(and(
+        eq(userTripFlags.userId, userId), 
+        eq(userTripFlags.pinned, true), 
+        eq(userTripFlags.interested, false) // Only pinned, not interested
+      ))
+      .orderBy(desc(userTripFlags.updatedAt));
+
+    return pinnedOnlyTripsWithDetails.map(({ trip, organizer }) => ({
+      ...trip,
+      organizer,
+    }));
   }
 }
 

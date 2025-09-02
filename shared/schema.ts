@@ -358,7 +358,21 @@ export const userPersonalization = pgTable("user_personalization", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Pinned trips table for user-specific trip pinning
+// User trip flags table for unified pinning and interest management
+export const userTripFlags = pgTable("user_trip_flags", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  tripId: varchar("trip_id").notNull(),
+  pinned: boolean("pinned").default(false),
+  interested: boolean("interested").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  // Unique constraint to prevent duplicate entries for same user+trip
+  uniqueUserTrip: unique().on(table.userId, table.tripId),
+}));
+
+// Pinned trips table for user-specific trip pinning (legacy - keeping for migration)
 export const pinnedTrips = pgTable("pinned_trips", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),
@@ -378,6 +392,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   reports: many(reports),
   authSessions: many(authSessions),
   interestRequests: many(tripInterestRequests),
+  tripFlags: many(userTripFlags),
   pinnedTrips: many(pinnedTrips),
 }));
 
@@ -397,6 +412,7 @@ export const tripsRelations = relations(trips, ({ one, many }) => ({
   ratings: many(ratings),
   reports: many(reports),
   interestRequests: many(tripInterestRequests),
+  userFlags: many(userTripFlags),
   pinnedByUsers: many(pinnedTrips),
 }));
 
@@ -530,6 +546,17 @@ export const userInteractionsRelations = relations(userInteractions, ({ one }) =
 export const tripFeaturesRelations = relations(tripFeatures, ({ one }) => ({
   trip: one(trips, {
     fields: [tripFeatures.tripId],
+    references: [trips.id],
+  }),
+}));
+
+export const userTripFlagsRelations = relations(userTripFlags, ({ one }) => ({
+  user: one(users, {
+    fields: [userTripFlags.userId],
+    references: [users.id],
+  }),
+  trip: one(trips, {
+    fields: [userTripFlags.tripId],
     references: [trips.id],
   }),
 }));
@@ -734,6 +761,12 @@ export const insertUserPersonalizationSchema = createInsertSchema(userPersonaliz
   updatedAt: true,
 });
 
+export const insertUserTripFlagsSchema = createInsertSchema(userTripFlags).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -787,6 +820,9 @@ export type TripInterestRequestWithDetails = TripInterestRequest & {
   user: User;
   trip: TripWithOrganizer;
 };
+
+export type InsertUserTripFlags = z.infer<typeof insertUserTripFlagsSchema>;
+export type UserTripFlags = typeof userTripFlags.$inferSelect;
 export type InsertTrip = z.infer<typeof insertTripSchema>;
 export type Trip = typeof trips.$inferSelect;
 export type TripWithOrganizer = Trip & { organizer: User };

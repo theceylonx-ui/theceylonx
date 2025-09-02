@@ -254,23 +254,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const result = await storage.searchTrips(filters);
       
-      // For authenticated users, add pin status to each trip
-      let tripsWithPinStatus = result.trips;
+      // For authenticated users, add flag status to each trip
+      let tripsWithFlags = result.trips;
       if ((req as any).user?.id) {
         const userId = (req as any).user.id;
-        tripsWithPinStatus = await Promise.all(
+        tripsWithFlags = await Promise.all(
           result.trips.map(async (trip) => {
-            const isPinned = await storage.getTripPinStatus(userId, trip.id);
-            return { ...trip, isPinned };
+            const flags = await storage.getUserTripFlags(userId, trip.id);
+            return { 
+              ...trip, 
+              isPinned: flags?.pinned ?? false,
+              isInterested: flags?.interested ?? false
+            };
           })
         );
       } else {
-        // For non-authenticated users, set isPinned to false
-        tripsWithPinStatus = result.trips.map(trip => ({ ...trip, isPinned: false }));
+        // For non-authenticated users, set flags to false
+        tripsWithFlags = result.trips.map(trip => ({ 
+          ...trip, 
+          isPinned: false, 
+          isInterested: false 
+        }));
       }
       
       res.json({
-        trips: tripsWithPinStatus,
+        trips: tripsWithFlags,
         pagination: {
           page,
           limit,
@@ -379,6 +387,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       const tripId = req.params.id;
+      const { pinned } = req.body;
       
       // Check if trip exists
       const trip = await storage.getTrip(tripId);
@@ -386,17 +395,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Trip not found" });
       }
       
-      // Check if already pinned
-      const isAlreadyPinned = await storage.getTripPinStatus(userId, tripId);
-      if (isAlreadyPinned) {
-        return res.status(400).json({ message: "Trip is already pinned" });
+      // Check current flags
+      const currentFlags = await storage.getUserTripFlags(userId, tripId);
+      
+      // Option A: Prevent pinning if already interested
+      if (pinned && currentFlags?.interested) {
+        return res.status(409).json({ 
+          error: "INTERESTED_ACTIVE", 
+          message: "This trip is marked as interested. Unmark to pin." 
+        });
       }
       
-      const pinnedTrip = await storage.pinTrip(userId, tripId);
-      res.status(201).json({ message: "Trip pinned successfully", pinnedTrip });
+      // Update or create the user trip flags
+      const tripFlags = await storage.upsertUserTripFlags(userId, tripId, { pinned });
+      
+      res.json({
+        trip_id: tripId,
+        user_id: userId,
+        pinned: tripFlags.pinned,
+        interested: tripFlags.interested
+      });
     } catch (error) {
-      console.error("Error pinning trip:", error);
-      res.status(500).json({ message: "Failed to pin trip" });
+      console.error("Error updating pin status:", error);
+      res.status(500).json({ message: "Failed to update pin status" });
     }
   });
 
@@ -411,14 +432,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Trip not found" });
       }
       
-      // Check if actually pinned
-      const isPinned = await storage.getTripPinStatus(userId, tripId);
-      if (!isPinned) {
-        return res.status(400).json({ message: "Trip is not pinned" });
-      }
+      // Update flags to unpin
+      const tripFlags = await storage.upsertUserTripFlags(userId, tripId, { pinned: false });
       
-      await storage.unpinTrip(userId, tripId);
-      res.json({ message: "Trip unpinned successfully" });
+      res.json({
+        trip_id: tripId,
+        user_id: userId,
+        pinned: tripFlags.pinned,
+        interested: tripFlags.interested
+      });
     } catch (error) {
       console.error("Error unpinning trip:", error);
       res.status(500).json({ message: "Failed to unpin trip" });
@@ -428,7 +450,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/pinned-trips', unifiedAuthGuard, async (req, res) => {
     try {
       const userId = req.user!.id;
-      const pinnedTrips = await storage.getUserPinnedTrips(userId);
+      // Get only trips that are pinned but NOT interested (following precedence rules)
+      const pinnedTrips = await storage.getUserPinnedTripsOnly(userId);
       res.json(pinnedTrips);
     } catch (error) {
       console.error("Error fetching pinned trips:", error);
@@ -436,16 +459,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Interest request routes
-  app.post('/api/trips/:id/interest', isAuthenticated, async (req, res) => {
+  app.get('/api/interested-trips', unifiedAuthGuard, async (req, res) => {
     try {
-      const userId = (req.user as any)?.claims?.sub;
-      const tripId = req.params.id;
-      const { message } = req.body;
+      const userId = req.user!.id;
+      // Get trips marked as interested (regardless of pinned status)
+      const interestedTrips = await storage.getUserInterestedTrips(userId);
+      res.json(interestedTrips);
+    } catch (error) {
+      console.error("Error fetching interested trips:", error);
+      res.status(500).json({ message: "Failed to fetch interested trips" });
+    }
+  });
 
-      if (!userId) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
+  // New unified flag-based interest system
+  app.post('/api/trips/:id/interest', unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const tripId = req.params.id;
+      const { interested } = req.body;
 
       // Check if trip exists
       const trip = await storage.getTrip(tripId);
@@ -453,42 +484,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Trip not found" });
       }
 
-      // Cannot send interest to own trip
+      // Cannot mark interest on own trip
       if (trip.organizerId === userId) {
-        return res.status(400).json({ message: "Cannot send interest to your own trip" });
+        return res.status(400).json({ message: "Cannot mark interest on your own trip" });
       }
 
-      // Check if user already has a pending/accepted request
-      const existingRequest = await storage.getTripInterestRequestByUserAndTrip(userId, tripId);
-      if (existingRequest) {
-        return res.status(400).json({ message: "You have already sent an interest request for this trip" });
+      // Update or create the user trip flags with precedence rule: interested=true forces pinned=false
+      const tripFlags = await storage.upsertUserTripFlags(userId, tripId, { interested });
+      
+      // Create notification for trip organizer if marking as interested
+      if (interested) {
+        await storage.createNotification({
+          userId: trip.organizerId,
+          type: "interest_request",
+          category: "trips",
+          priority: "high",
+          title: "Trip Marked as Interested",
+          message: `Someone is interested in your trip "${trip.title}"`,
+          relatedTripId: tripId,
+          actionUrl: `/trips/${tripId}`,
+          isRead: false,
+        });
       }
 
-      // Create interest request
-      const interestRequest = await storage.createTripInterestRequest({
-        tripId,
-        userId,
-        message: message || "I'm interested in joining this trip!",
-        status: 'pending'
+      res.json({
+        trip_id: tripId,
+        user_id: userId,
+        pinned: tripFlags.pinned,
+        interested: tripFlags.interested
       });
-
-      // Create notification for trip organizer
-      await storage.createNotification({
-        userId: trip.organizerId,
-        type: "interest_request",
-        category: "trips",
-        priority: "high",
-        title: "New Interest Request",
-        message: `Someone is interested in your trip "${trip.title}"`,
-        relatedTripId: tripId,
-        actionUrl: `/trips/${tripId}`,
-        isRead: false,
-      });
-
-      res.status(201).json(interestRequest);
     } catch (error) {
-      console.error("Error creating interest request:", error);
-      res.status(500).json({ message: "Failed to send interest request" });
+      console.error("Error updating interest flag:", error);
+      res.status(500).json({ message: "Failed to update interest" });
+    }
+  });
+
+  // Get current user's flags for a specific trip
+  app.get('/api/trips/:id/flags', unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const tripId = req.params.id;
+      
+      const flags = await storage.getUserTripFlags(userId, tripId);
+      
+      res.json({
+        trip_id: tripId,
+        user_id: userId,
+        pinned: flags?.pinned ?? false,
+        interested: flags?.interested ?? false
+      });
+    } catch (error) {
+      console.error("Error fetching trip flags:", error);
+      res.status(500).json({ message: "Failed to fetch trip flags" });
     }
   });
 
@@ -1875,15 +1922,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const start = startDate ? new Date(startDate as string) : new Date();
       const end = endDate ? new Date(endDate as string) : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
       
-      // Get user's trips as calendar events with pin status
+      // Get user's trips as calendar events with flag status
       const trips = await storage.getUserTrips(userId);
       const pinnedTripIds = new Set((await storage.getUserPinnedTrips(userId)).map(trip => trip.id));
+      const interestedTripIds = new Set((await storage.getUserInterestedTrips(userId)).map(trip => trip.id));
       
       const tripEvents = trips.map(trip => {
         const isPinned = pinnedTripIds.has(trip.id);
+        const isInterested = interestedTripIds.has(trip.id);
+        
+        // Determine title prefix based on flag status (interested takes precedence)
+        let titlePrefix = '';
+        if (isInterested) {
+          titlePrefix = '⭐ ';
+        } else if (isPinned) {
+          titlePrefix = '📌 ';
+        }
+        
         return {
           id: `trip-${trip.id}`,
-          title: isPinned ? `📌 ${trip.title}` : trip.title,
+          title: titlePrefix + trip.title,
           description: `${trip.fromLocation} → ${trip.toLocation}`,
           eventDate: trip.date,
           eventType: 'trip' as const,
@@ -1896,7 +1954,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             price: trip.price,
             seatsAvailable: trip.seatsAvailable,
             region: trip.region,
-            isPinned: isPinned
+            isPinned: isPinned,
+            isInterested: isInterested
           }
         };
       });

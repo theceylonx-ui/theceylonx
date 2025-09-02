@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { MapPin, Calendar, Users, DollarSign, Mail, Lock, Pin, PinOff } from "lucide-react";
+import { MapPin, Calendar, Users, DollarSign, Mail, Lock, Pin, PinOff, Star, StarOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,7 @@ import { apiRequest } from "@/lib/queryClient";
 import type { TripWithOrganizer } from "@shared/schema";
 
 interface TripCardProps {
-  trip: TripWithOrganizer & { isPinned?: boolean };
+  trip: TripWithOrganizer & { isPinned?: boolean; isInterested?: boolean };
 }
 
 export default function TripCard({ trip }: TripCardProps) {
@@ -21,14 +21,11 @@ export default function TripCard({ trip }: TripCardProps) {
   const queryClient = useQueryClient();
 
   const pinMutation = useMutation({
-    mutationFn: async (action: 'pin' | 'unpin') => {
-      if (action === 'pin') {
-        await apiRequest('POST', `/api/trips/${trip.id}/pin`);
-      } else {
-        await apiRequest('DELETE', `/api/trips/${trip.id}/pin`);
-      }
+    mutationFn: async (pinned: boolean) => {
+      const response = await apiRequest('POST', `/api/trips/${trip.id}/pin`, { pinned });
+      return response;
     },
-    onMutate: async (action) => {
+    onMutate: async (pinned) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['/api/trips'] });
       
@@ -42,26 +39,93 @@ export default function TripCard({ trip }: TripCardProps) {
         return {
           ...oldData,
           trips: oldData.trips.map((t: any) => 
-            t.id === trip.id ? { ...t, isPinned: action === 'pin' } : t
+            t.id === trip.id ? { ...t, isPinned: pinned } : t
           )
         };
       });
       
       return { previousTrips };
     },
-    onSuccess: (_, action) => {
+    onSuccess: (data, pinned) => {
       queryClient.invalidateQueries({ queryKey: ['/api/trips'] });
       queryClient.invalidateQueries({ queryKey: ['/api/pinned-trips'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/interested-trips'] });
       queryClient.invalidateQueries({ queryKey: ['/api/calendar/aggregate'] });
       
       toast({
-        title: action === 'pin' ? 'Trip Pinned' : 'Trip Unpinned',
-        description: action === 'pin' 
+        title: pinned ? 'Trip Pinned' : 'Trip Unpinned',
+        description: pinned 
           ? 'Trip has been added to your pinned trips' 
           : 'Trip has been removed from your pinned trips',
       });
     },
-    onError: (error, action, context) => {
+    onError: (error: any, pinned, context) => {
+      // Rollback optimistic update on error
+      if (context?.previousTrips) {
+        queryClient.setQueryData(['/api/trips'], context.previousTrips);
+      }
+      
+      // Handle special case for interested trips
+      if (error.status === 409 && error.error === 'INTERESTED_ACTIVE') {
+        toast({
+          title: 'Cannot Pin Trip',
+          description: 'This trip is marked as interested. Unmark to pin.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to update pin status',
+          variant: 'destructive',
+        });
+      }
+    },
+  });
+
+  const interestMutation = useMutation({
+    mutationFn: async (interested: boolean) => {
+      const response = await apiRequest('POST', `/api/trips/${trip.id}/interest`, { interested });
+      return response;
+    },
+    onMutate: async (interested) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['/api/trips'] });
+      
+      // Snapshot the previous value
+      const previousTrips = queryClient.getQueryData(['/api/trips']);
+      
+      // Optimistically update to the new value - interested=true forces pinned=false
+      queryClient.setQueryData(['/api/trips'], (oldData: any) => {
+        if (!oldData) return oldData;
+        
+        return {
+          ...oldData,
+          trips: oldData.trips.map((t: any) => 
+            t.id === trip.id ? { 
+              ...t, 
+              isInterested: interested,
+              isPinned: interested ? false : t.isPinned // Force pinned=false when interested=true
+            } : t
+          )
+        };
+      });
+      
+      return { previousTrips };
+    },
+    onSuccess: (data, interested) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/trips'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/pinned-trips'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/interested-trips'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/calendar/aggregate'] });
+      
+      toast({
+        title: interested ? 'Marked as Interested' : 'Removed Interest',
+        description: interested 
+          ? 'Trip has been marked as interested' 
+          : 'Trip interest has been removed',
+      });
+    },
+    onError: (error: any, interested, context) => {
       // Rollback optimistic update on error
       if (context?.previousTrips) {
         queryClient.setQueryData(['/api/trips'], context.previousTrips);
@@ -69,7 +133,7 @@ export default function TripCard({ trip }: TripCardProps) {
       
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update pin status',
+        description: error.message || 'Failed to update interest status',
         variant: 'destructive',
       });
     },
@@ -84,7 +148,19 @@ export default function TripCard({ trip }: TripCardProps) {
       return;
     }
     
-    pinMutation.mutate(trip.isPinned ? 'unpin' : 'pin');
+    pinMutation.mutate(!trip.isPinned);
+  };
+
+  const handleInterest = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      window.location.href = '/auth/signin';
+      return;
+    }
+    
+    interestMutation.mutate(!trip.isInterested);
   };
 
   const handleContact = (e: React.MouseEvent) => {
@@ -215,39 +291,68 @@ export default function TripCard({ trip }: TripCardProps) {
               </span>
             </div>
             
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1 sm:space-x-2">
               {user && (
-                <Button
-                  size="sm"
-                  variant={trip.isPinned ? "default" : "outline"}
-                  className={`text-xs px-2 py-1 transition-all duration-200 ${
-                    trip.isPinned 
-                      ? 'bg-orange-500 text-white hover:bg-orange-600 border-orange-500' 
-                      : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-                  }`}
-                  onClick={handlePin}
-                  disabled={pinMutation.isPending}
-                  data-testid={`button-pin-${trip.id}`}
-                >
-                  {pinMutation.isPending ? (
-                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  ) : trip.isPinned ? (
-                    <>
-                      <span className="mr-1">📌</span>
-                      Pinned
-                    </>
-                  ) : (
-                    <>
-                      <PinOff className="h-3 w-3 mr-1" />
-                      Pin
-                    </>
-                  )}
-                </Button>
+                <>
+                  <Button
+                    size="sm"
+                    variant={trip.isInterested ? "default" : "outline"}
+                    className={`text-xs px-1 sm:px-2 py-1 transition-all duration-200 ${
+                      trip.isInterested 
+                        ? 'bg-yellow-500 text-white hover:bg-yellow-600 border-yellow-500' 
+                        : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                    }`}
+                    onClick={handleInterest}
+                    disabled={interestMutation.isPending}
+                    data-testid={`button-interested-${trip.id}`}
+                  >
+                    {interestMutation.isPending ? (
+                      <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    ) : trip.isInterested ? (
+                      <>
+                        <span className="mr-1">⭐</span>
+                        <span className="hidden sm:inline">Interested</span>
+                      </>
+                    ) : (
+                      <>
+                        <StarOff className="h-3 w-3 mr-0 sm:mr-1" />
+                        <span className="hidden sm:inline">Interested</span>
+                      </>
+                    )}
+                  </Button>
+                  
+                  <Button
+                    size="sm"
+                    variant={trip.isPinned ? "default" : "outline"}
+                    className={`text-xs px-1 sm:px-2 py-1 transition-all duration-200 ${
+                      trip.isPinned 
+                        ? 'bg-orange-500 text-white hover:bg-orange-600 border-orange-500' 
+                        : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                    }`}
+                    onClick={handlePin}
+                    disabled={pinMutation.isPending}
+                    data-testid={`button-pin-${trip.id}`}
+                  >
+                    {pinMutation.isPending ? (
+                      <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    ) : trip.isPinned ? (
+                      <>
+                        <span className="mr-1">📌</span>
+                        <span className="hidden sm:inline">Pinned</span>
+                      </>
+                    ) : (
+                      <>
+                        <PinOff className="h-3 w-3 mr-0 sm:mr-1" />
+                        <span className="hidden sm:inline">Pin</span>
+                      </>
+                    )}
+                  </Button>
+                </>
               )}
               
               <Button 
                 size="sm"
-                className={`text-xs px-2 sm:px-3 py-1 transition-all duration-200 ${user 
+                className={`text-xs px-1 sm:px-2 py-1 transition-all duration-200 ${user 
                   ? 'bg-ceylon-green text-white hover:bg-ceylon-green/90 shadow-sm hover:shadow-md' 
                   : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                 }`}
@@ -256,13 +361,13 @@ export default function TripCard({ trip }: TripCardProps) {
               >
                 {user ? (
                   <>
-                    <Mail className="h-3 w-3 mr-1" />
-                    Contact
+                    <Mail className="h-3 w-3 mr-0 sm:mr-1" />
+                    <span className="hidden sm:inline">Contact</span>
                   </>
                 ) : (
                   <>
-                    <Lock className="h-3 w-3 mr-1" />
-                    Sign in to Contact
+                    <Lock className="h-3 w-3 mr-0 sm:mr-1" />
+                    <span className="hidden sm:inline">Sign in</span>
                   </>
                 )}
               </Button>
