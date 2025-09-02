@@ -292,12 +292,18 @@ export default function TripDetails({ params }: TripDetailsProps) {
     sendInterestMutation.mutate("I'm interested in joining this trip!");
   };
 
+  // Emergency debugging - render something no matter what
+  console.log("TripDetails render:", { tripLoading, trip: !!trip, id });
+
   if (tripLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">Loading trip details...</div>
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-red-500">LOADING TRIP DETAILS...</h1>
+            <p className="text-xl">Trip ID: {id}</p>
+          </div>
         </div>
       </div>
     );
@@ -309,8 +315,10 @@ export default function TripDetails({ params }: TripDetailsProps) {
         <Navigation />
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
+            <h1 className="text-4xl font-bold text-red-500 mb-4">TRIP NOT FOUND!</h1>
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Trip Not Found</h2>
             <p className="text-gray-600 mb-4">The trip you're looking for doesn't exist or has been removed.</p>
+            <p className="text-sm text-gray-500">Trip ID: {id}</p>
             <Link href="/browse">
               <Button className="bg-ceylon-green hover:bg-ceylon-green/90">Browse Other Trips</Button>
             </Link>
@@ -323,6 +331,11 @@ export default function TripDetails({ params }: TripDetailsProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
+      
+      {/* Emergency visibility test */}
+      <div className="bg-red-500 text-white p-4 text-center text-2xl font-bold">
+        🚨 TRIP DETAILS PAGE IS RENDERING! 🚨
+      </div>
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}
