@@ -203,7 +203,7 @@ export interface IStorage {
   // Chat thread operations
   createChatThread(thread: InsertChatThread): Promise<ChatThread>;
   getChatThread(id: string): Promise<ChatThread | undefined>;
-  getUserChatThreads(userId: string): Promise<(ChatThread & { lastMessage?: Message, unreadCount: number, otherUser?: User })[]>;
+  getUserChatThreads(userId: string): Promise<(ChatThread & { lastMessage?: Message, unreadCount: number, otherUser?: User, trip?: Trip })[]>;
   addUserToThread(threadUser: InsertThreadUser): Promise<ThreadUser>;
   removeUserFromThread(threadId: string, userId: string): Promise<void>;
   isUserInThread(threadId: string, userId: string): Promise<boolean>;
@@ -1336,7 +1336,7 @@ export class DatabaseStorage implements IStorage {
     return thread;
   }
 
-  async getUserChatThreads(userId: string): Promise<(ChatThread & { lastMessage?: Message, unreadCount: number, otherUser?: User })[]> {
+  async getUserChatThreads(userId: string): Promise<(ChatThread & { lastMessage?: Message, unreadCount: number, otherUser?: User, trip?: Trip })[]> {
     // Get all threads user is in
     const threadUserResult = await db
       .select()
@@ -1345,10 +1345,20 @@ export class DatabaseStorage implements IStorage {
       .where(eq(threadUsers.userId, userId))
       .orderBy(desc(chatThreads.updatedAt));
 
-    const threads: (ChatThread & { lastMessage?: Message, unreadCount: number, otherUser?: User })[] = [];
+    const threads: (ChatThread & { lastMessage?: Message, unreadCount: number, otherUser?: User, trip?: Trip })[] = [];
     
     for (const { thread_users: tu, chat_threads: thread } of threadUserResult) {
       if (!thread) continue;
+      
+      // Get trip information if thread is associated with a trip
+      let trip: Trip | undefined;
+      if (thread.tripId) {
+        const [tripResult] = await db
+          .select()
+          .from(trips)
+          .where(eq(trips.id, thread.tripId));
+        trip = tripResult;
+      }
       
       // Get last message
       const [lastMessage] = await db
@@ -1383,7 +1393,8 @@ export class DatabaseStorage implements IStorage {
         ...thread,
         lastMessage,
         unreadCount: unreadResult?.count || 0,
-        otherUser
+        otherUser,
+        trip
       });
     }
 
@@ -1891,6 +1902,43 @@ export class DatabaseStorage implements IStorage {
       .where(and(
         eq(threadUsers.threadId, threadId),
         eq(threadUsers.userId, userId)
+      ));
+  }
+
+  // Missing vote methods for interface compliance
+  async createVote(vote: InsertVote): Promise<Vote> {
+    const [newVote] = await db.insert(votes).values(vote).returning();
+    return newVote;
+  }
+
+  async updateVote(userId: string, questionId: string | undefined, answerId: string | undefined, voteType: 'up' | 'down'): Promise<Vote> {
+    const value = voteType === 'up' ? 1 : -1;
+    const votableType = questionId ? 'question' : 'answer';
+    const votableId = questionId || answerId!;
+    
+    const [updatedVote] = await db
+      .update(votes)
+      .set({ value, updatedAt: new Date() })
+      .where(and(
+        eq(votes.userId, userId),
+        eq(votes.votableType, votableType),
+        eq(votes.votableId, votableId)
+      ))
+      .returning();
+    
+    return updatedVote;
+  }
+
+  async deleteVote(userId: string, questionId?: string, answerId?: string): Promise<void> {
+    const votableType = questionId ? 'question' : 'answer';
+    const votableId = questionId || answerId!;
+    
+    await db
+      .delete(votes)
+      .where(and(
+        eq(votes.userId, userId),
+        eq(votes.votableType, votableType),
+        eq(votes.votableId, votableId)
       ));
   }
 }

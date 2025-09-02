@@ -13,19 +13,19 @@ interface ChatThread {
   tripId: string;
   createdAt: string;
   updatedAt: string;
-  trip: {
+  trip?: {
     id: string;
     title: string;
     origin: string;
     destination: string;
   };
-  users: Array<{
+  otherUser?: {
     id: string;
     firstName?: string;
     lastName?: string;
     username?: string;
     profileImageUrl?: string;
-  }>;
+  };
   lastMessage?: {
     id: string;
     body: string;
@@ -105,7 +105,7 @@ export function ChatInbox({ userId, onThreadSelect }: ChatInboxProps) {
           <div className="space-y-3">
             {threads.map((thread) => {
               // Get the other user in the conversation
-              const otherUser = thread.users.find(user => user.id !== userId);
+              const otherUser = thread.otherUser;
               const displayName = otherUser?.firstName || otherUser?.username || "Unknown User";
               
               return (
