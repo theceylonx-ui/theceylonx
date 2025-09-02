@@ -16,8 +16,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     : 'https://theceylonx.replit.app/api/auth/google/callback';
     
   console.log('🔧 Google OAuth callback URL configured:', {
-    REPLIT_DOMAINS: process.env.REPLIT_DOMAINS,
-    replitDevUrl,
+    NODE_ENV: process.env.NODE_ENV,
+    isDevelopment,
     googleCallbackURL
   });
     
