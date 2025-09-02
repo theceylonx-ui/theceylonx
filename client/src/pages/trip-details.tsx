@@ -45,17 +45,6 @@ export default function TripDetails({ params }: TripDetailsProps) {
     }
   }, [user, id, trackInteraction]);
 
-  // Debug logging for button state
-  useEffect(() => {
-    console.log("Trip Details Debug:", {
-      isAuthenticated,
-      userId: user?.id,
-      tripOrganizerId: trip?.organizerId,
-      userIsOrganizer: user?.id === trip?.organizerId,
-      existingInterestRequest: !!existingInterestRequest
-    });
-  }, [isAuthenticated, user, trip, existingInterestRequest]);
-
   const { data: trip, isLoading: tripLoading } = useQuery<TripWithOrganizer>({
     queryKey: ["/api/trips", id],
     queryFn: async () => {
@@ -86,6 +75,17 @@ export default function TripDetails({ params }: TripDetailsProps) {
     },
     enabled: !!isAuthenticated && !!user && !!id,
   });
+
+  // Debug logging for button state - moved after data declarations
+  useEffect(() => {
+    console.log("Trip Details Debug:", {
+      isAuthenticated,
+      userId: user?.id,
+      tripOrganizerId: trip?.organizerId,
+      userIsOrganizer: user?.id === trip?.organizerId,
+      existingInterestRequest: !!existingInterestRequest
+    });
+  }, [isAuthenticated, user, trip, existingInterestRequest]);
 
   const deleteCommentMutation = useMutation({
     mutationFn: async (commentId: string) => {
