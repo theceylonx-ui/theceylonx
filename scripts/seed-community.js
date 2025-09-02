@@ -22,6 +22,13 @@ async function seedTopics() {
     { slug: "food-kitchens", name: "Food & Local Kitchens", description: "Home cooking, street food, regional dishes" },
     { slug: "coast-surf-sea", name: "Coast, Surf & Sea", description: "Uncrowded beaches, surfing, diving" },
     { slug: "wellness-ayurveda", name: "Wellness & Ayurveda", description: "Retreats, meditation, healing" },
+    { slug: "transport-logistics", name: "Transport & Logistics", description: "Getting around, train schedules, bus routes" },
+    { slug: "accommodation", name: "Accommodation", description: "Hotels, guesthouses, homestays, camping" },
+    { slug: "budget-travel", name: "Budget Travel", description: "Affordable options, cost-saving tips" },
+    { slug: "safety-tips", name: "Safety & Tips", description: "Travel safety, local customs, what to avoid" },
+    { slug: "photography", name: "Photography", description: "Best spots for photos, sunrise/sunset locations" },
+    { slug: "wildlife-nature", name: "Wildlife & Nature", description: "National parks, elephants, leopards, bird watching" },
+    { slug: "others", name: "Others", description: "General questions and topics not covered above" },
   ];
 
   for (const topic of topicsData) {

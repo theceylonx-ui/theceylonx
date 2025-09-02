@@ -856,17 +856,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Questions
-  app.post('/api/questions', isAuthenticated, async (req: any, res) => {
+  app.post('/api/questions', async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      console.log("📝 POST /api/questions - attempting to create question");
+      
+      // Use the same authentication logic as /api/user
+      let userId = null;
+      
+      // First try JWT authentication (for Google/Facebook OAuth users)
+      const { getCurrentUser } = await import('./auth/jwt');
+      const jwtUser = await getCurrentUser(req);
+      
+      if (jwtUser) {
+        userId = jwtUser.id;
+        console.log("✅ Question creation - JWT auth successful:", jwtUser.email);
+      } else {
+        // Fallback to Replit Auth
+        if (req.isAuthenticated && req.isAuthenticated()) {
+          const user = req.user as any;
+          if (user?.claims?.sub) {
+            userId = user.claims.sub;
+            console.log("✅ Question creation - Replit Auth successful:", userId);
+          }
+        }
+      }
+      
+      if (!userId) {
+        console.log("❌ Question creation - No authentication found");
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
       const questionData = insertQuestionSchema.parse({ ...req.body, userId });
+      console.log("📝 Creating question:", { title: questionData.title, topicId: questionData.topicId });
+      
       const question = await storage.createQuestion(questionData);
+      console.log("✅ Question created successfully:", question.id);
       res.json(question);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.log("❌ Question validation error:", error.errors);
         return res.status(400).json({ message: "Invalid question data", errors: error.errors });
       }
-      console.error("Error creating question:", error);
+      console.error("❌ Error creating question:", error);
       res.status(500).json({ message: "Failed to create question" });
     }
   });
