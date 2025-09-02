@@ -1,0 +1,73 @@
+USP Statement:
+Our platform’s unique value is an ML-powered discovery feed that blends Sri Lanka’s real travel seasonality with community signals (Pins, Interested, Questions). It works from day one with Trending Trips and gets smarter with every user action, making it the #1 reason travelers will love our site.
+1) Homepage Hero (show USP clearly)
+Headline: Discover Sri Lanka with Smart Picks
+Subtext: Real traveler trends + your travel style = trips you’ll love.
+Trust line: Powered by CeylonX ML. Private, simple, helpful.
+CTA buttons: Browse Trending · Set My Travel Style
+2) Discovery Feed Tabs
+Tabs: Trending (default) | Near You | Fresh Finds | For You
+Tooltip for Trending: “Ranked by Pins, Interested, Questions + season.”
+For You unlocks after ≥3 actions (pin/interested/join). First time → badge NEW.
+3) Trip Card Redesign
+Each card shows:
+Title + Region chip (e.g., “Hill Country”)
+2–3 badges (from ML signals):
+⭐ Popular this week (N interested)
+📌 Saved by travelers (N pins)
+🌊 Surf season (East) / 🌞 Best weather now (South/West)
+🐆 Safari good now / 🚂 Tea & Trains / 🧘 Ayurveda retreat
+✨ New listing / 🛤 Pekoe Trail stage
+Footer: Date/time, price/seats
+Small hint: Why this pick → “Matches your Beach + Weekends preference” OR “Trending near you”.
+4) Onboarding Lite (cold-start fix)
+Show 3 quick questions on first visit (dismissible):
+Vibe → Beach / Hills / City / Culture
+When → Weekends / Festivals / Long holidays
+Travel style → Solo / Friends / Family
+Store as lightweight prefs; use only to reorder Trending and power “For You.”
+5) Seasonal Logic (Sri Lanka–specific)
+Dec–Mar: Promote South & West (Galle, Mirissa, Yala).
+Jul–Aug: Promote East & North (Trinco, Jaffna, Arugam Bay).
+Off-season (May–Jun, Oct–Nov): Highlight festivals, indoor/wellness retreats.
+Copy examples:
+🌞 “Best weather now (south coast)”
+🌊 “East coast in season—calm seas & surf”
+🌧 “Off-season = fewer crowds + deals”
+6) Backend Scoring (reuse ML, change weights)
+Keep current ML pipeline (popularity, freshness, safety, novelty, diversity, prefs).
+Adjust weights:
+Popularity (pins, interests, questions, recency): 35%
+Seasonality: 20%
+Freshness: 10%
+Regional/Thematic diversity: 10%
+Safety: 10%
+Novelty: 5%
+User preferences: 10%
+Expose only badges + plain-text reasons to UI (never raw %).
+7) Notifications (make ML feel alive)
+“10 travelers pinned the Ella hike you saved.”
+“Surf season is starting in Arugam Bay—2 trips match your Beach vibe.”
+“New Jaffna heritage tour is trending this week.”
+8) Transparency & Trust
+Add “🧠 How Smart Picks work” modal:
+“Ranked by real traveler activity and Sri Lanka’s travel seasons. Personalization uses what you save—never sold or shared.”
+Add “Why you’re seeing this” on each card (tooltip or inline).
+9) Analytics & Proof of USP
+Track:
+Tab impressions → CTR
+Card clicks → Pin/Interested rate
+Chat/Join conversion
+“For You” unlock rate & lift vs. Trending
+Preference completion rate
+10) Acceptance Criteria
+Homepage shows ML as the USP above the fold.
+No percentages shown to users.
+Trip cards display Sri Lanka–specific reasons with icons.
+Seasonal timing reflected in recommendations.
+Trending Trips always mixes iconic + off-beat (Sigiriya, Ella, Galle, plus Jaffna, Kalpitiya, Knuckles).
+“For You” is visibly different from Trending, proving personalization.
+Deliverables:
+Updated homepage hero, discovery tabs, trip cards, onboarding, notifications.
+Backend scoring adjustments.
+Analytics events + README documenting “ML as USP.”
