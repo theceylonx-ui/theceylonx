@@ -93,8 +93,18 @@ export default function CommunityPage() {
       form.reset();
       toast({ title: "Question posted successfully!" });
     },
-    onError: () => {
-      toast({ title: "Failed to post question", variant: "destructive" });
+    onError: (error) => {
+      console.error("Question creation error:", error);
+      // Check if it's an authorization error
+      if (error.message.includes('401')) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to ask questions",
+          variant: "destructive",
+        });
+        return;
+      }
+      toast({ title: "Failed to post question", description: error.message, variant: "destructive" });
     },
   });
 

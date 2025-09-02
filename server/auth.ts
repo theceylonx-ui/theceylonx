@@ -179,6 +179,7 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     const jwtUser = await getCurrentUser(req);
     
     if (jwtUser) {
+      console.log("✅ JWT User authenticated:", jwtUser.email);
       // Set user info for routes to access
       req.user = { claims: { sub: jwtUser.id }, email: jwtUser.email, name: jwtUser.name };
       return next();
@@ -188,6 +189,7 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     if (req.isAuthenticated()) {
       const user = req.user as any;
       if (user?.claims?.sub) {
+        console.log("✅ Replit Auth user authenticated:", user.claims.sub);
         const now = Math.floor(Date.now() / 1000);
         if (now <= user.expires_at) {
           return next();
@@ -205,6 +207,7 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     }
     
     // No authentication found
+    console.log("❌ No authentication found for request to:", req.path);
     return res.status(401).json({ message: "Unauthorized" });
   } catch (error) {
     console.error("Authentication error:", error);
