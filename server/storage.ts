@@ -77,7 +77,7 @@ import {
   type InsertUserTripFlags,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, ilike, desc, asc, gte, lte, count, sql } from "drizzle-orm";
+import { eq, and, or, ilike, desc, asc, gte, lte, count, sql, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (for Replit auth)
@@ -96,6 +96,8 @@ export interface IStorage {
   updateTrip(id: string, trip: Partial<InsertTrip>): Promise<Trip>;
   deleteTrip(id: string): Promise<void>;
   getUserTrips(userId: string): Promise<TripWithOrganizer[]>;
+  getTripsWithoutImages(): Promise<Trip[]>;
+  updateTripImage(tripId: string, imageUrl: string): Promise<void>;
   searchTrips(filters: {
     from?: string;
     to?: string;
@@ -401,6 +403,27 @@ export class DatabaseStorage implements IStorage {
       .update(trips)
       .set({ isDeleted: true, deletedAt: new Date() })
       .where(eq(trips.id, id));
+  }
+
+  async getTripsWithoutImages(): Promise<Trip[]> {
+    const result = await db
+      .select()
+      .from(trips)
+      .where(and(
+        eq(trips.isDeleted, false),
+        or(
+          isNull(trips.imageUrl),
+          eq(trips.imageUrl, '')
+        )
+      ));
+    return result;
+  }
+
+  async updateTripImage(tripId: string, imageUrl: string): Promise<void> {
+    await db
+      .update(trips)
+      .set({ imageUrl, updatedAt: new Date() })
+      .where(eq(trips.id, tripId));
   }
 
   async getUserTrips(userId: string): Promise<TripWithOrganizer[]> {

@@ -292,17 +292,25 @@ export default function TripCard({ trip, badges }: TripCardProps) {
     return colors[region] || 'bg-gray-500';
   };
 
-  const getDestinationImage = (region: string, fromLocation: string, toLocation: string) => {
-    // Generate appropriate images based on destination
-    if (region === 'southern' || toLocation.toLowerCase().includes('galle') || toLocation.toLowerCase().includes('mirissa')) {
-      return 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
-    } else if (region === 'central' || toLocation.toLowerCase().includes('kandy') || toLocation.toLowerCase().includes('nuwara')) {
-      return 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
-    } else if (toLocation.toLowerCase().includes('sigiriya') || region === 'north-central') {
-      return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
-    } else {
-      return 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
+  const getTripImage = () => {
+    // Use assigned image from database first
+    if (trip.imageUrl) {
+      return trip.imageUrl;
     }
+    
+    // Fallback to basic region mapping for now
+    // The server should have already assigned an image during trip creation
+    const fallbackImages: Record<string, string> = {
+      'southern': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200',
+      'central': 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200',
+      'north central': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200',
+      'eastern': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200',
+      'northern': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200',
+      'western': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200',
+      'uva': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200',
+    };
+    
+    return fallbackImages[trip.region.toLowerCase()] || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
   };
 
   return (
@@ -310,9 +318,10 @@ export default function TripCard({ trip, badges }: TripCardProps) {
       <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group border-0 shadow-sm" data-testid={`trip-card-${trip.id}`}>
         <div className="relative">
           <img 
-            src={getDestinationImage(trip.region, trip.fromLocation, trip.toLocation)}
-            alt={`${trip.fromLocation} to ${trip.toLocation}`}
+            src={getTripImage()}
+            alt={`${trip.region} travel photo of Sri Lanka - ${trip.fromLocation} to ${trip.toLocation}`}
             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
             onError={(e) => {
               e.currentTarget.src = 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
             }}

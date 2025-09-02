@@ -112,6 +112,9 @@ export const trips = pgTable("trips", {
   bookingCount: integer("booking_count").default(0),
   freshBoost: decimal("fresh_boost", { precision: 3, scale: 2 }).default('1.0'), // New listing boost that decays
   
+  // Image URL for the trip (user uploaded or auto-assigned)
+  imageUrl: varchar("image_url"),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   isDeleted: boolean("is_deleted").default(false),
@@ -691,6 +694,7 @@ export const insertTripSchema = z.object({
   notes: z.string().optional(),
   organizerId: z.string(),
   status: z.string().optional(),
+  imageUrl: z.string().optional(),
 });
 
 

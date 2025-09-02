@@ -215,6 +215,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Backfill images for existing trips
+  app.post('/api/trips/backfill-images', unifiedAuthGuard, async (req, res) => {
+    try {
+      const { getSriLankanTripImage } = await import('@shared/sriLankaImages');
+      
+      // Get all trips without images
+      const tripsWithoutImages = await storage.getTripsWithoutImages();
+      let updateCount = 0;
+      
+      for (const trip of tripsWithoutImages) {
+        const imageUrl = getSriLankanTripImage(trip.region, trip.fromLocation, trip.toLocation);
+        await storage.updateTripImage(trip.id, imageUrl);
+        updateCount++;
+      }
+      
+      console.log(`Backfilled images for ${updateCount} trips`);
+      res.json({ message: `Successfully assigned images to ${updateCount} trips` });
+    } catch (error) {
+      console.error("Error during image backfill:", error);
+      res.status(500).json({ message: "Failed to backfill images" });
+    }
+  });
+
   // Trip routes
   app.post('/api/trips', unifiedAuthGuard, async (req, res) => {
     try {
@@ -223,6 +246,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const tripData = insertTripSchema.parse({ ...req.body, organizerId: userId });
       console.log("Trip data validated successfully:", tripData);
+      
+      // Auto-assign image if none provided
+      if (!tripData.imageUrl) {
+        const { getSriLankanTripImage } = await import('@shared/sriLankaImages');
+        tripData.imageUrl = getSriLankanTripImage(tripData.region, tripData.fromLocation, tripData.toLocation);
+        console.log("Auto-assigned image for trip:", tripData.imageUrl);
+      }
       
       const trip = await storage.createTrip(tripData);
       res.json(trip);
