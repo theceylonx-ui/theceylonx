@@ -88,81 +88,6 @@ import {
 import { enhancedRecommendationService } from "./ml/enhancedRecommendationService";
 import { z } from "zod";
 
-// ML-powered badge generation based on Sri Lankan seasonality and community signals
-function generateMLBadges(trip: any, currentMonth: number, feedType: string) {
-  const badges: string[] = [];
-  let whyRecommended = '';
-  let seasonalTiming = '';
-  
-  // Sri Lanka Seasonal Logic (Dec-Mar: South/West, Jul-Aug: East/North)
-  const destination = trip.toLocation?.toLowerCase() || '';
-  const region = trip.region?.toLowerCase() || '';
-  
-  // Peak seasons logic
-  if ((currentMonth >= 12 || currentMonth <= 3) && (
-    destination.includes('galle') || destination.includes('mirissa') || 
-    destination.includes('hikkaduwa') || region.includes('southern') || region.includes('western')
-  )) {
-    badges.push('🌞 Best weather now');
-    seasonalTiming = 'Perfect season for south/west coast';
-  } else if ((currentMonth >= 7 && currentMonth <= 8) && (
-    destination.includes('trinco') || destination.includes('arugam') ||
-    destination.includes('batticaloa') || region.includes('eastern') || region.includes('northern')
-  )) {
-    badges.push('🌊 East coast in season');
-    seasonalTiming = 'Calm seas and great surf conditions';
-  } else if ((currentMonth >= 5 && currentMonth <= 6) || (currentMonth >= 10 && currentMonth <= 11)) {
-    badges.push('🌧 Off-season deals');
-    seasonalTiming = 'Fewer crowds, better prices';
-  }
-  
-  // Activity-based badges
-  if (destination.includes('yala') || destination.includes('safari')) {
-    badges.push('🐆 Safari good now');
-  } else if (destination.includes('ella') || destination.includes('kandy') || destination.includes('nuwara')) {
-    badges.push('🚂 Tea & Trains');
-  } else if (destination.includes('ayurveda') || destination.includes('wellness')) {
-    badges.push('🧘 Ayurveda retreat');
-  } else if (destination.includes('surf') || destination.includes('beach')) {
-    badges.push('🏄‍♂️ Surf season');
-  }
-  
-  // Community signals (simulate based on trip data)
-  const isPopular = trip.seatsAvailable < 3; // High demand indicator
-  const isNewListing = new Date(trip.createdAt || new Date()).getTime() > Date.now() - (7 * 24 * 60 * 60 * 1000);
-  
-  if (isPopular) {
-    badges.push(`⭐ Popular this week`);
-    whyRecommended = 'High traveler interest';
-  } else if (isNewListing) {
-    badges.push('✨ New listing');
-    whyRecommended = 'Fresh opportunity';
-  }
-  
-  // Feed-specific logic
-  switch (feedType) {
-    case 'trending':
-      if (!whyRecommended) whyRecommended = 'Trending based on community activity';
-      break;
-    case 'near-you':
-      whyRecommended = 'Popular near your area';
-      break;
-    case 'fresh-finds':
-      badges.unshift('🔍 Hidden gem');
-      whyRecommended = 'Recently discovered by our community';
-      break;
-    case 'for-you':
-      whyRecommended = 'Matches your travel preferences';
-      break;
-  }
-  
-  return {
-    mlBadges: badges.slice(0, 3), // Max 3 badges
-    whyRecommended,
-    seasonalTiming
-  };
-}
-
 export async function registerRoutes(app: Express): Promise<Server> {
   // CORS and cookie middleware
   app.use(cors({
@@ -314,7 +239,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const page = req.query.page ? Number(req.query.page) : 1;
       const limit = req.query.limit ? Number(req.query.limit) : 8;
       const offset = (page - 1) * limit;
-      const feedType = req.query.feed as string || 'trending';
       
       const filters = {
         from: req.query.from as string,
@@ -326,41 +250,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         search: req.query.search as string,
         limit,
         offset,
-        feedType, // Add feed type to filters
       };
       
       const result = await storage.searchTrips(filters);
       
-      // Get current month for seasonal logic
-      const currentMonth = new Date().getMonth() + 1; // 1-12
-      
-      // Apply ML-powered enhancements to each trip
+      // For authenticated users, add flag status to each trip
       let tripsWithFlags = result.trips;
       if ((req as any).user?.id) {
         const userId = (req as any).user.id;
         tripsWithFlags = await Promise.all(
           result.trips.map(async (trip) => {
             const flags = await storage.getUserTripFlags(userId, trip.id);
-            const mlEnhancements = generateMLBadges(trip, currentMonth, feedType);
             return { 
               ...trip, 
               isPinned: flags?.pinned ?? false,
-              isInterested: flags?.interested ?? false,
-              ...mlEnhancements
+              isInterested: flags?.interested ?? false
             };
           })
         );
       } else {
-        // For non-authenticated users, set flags to false but add ML features
-        tripsWithFlags = result.trips.map(trip => {
-          const mlEnhancements = generateMLBadges(trip, currentMonth, feedType);
-          return {
-            ...trip, 
-            isPinned: false, 
-            isInterested: false,
-            ...mlEnhancements
-          };
-        });
+        // For non-authenticated users, set flags to false
+        tripsWithFlags = result.trips.map(trip => ({ 
+          ...trip, 
+          isPinned: false, 
+          isInterested: false 
+        }));
       }
       
       res.json({

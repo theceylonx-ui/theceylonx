@@ -16,13 +16,7 @@ import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { useState } from "react";
 
 interface TripCardProps {
-  trip: TripWithOrganizer & { 
-    isPinned?: boolean; 
-    isInterested?: boolean;
-    mlBadges?: string[];
-    whyRecommended?: string;
-    seasonalTiming?: string;
-  };
+  trip: TripWithOrganizer & { isPinned?: boolean; isInterested?: boolean };
 }
 
 export default function TripCard({ trip }: TripCardProps) {
@@ -337,28 +331,6 @@ export default function TripCard({ trip }: TripCardProps) {
             <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2 line-clamp-2" data-testid={`trip-title-${trip.id}`}>
               {trip.title}
             </h3>
-            
-            {/* ML Badges - Smart Discovery Features */}
-            {trip.mlBadges && trip.mlBadges.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-2" data-testid={`trip-ml-badges-${trip.id}`}>
-                {trip.mlBadges.slice(0, 3).map((badge, index) => (
-                  <Badge 
-                    key={index}
-                    variant="secondary" 
-                    className="text-xs bg-blue-50 text-blue-700 border border-blue-200"
-                  >
-                    {badge}
-                  </Badge>
-                ))}
-              </div>
-            )}
-            
-            {/* Why Recommended - Personalization hint */}
-            {trip.whyRecommended && (
-              <p className="text-xs text-gray-500 italic mb-2" data-testid={`trip-why-recommended-${trip.id}`}>
-                💡 {trip.whyRecommended}
-              </p>
-            )}
           </div>
           
           <div className="space-y-2 sm:space-y-3 mb-4 text-gray-600 text-xs sm:text-sm">

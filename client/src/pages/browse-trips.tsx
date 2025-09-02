@@ -7,16 +7,10 @@ import TripFilters from "@/components/trip-filters";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Info } from "lucide-react";
 import type { TripWithOrganizer } from "@shared/schema";
 
 export default function BrowseTrips() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeTab, setActiveTab] = useState("trending");
-  const [userActionCount, setUserActionCount] = useState(2); // Simulate user actions count
   const [filters, setFilters] = useState({
     from: "",
     to: "",
@@ -28,12 +22,7 @@ export default function BrowseTrips() {
   });
 
   const { data, isLoading } = useQuery<{
-    trips: (TripWithOrganizer & { 
-      isPinned?: boolean;
-      mlBadges?: string[];
-      whyRecommended?: string;
-      seasonalTiming?: string;
-    })[];
+    trips: (TripWithOrganizer & { isPinned?: boolean })[];
     pagination: {
       page: number;
       limit: number;
@@ -41,7 +30,7 @@ export default function BrowseTrips() {
       totalPages: number;
     };
   }>({
-    queryKey: ["/api/trips", filters, currentPage, activeTab],
+    queryKey: ["/api/trips", filters, currentPage],
     queryFn: async () => {
       const params = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
@@ -49,7 +38,6 @@ export default function BrowseTrips() {
       });
       params.set('page', currentPage.toString());
       params.set('limit', '8');
-      params.set('feed', activeTab); // Add feed type parameter
       
       const response = await fetch(`/api/trips?${params}`);
       if (!response.ok) throw new Error("Failed to fetch trips");
@@ -161,83 +149,20 @@ export default function BrowseTrips() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2" data-testid="page-title">
-            Smart Discovery Feed
+            Browse Trips
           </h1>
           <p className="text-gray-600" data-testid="page-subtitle">
-            ML-powered trip recommendations tailored to Sri Lanka's travel seasons and your preferences.
+            Discover amazing travel opportunities across Sri Lanka.
           </p>
         </div>
 
-        {/* Discovery Feed Tabs */}
-        <TooltipProvider>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-            <TabsList className="grid grid-cols-4 w-full max-w-2xl mx-auto mb-6">
-              <TabsTrigger value="trending" className="relative" data-testid="tab-trending">
-                <Tooltip>
-                  <TooltipTrigger className="flex items-center gap-1">
-                    🔥 Trending
-                    <Info className="w-3 h-3 opacity-50" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Ranked by Pins, Interested, Questions + season</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TabsTrigger>
-              <TabsTrigger value="near-you" data-testid="tab-near-you">
-                📍 Near You
-              </TabsTrigger>
-              <TabsTrigger value="fresh-finds" data-testid="tab-fresh-finds">
-                ✨ Fresh Finds
-              </TabsTrigger>
-              <TabsTrigger 
-                value="for-you" 
-                disabled={userActionCount < 3}
-                className="relative" 
-                data-testid="tab-for-you"
-              >
-                🎯 For You
-                {userActionCount >= 3 && userActionCount < 5 && (
-                  <Badge className="absolute -top-1 -right-1 bg-ceylon-blue text-white text-xs">NEW</Badge>
-                )}
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="trending">
-              {/* Filters for Trending */}
-              <TripFilters filters={filters} onFiltersChange={handleFiltersChange} />
-            </TabsContent>
-            
-            <TabsContent value="near-you">
-              {/* Filters for Near You */}
-              <TripFilters filters={filters} onFiltersChange={handleFiltersChange} />
-            </TabsContent>
-            
-            <TabsContent value="fresh-finds">
-              {/* Filters for Fresh Finds */}
-              <TripFilters filters={filters} onFiltersChange={handleFiltersChange} />
-            </TabsContent>
-            
-            <TabsContent value="for-you">
-              {userActionCount < 3 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500 mb-4">
-                    Unlock personalized recommendations by engaging with trips!
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    Pin, mark as interested, or join discussions on {3 - userActionCount} more trips to see "For You" recommendations.
-                  </p>
-                </div>
-              ) : (
-                <TripFilters filters={filters} onFiltersChange={handleFiltersChange} />
-              )}
-            </TabsContent>
-          </Tabs>
-        </TooltipProvider>
+        {/* Filters */}
+        <TripFilters filters={filters} onFiltersChange={handleFiltersChange} />
 
         {/* Results */}
         <div className="mb-6">
           <p className="text-gray-600" data-testid="results-count">
-            {isLoading ? "Loading..." : `${pagination?.total || 0} smart picks found`}
+            {isLoading ? "Loading..." : `${pagination?.total || 0} trips found`}
             {pagination && pagination.totalPages > 1 && (
               <span className="text-sm text-gray-500 ml-2">
                 (Page {pagination.page} of {pagination.totalPages})

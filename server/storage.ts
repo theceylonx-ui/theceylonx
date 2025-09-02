@@ -455,7 +455,6 @@ export class DatabaseStorage implements IStorage {
     search?: string;
     limit?: number;
     offset?: number;
-    feedType?: string;
   }): Promise<{ trips: TripWithOrganizer[], total: number }> {
     const conditions = [eq(trips.status, "active"), eq(trips.isDeleted, false)];
     
@@ -500,35 +499,13 @@ export class DatabaseStorage implements IStorage {
       .from(trips)
       .where(and(...conditions));
 
-    // Get paginated results with ML-powered sorting
-    let query = db
+    // Get paginated results
+    const query = db
       .select()
       .from(trips)
       .leftJoin(users, eq(trips.organizerId, users.id))
-      .where(and(...conditions));
-
-    // Apply feed-specific sorting
-    switch (filters.feedType) {
-      case 'trending':
-        // Sort by popularity signals: low seats available, recent creation
-        query = query.orderBy(asc(trips.seatsAvailable), desc(trips.createdAt));
-        break;
-      case 'fresh-finds':
-        // Sort by newest first
-        query = query.orderBy(desc(trips.createdAt));
-        break;
-      case 'near-you':
-        // Sort by region clustering and date
-        query = query.orderBy(trips.region, asc(trips.date));
-        break;
-      case 'for-you':
-        // Personalized sorting (fallback to trending for now)
-        query = query.orderBy(asc(trips.seatsAvailable), asc(trips.date));
-        break;
-      default:
-        // Default to date ascending
-        query = query.orderBy(asc(trips.date));
-    }
+      .where(and(...conditions))
+      .orderBy(asc(trips.date));
     
     if (filters.limit) {
       query.limit(filters.limit);
