@@ -34,6 +34,13 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 const effectiveCookieDomain = isDevelopment ? undefined : COOKIE_DOMAIN;
 const effectiveCookieSecure = isDevelopment ? false : COOKIE_SECURE;
 
+console.log('🍪 Cookie configuration:', {
+  isDevelopment,
+  domain: effectiveCookieDomain,
+  secure: effectiveCookieSecure,
+  NODE_ENV: process.env.NODE_ENV
+});
+
 export function signAccessToken(user: JWTUser): string {
   return jwt.sign(user, ACCESS_TOKEN_SECRET, { 
     expiresIn: ACCESS_TOKEN_EXPIRY,
@@ -99,12 +106,21 @@ export function setAuthCookies(res: Response, tokens: AuthTokens): void {
     delete cookieOptions.domain;
   }
 
+  console.log('🍪 Setting auth cookies with options:', {
+    domain: cookieOptions.domain,
+    secure: cookieOptions.secure,
+    sameSite: cookieOptions.sameSite,
+    httpOnly: cookieOptions.httpOnly
+  });
+
   res.cookie('accessToken', tokens.accessToken, {
     ...cookieOptions,
     maxAge: 15 * 60 * 1000, // 15 minutes
   });
 
   res.cookie('refreshToken', tokens.refreshToken, cookieOptions);
+  
+  console.log('🍪 Auth cookies set successfully');
 }
 
 export function clearAuthCookies(res: Response): void {
