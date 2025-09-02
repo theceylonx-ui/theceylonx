@@ -19,6 +19,7 @@ import {
   emailTokens,
   phoneOtps,
   tripInterestRequests,
+  calendarEvents,
   type User,
   type UpsertUser,
   type InsertTrip,
@@ -66,6 +67,8 @@ import {
   messages,
   type Message,
   type InsertMessage,
+  type CalendarEvent,
+  type InsertCalendarEvent,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, ilike, desc, asc, gte, lte, count, sql } from "drizzle-orm";
@@ -203,6 +206,13 @@ export interface IStorage {
   createMessage(message: InsertMessage): Promise<Message>;
   getThreadMessages(threadId: string, limit?: number, cursor?: string): Promise<(Message & { author: User })[]>;
   getThreadUsers(threadId: string): Promise<User[]>;
+  
+  // Calendar Event operations
+  createCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent>;
+  getUserCalendarEvents(userId: string, startDate?: Date, endDate?: Date): Promise<CalendarEvent[]>;
+  getCalendarEvent(id: string): Promise<CalendarEvent | undefined>;
+  updateCalendarEvent(id: string, event: Partial<InsertCalendarEvent>): Promise<CalendarEvent>;
+  deleteCalendarEvent(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1561,6 +1571,46 @@ export class DatabaseStorage implements IStorage {
     
     console.log('🔄 Interest request updated:', { requestId, status, chatThreadId });
     return updatedRequest;
+  }
+
+  // Calendar Event operations
+  async createCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent> {
+    const [calendarEvent] = await db.insert(calendarEvents).values(event).returning();
+    return calendarEvent;
+  }
+
+  async getUserCalendarEvents(userId: string, startDate?: Date, endDate?: Date): Promise<CalendarEvent[]> {
+    let query = db.select().from(calendarEvents).where(eq(calendarEvents.userId, userId));
+    
+    if (startDate && endDate) {
+      query = query.where(
+        and(
+          gte(calendarEvents.eventDate, startDate),
+          lte(calendarEvents.eventDate, endDate)
+        )
+      );
+    }
+    
+    const events = await query.orderBy(asc(calendarEvents.eventDate));
+    return events;
+  }
+
+  async getCalendarEvent(id: string): Promise<CalendarEvent | undefined> {
+    const [event] = await db.select().from(calendarEvents).where(eq(calendarEvents.id, id));
+    return event;
+  }
+
+  async updateCalendarEvent(id: string, eventData: Partial<InsertCalendarEvent>): Promise<CalendarEvent> {
+    const [updatedEvent] = await db
+      .update(calendarEvents)
+      .set({ ...eventData, updatedAt: new Date() })
+      .where(eq(calendarEvents.id, id))
+      .returning();
+    return updatedEvent;
+  }
+
+  async deleteCalendarEvent(id: string): Promise<void> {
+    await db.delete(calendarEvents).where(eq(calendarEvents.id, id));
   }
 }
 

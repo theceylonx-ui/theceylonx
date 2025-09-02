@@ -1750,6 +1750,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Calendar Events API
+  app.get("/api/calendar/events", unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { startDate, endDate } = req.query;
+      
+      const start = startDate ? new Date(startDate as string) : undefined;
+      const end = endDate ? new Date(endDate as string) : undefined;
+      
+      const events = await storage.getUserCalendarEvents(userId, start, end);
+      res.json(events);
+    } catch (error) {
+      console.error("Failed to get calendar events:", error);
+      res.status(500).json({ message: "Failed to get calendar events" });
+    }
+  });
+  
+  app.post("/api/calendar/events", unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const eventData = { ...req.body, userId };
+      
+      const event = await storage.createCalendarEvent(eventData);
+      res.status(201).json(event);
+    } catch (error) {
+      console.error("Failed to create calendar event:", error);
+      res.status(500).json({ message: "Failed to create calendar event" });
+    }
+  });
+
+  app.get("/api/calendar/aggregate", unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { startDate, endDate } = req.query;
+      
+      const start = startDate ? new Date(startDate as string) : new Date();
+      const end = endDate ? new Date(endDate as string) : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
+      
+      // Get user's trips as calendar events
+      const trips = await storage.getUserTrips(userId);
+      const tripEvents = trips.map(trip => ({
+        id: `trip-${trip.id}`,
+        title: trip.title,
+        description: `${trip.fromLocation} → ${trip.toLocation}`,
+        eventDate: trip.date,
+        eventType: 'trip' as const,
+        entityId: trip.id,
+        entityType: 'trip' as const,
+        location: `${trip.fromLocation} - ${trip.toLocation}`,
+        isAllDay: false,
+        startTime: trip.time,
+        metadata: {
+          price: trip.price,
+          seatsAvailable: trip.seatsAvailable,
+          region: trip.region
+        }
+      }));
+      
+      // Get user's questions as calendar events (when created)
+      const questions = await storage.getUserQuestions(userId);
+      const questionEvents = questions.map(question => ({
+        id: `question-${question.id}`,
+        title: question.title,
+        description: 'Community Q&A Discussion',
+        eventDate: question.createdAt || new Date(),
+        eventType: 'community_event' as const,
+        entityId: question.id,
+        entityType: 'question' as const,
+        location: question.topic?.name || 'General',
+        isAllDay: true,
+        metadata: {
+          votesCount: question.votesCount,
+          answersCount: question.answersCount
+        }
+      }));
+      
+      // Get custom calendar events
+      const calendarEvents = await storage.getUserCalendarEvents(userId, start, end);
+      
+      // Combine and filter by date range
+      const allEvents = [...tripEvents, ...questionEvents, ...calendarEvents]
+        .filter(event => {
+          const eventDate = new Date(event.eventDate);
+          return eventDate >= start && eventDate <= end;
+        })
+        .sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
+      
+      res.json(allEvents);
+    } catch (error) {
+      console.error("Failed to get aggregated calendar events:", error);
+      res.status(500).json({ message: "Failed to get calendar events" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

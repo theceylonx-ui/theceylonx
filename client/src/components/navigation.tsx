@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { User, LogOut, Menu, X, MessageSquare } from "lucide-react";
+import { User, LogOut, Menu, X, MessageSquare, Calendar } from "lucide-react";
 import { useState } from "react";
 import logoImage from "@assets/5_1756417819316.png";
 import { Button } from "@/components/ui/button";
@@ -70,6 +70,21 @@ export default function Navigation() {
                 Post a Trip
               </span>
             </Link>
+            {user && (
+              <Link href="/calendar">
+                <span 
+                  className={`transition-colors cursor-pointer flex items-center gap-1 ${
+                    isActive('/calendar') 
+                      ? 'text-ceylon-green font-medium' 
+                      : 'text-gray-600 hover:text-ceylon-green'
+                  }`}
+                  data-testid="nav-calendar"
+                >
+                  <Calendar className="w-4 h-4" />
+                  Calendar
+                </span>
+              </Link>
+            )}
             {user && (
               <Link href="/chat">
                 <span 
@@ -215,6 +230,22 @@ export default function Navigation() {
                   Post a Trip
                 </span>
               </Link>
+              {user && (
+                <Link href="/calendar">
+                  <span 
+                    className={`block px-3 py-2 text-base transition-colors cursor-pointer flex items-center gap-2 ${
+                      isActive('/calendar') 
+                        ? 'text-ceylon-green font-medium' 
+                        : 'text-gray-600 hover:text-ceylon-green'
+                    }`}
+                    onClick={toggleMobileMenu}
+                    data-testid="mobile-nav-calendar"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Calendar
+                  </span>
+                </Link>
+              )}
               {user && (
                 <Link href="/chat">
                   <span 

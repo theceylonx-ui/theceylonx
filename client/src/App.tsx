@@ -28,6 +28,7 @@ import AdminDashboardPage from "@/pages/admin-dashboard";
 import ReportTripPage from "@/pages/report-trip";
 import ChatPage from "@/pages/chat";
 import UserDeletion from "@/pages/user-deletion";
+import CalendarPage from "@/pages/calendar";
 import { FloatingActionMenu } from "@/components/floating-action-menu";
 
 function Router() {
@@ -93,6 +94,7 @@ function Router() {
             <Route path="/user/delete" component={UserDeletion} />
             <Route path="/admin" component={AdminDashboardPage} />
             <Route path="/report-trip/:id" component={ReportTripPage} />
+            <Route path="/calendar" component={CalendarPage} />
           </>
         )}
         

@@ -116,6 +116,26 @@ export const trips = pgTable("trips", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Calendar events for aggregated view
+export const calendarEvents = pgTable("calendar_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(), // owner of the event
+  title: varchar("title").notNull(),
+  description: text("description"),
+  eventDate: timestamp("event_date").notNull(),
+  eventType: varchar("event_type").notNull(), // 'trip', 'community_event', 'personal_plan', 'reminder'
+  entityId: varchar("entity_id"), // reference to trips.id, questions.id, etc.
+  entityType: varchar("entity_type"), // 'trip', 'question', 'custom'
+  status: varchar("status").default("active"), // active, completed, cancelled
+  isAllDay: boolean("is_all_day").default(false),
+  startTime: varchar("start_time"), // e.g., "09:00"
+  endTime: varchar("end_time"), // e.g., "17:00"
+  location: varchar("location"),
+  metadata: jsonb("metadata"), // flexible data for different event types
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 
 // Notifications table
 export const notifications = pgTable("notifications", {
@@ -693,6 +713,12 @@ export const insertUserPersonalizationSchema = createInsertSchema(userPersonaliz
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+// Calendar Event Types
+export type CalendarEvent = typeof calendarEvents.$inferSelect;
+export type InsertCalendarEvent = typeof calendarEvents.$inferInsert;
+export const insertCalendarEventSchema = createInsertSchema(calendarEvents);
+export type InsertCalendarEventType = z.infer<typeof insertCalendarEventSchema>;
 export type InsertAuthSession = z.infer<typeof insertAuthSessionSchema>;
 export type AuthSession = typeof authSessions.$inferSelect;
 export type InsertEmailToken = z.infer<typeof insertEmailTokenSchema>;
