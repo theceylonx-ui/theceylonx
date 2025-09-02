@@ -1,0 +1,68 @@
+Goal
+Replace the current “Travel Preferences” form with a simple, friendly, multi-select “Travel Style Settings” page. Saved answers must feed the new badge-based ML (reorder results; no % in UI). Users can return anytime to edit.
+UX / UI
+Page title: Travel Style Settings
+Subtitle: Tell us your vibe. We’ll suggest better trips in Sri Lanka.
+Blocks (multi-select chips with clear limits):
+Your vibe (choose up to 3)
+Chips: Beach 🏝 · Hills 🏔 · City 🏙 · Culture 🛕 · Wildlife 🐆 · Wellness 🧘 · Food 🍲 · Hidden gems ✨
+When you usually travel (choose up to 2)
+Chips: Weekends · Long holidays · Festivals & events
+Who you travel with (choose up to 2)
+Chips: Solo · Friends · Family
+Optional interests (choose many; scrollable chip list)
+Chips: Surfing · Whale watching · Train rides · Tea estates · Temple trails · Street food · Waterfalls · Safari · Ayurveda
+Helper text under the form: “You can change these anytime. Your picks help us reorder trips and show clearer reasons.”
+Actions:
+Primary button: Save Preferences
+Secondary link: Reset (clears selections)
+Entry points:
+Keep this page under Profile.
+Add a small CTA above the discovery feed: “Fine-tune your Travel Style →” linking here.
+Do NOT show now: provinces, budget slider, time-of-day. (Those can move to an “Advanced Filters” modal on Discover later.)
+Data & API
+Table: user_preferences (extend or create)
+{
+  "user_id": "string",
+  "vibe": ["Beach","Wildlife"],          // max 3
+  "when": ["Weekends","Festivals"],      // max 2
+  "companions": ["Friends","Family"],    // max 2
+  "interests": ["Surfing","Tea estates"],// any length
+  "updated_at": "datetime"
+}
+Endpoints:
+GET /api/user/preferences → returns JSON above for current user
+PUT /api/user/preferences with validation rules:
+vibe max 3, when max 2, companions max 2
+interests unbounded (de-dupe on save)
+On success, return updated record
+On Save side-effects:
+Invalidate/recompute caches for feeds (Trending, For You).
+Store a concise reason seed used by cards’ “Why you’re seeing this” tooltip (e.g., Beach + Family, Hills + Weekends).
+Wiring to ML (no percentages)
+Preferences reorder results; they do not hard-filter.
+Card API should deliver badges + reason only (no scores):
+{
+  "trip_id": "t_123",
+  "badges": [
+    "⭐ Popular with 32 travelers",
+    "🌞 Best season in the Hill Country",
+    "✨ New this week"
+  ],
+  "why_reason": "Matches your Beach + Family preference"
+}
+Validation & States
+Disable Save until min requirement met: at least one selection in vibe or interests.
+On Save → toast “Preferences saved. Your suggestions will update.”
+On Reset → clear chips, show subtle hint to re-save.
+Preload existing prefs to chips when page opens.
+Accessibility & Mobile
+Chips: large tap targets; visible selected state.
+Button sticky at bottom on mobile.
+All icons have aria-labels (e.g., “Beach”).
+Acceptance Criteria
+Users can select multiple answers per block within limits and save/edit later.
+Saved prefs immediately influence ordering and “Why you’re seeing this” copy on cards.
+No numeric percentages appear anywhere in this section or downstream cards.
+API returns/updates the new JSON shape; no references to deprecated fields in logs.
+Works responsively and is easy to understand in <30 seconds.

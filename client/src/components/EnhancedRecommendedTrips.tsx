@@ -344,13 +344,27 @@ export default function EnhancedRecommendedTrips() {
     <div className="space-y-6">
       {/* Simple Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <TrendingUp className="h-6 w-6 text-purple-600" />
-          Trending Trips & For You
-        </h2>
-        <p className="text-muted-foreground">
-          Discover trips popular with other travelers and tailored to your travel style
-        </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <TrendingUp className="h-6 w-6 text-purple-600" />
+              Trending Trips & For You
+            </h2>
+            <p className="text-muted-foreground">
+              Discover trips popular with other travelers and tailored to your travel style
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLocation('/travel-style-settings')}
+            className="text-gray-600 hover:text-gray-800 border-gray-200 hover:border-gray-300"
+            data-testid="button-travel-style-settings"
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Settings
+          </Button>
+        </div>
       </div>
 
 

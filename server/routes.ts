@@ -83,7 +83,9 @@ import {
   insertVoteSchema,
   insertUserPreferencesSchema,
   insertUserInteractionSchema,
-  insertMessageSchema
+  insertMessageSchema,
+  travelStyleSettingsSchema,
+  type TravelStyleSettings
 } from "@shared/schema";
 import { enhancedRecommendationService } from "./ml/enhancedRecommendationService";
 import { z } from "zod";
@@ -1503,13 +1505,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/user/preferences', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const preferencesData = insertUserPreferencesSchema.parse(req.body);
       
-      const preferences = await storage.upsertUserPreferences(userId, preferencesData);
+      // Validate using the new Travel Style Settings schema
+      const validatedData = travelStyleSettingsSchema.parse(req.body);
+      
+      // Update preferences using the new format
+      const preferences = await storage.updateTravelStyleSettings(userId, validatedData);
+      
+      // Invalidate recommendation caches after preferences update
+      await enhancedRecommendationService.invalidateUserCaches(userId);
+      
       res.json(preferences);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid preferences data", errors: error.errors });
+        return res.status(400).json({ 
+          message: "Invalid preferences data", 
+          errors: error.errors 
+        });
       }
       console.error("Error updating user preferences:", error);
       res.status(500).json({ message: "Failed to update preferences" });

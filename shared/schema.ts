@@ -340,15 +340,16 @@ export const follows = pgTable("follows", {
   uniqueUserFollow: unique().on(table.userId, table.followType, table.followIdOrValue),
 }));
 
-// User preferences table for 3-step onboarding and ML recommendations
+// User preferences table for Travel Style Settings and ML recommendations
 export const userPreferences = pgTable("user_preferences", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().unique(),
   
-  // 3-step onboarding preferences
-  vibe: varchar("vibe"), // 'beach', 'hills', 'city', 'culture' (from 🏝 Beach · 🏔 Hills · 🏙 City · 🛕 Culture)
-  whenTravel: varchar("when_travel"), // 'weekends', 'festivals', 'long_holidays'
-  travelStyle: varchar("travel_style"), // 'solo', 'friends', 'family'
+  // New Travel Style Settings format
+  vibe: text("vibe").array(), // max 3: ["Beach", "Hills", "Wildlife"]
+  when: text("when").array(), // max 2: ["Weekends", "Festivals"]  
+  companions: text("companions").array(), // max 2: ["Solo", "Friends"]
+  interests: text("interests").array(), // unlimited: ["Surfing", "Tea estates"]
   
   // Legacy preferences (keep for backward compatibility)
   preferredRegions: jsonb("preferred_regions").$type<string[]>().default([]),
@@ -357,7 +358,10 @@ export const userPreferences = pgTable("user_preferences", {
   preferredTimes: jsonb("preferred_times").$type<string[]>().default([]), // ['morning', 'afternoon', 'evening']
   tripTypes: jsonb("trip_types").$type<string[]>().default([]), // ['adventure', 'cultural', 'beach', 'nature']
   groupSize: varchar("group_size"), // 'solo', 'couple', 'small_group', 'large_group'
-  interests: jsonb("interests").$type<string[]>().default([]),
+  
+  // Legacy single fields (keep for backward compatibility)
+  whenTravel: varchar("when_travel"), // old format
+  travelStyle: varchar("travel_style"), // old format
   
   // Engagement tracking for "For You" tab unlock
   actionCount: integer("action_count").default(0), // Count of pins, interests, joins
@@ -821,6 +825,19 @@ export const insertUserPreferencesSchema = createInsertSchema(userPreferences).o
   createdAt: true,
   updatedAt: true,
 });
+
+// Travel Style Settings Zod schemas with validation rules
+export const travelStyleSettingsSchema = z.object({
+  vibe: z.array(z.string()).max(3, "Choose up to 3 vibes").default([]),
+  when: z.array(z.string()).max(2, "Choose up to 2 travel times").default([]),
+  companions: z.array(z.string()).max(2, "Choose up to 2 companion types").default([]),
+  interests: z.array(z.string()).default([]),
+}).refine(
+  (data) => data.vibe.length > 0 || data.interests.length > 0,
+  "Please select at least one vibe or interest"
+);
+
+export type TravelStyleSettings = z.infer<typeof travelStyleSettingsSchema>;
 
 export const insertUserInteractionSchema = createInsertSchema(userInteractions).omit({
   id: true,

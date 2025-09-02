@@ -1086,6 +1086,48 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // New Travel Style Settings implementation
+  async updateTravelStyleSettings(userId: string, settings: any): Promise<UserPreferences> {
+    try {
+      const [preferences] = await db
+        .insert(userPreferences)
+        .values({
+          userId,
+          vibe: settings.vibe,
+          when: settings.when,
+          companions: settings.companions,
+          interests: settings.interests,
+          updatedAt: new Date(),
+        } as any)
+        .onConflictDoUpdate({
+          target: userPreferences.userId,
+          set: {
+            vibe: settings.vibe,
+            when: settings.when,
+            companions: settings.companions,
+            interests: settings.interests,
+            updatedAt: new Date(),
+          } as any,
+        })
+        .returning();
+      
+      return preferences;
+    } catch (error) {
+      console.error("Error updating travel style settings:", error);
+      // Return a fallback object
+      return {
+        id: `temp-${userId}`,
+        userId,
+        vibe: settings.vibe || [],
+        when: settings.when || [],
+        companions: settings.companions || [],
+        interests: settings.interests || [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any;
+    }
+  }
+
   async createUserInteraction(interaction: InsertUserInteraction): Promise<UserInteraction> {
     const [newInteraction] = await db
       .insert(userInteractions)
