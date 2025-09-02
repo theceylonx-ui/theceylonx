@@ -1,0 +1,44 @@
+Goal
+Add small tips/help sections at the bottom or sidebar of key pages so new users understand how to use the platform. Tips should be contextual, Sri Lanka travel–friendly, and concise.
+Pages & Tips
+1. Browse Trips
+Placement: bottom of the trip feed or a collapsible info box.
+Tips content:
+⭐ Interested = let the organizer know you like this trip.
+📌 Pin = save trips you want to revisit later.
+💬 Chat Buddy unlocks when the organizer accepts your request.
+💚 Free = if price is 0 or not set, trip is free to join.
+Use filters (Trending, Near You, Fresh Finds, For You) to explore Sri Lanka’s coast, hills, culture, and safaris.
+2. Post a Trip
+Placement: under the form (after Save button) or as a side panel.
+Tips content:
+Add clear trip title, date, and meeting point so others can plan easily.
+Set a price or leave it 0 for Free Trips 💚.
+Include extra details (seats, notes) to build trust.
+Trips with photos (or region-auto images) get more interest.
+After posting, you can always edit or delete your trip in Profile.
+3. Community – Ask Questions
+Placement: right sidebar or just below the Ask form.
+Tips content:
+Ask clear, travel-focused questions (e.g., “Best time for Arugam Bay surf?”).
+Use categories and tags (Surfing, Ayurveda, Safari, Food) so others can find your question.
+Upvote helpful answers 👍, mark one as Accepted ✓ if it solved your query.
+Be respectful and keep Q&A Sri Lanka travel–related.
+You can edit or delete your own questions anytime.
+Implementation
+Create a reusable Tips component (TipsBox) that accepts:
+{
+  "title": "How to use this page",
+  "tips": [
+    "Tip 1 text",
+    "Tip 2 text",
+    ...
+  ]
+}
+Render it on the three pages with page-specific content.
+Style: light box with ✅/⭐/💚/💬 icons where relevant; collapsible on mobile.
+Acceptance Criteria
+Each page has a visible “How to Use Tips” box with contextual guidance.
+Tips are concise, action-oriented, and use icons for clarity.
+Component is reusable and easy to update in the future.
+On mobile, tips collapse/expand to avoid clutter.

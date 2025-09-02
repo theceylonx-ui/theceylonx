@@ -293,7 +293,12 @@ export default function TripCard({ trip, badges }: TripCardProps) {
   };
 
   const getTripImage = () => {
-    // FORCE Sri Lankan regional images - override everything for now to test
+    // Use database image first, fallback to regional mapping
+    if (trip.imageUrl) {
+      return trip.imageUrl;
+    }
+    
+    // Sri Lankan regional image fallbacks
     const sriLankanImages: Record<string, string> = {
       'southern': 'https://images.unsplash.com/photo-1605540436563-5bca919ae766?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Stilt fishermen
       'central': 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Tea plantation
@@ -305,14 +310,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
       'sabaragamuwa': 'https://images.unsplash.com/photo-1571115764595-644a1f56a55c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Mountain forest
     };
     
-    // Debug logs
-    console.log('🔍 FORCED Sri Lankan images - Trip region:', trip.region);
-    console.log('🔍 Available regions in mapping:', Object.keys(sriLankanImages));
-    
-    const selectedImage = sriLankanImages[trip.region.toLowerCase()] || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
-    console.log('✅ FORCED image selected:', selectedImage);
-    
-    return selectedImage;
+    return sriLankanImages[trip.region.toLowerCase()] || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
   };
 
   return (
@@ -324,9 +322,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
             alt={`${trip.region} travel photo of Sri Lanka - ${trip.fromLocation} to ${trip.toLocation}`}
             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
-            key={`${trip.id}-${Date.now()}`}
             onError={(e) => {
-              console.log('❌ Image failed to load:', e.currentTarget.src);
               e.currentTarget.src = 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
             }}
           />
