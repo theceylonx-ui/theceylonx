@@ -47,7 +47,7 @@ export default function CalendarPage() {
                   </p>
                 </div>
                 <div className="hidden md:block">
-                  <Link href="/post-trip">
+                  <Link href="/post">
                     <Button variant="secondary" size="lg" className="text-ceylon-green">
                       <CalendarPlus className="w-5 h-5 mr-2" />
                       Add Trip
@@ -115,7 +115,7 @@ export default function CalendarPage() {
                   <CardTitle className="text-lg">Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Link href="/post-trip">
+                  <Link href="/post">
                     <Button className="w-full justify-start text-left" variant="outline" data-testid="quick-action-post-trip">
                       <MapPin className="w-4 h-4 mr-2" />
                       Post a Trip
