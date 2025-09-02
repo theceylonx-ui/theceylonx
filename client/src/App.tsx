@@ -56,6 +56,7 @@ function Router() {
             <Route path="/trips/:id" component={TripDetails} />
             <Route path="/community" component={Community} />
             <Route path="/question/:id" component={QuestionDetail} />
+            <Route path="/calendar" component={CalendarPage} />
             <Route path="/safety-guidelines" component={SafetyGuidelines} />
             <Route path="/terms-of-service" component={TermsOfService} />
             <Route path="/privacy-policy" component={PrivacyPolicy} />
@@ -81,6 +82,7 @@ function Router() {
             <Route path="/dashboard" component={UserDashboard} />
             <Route path="/community" component={Community} />
             <Route path="/question/:id" component={QuestionDetail} />
+            <Route path="/calendar" component={CalendarPage} />
             <Route path="/safety-guidelines" component={SafetyGuidelines} />
             <Route path="/terms-of-service" component={TermsOfService} />
             <Route path="/privacy-policy" component={PrivacyPolicy} />
