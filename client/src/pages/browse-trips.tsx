@@ -22,7 +22,7 @@ export default function BrowseTrips() {
   });
 
   const { data, isLoading } = useQuery<{
-    trips: TripWithOrganizer[];
+    trips: (TripWithOrganizer & { isPinned?: boolean })[];
     pagination: {
       page: number;
       limit: number;

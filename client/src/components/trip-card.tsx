@@ -28,6 +28,27 @@ export default function TripCard({ trip }: TripCardProps) {
         await apiRequest('DELETE', `/api/trips/${trip.id}/pin`);
       }
     },
+    onMutate: async (action) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['/api/trips'] });
+      
+      // Snapshot the previous value
+      const previousTrips = queryClient.getQueryData(['/api/trips']);
+      
+      // Optimistically update to the new value
+      queryClient.setQueryData(['/api/trips'], (oldData: any) => {
+        if (!oldData) return oldData;
+        
+        return {
+          ...oldData,
+          trips: oldData.trips.map((t: any) => 
+            t.id === trip.id ? { ...t, isPinned: action === 'pin' } : t
+          )
+        };
+      });
+      
+      return { previousTrips };
+    },
     onSuccess: (_, action) => {
       queryClient.invalidateQueries({ queryKey: ['/api/trips'] });
       queryClient.invalidateQueries({ queryKey: ['/api/pinned-trips'] });
@@ -40,7 +61,12 @@ export default function TripCard({ trip }: TripCardProps) {
           : 'Trip has been removed from your pinned trips',
       });
     },
-    onError: (error) => {
+    onError: (error, action, context) => {
+      // Rollback optimistic update on error
+      if (context?.previousTrips) {
+        queryClient.setQueryData(['/api/trips'], context.previousTrips);
+      }
+      
       toast({
         title: 'Error',
         description: error.message || 'Failed to update pin status',
