@@ -435,12 +435,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all interest requests for trips organized by the current user
-  app.get('/api/my-trips/interest-requests', isAuthenticated, async (req, res) => {
+  app.get('/api/my-trips/interest-requests', unifiedAuthGuard, async (req, res) => {
     try {
-      const userId = (req.user as any)?.claims?.sub;
-      if (!userId) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
+      const userId = req.user!.id;
       
       const requests = await storage.getInterestRequestsForOrganizer(userId);
       res.json(requests);

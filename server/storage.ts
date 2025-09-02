@@ -1463,7 +1463,49 @@ export class DatabaseStorage implements IStorage {
       .where(eq(trips.organizerId, userId))
       .orderBy(desc(tripInterestRequests.createdAt));
     
-    return result;
+    // Add duration calculation for each request
+    const currentTime = new Date();
+    const requestsWithDuration = result.map(request => {
+      const createdAt = request.createdAt ? new Date(request.createdAt) : currentTime;
+      const durationMs = currentTime.getTime() - createdAt.getTime();
+      
+      // Calculate duration components
+      const seconds = Math.floor(durationMs / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+      
+      // Format duration string
+      let durationText = '';
+      let waitingTimeCategory = 'recent'; // recent, moderate, long, urgent
+      
+      if (days > 0) {
+        durationText = days === 1 ? '1 day ago' : `${days} days ago`;
+        waitingTimeCategory = days >= 7 ? 'urgent' : days >= 3 ? 'long' : 'moderate';
+      } else if (hours > 0) {
+        durationText = hours === 1 ? '1 hour ago' : `${hours} hours ago`;
+        waitingTimeCategory = hours >= 12 ? 'moderate' : 'recent';
+      } else if (minutes > 0) {
+        durationText = minutes === 1 ? '1 minute ago' : `${minutes} minutes ago`;
+        waitingTimeCategory = 'recent';
+      } else {
+        durationText = 'Just now';
+        waitingTimeCategory = 'recent';
+      }
+      
+      return {
+        ...request,
+        requestTimestamp: request.createdAt,
+        durationSinceRequest: durationText,
+        waitingTimeMs: durationMs,
+        waitingTimeCategory,
+        daysWaiting: days,
+        hoursWaiting: hours,
+        minutesWaiting: minutes
+      };
+    });
+    
+    return requestsWithDuration;
   }
 
   async updateInterestRequestStatus(requestId: string, status: 'accepted' | 'rejected', organizerId: string): Promise<TripInterestRequest> {
