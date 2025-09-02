@@ -136,6 +136,8 @@ export async function setupAuth(app: Express) {
   // Add the user endpoint that frontend expects - check both auth systems
   app.get('/api/auth/me', async (req, res) => {
     try {
+      console.log("🔍 /api/auth/me called - checking auth methods");
+      
       // First try JWT authentication (for Google/Facebook OAuth users)
       const { getCurrentUser } = await import('./auth/jwt');
       const jwtUser = await getCurrentUser(req);
@@ -150,22 +152,29 @@ export async function setupAuth(app: Express) {
       }
       
       // Fallback to Replit Auth
-      if (req.isAuthenticated()) {
+      console.log("🔍 Trying Replit Auth fallback, isAuthenticated:", typeof req.isAuthenticated);
+      if (req.isAuthenticated && req.isAuthenticated()) {
         const user = req.user as any;
+        console.log("🔍 Replit Auth user claims:", user?.claims ? "present" : "missing", user?.claims?.sub);
         if (user?.claims?.sub) {
           const userId = user.claims.sub;
           const userData = await storage.getUser(userId);
           if (userData) {
             console.log("✅ User authenticated via Replit Auth:", userData.email);
             return res.json(userData);
+          } else {
+            console.log("⚠️ Replit Auth user ID found but no database record:", userId);
           }
         }
+      } else {
+        console.log("🔍 req.isAuthenticated() returned:", req.isAuthenticated ? req.isAuthenticated() : 'not a function');
       }
       
       // No authentication found
+      console.log("❌ No authentication method worked");
       return res.status(401).json({ message: "Unauthorized" });
     } catch (error) {
-      console.error("Error fetching user:", error);
+      console.error("❌ Error in /api/auth/me:", error);
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });
