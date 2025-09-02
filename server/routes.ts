@@ -346,6 +346,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all interest requests for trips organized by the current user
+  app.get('/api/my-trips/interest-requests', authGuard, async (req, res) => {
+    try {
+      const userId = (req.user as JWTUser).id;
+      const requests = await storage.getInterestRequestsForOrganizer(userId);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching interest requests:", error);
+      res.status(500).json({ message: "Failed to fetch interest requests" });
+    }
+  });
+
+  // Update interest request status (accept/reject)
+  app.put('/api/interest-requests/:requestId', authGuard, async (req, res) => {
+    try {
+      const { requestId } = req.params;
+      const { status } = req.body;
+      const userId = (req.user as JWTUser).id;
+
+      if (!["accepted", "rejected"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+
+      const updatedRequest = await storage.updateInterestRequestStatus(requestId, status, userId);
+      
+      // Create notification for the requester
+      await storage.createNotification({
+        userId: updatedRequest.userId,
+        type: status === 'accepted' ? 'interest_accepted' : 'interest_rejected',
+        category: 'trips',
+        priority: 'high',
+        title: status === 'accepted' ? 'Interest Request Accepted!' : 'Interest Request Update',
+        message: status === 'accepted' 
+          ? 'Your interest request has been accepted. You can now chat with the organizer!'
+          : 'Your interest request was not accepted for this trip.',
+        relatedTripId: updatedRequest.tripId,
+        actionUrl: status === 'accepted' ? '/chat' : `/trips/${updatedRequest.tripId}`,
+        isRead: false
+      });
+
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Error updating interest request:", error);
+      res.status(500).json({ message: "Failed to update interest request" });
+    }
+  });
+
   // Update trip status (mark as completed/inactive)
   app.patch('/api/trips/:id/status', authGuard, async (req: any, res) => {
     try {

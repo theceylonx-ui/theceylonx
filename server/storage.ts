@@ -1408,6 +1408,52 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return updatedRequest;
   }
+
+  async getInterestRequestsForOrganizer(userId: string): Promise<TripInterestRequest[]> {
+    const result = await db
+      .select({
+        id: tripInterestRequests.id,
+        tripId: tripInterestRequests.tripId,
+        userId: tripInterestRequests.userId,
+        message: tripInterestRequests.message,
+        status: tripInterestRequests.status,
+        createdAt: tripInterestRequests.createdAt,
+        updatedAt: tripInterestRequests.updatedAt,
+        tripTitle: trips.title,
+        requesterName: users.firstName
+      })
+      .from(tripInterestRequests)
+      .leftJoin(trips, eq(tripInterestRequests.tripId, trips.id))
+      .leftJoin(users, eq(tripInterestRequests.userId, users.id))
+      .where(eq(trips.organizerId, userId))
+      .orderBy(desc(tripInterestRequests.createdAt));
+    
+    return result;
+  }
+
+  async updateInterestRequestStatus(requestId: string, status: 'accepted' | 'rejected', organizerId: string): Promise<TripInterestRequest> {
+    // First verify the organizer owns the trip
+    const [request] = await db
+      .select()
+      .from(tripInterestRequests)
+      .leftJoin(trips, eq(tripInterestRequests.tripId, trips.id))
+      .where(and(
+        eq(tripInterestRequests.id, requestId),
+        eq(trips.organizerId, organizerId)
+      ));
+
+    if (!request) {
+      throw new Error("Interest request not found or you don't have permission to update it");
+    }
+
+    const [updatedRequest] = await db
+      .update(tripInterestRequests)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(tripInterestRequests.id, requestId))
+      .returning();
+    
+    return updatedRequest;
+  }
 }
 
 export const storage = new DatabaseStorage();

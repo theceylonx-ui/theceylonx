@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Check, X, RefreshCw, User as UserIcon } from "lucide-react";
+import { Check, X, RefreshCw, User as UserIcon, Heart, Clock } from "lucide-react";
 import { generateRandomProfilePicture, getDisplayName, getInitials } from "@/lib/profileUtils";
 import type { User, TripWithOrganizer, TripParticipant } from "@shared/schema";
 
@@ -56,6 +56,12 @@ export default function UserDashboard() {
 
   const { data: myTrips } = useQuery<TripWithOrganizer[]>({
     queryKey: ["/api/users/trips"],
+    enabled: !!user,
+  });
+
+  // Query for interest requests on my trips
+  const { data: interestRequests, refetch: refetchInterestRequests } = useQuery({
+    queryKey: ["/api/my-trips/interest-requests"],
     enabled: !!user,
   });
 
@@ -209,6 +215,40 @@ export default function UserDashboard() {
     },
   });
 
+  // Mutation for handling interest request responses
+  const updateInterestRequestMutation = useMutation({
+    mutationFn: async ({ requestId, status }: { requestId: string; status: 'accepted' | 'rejected' }) => {
+      const result = await apiRequest("PUT", `/api/interest-requests/${requestId}`, { status });
+      return result;
+    },
+    onSuccess: (_, { status }) => {
+      toast({
+        title: "Success",
+        description: `Interest request ${status === 'accepted' ? 'accepted' : 'declined'} successfully`,
+      });
+      refetchInterestRequests();
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/auth/signin";
+        }, 500);
+        return;
+      }
+      
+      toast({
+        title: "Error",
+        description: "Failed to update interest request",
+        variant: "destructive",
+      });
+    },
+  });
+
   const updateTripStatusMutation = useMutation({
     mutationFn: async ({ tripId, status }: { tripId: string; status: string }) => {
       return await apiRequest("PATCH", `/api/trips/${tripId}/status`, { status });
@@ -330,8 +370,9 @@ export default function UserDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 bg-gray-100">
+          <TabsList className="grid w-full grid-cols-3 bg-gray-100">
             <TabsTrigger value="my-trips" data-testid="tab-my-trips">My Trips</TabsTrigger>
+            <TabsTrigger value="interest-requests" data-testid="tab-interest-requests">Interest Requests</TabsTrigger>
             <TabsTrigger value="profile" data-testid="tab-profile">Profile</TabsTrigger>
           </TabsList>
 
@@ -409,6 +450,87 @@ export default function UserDashboard() {
             </Card>
           </TabsContent>
 
+          {/* Interest Requests Tab */}
+          <TabsContent value="interest-requests">
+            <Card>
+              <CardHeader>
+                <CardTitle>Interest Requests</CardTitle>
+                <p className="text-sm text-gray-600">Manage interest requests for your trips</p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {interestRequests && interestRequests.length > 0 ? (
+                    interestRequests.map((request: any) => (
+                      <div key={request.id} className="bg-gray-50 rounded-lg p-4 border" data-testid={`interest-request-${request.id}`}>
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-800">{request.tripTitle}</h3>
+                            <p className="text-sm text-gray-600 mt-1">From: {request.requesterName}</p>
+                            <p className="text-sm text-gray-500 mt-1">{request.message}</p>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            <Badge 
+                              variant={
+                                request.status === "pending" ? "secondary" : 
+                                request.status === "accepted" ? "default" : 
+                                "destructive"
+                              }
+                              className={
+                                request.status === "pending" ? "bg-blue-100 text-blue-800" :
+                                request.status === "accepted" ? "bg-green-100 text-green-800" : 
+                                "bg-red-100 text-red-800"
+                              }
+                            >
+                              {request.status === "pending" && <Clock className="h-3 w-3 mr-1" />}
+                              {request.status === "accepted" && <Check className="h-3 w-3 mr-1" />}
+                              {request.status === "rejected" && <X className="h-3 w-3 mr-1" />}
+                              {request.status}
+                            </Badge>
+                          </div>
+                        </div>
+                        
+                        {request.status === "pending" && (
+                          <div className="flex gap-2 mt-3">
+                            <Button
+                              size="sm"
+                              onClick={() => updateInterestRequestMutation.mutate({ requestId: request.id, status: 'accepted' })}
+                              disabled={updateInterestRequestMutation.isPending}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              data-testid={`button-accept-${request.id}`}
+                            >
+                              <Check className="h-4 w-4 mr-1" />
+                              Accept
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateInterestRequestMutation.mutate({ requestId: request.id, status: 'rejected' })}
+                              disabled={updateInterestRequestMutation.isPending}
+                              className="border-red-300 text-red-600 hover:bg-red-50"
+                              data-testid={`button-reject-${request.id}`}
+                            >
+                              <X className="h-4 w-4 mr-1" />
+                              Decline
+                            </Button>
+                          </div>
+                        )}
+                        
+                        <div className="text-xs text-gray-500 mt-2">
+                          Requested: {new Date(request.createdAt).toLocaleDateString()} at {new Date(request.createdAt).toLocaleTimeString()}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-600" data-testid="empty-interest-requests">
+                      <Heart className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+                      <p>No interest requests yet.</p>
+                      <p className="text-sm">When people show interest in your trips, they'll appear here.</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Profile Tab */}
           <TabsContent value="profile">

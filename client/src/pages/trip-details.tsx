@@ -445,72 +445,74 @@ export default function TripDetails({ params }: TripDetailsProps) {
                     )}
                   </Button>
 
-                  {/* 🚨 COMPLETELY NEW SYSTEM - JOIN BUTTON REMOVED FOREVER 🚨 */}
-                  <div className="w-full p-6 bg-gradient-to-r from-pink-100 to-blue-100 border-4 border-dashed border-pink-500 rounded-xl text-center shadow-xl">
-                    <div className="bg-yellow-300 text-black p-2 rounded-lg mb-4 font-black text-xl animate-pulse">
-                      🔥 NO MORE "JOIN THIS TRIP" BUTTON! 🔥
-                    </div>
-                    <p className="text-purple-800 font-bold text-2xl mb-4">✨ INTEREST REQUEST SYSTEM ✨</p>
-                    {isAuthenticated ? (
-                      user && user.id !== trip.organizerId ? (
-                        <Button 
-                          onClick={handleSendInterest}
-                          disabled={!!existingInterestRequest || sendInterestMutation.isPending}
-                          className={`w-full text-xl py-4 ${
-                            existingInterestRequest 
-                              ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-black cursor-not-allowed'
-                              : 'bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white shadow-lg transform hover:scale-105'
-                          }`}
-                          data-testid="button-interest"
-                        >
-                          {sendInterestMutation.isPending ? (
-                            <>
-                              <div className="animate-spin h-6 w-6 mr-3 border-4 border-white border-t-transparent rounded-full" />
-                              SENDING INTEREST REQUEST...
-                            </>
-                          ) : existingInterestRequest ? (
-                            <>
-                              <Heart className="h-6 w-6 mr-3 fill-current" />
-                              {existingInterestRequest.status === 'pending' && '⏳ INTEREST REQUEST PENDING'}
-                              {existingInterestRequest.status === 'accepted' && '✅ INTEREST REQUEST ACCEPTED!'}
-                              {existingInterestRequest.status === 'rejected' && '❌ INTEREST REQUEST DECLINED'}
-                            </>
-                          ) : (
-                            <>
-                              <Heart className="h-6 w-6 mr-3" />
-                              💖 SEND INTEREST REQUEST (NOT JOIN!)
-                            </>
-                          )}
-                        </Button>
-                      ) : user?.id === trip.organizerId ? (
-                        <div className="w-full text-center text-lg text-blue-800 p-4 bg-gradient-to-r from-blue-100 to-green-100 rounded-lg border-2 border-blue-400">
-                          👑 YOU ARE THE TRIP ORGANIZER
-                        </div>
-                      ) : null
-                    ) : (
+                  {/* Clean Interest Request System */}
+                  {isAuthenticated ? (
+                    user && user.id !== trip.organizerId ? (
                       <Button 
-                        onClick={() => window.location.href = '/auth/signin'}
-                        className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold text-xl py-4 shadow-lg transform hover:scale-105"
-                        data-testid="button-signin-interest"
+                        onClick={handleSendInterest}
+                        disabled={!!existingInterestRequest || sendInterestMutation.isPending}
+                        className={`w-full ${
+                          existingInterestRequest 
+                            ? 'bg-gray-100 text-gray-600 cursor-not-allowed border border-gray-300'
+                            : 'bg-ceylon-green hover:bg-ceylon-green/90 text-white'
+                        }`}
+                        data-testid="button-interest"
                       >
-                        <Heart className="h-6 w-6 mr-3" />
-                        🔐 SIGN IN TO SEND INTEREST REQUEST
+                        {sendInterestMutation.isPending ? (
+                          <>
+                            <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
+                            Sending...
+                          </>
+                        ) : existingInterestRequest ? (
+                          <>
+                            <Heart className="h-4 w-4 mr-2 fill-current" />
+                            Request Sent
+                          </>
+                        ) : (
+                          <>
+                            I'm Interested
+                          </>
+                        )}
                       </Button>
-                    )}
-                  </div>
+                    ) : user?.id === trip.organizerId ? (
+                      <div className="w-full text-center text-sm text-gray-600 p-3 bg-blue-50 rounded-md border border-blue-200">
+                        You are the organizer of this trip
+                      </div>
+                    ) : null
+                  ) : (
+                    <Button 
+                      onClick={() => window.location.href = '/auth/signin'}
+                      className="w-full bg-ceylon-green hover:bg-ceylon-green/90 text-white"
+                      data-testid="button-signin-interest"
+                    >
+                      <Lock className="h-4 w-4 mr-2" />
+                      Sign in to show interest
+                    </Button>
+                  )}
 
                   {/* Show status message for existing requests */}
                   {existingInterestRequest && (
-                    <div className={`text-sm text-center p-2 rounded-md ${
+                    <div className={`text-sm text-center p-3 rounded-md mt-2 ${
                       existingInterestRequest.status === 'accepted' 
-                        ? 'bg-green-100 text-green-800'
+                        ? 'bg-green-100 text-green-800 border border-green-200'
                         : existingInterestRequest.status === 'rejected'
-                        ? 'bg-red-100 text-red-800' 
-                        : 'bg-yellow-100 text-yellow-800'
+                        ? 'bg-red-100 text-red-800 border border-red-200' 
+                        : 'bg-blue-100 text-blue-800 border border-blue-200'
                     }`} data-testid="interest-status">
-                      {existingInterestRequest.status === 'pending' && 'Your interest request is pending review by the organizer.'}
-                      {existingInterestRequest.status === 'accepted' && 'Great! Your interest has been accepted. You can now chat with the organizer.'}
-                      {existingInterestRequest.status === 'rejected' && 'Your interest request was not accepted for this trip.'}
+                      {existingInterestRequest.status === 'pending' && 'Your interest request is pending review by the organizer'}
+                      {existingInterestRequest.status === 'accepted' && (
+                        <div>
+                          <div className="font-medium">Request accepted! 🎉</div>
+                          <Button 
+                            size="sm" 
+                            className="mt-2 bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => window.location.href = '/chat'}
+                          >
+                            Chat with Organizer
+                          </Button>
+                        </div>
+                      )}
+                      {existingInterestRequest.status === 'rejected' && 'Your interest request was declined'}
                     </div>
                   )}
                 </div>
