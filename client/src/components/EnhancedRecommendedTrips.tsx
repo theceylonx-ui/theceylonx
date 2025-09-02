@@ -327,58 +327,15 @@ export default function EnhancedRecommendedTrips() {
 
   return (
     <div className="space-y-6">
-      {/* Enhanced Header with Controls */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <TrendingUp className="h-6 w-6 text-purple-600" />
-            Trending Trips & For You
-          </h2>
-          <p className="text-muted-foreground">
-            Discover trips popular with other travelers and tailored to your travel style
-          </p>
-        </div>
-
-        <div className="flex items-center gap-4">
-          {/* Filter Dropdown */}
-          <div className="relative">
-            <Button
-              variant="outline"
-              className="min-w-[120px] justify-between"
-            >
-              {selectedFilter}
-              <ChevronDown className="h-4 w-4 ml-2" />
-            </Button>
-          </div>
-
-          {/* Personalization Toggle */}
-          <div className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            <Switch
-              checked={!personalizationSettings?.isPaused}
-              onCheckedChange={handleTogglePersonalization}
-              disabled={togglePersonalizationMutation.isPending}
-            />
-            <span className="text-sm">Personalization</span>
-            <div className="relative group">
-              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                Turn off to see all trips without reordering
-              </div>
-            </div>
-          </div>
-
-          {/* Reset Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleResetRecommendations}
-            disabled={resetRecommendationsMutation.isPending}
-          >
-            <RefreshCw className="h-4 w-4 mr-1" />
-            Reset
-          </Button>
-        </div>
+      {/* Simple Header */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold flex items-center gap-2">
+          <TrendingUp className="h-6 w-6 text-purple-600" />
+          Trending Trips & For You
+        </h2>
+        <p className="text-muted-foreground">
+          Discover trips popular with other travelers and tailored to your travel style
+        </p>
       </div>
 
       {/* Travel Style Settings CTA */}
@@ -453,26 +410,26 @@ export default function EnhancedRecommendedTrips() {
           return (
             <Card 
               key={trip.id} 
-              className={`group cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border-2 hover:border-purple-200 ${
-                isViewed ? 'ring-2 ring-purple-200 bg-purple-50' : 'hover:bg-gradient-to-br hover:from-white hover:to-purple-50'
+              className={`group cursor-pointer transition-all duration-200 hover:shadow-lg border rounded-xl ${
+                isViewed ? 'ring-1 ring-blue-200 bg-blue-50/30' : 'hover:shadow-md'
               }`}
               onMouseEnter={() => handleTripView(trip.id)}
               onClick={() => handleTripClick(trip.id)}
               data-testid={`enhanced-trip-card-${trip.id}`}
             >
-              <CardHeader className="pb-3">
-                {/* Header: Trip name + region chip */}
+              <CardHeader className="pb-4 pt-4">
+                {/* Header: Trip name + info icon */}
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-lg leading-tight">
+                    <CardTitle className="text-base font-semibold leading-tight mb-2">
                       {trip.title}
                     </CardTitle>
-                    <div className="flex items-center gap-2 mt-1">
-                      <CardDescription className="flex items-center gap-1">
+                    <div className="flex items-center gap-2 mb-3">
+                      <CardDescription className="flex items-center gap-1 text-sm">
                         <MapPin className="h-3 w-3" />
                         {trip.fromLocation} → {trip.toLocation}
                       </CardDescription>
-                      <Badge variant="secondary" className="text-xs bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 border-purple-200">
+                      <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800 border-blue-200 px-2 py-0.5">
                         {getRegionChip(trip)}
                       </Badge>
                     </div>
@@ -480,7 +437,7 @@ export default function EnhancedRecommendedTrips() {
                   
                   {/* Why tooltip - positioned to not interfere with clicks */}
                   <div className="relative group ml-2">
-                    <Info className="h-4 w-4 text-purple-500 cursor-help hover:text-purple-700" />
+                    <Info className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-600" />
                     <div className="absolute top-full right-0 mt-2 px-3 py-2 bg-black text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50 max-w-[200px] pointer-events-none">
                       Why: {getWhyReason(recommendation)}
                     </div>
@@ -488,48 +445,41 @@ export default function EnhancedRecommendedTrips() {
                 </div>
               </CardHeader>
 
-              <CardContent className="pt-0">
-                {/* Trip Details */}
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Calendar className="h-3 w-3" />
-                      {format(new Date(trip.date), 'MMM dd, yyyy')}
-                    </div>
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      {trip.time}
-                    </div>
+              <CardContent className="pt-0 pb-4">
+                {/* Trip Details - Compact Layout */}
+                <div className="grid grid-cols-2 gap-2 mb-4 text-sm">
+                  <div className="flex items-center gap-1 text-gray-600">
+                    <Calendar className="h-3 w-3" />
+                    {format(new Date(trip.date), 'MMM dd, yyyy')}
+                  </div>
+                  <div className="flex items-center gap-1 text-gray-600 justify-end">
+                    <Clock className="h-3 w-3" />
+                    {trip.time}
                   </div>
                   
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Users className="h-3 w-3" />
-                      {trip.seatsAvailable} seats available
-                    </div>
-                    <div className="flex items-center gap-1 font-semibold">
-                      {trip.price === 0 || !trip.price ? (
-                        <span className="text-green-600 flex items-center gap-1">
-                          💚 Free
-                        </span>
-                      ) : (
-                        <span className="text-green-600 flex items-center gap-1">
-                          <DollarSign className="h-3 w-3" />
-                          {formatPrice(trip.price)}
-                        </span>
-                      )}
-                    </div>
+                  <div className="flex items-center gap-1 text-gray-600">
+                    <Users className="h-3 w-3" />
+                    {trip.seatsAvailable} seats available
+                  </div>
+                  <div className="flex items-center gap-1 font-semibold justify-end">
+                    {trip.price === 0 || !trip.price ? (
+                      <span className="text-green-600">💚 Free</span>
+                    ) : (
+                      <span className="text-green-600">
+                        $ LKR {formatPrice(trip.price)}
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                {/* Sri Lankan Badges - More Eye-Catching */}
+                {/* Sri Lankan Badges - Cleaner Style */}
                 <div className="mb-4">
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {getSriLankanBadges(recommendation).map((badge, idx) => (
                       <Badge 
                         key={idx} 
-                        variant={badge.variant as any}
-                        className="text-xs px-3 py-1.5 flex items-center gap-1 font-medium shadow-sm hover:shadow-md transition-shadow bg-gradient-to-r from-green-50 to-blue-50 text-green-800 border-green-200"
+                        variant="secondary"
+                        className="text-xs px-2 py-1 flex items-center gap-1 bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-150"
                       >
                         {badge.icon}
                         {badge.text}
@@ -538,32 +488,32 @@ export default function EnhancedRecommendedTrips() {
                   </div>
                 </div>
 
-                {/* Footer Actions: 📌 Pin · ⭐ Interested · ↔ Share · 💬 Ask */}
-                <div className="flex items-center justify-between border-t pt-3 bg-gradient-to-r from-gray-50 to-purple-50 -mx-6 px-6 -mb-6 pb-4 rounded-b-lg">
-                  <div className="flex items-center gap-4 text-sm">
+                {/* Footer Actions - Simple Style like your image */}
+                <div className="flex items-center justify-between pt-2">
+                  <div className="flex items-center gap-6 text-sm">
                     <button 
-                      className="flex items-center gap-1 text-purple-600 hover:text-purple-800 hover:bg-purple-100 px-2 py-1 rounded-md transition-colors font-medium"
+                      className="flex items-center gap-1 text-pink-500 hover:text-pink-700 transition-colors"
                       onClick={(e) => {e.stopPropagation(); handleBookmark(trip.id, e);}}
                       data-testid={`button-pin-${trip.id}`}
                     >
                       📌 Pin
                     </button>
                     <button 
-                      className="flex items-center gap-1 text-orange-600 hover:text-orange-800 hover:bg-orange-100 px-2 py-1 rounded-md transition-colors font-medium"
+                      className="flex items-center gap-1 text-orange-500 hover:text-orange-700 transition-colors"
                       onClick={(e) => {e.stopPropagation(); /* Handle interested */}}
                       data-testid={`button-interested-${trip.id}`}
                     >
                       ⭐ Interested
                     </button>
                     <button 
-                      className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 px-2 py-1 rounded-md transition-colors font-medium"
+                      className="flex items-center gap-1 text-blue-500 hover:text-blue-700 transition-colors"
                       onClick={(e) => {e.stopPropagation(); handleShare(trip.id, e);}}
                       data-testid={`button-share-${trip.id}`}
                     >
                       ↔ Share
                     </button>
                     <button 
-                      className="flex items-center gap-1 text-green-600 hover:text-green-800 hover:bg-green-100 px-2 py-1 rounded-md transition-colors font-medium"
+                      className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors"
                       onClick={(e) => {e.stopPropagation(); /* Handle ask */}}
                       data-testid={`button-ask-${trip.id}`}
                     >
@@ -572,7 +522,7 @@ export default function EnhancedRecommendedTrips() {
                   </div>
                   
                   {isViewed && (
-                    <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-800 border-purple-200">
+                    <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800 border-blue-200">
                       <Eye className="h-3 w-3 mr-1" />
                       Viewed
                     </Badge>
