@@ -37,6 +37,35 @@ export function AuthSignIn({ onSuccess }: AuthSignInProps) {
       <CardContent className="space-y-4">
         {/* OAuth Providers */}
         <div className="space-y-3">
+          {/* Development Login Button - Only show in dev mode */}
+          {import.meta.env.DEV && (
+            <Button
+              onClick={async () => {
+                setIsLoading(true);
+                try {
+                  const response = await fetch('/api/auth/dev-login', { method: 'POST' });
+                  if (response.ok) {
+                    toast({ title: "Development login successful!" });
+                    if (onSuccess) onSuccess();
+                    else window.location.href = '/';
+                  } else {
+                    toast({ title: "Development login failed", variant: "destructive" });
+                  }
+                } catch (error) {
+                  console.error('Dev login failed:', error);
+                  toast({ title: "Development login failed", variant: "destructive" });
+                } finally {
+                  setIsLoading(false);
+                }
+              }}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+              disabled={isLoading}
+              data-testid="button-dev-signin"
+            >
+              🔧 Quick Dev Login (Test Mode)
+            </Button>
+          )}
+          
           <Button 
             onClick={() => handleOAuthProvider('google')}
             variant="outline" 

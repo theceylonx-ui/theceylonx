@@ -45,17 +45,17 @@ router.get('/google/callback',
   async (req: any, res: Response) => {
     console.log('🔄 Google OAuth callback received - after passport auth');
     
-    // Use localhost for development, production URL for production
-    // Check if we're running locally (no REPLIT_DOMAINS means local development)
-    const isLocalDev = !process.env.REPLIT_DOMAINS || req.get('host')?.includes('localhost') || process.env.NODE_ENV === 'development';
-    const baseUrl = isLocalDev ? 'http://localhost:5000' : (process.env.APP_URL || 'https://www.theceylonx.com');
+    // Use the same URL that Google redirected to (from the request)
+    const protocol = req.get('x-forwarded-proto') || req.protocol;
+    const host = req.get('host');
+    const baseUrl = `${protocol}://${host}`;
     
     console.log('🔍 Google OAuth callback URL detection:', {
-      NODE_ENV: process.env.NODE_ENV,
-      host: req.get('host'),
-      REPLIT_DOMAINS: process.env.REPLIT_DOMAINS,
-      isLocalDev,
-      baseUrl
+      protocol,
+      host,
+      baseUrl,
+      'x-forwarded-proto': req.get('x-forwarded-proto'),
+      'original-url': req.originalUrl
     });
     
     if (!req.user) {

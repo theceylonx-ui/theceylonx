@@ -9,17 +9,15 @@ import { JWTUser } from './jwt';
 
 // Google OAuth Strategy
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  // Dynamic callback URL based on environment
-  // Force localhost for development (when running locally)
-  const isLocalDev = !process.env.REPLIT_DOMAINS || process.env.NODE_ENV === 'development';
-  const googleCallbackURL = isLocalDev 
-    ? 'http://localhost:5000/api/auth/google/callback'
-    : 'https://www.theceylonx.com/api/auth/google/callback';
+  // Use the Replit development URL for OAuth callbacks
+  const replitDevUrl = process.env.REPLIT_DOMAINS ? 
+    `https://${process.env.REPLIT_DOMAINS}` : 
+    'http://localhost:5000';
+  const googleCallbackURL = `${replitDevUrl}/api/auth/google/callback`;
     
   console.log('🔧 Google OAuth callback URL configured:', {
-    isLocalDev,
-    NODE_ENV: process.env.NODE_ENV,
     REPLIT_DOMAINS: process.env.REPLIT_DOMAINS,
+    replitDevUrl,
     googleCallbackURL
   });
     
