@@ -30,7 +30,7 @@ interface ChatThreadData {
   id: string;
   tripId: string;
   createdAt: string;
-  trip: {
+  trip?: {
     id: string;
     title: string;
     origin: string;
@@ -168,10 +168,10 @@ export function ChatThread({ threadId, userId, onBack }: ChatThreadProps) {
           </Avatar>
           <div className="flex-1">
             <CardTitle className="text-lg">{displayName}</CardTitle>
-            {thread && (
+            {thread && thread.trip && (
               <div className="text-sm text-muted-foreground flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
-                {thread.trip.origin} → {thread.trip.destination}
+                {thread.trip.origin || 'Unknown'} → {thread.trip.destination || 'Unknown'}
               </div>
             )}
           </div>

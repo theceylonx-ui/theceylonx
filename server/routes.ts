@@ -1949,7 +1949,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const threadUsers = await storage.getThreadUsers(threadId);
-      res.json({ ...thread, users: threadUsers });
+      
+      // Get trip information if thread is associated with a trip
+      let trip = null;
+      if (thread.tripId) {
+        trip = await storage.getTrip(thread.tripId);
+      }
+
+      res.json({ ...thread, users: threadUsers, trip });
     } catch (error) {
       console.error("Error fetching chat thread:", error);
       res.status(500).json({ message: "Failed to fetch chat thread" });
