@@ -20,6 +20,7 @@ import { Link } from "wouter";
 import type { QuestionWithDetails, Topic, User as UserType } from "@shared/schema";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
+import { TipsBox } from "@/components/TipsBox";
 import communityBgImage from "@assets/2_1756418517711.png";
 
 const questionSchema = z.object({
@@ -685,6 +686,21 @@ export default function CommunityPage() {
             
             {/* Pagination */}
             {renderPagination()}
+            
+            {/* Tips Section */}
+            <div className="mt-8">
+              <TipsBox
+                title="How to Ask Great Questions"
+                defaultCollapsed={true}
+                tips={[
+                  "Ask clear, travel-focused questions (e.g., \"Best time for Arugam Bay surf?\")",
+                  "Use categories and tags (Surfing, Ayurveda, Safari, Food) so others can find your question",
+                  "Upvote helpful answers 👍, mark one as <strong>Accepted ✓</strong> if it solved your query",
+                  "Be respectful and keep Q&A Sri Lanka travel–related",
+                  "You can edit or delete your own questions anytime"
+                ]}
+              />
+            </div>
           </div>
         </div>
         </div>

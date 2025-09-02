@@ -6,6 +6,7 @@ import { useLocation } from "wouter";
 import { z } from "zod";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
+import { TipsBox } from "@/components/TipsBox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -394,6 +395,21 @@ export default function PostTrip() {
             </Form>
           </CardContent>
         </Card>
+        
+        {/* Tips Section */}
+        <div className="mt-6">
+          <TipsBox
+            title="Tips for Posting Great Trips"
+            defaultCollapsed={true}
+            tips={[
+              "Add clear trip title, date, and meeting point so others can plan easily",
+              "Set a price or leave it 0 for <strong>Free Trips 💚</strong>",
+              "Include extra details (seats, notes) to build trust",
+              "Trips with photos (or region-auto images) get more interest",
+              "After posting, you can always edit or delete your trip in Profile"
+            ]}
+          />
+        </div>
       </div>
       
       <Footer />

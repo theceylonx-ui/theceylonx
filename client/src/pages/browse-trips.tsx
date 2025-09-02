@@ -4,6 +4,7 @@ import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import TripCard from "@/components/trip-card";
 import TripFilters from "@/components/trip-filters";
+import { TipsBox } from "@/components/TipsBox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -208,6 +209,21 @@ export default function BrowseTrips() {
         
         {/* Pagination */}
         <PaginationComponent />
+        
+        {/* Tips Section */}
+        <div className="mt-8">
+          <TipsBox
+            title="How to Use Browse Trips"
+            defaultCollapsed={true}
+            tips={[
+              "⭐ <strong>Interested</strong> = let the organizer know you like this trip",
+              "📌 <strong>Pin</strong> = save trips you want to revisit later", 
+              "💬 <strong>Chat Buddy</strong> unlocks when the organizer accepts your request",
+              "💚 <strong>Free</strong> = if price is 0 or not set, trip is free to join",
+              "Use filters (Trending, Near You, Fresh Finds, For You) to explore Sri Lanka's coast, hills, culture, and safaris"
+            ]}
+          />
+        </div>
       </div>
       
       <Footer />
