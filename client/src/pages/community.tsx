@@ -86,7 +86,7 @@ export default function CommunityPage() {
 
   // Mutations
   const createQuestionMutation = useMutation({
-    mutationFn: (data: QuestionFormData) => apiRequest('/api/questions', 'POST', data),
+    mutationFn: (data: QuestionFormData) => apiRequest('POST', '/api/questions', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
       setIsCreateDialogOpen(false);
@@ -110,7 +110,7 @@ export default function CommunityPage() {
 
   const voteMutation = useMutation({
     mutationFn: ({ questionId, answerId, voteType }: { questionId?: string; answerId?: string; voteType: 'up' | 'down' }) =>
-      apiRequest('/api/vote', 'POST', { questionId, answerId, voteType }),
+      apiRequest('POST', '/api/vote', { questionId, answerId, voteType }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
     },
