@@ -338,18 +338,6 @@ export default function EnhancedRecommendedTrips() {
         </p>
       </div>
 
-      {/* Travel Style Settings CTA */}
-      <div className="mb-4">
-        <Button 
-          variant="ghost" 
-          size="sm"
-          className="text-purple-600 hover:text-purple-700 p-0 h-auto"
-          onClick={() => window.location.href = '/profile'}
-        >
-          <Edit className="h-4 w-4 mr-1" />
-          Fine-tune your Travel Style →
-        </Button>
-      </div>
 
       {/* Preferences Nudge Banner */}
       {(!personalizationSettings || !personalizationSettings.hasPreferences) && (
@@ -489,7 +477,7 @@ export default function EnhancedRecommendedTrips() {
                 </div>
 
                 {/* View Trip Button */}
-                <div className="flex items-center justify-between pt-3">
+                <div className="pt-3">
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -499,13 +487,6 @@ export default function EnhancedRecommendedTrips() {
                   >
                     View this trip
                   </Button>
-                  
-                  {isViewed && (
-                    <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800 border-blue-200">
-                      <Eye className="h-3 w-3 mr-1" />
-                      Viewed
-                    </Badge>
-                  )}
                 </div>
               </CardContent>
             </Card>
