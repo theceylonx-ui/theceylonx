@@ -44,6 +44,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/auth', authRouter);
 
   // User profile routes
+  app.get('/api/user', async (req, res) => {
+    // Delegate to the existing auth endpoint that handles both JWT and Replit Auth
+    try {
+      console.log("🔄 GET /api/user - delegating to /api/auth/me logic");
+      
+      // First try JWT authentication (for Google/Facebook OAuth users)
+      const { getCurrentUser } = await import('./auth/jwt');
+      const jwtUser = await getCurrentUser(req);
+      
+      if (jwtUser) {
+        // User is authenticated via JWT (Google/Facebook)
+        const userData = await storage.getUser(jwtUser.id);
+        if (userData) {
+          console.log("✅ /api/user - JWT auth successful:", userData.email);
+          return res.json(userData);
+        }
+      }
+      
+      // Fallback to Replit Auth
+      console.log("🔍 /api/user - trying Replit Auth fallback, isAuthenticated:", typeof req.isAuthenticated);
+      if (req.isAuthenticated && req.isAuthenticated()) {
+        const user = req.user as any;
+        console.log("🔍 /api/user - Replit Auth user claims:", user?.claims ? "present" : "missing", user?.claims?.sub);
+        if (user?.claims?.sub) {
+          const userId = user.claims.sub;
+          const userData = await storage.getUser(userId);
+          if (userData) {
+            console.log("✅ /api/user - Replit Auth successful:", userData.email);
+            return res.json(userData);
+          } else {
+            console.log("⚠️ /api/user - Replit Auth user ID found but no database record:", userId);
+          }
+        }
+      } else {
+        console.log("🔍 /api/user - req.isAuthenticated() returned:", req.isAuthenticated ? req.isAuthenticated() : 'not a function');
+      }
+      
+      // No authentication found
+      console.log("❌ /api/user - No authentication method worked");
+      return res.status(401).json({ message: "Unauthorized" });
+    } catch (error) {
+      console.error("❌ Error in /api/user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
   app.patch('/api/user', authGuard, async (req, res) => {
     try {
       const userId = (req.user as JWTUser).id;
