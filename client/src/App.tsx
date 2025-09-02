@@ -96,7 +96,6 @@ function Router() {
             <Route path="/user/delete" component={UserDeletion} />
             <Route path="/admin" component={AdminDashboardPage} />
             <Route path="/report-trip/:id" component={ReportTripPage} />
-            <Route path="/calendar" component={CalendarPage} />
           </>
         )}
         
