@@ -354,25 +354,6 @@ export default function EnhancedRecommendedTrips() {
       </div>
 
 
-      {/* Preferences Nudge Banner */}
-      {(!personalizationSettings || !personalizationSettings.hasPreferences) && (
-        <Card className="p-4 mb-6 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
-          <div className="flex items-center gap-3">
-            <Sparkles className="h-5 w-5 text-purple-600" />
-            <div className="flex-1">
-              <h4 className="font-medium text-purple-900">Want better picks?</h4>
-              <p className="text-sm text-purple-700">Answer 3 quick questions in Travel Style Settings for personalized recommendations.</p>
-            </div>
-            <Button 
-              size="sm" 
-              className="bg-purple-600 hover:bg-purple-700"
-              onClick={() => window.location.href = '/profile'}
-            >
-              Set Preferences
-            </Button>
-          </div>
-        </Card>
-      )}
 
       {/* Analytics Panel */}
       {showAnalytics && (
