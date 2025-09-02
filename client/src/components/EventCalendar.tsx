@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MapPin, Clock, Users, MessageCircle, Calendar as CalendarIcon, ArrowRight } from "lucide-react";
+import { MapPin, Clock, Users, MessageCircle, Calendar as CalendarIcon, ArrowRight, Pin } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { format, isSameDay, startOfMonth, endOfMonth } from "date-fns";
 import { Link } from "wouter";
@@ -15,7 +15,7 @@ interface CalendarEvent {
   title: string;
   description: string;
   eventDate: Date;
-  eventType: 'trip' | 'community_event' | 'personal_plan' | 'reminder';
+  eventType: 'trip' | 'community_event' | 'personal_plan' | 'reminder' | 'pinned_trip';
   entityId?: string;
   entityType?: 'trip' | 'question' | 'custom';
   location?: string;
@@ -32,14 +32,16 @@ const eventTypeColors = {
   trip: "bg-ceylon-green text-white",
   community_event: "bg-blue-500 text-white", 
   personal_plan: "bg-purple-500 text-white",
-  reminder: "bg-orange-500 text-white"
+  reminder: "bg-orange-500 text-white",
+  pinned_trip: "bg-yellow-500 text-white border-2 border-yellow-600 font-bold"
 };
 
 const eventTypeIcons = {
   trip: MapPin,
   community_event: MessageCircle,
   personal_plan: CalendarIcon,
-  reminder: Clock
+  reminder: Clock,
+  pinned_trip: Pin
 };
 
 export function EventCalendar({ className }: EventCalendarProps) {
