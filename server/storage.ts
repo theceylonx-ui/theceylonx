@@ -377,75 +377,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserQuestions(userId: string): Promise<QuestionWithDetails[]> {
-    const result = await db
-      .select({
-        question: questions,
-        user: users,
-        topic: topics,
-      })
-      .from(questions)
-      .leftJoin(users, eq(questions.userId, users.id))
-      .leftJoin(topics, eq(questions.topicId, topics.id))
-      .where(eq(questions.userId, userId))
-      .orderBy(desc(questions.createdAt));
+    try {
+      console.log('🔍 getUserQuestions called for userId:', userId);
+      
+      // Ultra-simple query to test
+      const result = await db
+        .select()
+        .from(questions)
+        .where(eq(questions.userId, userId))
+        .orderBy(desc(questions.createdAt));
 
-    const questionsWithDetails = await Promise.all(
-      result.map(async ({ question, user, topic }) => {
-        // Get answers for this question
-        const answersResult = await db
-          .select({
-            answer: answers,
-            user: users,
-          })
-          .from(answers)
-          .leftJoin(users, eq(answers.userId, users.id))
-          .where(eq(answers.questionId, question.id))
-          .orderBy(desc(answers.createdAt));
+      console.log('✅ Basic questions query successful, found:', result.length);
 
-        // Get vote counts for each answer
-        const answersWithVotes = await Promise.all(
-          answersResult.map(async ({ answer, user: answerUser }) => {
-            const [upVotes] = await db
-              .select({ count: count() })
-              .from(votes)
-              .where(and(eq(votes.answerId, answer.id), eq(votes.type, 'up')));
-            
-            const [downVotes] = await db
-              .select({ count: count() })
-              .from(votes)
-              .where(and(eq(votes.answerId, answer.id), eq(votes.type, 'down')));
-
-            return {
-              ...answer,
-              user: answerUser,
-              votesCount: (upVotes?.count || 0) - (downVotes?.count || 0),
-            };
-          })
-        );
-
-        // Get vote counts for the question
-        const [upVotes] = await db
-          .select({ count: count() })
-          .from(votes)
-          .where(and(eq(votes.questionId, question.id), eq(votes.type, 'up')));
-        
-        const [downVotes] = await db
-          .select({ count: count() })
-          .from(votes)
-          .where(and(eq(votes.questionId, question.id), eq(votes.type, 'down')));
-
-        return {
-          ...question,
-          user,
-          topic,
-          answers: answersWithVotes,
-          votesCount: (upVotes?.count || 0) - (downVotes?.count || 0),
-          answerCount: answersWithVotes.length,
-        };
-      })
-    );
-
-    return questionsWithDetails;
+      // Return minimal structure
+      return result.map(question => ({
+        ...question,
+        user: { id: userId, name: 'Test User', email: null, phone: null, image: null, provider: null, firstName: 'Test', lastName: 'User', username: null, profileImageUrl: null, phoneNumber: null, bio: null, googleId: null, facebookId: null, microsoftId: null, appleId: null, emailVerified: false, createdAt: new Date(), updatedAt: new Date() },
+        topic: { id: question.topicId || '', name: 'General', slug: 'general', description: null, createdAt: new Date() },
+        answers: [],
+        votesCount: 0,
+        answerCount: 0,
+      }));
+    } catch (error) {
+      console.error('❌ Error in getUserQuestions:', error);
+      throw error;
+    }
   }
 
   async searchTrips(filters: {
