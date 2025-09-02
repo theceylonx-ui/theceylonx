@@ -1068,6 +1068,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         questionId: req.params.questionId 
       });
       const answer = await storage.createAnswer(answerData);
+      
+      // Create notification for question author when someone answers their question
+      const question = await storage.getQuestion(req.params.questionId);
+      if (question && question.userId !== userId) {
+        const answerer = await storage.getUser(userId);
+        await storage.createNotification({
+          userId: question.userId,
+          type: "question_answered",
+          category: "social",
+          priority: "normal",
+          title: "Your Question Got an Answer!",
+          message: `${answerer?.firstName || 'Someone'} answered your question "${question.title}".`,
+          relatedUserId: userId,
+          actionUrl: `/community/questions/${question.id}#answer-${answer.id}`,
+          isRead: false,
+        });
+      }
+      
       res.json(answer);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1098,7 +1116,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Not authorized to accept answers for this question" });
       }
       
+      // Get answer details before accepting
+      const answer = await storage.getAnswer(req.params.answerId);
+      if (!answer) {
+        return res.status(404).json({ message: "Answer not found" });
+      }
+      
       await storage.acceptAnswer(req.params.questionId, req.params.answerId);
+      
+      // Create notification for answer author when their answer is accepted
+      if (answer.userId !== userId) {
+        const questionAuthor = await storage.getUser(userId);
+        await storage.createNotification({
+          userId: answer.userId,
+          type: "answer_accepted",
+          category: "social",
+          priority: "normal",
+          title: "Your Answer Was Accepted!",
+          message: `${questionAuthor?.firstName || 'Someone'} accepted your answer to "${question.title}".`,
+          relatedUserId: userId,
+          actionUrl: `/community/questions/${question.id}#answer-${answer.id}`,
+          isRead: false,
+        });
+      }
+      
       res.json({ message: "Answer accepted successfully" });
     } catch (error) {
       console.error("Error accepting answer:", error);
@@ -1173,11 +1214,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else {
           // Different vote type - update vote
           const vote = await storage.updateVote(userId, voteData.questionId || undefined, voteData.answerId || undefined, voteData.voteType as 'up' | 'down');
+          
+          // Create notification for vote on question or answer (only for upvotes to reduce spam)
+          if (voteData.voteType === 'up') {
+            if (voteData.questionId) {
+              const question = await storage.getQuestion(voteData.questionId);
+              if (question && question.userId !== userId) {
+                const voter = await storage.getUser(userId);
+                await storage.createNotification({
+                  userId: question.userId,
+                  type: "question_voted",
+                  category: "social",
+                  priority: "low",
+                  title: "Your Question Received an Upvote!",
+                  message: `${voter?.firstName || 'Someone'} upvoted your question "${question.title}".`,
+                  relatedUserId: userId,
+                  actionUrl: `/community/questions/${question.id}`,
+                  isRead: false,
+                });
+              }
+            } else if (voteData.answerId) {
+              const answer = await storage.getAnswer(voteData.answerId);
+              if (answer && answer.userId !== userId) {
+                const voter = await storage.getUser(userId);
+                await storage.createNotification({
+                  userId: answer.userId,
+                  type: "answer_voted",
+                  category: "social", 
+                  priority: "low",
+                  title: "Your Answer Received an Upvote!",
+                  message: `${voter?.firstName || 'Someone'} upvoted your answer.`,
+                  relatedUserId: userId,
+                  actionUrl: `/community/questions/${answer.questionId}#answer-${answer.id}`,
+                  isRead: false,
+                });
+              }
+            }
+          }
+          
           res.json(vote);
         }
       } else {
         // New vote
         const vote = await storage.createVote(voteData);
+        
+        // Create notification for new vote (only for upvotes to reduce spam)
+        if (voteData.voteType === 'up') {
+          if (voteData.questionId) {
+            const question = await storage.getQuestion(voteData.questionId);
+            if (question && question.userId !== userId) {
+              const voter = await storage.getUser(userId);
+              await storage.createNotification({
+                userId: question.userId,
+                type: "question_voted",
+                category: "social",
+                priority: "low",
+                title: "Your Question Received an Upvote!",
+                message: `${voter?.firstName || 'Someone'} upvoted your question "${question.title}".`,
+                relatedUserId: userId,
+                actionUrl: `/community/questions/${question.id}`,
+                isRead: false,
+              });
+            }
+          } else if (voteData.answerId) {
+            const answer = await storage.getAnswer(voteData.answerId);
+            if (answer && answer.userId !== userId) {
+              const voter = await storage.getUser(userId);
+              await storage.createNotification({
+                userId: answer.userId,
+                type: "answer_voted",
+                category: "social",
+                priority: "low", 
+                title: "Your Answer Received an Upvote!",
+                message: `${voter?.firstName || 'Someone'} upvoted your answer.`,
+                relatedUserId: userId,
+                actionUrl: `/community/questions/${answer.questionId}#answer-${answer.id}`,
+                isRead: false,
+              });
+            }
+          }
+        }
+        
         res.json(vote);
       }
     } catch (error) {
