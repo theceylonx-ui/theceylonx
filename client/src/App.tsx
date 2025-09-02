@@ -31,7 +31,6 @@ import UserDeletion from "@/pages/user-deletion";
 import CalendarPage from "@/pages/calendar";
 import TravelStyleSettings from "@/pages/travel-style-settings";
 import ChatBuddy from "@/pages/chat-buddy";
-import { FloatingActionMenu } from "@/components/floating-action-menu";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -110,7 +109,6 @@ function Router() {
       </Switch>
       
       {/* Show floating action menu only for authenticated users */}
-      {isAuthenticated && <FloatingActionMenu />}
     </>
   );
 }
