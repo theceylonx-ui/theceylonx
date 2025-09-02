@@ -355,35 +355,6 @@ export default function EnhancedRecommendedTrips() {
 
 
 
-      {/* Analytics Panel */}
-      {showAnalytics && (
-        <Card className="p-4 bg-gradient-to-r from-blue-50 to-purple-50">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{recommendations.length}</div>
-              <div className="text-sm text-muted-foreground">Total Recommendations</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {recommendations.filter(r => r.seasonalityScore > 0.8).length}
-              </div>
-              <div className="text-sm text-muted-foreground">Perfect Season</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
-                {recommendations.filter(r => r.noveltyScore > 0.7).length}
-              </div>
-              <div className="text-sm text-muted-foreground">Fresh Discoveries</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
-                {viewedTrips.size}
-              </div>
-              <div className="text-sm text-muted-foreground">Viewed This Session</div>
-            </div>
-          </div>
-        </Card>
-      )}
 
       {/* Enhanced Recommendations Grid - Show exactly 3 cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
