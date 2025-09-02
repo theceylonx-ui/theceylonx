@@ -297,7 +297,7 @@ export default function TripCard({ trip }: TripCardProps) {
                   <Button
                     size="sm"
                     variant={trip.isInterested ? "default" : "outline"}
-                    className={`text-xs px-1 sm:px-2 py-1 transition-all duration-200 ${
+                    className={`text-xs px-2 py-1 transition-all duration-200 ${
                       trip.isInterested 
                         ? 'bg-yellow-500 text-white hover:bg-yellow-600 border-yellow-500' 
                         : 'border-gray-300 text-gray-600 hover:bg-gray-50'
@@ -305,26 +305,21 @@ export default function TripCard({ trip }: TripCardProps) {
                     onClick={handleInterest}
                     disabled={interestMutation.isPending}
                     data-testid={`button-interested-${trip.id}`}
+                    title={trip.isInterested ? "Remove interest" : "Mark as interested"}
                   >
                     {interestMutation.isPending ? (
                       <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
                     ) : trip.isInterested ? (
-                      <>
-                        <span className="mr-1">⭐</span>
-                        <span className="hidden sm:inline">Interested</span>
-                      </>
+                      <span>⭐</span>
                     ) : (
-                      <>
-                        <StarOff className="h-3 w-3 mr-0 sm:mr-1" />
-                        <span className="hidden sm:inline">Interested</span>
-                      </>
+                      <StarOff className="h-3 w-3" />
                     )}
                   </Button>
                   
                   <Button
                     size="sm"
                     variant={trip.isPinned ? "default" : "outline"}
-                    className={`text-xs px-1 sm:px-2 py-1 transition-all duration-200 ${
+                    className={`text-xs px-2 py-1 transition-all duration-200 ${
                       trip.isPinned 
                         ? 'bg-orange-500 text-white hover:bg-orange-600 border-orange-500' 
                         : 'border-gray-300 text-gray-600 hover:bg-gray-50'
@@ -332,19 +327,14 @@ export default function TripCard({ trip }: TripCardProps) {
                     onClick={handlePin}
                     disabled={pinMutation.isPending}
                     data-testid={`button-pin-${trip.id}`}
+                    title={trip.isPinned ? "Unpin trip" : "Pin trip"}
                   >
                     {pinMutation.isPending ? (
                       <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
                     ) : trip.isPinned ? (
-                      <>
-                        <span className="mr-1">📌</span>
-                        <span className="hidden sm:inline">Pinned</span>
-                      </>
+                      <span>📌</span>
                     ) : (
-                      <>
-                        <PinOff className="h-3 w-3 mr-0 sm:mr-1" />
-                        <span className="hidden sm:inline">Pin</span>
-                      </>
+                      <PinOff className="h-3 w-3" />
                     )}
                   </Button>
                 </>
@@ -352,23 +342,18 @@ export default function TripCard({ trip }: TripCardProps) {
               
               <Button 
                 size="sm"
-                className={`text-xs px-1 sm:px-2 py-1 transition-all duration-200 ${user 
+                className={`text-xs px-2 py-1 transition-all duration-200 ${user 
                   ? 'bg-ceylon-green text-white hover:bg-ceylon-green/90 shadow-sm hover:shadow-md' 
                   : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                 }`}
                 onClick={handleContact}
                 data-testid={`button-contact-${trip.id}`}
+                title={user ? "Contact organizer" : "Sign in to contact"}
               >
                 {user ? (
-                  <>
-                    <Mail className="h-3 w-3 mr-0 sm:mr-1" />
-                    <span className="hidden sm:inline">Contact</span>
-                  </>
+                  <Mail className="h-3 w-3" />
                 ) : (
-                  <>
-                    <Lock className="h-3 w-3 mr-0 sm:mr-1" />
-                    <span className="hidden sm:inline">Sign in</span>
-                  </>
+                  <Lock className="h-3 w-3" />
                 )}
               </Button>
             </div>
