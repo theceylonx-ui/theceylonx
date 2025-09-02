@@ -22,9 +22,7 @@ const EMAIL_FROM = process.env.EMAIL_FROM || 'Ceylon Expand <no-reply@ceylonexpa
 const APP_URL = process.env.APP_URL || 
   (process.env.NODE_ENV === 'production' 
     ? 'https://theceylonx.com'  // Production fallback
-    : process.env.REPLIT_DEV_DOMAIN 
-      ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
-      : 'http://localhost:5000');
+    : 'http://localhost:5000');  // Development fallback
 
 // Create transporter
 const transporter = nodemailer.createTransport(SMTP_CONFIG);
