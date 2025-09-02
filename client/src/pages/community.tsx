@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MessageSquare, ThumbsUp, ThumbsDown, Plus, Search, Calendar, User, CheckCircle } from "lucide-react";
+import { MessageSquare, ThumbsUp, ThumbsDown, Plus, Search, Calendar, User, CheckCircle, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
@@ -43,16 +43,16 @@ export default function CommunityPage() {
   const { toast } = useToast();
 
   // Queries
-  const { data: topicsData = [] } = useQuery<Topic[]>({
+  const { data: topicsData = [], isLoading: topicsLoading } = useQuery<Topic[]>({
     queryKey: ['/api/topics'],
   });
 
   // Sort topics with "Others" at the end
-  const topics = topicsData.sort((a, b) => {
+  const topics = topicsData.length > 0 ? [...topicsData].sort((a, b) => {
     if (a.name === "Others") return 1;
     if (b.name === "Others") return -1;
     return a.name.localeCompare(b.name);
-  });
+  }) : [];
 
   const { data: questionsResponse, isLoading } = useQuery<{questions: QuestionWithDetails[], total: number}>({
     queryKey: ['/api/questions', searchQuery, selectedTopic, sortBy, currentPage],
@@ -112,6 +112,18 @@ export default function CommunityPage() {
         return;
       }
       toast({ title: "Failed to post question", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const editQuestionMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: QuestionFormData }) => 
+      apiRequest('PUT', `/api/questions/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
+      toast({ title: "Question updated successfully!" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Failed to update question", description: error.message, variant: "destructive" });
     },
   });
 
@@ -349,7 +361,7 @@ export default function CommunityPage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {topics.length === 0 ? (
+                              {topicsLoading || topics.length === 0 ? (
                                 <SelectItem value="loading" disabled>Loading topics...</SelectItem>
                               ) : (
                                 topics.map((topic) => (
@@ -519,9 +531,27 @@ export default function CommunityPage() {
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                            {question.title}
-                          </h3>
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                              {question.title}
+                            </h3>
+                            {user && question.user?.id === user.id && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  form.setValue('title', question.title);
+                                  form.setValue('body', question.body);
+                                  form.setValue('topicId', question.topic?.id || '');
+                                  setIsCreateDialogOpen(true);
+                                }}
+                                data-testid={`button-edit-question-${question.id}`}
+                              >
+                                <Edit className="w-4 h-4 mr-1" />
+                                Edit
+                              </Button>
+                            )}
+                          </div>
                           <p className="text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
                             {question.body.replace(/<[^>]*>/g, '')}
                           </p>

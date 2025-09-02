@@ -489,6 +489,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User trip routes
+  // Get user's questions
+  app.get('/api/users/questions', authGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const questions = await storage.getUserQuestions(userId);
+      res.json(questions);
+    } catch (error) {
+      console.error('Error fetching user questions:', error);
+      res.status(500).json({ message: 'Failed to fetch user questions' });
+    }
+  });
+
   app.get('/api/users/trips', authGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;

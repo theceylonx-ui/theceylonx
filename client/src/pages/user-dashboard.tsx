@@ -17,9 +17,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Check, X, RefreshCw, User as UserIcon, Heart, Clock } from "lucide-react";
+import { Check, X, RefreshCw, User as UserIcon, Heart, Clock, MessageSquare, Edit } from "lucide-react";
 import { generateRandomProfilePicture, getDisplayName, getInitials } from "@/lib/profileUtils";
-import type { User, TripWithOrganizer } from "@shared/schema";
+import type { User, TripWithOrganizer, QuestionWithDetails } from "@shared/schema";
 
 const profileSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username must be less than 20 characters").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores").optional().or(z.literal('')),
@@ -56,6 +56,11 @@ export default function UserDashboard() {
 
   const { data: myTrips } = useQuery<TripWithOrganizer[]>({
     queryKey: ["/api/users/trips"],
+    enabled: !!user,
+  });
+
+  const { data: myQuestions } = useQuery<QuestionWithDetails[]>({
+    queryKey: ["/api/users/questions"],
     enabled: !!user,
   });
 
@@ -371,16 +376,67 @@ export default function UserDashboard() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 bg-gray-100">
-            <TabsTrigger value="my-trips" data-testid="tab-my-trips">My Trips</TabsTrigger>
+            <TabsTrigger value="my-trips" data-testid="tab-my-trips">Posted by Me</TabsTrigger>
             <TabsTrigger value="interest-requests" data-testid="tab-interest-requests">Interest Requests</TabsTrigger>
             <TabsTrigger value="profile" data-testid="tab-profile">Profile</TabsTrigger>
           </TabsList>
 
-          {/* My Trips Tab */}
+          {/* Posted by Me Tab */}
           <TabsContent value="my-trips">
-            <Card>
-              <CardHeader>
-                <CardTitle>Trips I've Posted</CardTitle>
+            <div className="space-y-6">
+              {/* Questions Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5" />
+                    Questions I've Asked
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {myQuestions && myQuestions.length > 0 ? (
+                    <div className="space-y-4">
+                      {myQuestions.map((question) => (
+                        <div key={question.id} className="border rounded-lg p-4 hover:shadow-sm transition-shadow">
+                          <div className="flex items-start justify-between mb-2">
+                            <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                              {question.title}
+                            </h4>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="ml-2"
+                              data-testid={`button-edit-question-${question.id}`}
+                            >
+                              <Edit className="w-4 h-4 mr-1" />
+                              Edit
+                            </Button>
+                          </div>
+                          <p className="text-gray-600 dark:text-gray-300 text-sm mb-3 line-clamp-2">
+                            {question.body.replace(/<[^>]*>/g, '')}
+                          </p>
+                          <div className="flex items-center space-x-4 text-xs text-gray-500">
+                            {question.topic && (
+                              <Badge variant="secondary">{question.topic.name}</Badge>
+                            )}
+                            <span>{question.answerCount || 0} answers</span>
+                            <span>{question.votesCount || 0} votes</span>
+                            <span>Asked {new Date(question.createdAt || '').toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-600">
+                      You haven't asked any questions yet.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Trips Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Trips I've Posted</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -447,7 +503,8 @@ export default function UserDashboard() {
                   )}
                 </div>
               </CardContent>
-            </Card>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Interest Requests Tab */}

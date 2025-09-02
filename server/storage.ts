@@ -129,6 +129,7 @@ export interface IStorage {
   
   // Questions
   createQuestion(question: InsertQuestion): Promise<Question>;
+  getUserQuestions(userId: string): Promise<QuestionWithDetails[]>;
   getQuestions(filters?: {
     search?: string;
     topic?: string;
@@ -373,6 +374,78 @@ export class DatabaseStorage implements IStorage {
       ...trip,
       organizer: organizer!,
     }));
+  }
+
+  async getUserQuestions(userId: string): Promise<QuestionWithDetails[]> {
+    const result = await db
+      .select({
+        question: questions,
+        user: users,
+        topic: topics,
+      })
+      .from(questions)
+      .leftJoin(users, eq(questions.userId, users.id))
+      .leftJoin(topics, eq(questions.topicId, topics.id))
+      .where(eq(questions.userId, userId))
+      .orderBy(desc(questions.createdAt));
+
+    const questionsWithDetails = await Promise.all(
+      result.map(async ({ question, user, topic }) => {
+        // Get answers for this question
+        const answersResult = await db
+          .select({
+            answer: answers,
+            user: users,
+          })
+          .from(answers)
+          .leftJoin(users, eq(answers.userId, users.id))
+          .where(eq(answers.questionId, question.id))
+          .orderBy(desc(answers.createdAt));
+
+        // Get vote counts for each answer
+        const answersWithVotes = await Promise.all(
+          answersResult.map(async ({ answer, user: answerUser }) => {
+            const [upVotes] = await db
+              .select({ count: count() })
+              .from(votes)
+              .where(and(eq(votes.answerId, answer.id), eq(votes.type, 'up')));
+            
+            const [downVotes] = await db
+              .select({ count: count() })
+              .from(votes)
+              .where(and(eq(votes.answerId, answer.id), eq(votes.type, 'down')));
+
+            return {
+              ...answer,
+              user: answerUser,
+              votesCount: (upVotes?.count || 0) - (downVotes?.count || 0),
+            };
+          })
+        );
+
+        // Get vote counts for the question
+        const [upVotes] = await db
+          .select({ count: count() })
+          .from(votes)
+          .where(and(eq(votes.questionId, question.id), eq(votes.type, 'up')));
+        
+        const [downVotes] = await db
+          .select({ count: count() })
+          .from(votes)
+          .where(and(eq(votes.questionId, question.id), eq(votes.type, 'down')));
+
+        return {
+          ...question,
+          user,
+          topic,
+          answers: answersWithVotes,
+          votesCount: (upVotes?.count || 0) - (downVotes?.count || 0),
+          answerCount: answersWithVotes.length,
+        };
+      })
+    );
+
+    return questionsWithDetails;
   }
 
   async searchTrips(filters: {
