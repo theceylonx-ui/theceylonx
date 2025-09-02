@@ -13,7 +13,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   const isDevelopment = process.env.NODE_ENV === 'development';
   const googleCallbackURL = isDevelopment 
     ? 'http://localhost:5000/api/auth/google/callback'
-    : 'https://theceylonx.replit.app/api/auth/google/callback';
+    : (process.env.APP_URL || 'https://theceylonx.com') + '/api/auth/google/callback';
     
   console.log('🔧 Google OAuth callback URL configured:', {
     NODE_ENV: process.env.NODE_ENV,
@@ -84,7 +84,7 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
   const isDevelopment = process.env.NODE_ENV === 'development';
   const facebookCallbackURL = isDevelopment 
     ? 'http://localhost:5000/api/auth/facebook/callback'
-    : 'https://theceylonx.replit.app/api/auth/facebook/callback';
+    : (process.env.APP_URL || 'https://theceylonx.com') + '/api/auth/facebook/callback';
     
   passport.use(new FacebookStrategy({
     clientID: process.env.FACEBOOK_APP_ID,
