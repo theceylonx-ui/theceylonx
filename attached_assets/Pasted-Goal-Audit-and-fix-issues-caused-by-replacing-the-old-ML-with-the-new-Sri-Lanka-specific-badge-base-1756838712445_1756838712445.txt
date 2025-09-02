@@ -1,0 +1,55 @@
+Goal
+Audit and fix issues caused by replacing the old ML with the new Sri Lanka–specific, badge-based system. Verify code, DB, APIs, UI, and logs. No percentages should leak to the UI.
+1) Codebase sweep (remove/replace legacy)
+Search & report all references to legacy fields/functions:
+match_score, season_score, novelty_score, %, topN, personalized_score, smart_picks, explanations.percent, reason_percent, rank_percent.
+Ensure all recommendation surfaces now call the badge output (not numeric scores).
+Confirm feature flags/env vars: RECS_BADGE_MODE=on, SHOW_PERCENTAGES=off.
+2) Schema & data integrity
+Verify presence & types of new pref fields/table (user_preferences: vibe[], when[], companions[], interests[]).
+Check recommendation tables/materialized views include columns for badges and why_reason.
+Identify null or malformed rows (e.g., empty arrays, strings instead of arrays) and create a one-time migration to fix.
+3) API contract validation
+Endpoints to test:
+GET /api/user/preferences (returns arrays),
+PUT /api/user/preferences (validates max selections),
+GET /api/discover?view=<trending|near|fresh|for-you> (returns badges[], why_reason),
+GET /api/calendar (unchanged but no % badges),
+Any legacy /smart-picks routes → redirect or remove.
+Ensure badges[] only contains human text (no raw numbers except counts like “Popular with 32 travelers”).
+4) Ranking & seasonality sanity checks
+Unit test a sample month from each season (Dec, Mar, Jul, Aug) and assert:
+South/West boosted in Dec–Mar; East/North boosted in Jul–Aug.
+Off-season yields “fewer crowds/deals” style badges (no %).
+Verify final blend weights in config: Popularity 35, Seasonality 20, Freshness 10, Diversity 10, Safety 10, Novelty 5, Prefs 10.
+5) Badge mapping & presentation
+Confirm badge mapper covers: ⭐ Popular with N, 🌞 Best season <region>, ✨ New this week, 🐆 Safari season, 🚂 Tea & Train views, 🧘 Ayurveda, 🌊 Surf season, 💚 Free.
+Max 2–3 badges per card.
+Tooltip/inline “Why you’re seeing this” uses preferences (e.g., “Beach + Family”).
+No numeric percentages in any template.
+6) Caches & recompute
+Invalidate/rebuild recommendation caches/materialized views.
+Verify recompute triggers on: saving preferences, pin/interested actions, new trip posted.
+7) Logs & monitoring
+Scan server logs for: missing columns, type errors, deprecated route calls, template keys not found.
+Add WARN when any % value is passed toward the UI layer.
+Ensure metrics exist: feed impressions, card clicks, pin/interested rate, badge coverage %, error rate.
+8) Backfill & legacy cleanup
+Run a one-time script: if interested=true and pinned=true → set pinned=false.
+Migrate any legacy “reason_percent” fields → drop or archive.
+Remove unused env vars tied to old ML.
+9) UI regression checks
+Discovery views: Trending (default), Near You, Fresh Finds, For You (unlocks after ≥3 actions).
+Cards show badges + “why” tooltip; no % anywhere.
+“Fine-tune your Travel Style →” CTA visible above feed and links to settings.
+10) Acceptance criteria
+✅ Zero occurrences of %-based scores rendered in UI.
+✅ All discover endpoints return badges[] + why_reason with valid strings.
+✅ Seasonality boosts behave correctly for SL regions/months.
+✅ Preferences save/edit reorders results and updates “why” within one refresh.
+✅ Logs clean of deprecated field/route errors for 24h after deploy.
+✅ Analytics dashboards show traffic on new endpoints; error rate <0.1%.
+11) Deliverables
+Audit report listing: removed legacy refs, schema fixes, endpoint diffs, badge coverage %, log errors resolved.
+Test checklist with sample inputs → expected badges (per season & preference).
+PR(s) links + short README updates.
