@@ -35,19 +35,26 @@ router.get('/google', passport.authenticate('google', {
 }));
 
 router.get('/google/callback', 
+  (req, res, next) => {
+    console.log('🔄 Google OAuth callback received - before passport auth');
+    console.log('🔍 Request URL:', req.url);
+    console.log('🔍 Request query:', req.query);
+    next();
+  },
   passport.authenticate('google', { session: false }),
   async (req: any, res: Response) => {
-    console.log('🔄 Google OAuth callback received');
+    console.log('🔄 Google OAuth callback received - after passport auth');
     
     // Use localhost for development, production URL for production
-    // Since NODE_ENV might not be set, also check if we're running on localhost
-    const isDevelopment = process.env.NODE_ENV === 'development' || req.get('host')?.includes('localhost');
-    const baseUrl = isDevelopment ? 'http://localhost:5000' : (process.env.APP_URL || 'https://www.theceylonx.com');
+    // Check if we're running locally (no REPLIT_DOMAINS means local development)
+    const isLocalDev = !process.env.REPLIT_DOMAINS || req.get('host')?.includes('localhost') || process.env.NODE_ENV === 'development';
+    const baseUrl = isLocalDev ? 'http://localhost:5000' : (process.env.APP_URL || 'https://www.theceylonx.com');
     
     console.log('🔍 Google OAuth callback URL detection:', {
       NODE_ENV: process.env.NODE_ENV,
       host: req.get('host'),
-      isDevelopment,
+      REPLIT_DOMAINS: process.env.REPLIT_DOMAINS,
+      isLocalDev,
       baseUrl
     });
     
@@ -80,14 +87,15 @@ router.get('/facebook/callback',
     console.log('🔄 Facebook OAuth callback received');
     
     // Use localhost for development, production URL for production
-    // Since NODE_ENV might not be set, also check if we're running on localhost
-    const isDevelopment = process.env.NODE_ENV === 'development' || req.get('host')?.includes('localhost');
-    const baseUrl = isDevelopment ? 'http://localhost:5000' : (process.env.APP_URL || 'https://www.theceylonx.com');
+    // Check if we're running locally (no REPLIT_DOMAINS means local development)
+    const isLocalDev = !process.env.REPLIT_DOMAINS || req.get('host')?.includes('localhost') || process.env.NODE_ENV === 'development';
+    const baseUrl = isLocalDev ? 'http://localhost:5000' : (process.env.APP_URL || 'https://www.theceylonx.com');
     
     console.log('🔍 Facebook OAuth callback URL detection:', {
       NODE_ENV: process.env.NODE_ENV,
       host: req.get('host'),
-      isDevelopment,
+      REPLIT_DOMAINS: process.env.REPLIT_DOMAINS,
+      isLocalDev,
       baseUrl
     });
     
