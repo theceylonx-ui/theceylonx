@@ -810,9 +810,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Questions
-  app.post('/api/questions', authGuard, async (req: any, res) => {
+  app.post('/api/questions', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.claims?.sub;
       const questionData = insertQuestionSchema.parse({ ...req.body, userId });
       const question = await storage.createQuestion(questionData);
       res.json(question);
@@ -855,9 +855,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/questions/:id', authGuard, async (req: any, res) => {
+  app.patch('/api/questions/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.claims?.sub;
       
       // First check if the question exists and belongs to the user
       const existingQuestion = await storage.getQuestion(req.params.id);
@@ -880,9 +880,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/questions/:id', authGuard, async (req: any, res) => {
+  app.delete('/api/questions/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.claims?.sub;
       
       // First check if the question exists and belongs to the user
       const existingQuestion = await storage.getQuestion(req.params.id);
@@ -902,9 +902,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Answers
-  app.post('/api/questions/:questionId/answers', authGuard, async (req: any, res) => {
+  app.post('/api/questions/:questionId/answers', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.claims?.sub;
       const answerData = insertAnswerSchema.parse({ 
         ...req.body, 
         userId, 
@@ -931,9 +931,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/questions/:questionId/accept/:answerId', authGuard, async (req: any, res) => {
+  app.post('/api/questions/:questionId/accept/:answerId', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.claims?.sub;
       
       // Check if the user owns the question
       const question = await storage.getQuestion(req.params.questionId);
@@ -950,9 +950,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update answer
-  app.patch('/api/answers/:id', authGuard, async (req: any, res) => {
+  app.patch('/api/answers/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.claims?.sub;
       const answerId = req.params.id;
       
       // First check if the answer exists and belongs to the user
@@ -977,9 +977,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete answer
-  app.delete('/api/answers/:id', authGuard, async (req: any, res) => {
+  app.delete('/api/answers/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.claims?.sub;
       const answerId = req.params.id;
       
       // First check if the answer exists and belongs to the user
@@ -1000,9 +1000,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Votes
-  app.post('/api/vote', authGuard, async (req: any, res) => {
+  app.post('/api/vote', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.claims?.sub;
       const voteData = insertVoteSchema.parse({ ...req.body, userId });
       
       // Check if user already voted
@@ -1032,9 +1032,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/vote/:type/:id', authGuard, async (req: any, res) => {
+  app.get('/api/vote/:type/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.claims?.sub;
       const { type, id } = req.params;
       
       const questionId = type === 'question' ? id : undefined;
