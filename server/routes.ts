@@ -647,6 +647,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user's participation status for a specific trip (for Chat Buddy)
+  app.get('/api/trips/:id/status', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      // Check if user has an interest request for this trip
+      const interestRequest = await storage.getTripInterestRequestByUserAndTrip(userId, id);
+      
+      if (!interestRequest) {
+        return res.json({ status: 'none' });
+      }
+
+      // Return the status of the interest request
+      res.json({ status: interestRequest.status });
+    } catch (error) {
+      console.error("Error fetching trip status:", error);
+      res.status(500).json({ message: "Failed to fetch trip status" });
+    }
+  });
+
   // User trip routes
   // Get user's questions
   app.get('/api/users/questions', unifiedAuthGuard, async (req: any, res) => {
