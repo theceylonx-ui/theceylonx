@@ -358,6 +358,17 @@ export const userPersonalization = pgTable("user_personalization", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Pinned trips table for user-specific trip pinning
+export const pinnedTrips = pgTable("pinned_trips", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  tripId: varchar("trip_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  // Unique constraint to prevent duplicate pins for same user+trip
+  uniqueUserTrip: unique().on(table.userId, table.tripId),
+}));
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   organizedTrips: many(trips),
@@ -367,6 +378,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   reports: many(reports),
   authSessions: many(authSessions),
   interestRequests: many(tripInterestRequests),
+  pinnedTrips: many(pinnedTrips),
 }));
 
 export const authSessionsRelations = relations(authSessions, ({ one }) => ({
@@ -385,6 +397,7 @@ export const tripsRelations = relations(trips, ({ one, many }) => ({
   ratings: many(ratings),
   reports: many(reports),
   interestRequests: many(tripInterestRequests),
+  pinnedByUsers: many(pinnedTrips),
 }));
 
 
@@ -517,6 +530,17 @@ export const userInteractionsRelations = relations(userInteractions, ({ one }) =
 export const tripFeaturesRelations = relations(tripFeatures, ({ one }) => ({
   trip: one(trips, {
     fields: [tripFeatures.tripId],
+    references: [trips.id],
+  }),
+}));
+
+export const pinnedTripsRelations = relations(pinnedTrips, ({ one }) => ({
+  user: one(users, {
+    fields: [pinnedTrips.userId],
+    references: [users.id],
+  }),
+  trip: one(trips, {
+    fields: [pinnedTrips.tripId],
     references: [trips.id],
   }),
 }));
@@ -809,3 +833,7 @@ export type InsertKpiEvent = z.infer<typeof insertKpiEventSchema>;
 export type KpiEvent = typeof kpiEvents.$inferSelect;
 export type InsertUserPersonalization = z.infer<typeof insertUserPersonalizationSchema>;
 export type UserPersonalization = typeof userPersonalization.$inferSelect;
+
+// Pinned trips types
+export type PinnedTrip = typeof pinnedTrips.$inferSelect;
+export type InsertPinnedTrip = typeof pinnedTrips.$inferInsert;

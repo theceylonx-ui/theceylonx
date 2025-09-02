@@ -20,6 +20,7 @@ import {
   phoneOtps,
   tripInterestRequests,
   calendarEvents,
+  pinnedTrips,
   type User,
   type UpsertUser,
   type InsertTrip,
@@ -69,6 +70,8 @@ import {
   type InsertMessage,
   type CalendarEvent,
   type InsertCalendarEvent,
+  type PinnedTrip,
+  type InsertPinnedTrip,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, ilike, desc, asc, gte, lte, count, sql } from "drizzle-orm";
@@ -213,6 +216,12 @@ export interface IStorage {
   getCalendarEvent(id: string): Promise<CalendarEvent | undefined>;
   updateCalendarEvent(id: string, event: Partial<InsertCalendarEvent>): Promise<CalendarEvent>;
   deleteCalendarEvent(id: string): Promise<void>;
+  
+  // Pinned trips operations  
+  pinTrip(userId: string, tripId: string): Promise<PinnedTrip>;
+  unpinTrip(userId: string, tripId: string): Promise<void>;
+  getUserPinnedTrips(userId: string): Promise<TripWithOrganizer[]>;
+  getTripPinStatus(userId: string, tripId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1616,6 +1625,46 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCalendarEvent(id: string): Promise<void> {
     await db.delete(calendarEvents).where(eq(calendarEvents.id, id));
+  }
+
+  // Pinned trips operations
+  async pinTrip(userId: string, tripId: string): Promise<PinnedTrip> {
+    const [pinnedTrip] = await db.insert(pinnedTrips)
+      .values({ userId, tripId })
+      .returning();
+    return pinnedTrip;
+  }
+
+  async unpinTrip(userId: string, tripId: string): Promise<void> {
+    await db.delete(pinnedTrips)
+      .where(and(eq(pinnedTrips.userId, userId), eq(pinnedTrips.tripId, tripId)));
+  }
+
+  async getUserPinnedTrips(userId: string): Promise<TripWithOrganizer[]> {
+    const pinnedTripsWithDetails = await db
+      .select({
+        trip: trips,
+        organizer: users,
+      })
+      .from(pinnedTrips)
+      .innerJoin(trips, eq(pinnedTrips.tripId, trips.id))
+      .innerJoin(users, eq(trips.organizerId, users.id))
+      .where(eq(pinnedTrips.userId, userId))
+      .orderBy(desc(pinnedTrips.createdAt));
+
+    return pinnedTripsWithDetails.map(({ trip, organizer }) => ({
+      ...trip,
+      organizer,
+    }));
+  }
+
+  async getTripPinStatus(userId: string, tripId: string): Promise<boolean> {
+    const [pinnedTrip] = await db
+      .select()
+      .from(pinnedTrips)
+      .where(and(eq(pinnedTrips.userId, userId), eq(pinnedTrips.tripId, tripId)))
+      .limit(1);
+    return !!pinnedTrip;
   }
 }
 

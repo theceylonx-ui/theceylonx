@@ -252,8 +252,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       const result = await storage.searchTrips(filters);
+      
+      // For authenticated users, add pin status to each trip
+      let tripsWithPinStatus = result.trips;
+      if ((req as any).user?.id) {
+        const userId = (req as any).user.id;
+        tripsWithPinStatus = await Promise.all(
+          result.trips.map(async (trip) => {
+            const isPinned = await storage.getTripPinStatus(userId, trip.id);
+            return { ...trip, isPinned };
+          })
+        );
+      }
+      
       res.json({
-        trips: result.trips,
+        trips: tripsWithPinStatus,
         pagination: {
           page,
           limit,
@@ -354,6 +367,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting trip:", error);
       res.status(500).json({ message: "Failed to delete trip" });
+    }
+  });
+
+  // Pinned trips endpoints
+  app.post('/api/trips/:id/pin', unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const tripId = req.params.id;
+      
+      // Check if trip exists
+      const trip = await storage.getTrip(tripId);
+      if (!trip) {
+        return res.status(404).json({ message: "Trip not found" });
+      }
+      
+      // Check if already pinned
+      const isAlreadyPinned = await storage.getTripPinStatus(userId, tripId);
+      if (isAlreadyPinned) {
+        return res.status(400).json({ message: "Trip is already pinned" });
+      }
+      
+      const pinnedTrip = await storage.pinTrip(userId, tripId);
+      res.status(201).json({ message: "Trip pinned successfully", pinnedTrip });
+    } catch (error) {
+      console.error("Error pinning trip:", error);
+      res.status(500).json({ message: "Failed to pin trip" });
+    }
+  });
+
+  app.delete('/api/trips/:id/pin', unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const tripId = req.params.id;
+      
+      // Check if trip exists
+      const trip = await storage.getTrip(tripId);
+      if (!trip) {
+        return res.status(404).json({ message: "Trip not found" });
+      }
+      
+      // Check if actually pinned
+      const isPinned = await storage.getTripPinStatus(userId, tripId);
+      if (!isPinned) {
+        return res.status(400).json({ message: "Trip is not pinned" });
+      }
+      
+      await storage.unpinTrip(userId, tripId);
+      res.json({ message: "Trip unpinned successfully" });
+    } catch (error) {
+      console.error("Error unpinning trip:", error);
+      res.status(500).json({ message: "Failed to unpin trip" });
+    }
+  });
+
+  app.get('/api/pinned-trips', unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const pinnedTrips = await storage.getUserPinnedTrips(userId);
+      res.json(pinnedTrips);
+    } catch (error) {
+      console.error("Error fetching pinned trips:", error);
+      res.status(500).json({ message: "Failed to fetch pinned trips" });
     }
   });
 
@@ -1807,12 +1882,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
           region: trip.region
         }
       }));
+
+      // Get user's pinned trips as calendar events  
+      const pinnedTrips = await storage.getUserPinnedTrips(userId);
+      const pinnedTripEvents = pinnedTrips.map(trip => ({
+        id: `pinned-trip-${trip.id}`,
+        title: `📌 ${trip.title}`,
+        description: `${trip.fromLocation} → ${trip.toLocation}`,
+        eventDate: trip.date,
+        eventType: 'pinned_trip' as const,
+        entityId: trip.id,
+        entityType: 'trip' as const,
+        location: `${trip.fromLocation} - ${trip.toLocation}`,
+        isAllDay: false,
+        startTime: trip.time,
+        metadata: {
+          price: trip.price,
+          seatsAvailable: trip.seatsAvailable,
+          region: trip.region,
+          isPinned: true
+        }
+      }));
       
       // Get custom calendar events
       const calendarEvents = await storage.getUserCalendarEvents(userId, start, end);
       
-      // Combine and filter by date range (only trips and custom calendar events)
-      const allEvents = [...tripEvents, ...calendarEvents]
+      // Combine all events, filter by date range, and sort
+      const allEvents = [...tripEvents, ...pinnedTripEvents, ...calendarEvents]
         .filter(event => {
           const eventDate = new Date(event.eventDate);
           return eventDate >= start && eventDate <= end;

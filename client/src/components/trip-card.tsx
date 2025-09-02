@@ -1,19 +1,65 @@
 import { Link } from "wouter";
-import { MapPin, Calendar, Users, DollarSign, Mail, Lock } from "lucide-react";
+import { MapPin, Calendar, Users, DollarSign, Mail, Lock, Pin, PinOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { generateRandomProfilePicture, getDisplayName, getInitials } from "@/lib/profileUtils";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import type { TripWithOrganizer } from "@shared/schema";
 
 interface TripCardProps {
-  trip: TripWithOrganizer;
+  trip: TripWithOrganizer & { isPinned?: boolean };
 }
 
 export default function TripCard({ trip }: TripCardProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const pinMutation = useMutation({
+    mutationFn: async (action: 'pin' | 'unpin') => {
+      if (action === 'pin') {
+        await apiRequest('POST', `/api/trips/${trip.id}/pin`);
+      } else {
+        await apiRequest('DELETE', `/api/trips/${trip.id}/pin`);
+      }
+    },
+    onSuccess: (_, action) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/trips'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/pinned-trips'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/calendar/aggregate'] });
+      
+      toast({
+        title: action === 'pin' ? 'Trip Pinned' : 'Trip Unpinned',
+        description: action === 'pin' 
+          ? 'Trip has been added to your pinned trips' 
+          : 'Trip has been removed from your pinned trips',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update pin status',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handlePin = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      window.location.href = '/auth/signin';
+      return;
+    }
+    
+    pinMutation.mutate(trip.isPinned ? 'unpin' : 'pin');
+  };
 
   const handleContact = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -143,27 +189,58 @@ export default function TripCard({ trip }: TripCardProps) {
               </span>
             </div>
             
-            <Button 
-              size="sm"
-              className={`text-xs px-2 sm:px-3 py-1 transition-all duration-200 ${user 
-                ? 'bg-ceylon-green text-white hover:bg-ceylon-green/90 shadow-sm hover:shadow-md' 
-                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-              }`}
-              onClick={handleContact}
-              data-testid={`button-contact-${trip.id}`}
-            >
-              {user ? (
-                <>
-                  <Mail className="h-3 w-3 mr-1" />
-                  Contact
-                </>
-              ) : (
-                <>
-                  <Lock className="h-3 w-3 mr-1" />
-                  Sign in to Contact
-                </>
+            <div className="flex items-center space-x-2">
+              {user && (
+                <Button
+                  size="sm"
+                  variant={trip.isPinned ? "default" : "outline"}
+                  className={`text-xs px-2 py-1 transition-all duration-200 ${
+                    trip.isPinned 
+                      ? 'bg-orange-500 text-white hover:bg-orange-600 border-orange-500' 
+                      : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                  }`}
+                  onClick={handlePin}
+                  disabled={pinMutation.isPending}
+                  data-testid={`button-pin-${trip.id}`}
+                >
+                  {pinMutation.isPending ? (
+                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  ) : trip.isPinned ? (
+                    <>
+                      <Pin className="h-3 w-3 mr-1" />
+                      Pinned
+                    </>
+                  ) : (
+                    <>
+                      <PinOff className="h-3 w-3 mr-1" />
+                      Pin
+                    </>
+                  )}
+                </Button>
               )}
-            </Button>
+              
+              <Button 
+                size="sm"
+                className={`text-xs px-2 sm:px-3 py-1 transition-all duration-200 ${user 
+                  ? 'bg-ceylon-green text-white hover:bg-ceylon-green/90 shadow-sm hover:shadow-md' 
+                  : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                }`}
+                onClick={handleContact}
+                data-testid={`button-contact-${trip.id}`}
+              >
+                {user ? (
+                  <>
+                    <Mail className="h-3 w-3 mr-1" />
+                    Contact
+                  </>
+                ) : (
+                  <>
+                    <Lock className="h-3 w-3 mr-1" />
+                    Sign in to Contact
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
