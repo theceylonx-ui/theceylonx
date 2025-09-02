@@ -105,7 +105,7 @@ export default function EnhancedRecommendedTrips() {
 
   const handleTripView = (tripId: string) => {
     if (!viewedTrips.has(tripId)) {
-      setViewedTrips(prev => new Set([...prev, tripId]));
+      setViewedTrips(prev => new Set([...Array.from(prev), tripId]));
       
       trackInteractionMutation.mutate({
         tripId,

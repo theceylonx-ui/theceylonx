@@ -40,11 +40,11 @@ export default function Home() {
       
       // Also check if they have any preferences data (fallback check)
       const hasPreferences = userPreferences && (
-        userPreferences.vibe || 
-        userPreferences.whenTravel || 
-        userPreferences.travelStyle ||
-        userPreferences.preferredRegions?.length > 0 ||
-        userPreferences.interests?.length > 0
+        (userPreferences as any).vibe || 
+        (userPreferences as any).whenTravel || 
+        (userPreferences as any).travelStyle ||
+        (userPreferences as any).preferredRegions?.length > 0 ||
+        (userPreferences as any).interests?.length > 0
       );
       
       // Show onboarding only if they haven't completed it and don't have preferences
