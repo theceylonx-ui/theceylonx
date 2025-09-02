@@ -293,17 +293,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
   };
 
   const getTripImage = () => {
-    // Debug log to see the complete trip object
-    console.log('TripCard Debug - Full trip object:', trip);
-    console.log('TripCard Debug - imageUrl field specifically:', trip.imageUrl);
-    
-    // Use assigned image from database first - this should contain the Sri Lankan regional photos
-    if (trip.imageUrl) {
-      console.log('✅ Using database imageUrl:', trip.imageUrl);
-      return trip.imageUrl;
-    }
-    
-    // Fallback to Sri Lankan regional images if database image is missing
+    // FORCE Sri Lankan regional images - override everything for now to test
     const sriLankanImages: Record<string, string> = {
       'southern': 'https://images.unsplash.com/photo-1605540436563-5bca919ae766?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Stilt fishermen
       'central': 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Tea plantation
@@ -315,10 +305,14 @@ export default function TripCard({ trip, badges }: TripCardProps) {
       'sabaragamuwa': 'https://images.unsplash.com/photo-1571115764595-644a1f56a55c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Mountain forest
     };
     
-    console.log('❌ No database image found, using regional fallback for region:', trip.region);
-    const fallbackImage = sriLankanImages[trip.region.toLowerCase()] || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
-    console.log('Fallback image selected:', fallbackImage);
-    return fallbackImage;
+    // Debug logs
+    console.log('🔍 FORCED Sri Lankan images - Trip region:', trip.region);
+    console.log('🔍 Available regions in mapping:', Object.keys(sriLankanImages));
+    
+    const selectedImage = sriLankanImages[trip.region.toLowerCase()] || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
+    console.log('✅ FORCED image selected:', selectedImage);
+    
+    return selectedImage;
   };
 
   return (
@@ -330,7 +324,9 @@ export default function TripCard({ trip, badges }: TripCardProps) {
             alt={`${trip.region} travel photo of Sri Lanka - ${trip.fromLocation} to ${trip.toLocation}`}
             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
+            key={`${trip.id}-${Date.now()}`}
             onError={(e) => {
+              console.log('❌ Image failed to load:', e.currentTarget.src);
               e.currentTarget.src = 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
             }}
           />
