@@ -316,7 +316,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(threadUsers).where(eq(threadUsers.userId, id));
     
     // Delete trip interest requests  
-    await db.delete(tripInterestRequests).where(eq(tripInterestRequests.requesterId, id));
+    await db.delete(tripInterestRequests).where(eq(tripInterestRequests.userId, id));
     
     // Delete trip views
     await db.delete(tripViews).where(eq(tripViews.userId, id));
@@ -351,7 +351,11 @@ export class DatabaseStorage implements IStorage {
 
   // Trip operations
   async createTrip(trip: InsertTrip): Promise<Trip> {
-    const [newTrip] = await db.insert(trips).values(trip).returning();
+    const tripData = {
+      ...trip,
+      price: typeof trip.price === 'number' ? trip.price.toString() : trip.price
+    };
+    const [newTrip] = await db.insert(trips).values(tripData).returning();
     return newTrip;
   }
 
@@ -369,9 +373,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateTrip(id: string, trip: Partial<InsertTrip>): Promise<Trip> {
+    const tripData = {
+      ...trip,
+      price: trip.price && typeof trip.price === 'number' ? trip.price.toString() : trip.price,
+      updatedAt: new Date()
+    };
     const [updatedTrip] = await db
       .update(trips)
-      .set({ ...trip, updatedAt: new Date() })
+      .set(tripData)
       .where(eq(trips.id, id))
       .returning();
     return updatedTrip;
@@ -1593,12 +1602,16 @@ export class DatabaseStorage implements IStorage {
       let query = db.select().from(calendarEvents).where(eq(calendarEvents.userId, userId));
       
       if (startDate && endDate) {
-        query = query.where(
+        const additionalConditions = and(
+          gte(calendarEvents.eventDate, startDate),
+          lte(calendarEvents.eventDate, endDate)
+        );
+        query = db.select().from(calendarEvents).where(
           and(
-            gte(calendarEvents.eventDate, startDate),
-            lte(calendarEvents.eventDate, endDate)
+            eq(calendarEvents.userId, userId),
+            additionalConditions
           )
-        ) as typeof query;
+        );
       }
       
       const events = await query.orderBy(asc(calendarEvents.eventDate));
