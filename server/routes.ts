@@ -1564,6 +1564,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User preferences routes
+  app.get('/api/user/preferences', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const preferences = await storage.getUserPreferences(userId);
+      res.json(preferences || {});
+    } catch (error) {
+      console.error("Error getting user preferences:", error);
+      res.status(500).json({ message: "Failed to get preferences" });
+    }
+  });
+
+  app.post('/api/user/preferences', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { vibe, whenTravel, travelStyle } = req.body;
+      
+      await storage.upsertUserPreferences(userId, {
+        vibe,
+        whenTravel,
+        travelStyle,
+      });
+      
+      res.json({ message: "Preferences saved successfully" });
+    } catch (error) {
+      console.error("Error saving user preferences:", error);
+      res.status(500).json({ message: "Failed to save preferences" });
+    }
+  });
+
   // User personalization controls
   app.get('/api/user/personalization', unifiedAuthGuard, async (req: any, res) => {
     try {
@@ -1600,6 +1630,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error resetting recommendations:", error);
       res.status(500).json({ message: "Failed to reset recommendations" });
+    }
+  });
+
+  // Trending trips endpoint (public, no authentication required)
+  app.get('/api/recommendations/trending', async (req, res) => {
+    try {
+      const { limit = 10 } = req.query;
+      
+      const trendingTrips = await enhancedRecommendationService.getTrendingTrips(
+        parseInt(limit as string)
+      );
+      
+      res.json(trendingTrips);
+    } catch (error) {
+      console.error("Error getting trending trips:", error);
+      res.status(500).json({ message: "Failed to get trending trips" });
     }
   });
 

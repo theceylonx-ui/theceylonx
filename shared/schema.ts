@@ -340,18 +340,28 @@ export const follows = pgTable("follows", {
   uniqueUserFollow: unique().on(table.userId, table.followType, table.followIdOrValue),
 }));
 
-// User preferences table for ML recommendations
+// User preferences table for 3-step onboarding and ML recommendations
 export const userPreferences = pgTable("user_preferences", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().unique(),
+  
+  // 3-step onboarding preferences
+  vibe: varchar("vibe"), // 'beach', 'hills', 'city', 'culture' (from 🏝 Beach · 🏔 Hills · 🏙 City · 🛕 Culture)
+  whenTravel: varchar("when_travel"), // 'weekends', 'festivals', 'long_holidays'
+  travelStyle: varchar("travel_style"), // 'solo', 'friends', 'family'
+  
+  // Legacy preferences (keep for backward compatibility)
   preferredRegions: jsonb("preferred_regions").$type<string[]>().default([]),
   budgetRange: jsonb("budget_range").$type<{min: number, max: number}>(),
   preferredDays: jsonb("preferred_days").$type<string[]>().default([]), // ['weekday', 'weekend']
   preferredTimes: jsonb("preferred_times").$type<string[]>().default([]), // ['morning', 'afternoon', 'evening']
   tripTypes: jsonb("trip_types").$type<string[]>().default([]), // ['adventure', 'cultural', 'beach', 'nature']
   groupSize: varchar("group_size"), // 'solo', 'couple', 'small_group', 'large_group'
-  travelStyle: varchar("travel_style"), // 'budget', 'comfort', 'luxury'
   interests: jsonb("interests").$type<string[]>().default([]),
+  
+  // Engagement tracking for "For You" tab unlock
+  actionCount: integer("action_count").default(0), // Count of pins, interests, joins
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

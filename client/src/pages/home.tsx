@@ -10,23 +10,39 @@ import type { TripWithOrganizer } from "@shared/schema";
 import backgroundImage from "@assets/11_1756417976014.png";
 import { RecommendedTrips } from "@/components/RecommendedTrips";
 import { useAuth } from "@/hooks/useAuth";
+import TravelPreferencesOnboarding from "@/components/TravelPreferencesOnboarding";
+import { useState, useEffect } from "react";
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
-  const { data: tripsData, isLoading } = useQuery<{
-    trips: TripWithOrganizer[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-    };
-  }>({
-    queryKey: ["/api/trips"],
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  
+  // Get trending trips with badges instead of regular trips
+  const { data: trendingData, isLoading } = useQuery<any[]>({
+    queryKey: ["/api/recommendations/trending"],
+    queryFn: () => fetch('/api/recommendations/trending?limit=6').then(res => res.json()),
   });
 
-  const featuredTrips = tripsData?.trips?.slice(0, 6) || [];
+  // Check if user has preferences set up
+  const { data: userPreferences } = useQuery({
+    queryKey: ["/api/user/preferences"],
+    enabled: !!user,
+  });
+
+  const trendingTrips = trendingData || [];
+
+  // Show onboarding for authenticated users without preferences
+  useEffect(() => {
+    if (user && userPreferences !== undefined) {
+      const hasPreferences = userPreferences && 
+        (userPreferences.vibe || userPreferences.whenTravel || userPreferences.travelStyle);
+      
+      if (!hasPreferences) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [user, userPreferences]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -100,10 +116,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h2 className="text-3xl font-bold text-gray-800 mb-2" data-testid="text-featured-trips">
-                Featured Trips
+              <h2 className="text-3xl font-bold text-gray-800 mb-2" data-testid="text-trending-trips">
+                Trending Trips
               </h2>
-              <p className="text-gray-600">Discover amazing travel opportunities.</p>
+              <p className="text-gray-600">Popular destinations with real Sri Lankan insights.</p>
             </div>
             <Link href="/browse-trips">
               <Button variant="outline" className="text-ceylon-green border-ceylon-green hover:bg-ceylon-green hover:text-white" data-testid="link-view-all">
@@ -128,9 +144,14 @@ export default function Home() {
                   </CardContent>
                 </Card>
               ))
-            ) : featuredTrips.length > 0 ? (
-              featuredTrips.map((trip) => (
-                <TripCard key={trip.id} trip={trip} data-testid={`trip-card-${trip.id}`} />
+            ) : trendingTrips.length > 0 ? (
+              trendingTrips.map((recommendation) => (
+                <TripCard 
+                  key={recommendation.trip.id} 
+                  trip={recommendation.trip} 
+                  badges={recommendation.reasons}
+                  data-testid={`trip-card-${recommendation.trip.id}`} 
+                />
               ))
             ) : (
               <div className="col-span-full text-center py-12" data-testid="empty-trips">
@@ -152,19 +173,19 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-8 text-center">
             <div data-testid="stat-active-trips">
               <div className="text-3xl font-bold text-ceylon-green mb-2">
-                {tripsData?.trips?.length || 0}
+                {trendingTrips?.length || 0}
               </div>
               <div className="text-gray-600">Active Trips</div>
             </div>
             <div data-testid="stat-destinations">
               <div className="text-3xl font-bold text-ceylon-blue mb-2">
-                {new Set(tripsData?.trips?.map(trip => trip.region)).size || 0}
+                {new Set(trendingTrips?.map(rec => rec.trip.region)).size || 0}
               </div>
               <div className="text-gray-600">Destinations</div>
             </div>
             <div data-testid="stat-travelers">
               <div className="text-3xl font-bold text-ceylon-green mb-2">
-                {tripsData?.trips?.reduce((sum, trip) => sum + trip.seatsAvailable, 0) || 0}
+                {trendingTrips?.reduce((sum, rec) => sum + rec.trip.seatsAvailable, 0) || 0}
               </div>
               <div className="text-gray-600">Available Seats</div>
             </div>
@@ -173,6 +194,17 @@ export default function Home() {
       </section>
       
       <Footer />
+      
+      {/* Onboarding modal for new users */}
+      <TravelPreferencesOnboarding 
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        onComplete={() => {
+          setShowOnboarding(false);
+          // Optionally refresh recommendations after preferences are set
+          // queryClient.invalidateQueries({ queryKey: ["/api/recommendations/trending"] });
+        }}
+      />
     </div>
   );
 }

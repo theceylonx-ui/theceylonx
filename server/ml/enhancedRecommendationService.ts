@@ -9,7 +9,7 @@ import {
   userPersonalization,
   kpiEvents
 } from "@shared/schema";
-import { eq, desc, and, or, sql, asc, inArray, ne, not } from "drizzle-orm";
+import { eq, desc, and, or, sql, asc, inArray, ne, not, gte } from "drizzle-orm";
 import type { 
   Trip, 
   User, 
@@ -63,15 +63,15 @@ interface RecommendationFilters {
 
 export class EnhancedRecommendationService {
   private weights: RecommendationWeights = {
-    preferences: 0.25,
-    behavior: 0.2,
-    collaborative: 0.15,
-    popularity: 0.1,
-    freshness: 0.1,
-    seasonality: 0.08,
-    safety: 0.07,
-    novelty: 0.03,
-    regionalBalance: 0.02,
+    preferences: 0.1,        // User preferences: 10%
+    behavior: 0.0,          // Merge into collaborative (removed)
+    collaborative: 0.35,    // Popularity (pins, interested, questions): 35%
+    popularity: 0.0,        // Merged into collaborative
+    freshness: 0.1,         // Freshness (newly posted trips): 10%
+    seasonality: 0.2,       // Seasonality (peak/off-peak per region): 20%
+    safety: 0.1,            // Safety & quality flags: 10%
+    novelty: 0.05,          // Novelty (hidden gems, offbeat): 5%
+    regionalBalance: 0.1,   // Regional/Thematic diversity: 10%
   };
 
   private readonly SRI_LANKAN_REGIONS = [
@@ -208,53 +208,58 @@ export class EnhancedRecommendationService {
       .from(tripFeatures)
       .where(eq(tripFeatures.tripId, trip.id));
 
-    // 1. Preference-based scoring
+    // 1. Preference-based scoring (10%)
     const preferencesScore = this.calculatePreferencesScore(trip, userProfile.preferences);
     totalScore += preferencesScore * this.weights.preferences;
     if (preferencesScore > 0.7) reasons.push('Matches your interests');
 
-    // 2. Behavior-based scoring
+    // 2. Combined Popularity & Behavior scoring (35%) - merges collaborative, behavior, and popularity
     const behaviorScore = this.calculateBehaviorScore(trip, userProfile.interactions);
-    totalScore += behaviorScore * this.weights.behavior;
-    if (behaviorScore > 0.6) reasons.push('Similar to trips you enjoyed');
-
-    // 3. Collaborative filtering
     const collaborativeScore = await this.calculateCollaborativeScore(trip, userProfile.userId);
-    totalScore += collaborativeScore * this.weights.collaborative;
-    if (collaborativeScore > 0.5) reasons.push('Popular with similar travelers');
-
-    // 4. Popularity score
     const popularityScore = this.calculatePopularityScore(trip, features);
-    totalScore += popularityScore * this.weights.popularity;
+    
+    // Combine into one unified popularity score
+    const combinedPopularityScore = (collaborativeScore * 0.4 + behaviorScore * 0.3 + popularityScore * 0.3);
+    totalScore += combinedPopularityScore * this.weights.collaborative;
+    if (combinedPopularityScore > 0.5) reasons.push('Popular with travelers');
 
-    // 5. Freshness score (new listing boost)
+    // 3. Freshness score (10%)
     const freshnessScore = this.calculateFreshnessScore(trip);
     totalScore += freshnessScore * this.weights.freshness;
     if (freshnessScore > 0.8) reasons.push('New listing');
 
-    // 6. Seasonality score
+    // 4. Seasonality score (20%)
     const seasonalityScore = this.calculateSeasonalityScore(trip, new Date());
     totalScore += seasonalityScore * this.weights.seasonality;
     if (seasonalityScore > 0.8) reasons.push('Perfect season to visit');
     else if (seasonalityScore < 0.3) reasons.push('Off-season pricing');
 
-    // 7. Safety score
+    // 5. Safety & quality flags score (10%)
     const safetyScore = this.calculateSafetyScore(trip, new Date());
     totalScore += safetyScore * this.weights.safety;
     if (safetyScore < 0.5) reasons.push('Check weather conditions');
 
-    // 8. Novelty score
+    // 6. Novelty score (5%)
     const noveltyScore = this.calculateNoveltyScore(trip, userProfile.interactions);
     totalScore += noveltyScore * this.weights.novelty;
 
-    // 9. Regional balance
+    // 7. Regional/Thematic diversity (10%)
     const regionalBalanceScore = this.calculateRegionalDiversityScore(trip);
     totalScore += regionalBalanceScore * this.weights.regionalBalance;
+
+    // Generate Sri Lanka-specific badges instead of generic reasons
+    const badges = this.generateSriLankaBadges(trip, features, {
+      popularity: combinedPopularityScore,
+      seasonality: seasonalityScore,
+      freshness: freshnessScore,
+      safety: safetyScore,
+      novelty: noveltyScore,
+    });
 
     return {
       trip,
       score: Math.min(totalScore, 1.0), // Normalize to 0-1
-      reasons: reasons.length > 0 ? reasons : ['Recommended for you'],
+      reasons: badges.length > 0 ? badges : ['Recommended for you'],
       features,
       seasonalityScore,
       safetyScore,
@@ -263,23 +268,45 @@ export class EnhancedRecommendationService {
     };
   }
 
-  // Seasonality scoring based on current date
+  // Enhanced Sri Lankan seasonality scoring based on current date and regions
   private calculateSeasonalityScore(trip: Trip, currentDate: Date): number {
     if (!trip.seasonality || trip.seasonality.length === 0) return 0.5; // Neutral if no data
 
     const currentMonth = currentDate.getMonth() + 1; // 1-12
     
-    // Sri Lankan seasons:
-    // Dry season: December-March (12, 1, 2, 3)
-    // Wet season: April-November (4, 5, 6, 7, 8, 9, 10, 11)
-    const isDrySeason = currentMonth <= 3 || currentMonth === 12;
-    const isWetSeason = !isDrySeason;
+    // Sri Lankan regional seasons (more accurate):
+    // South & West coasts: Dec-Mar peak (dry), Apr-Nov off-season
+    // East & North coasts: Jul-Aug peak (dry), Dec-Mar off-season  
+    // Hill Country: Dec-Mar & Jul-Aug good, Apr-May & Oct-Nov rainy
+    // Cultural sites: Year-round but best Dec-Mar
+    
+    const isSouthWestPeak = currentMonth >= 12 || currentMonth <= 3; // Dec-Mar
+    const isEastNorthPeak = currentMonth >= 7 && currentMonth <= 8;  // Jul-Aug
+    const isHillCountryGood = isSouthWestPeak || isEastNorthPeak;
+    const isFestivalSeason = currentMonth === 12 || currentMonth === 1 || currentMonth === 4; // Dec-Jan & April
 
-    if (trip.seasonality.includes('year_round')) return 0.9;
-    if (trip.seasonality.includes('dry_season') && isDrySeason) return 1.0;
-    if (trip.seasonality.includes('wet_season') && isWetSeason) return 1.0;
-    if (trip.seasonality.includes('dry_season') && isWetSeason) return 0.3;
-    if (trip.seasonality.includes('wet_season') && isDrySeason) return 0.3;
+    // Regional-specific scoring
+    if (trip.region === 'Southern Province' || trip.region === 'Western Province') {
+      if (trip.seasonality.includes('dry_season') && isSouthWestPeak) return 1.0;
+      if (trip.seasonality.includes('wet_season') && !isSouthWestPeak) return 0.9;
+      if (trip.seasonality.includes('dry_season') && !isSouthWestPeak) return 0.4;
+    }
+    
+    if (trip.region === 'Eastern Province' || trip.region === 'Northern Province') {
+      if (trip.seasonality.includes('dry_season') && isEastNorthPeak) return 1.0;
+      if (trip.seasonality.includes('wet_season') && !isEastNorthPeak) return 0.9;
+      if (trip.seasonality.includes('dry_season') && !isEastNorthPeak) return 0.4;
+    }
+    
+    if (trip.region === 'Central Province' || trip.region === 'Uva Province') {
+      if (trip.seasonality.includes('year_round') && isHillCountryGood) return 1.0;
+      if (trip.seasonality.includes('dry_season') && isHillCountryGood) return 1.0;
+      if (trip.seasonality.includes('wet_season') && !isHillCountryGood) return 0.9;
+    }
+
+    // Festival and cultural boost
+    if (trip.seasonality.includes('festival_season') && isFestivalSeason) return 1.0;
+    if (trip.seasonality.includes('year_round')) return 0.8;
 
     return 0.5;
   }
@@ -315,7 +342,7 @@ export class EnhancedRecommendationService {
       interaction => 
         interaction.tripId === trip.id && 
         interaction.interactionType === 'view' &&
-        new Date(interaction.createdAt).getTime() > Date.now() - (7 * 24 * 60 * 60 * 1000) // Last 7 days
+        new Date(interaction.createdAt || new Date()).getTime() > Date.now() - (7 * 24 * 60 * 60 * 1000) // Last 7 days
     );
 
     if (recentViews.length === 0) return 1.0;
@@ -339,7 +366,7 @@ export class EnhancedRecommendationService {
       'Sabaragamuwa Province': 0.8,
     };
 
-    return regionalPopularity[trip.region] || 0.5;
+    return regionalPopularity[trip.region as keyof typeof regionalPopularity] || 0.5;
   }
 
   // Apply diversity constraints to prevent too many similar trips
@@ -545,7 +572,7 @@ export class EnhancedRecommendationService {
 
   // Calculate freshness score with decay
   private calculateFreshnessScore(trip: Trip): number {
-    const createdAt = new Date(trip.createdAt);
+    const createdAt = new Date(trip.createdAt || new Date());
     const daysSinceCreated = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
     
     // Fresh boost decays over 30 days
@@ -588,9 +615,12 @@ export class EnhancedRecommendationService {
         freshBoost: trips.freshBoost,
         createdAt: trips.createdAt,
         updatedAt: trips.updatedAt,
+        isDeleted: trips.isDeleted,
+        deletedAt: trips.deletedAt,
         organizer: {
           id: users.id,
           email: users.email,
+          phone: users.phone,
           name: users.name,
           image: users.image,
           provider: users.provider,
@@ -601,6 +631,7 @@ export class EnhancedRecommendationService {
           phoneNumber: users.phoneNumber,
           bio: users.bio,
           googleId: users.googleId,
+          facebookId: users.facebookId,
           microsoftId: users.microsoftId,
           appleId: users.appleId,
           emailVerified: users.emailVerified,
@@ -797,6 +828,140 @@ export class EnhancedRecommendationService {
   private getCurrentSeason(): string {
     const month = new Date().getMonth() + 1;
     return (month <= 3 || month === 12) ? 'dry_season' : 'wet_season';
+  }
+
+  // Generate Sri Lanka-specific badges for trips
+  generateSriLankaBadges(
+    trip: Trip, 
+    features: TripFeatures | null, 
+    scores: {
+      popularity: number;
+      seasonality: number;
+      freshness: number;
+      safety: number;
+      novelty: number;
+    }
+  ): string[] {
+    const badges: string[] = [];
+    const currentMonth = new Date().getMonth() + 1;
+
+    // 1. Popularity badge (35% weight)
+    if (scores.popularity > 0.7) {
+      const count = Math.floor((trip.viewCount || 0) + (trip.bookingCount || 0) * 2);
+      if (count > 20) badges.push(`⭐ Popular with ${count} travelers`);
+    }
+
+    // 2. Seasonal badges (20% weight)
+    if (scores.seasonality > 0.8) {
+      // Hill Country seasons
+      if (trip.region === 'Central Province' || trip.region === 'Uva Province') {
+        if (currentMonth >= 12 || currentMonth <= 3) {
+          badges.push('🌞 Best season in the Hill Country');
+        } else if (currentMonth >= 7 && currentMonth <= 8) {
+          badges.push('🌤 Great weather for hill stations');
+        }
+      }
+      // East Coast surf season
+      else if (trip.region === 'Eastern Province' && (currentMonth >= 7 && currentMonth <= 8)) {
+        badges.push('🌊 Surf season on the East Coast');
+      }
+      // South Coast beach season
+      else if (trip.region === 'Southern Province' && (currentMonth >= 12 || currentMonth <= 3)) {
+        badges.push('🏖 Perfect beach weather');
+      }
+    }
+
+    // 3. Freshness badge (10% weight)
+    if (scores.freshness > 0.8) {
+      badges.push('✨ New this week');
+    }
+
+    // 4. Special Sri Lankan experiences
+    if (trip.tags?.includes('safari')) {
+      badges.push('🐆 Great for safaris now');
+    }
+    if (trip.tags?.includes('ayurveda') || trip.tags?.includes('wellness')) {
+      badges.push('🧘 Ayurveda & Wellness retreat');
+    }
+    if (trip.tags?.includes('tea') || trip.tags?.includes('train')) {
+      badges.push('🚂 Tea & Train views');
+    }
+    if (trip.tags?.includes('cultural') || trip.tags?.includes('temple')) {
+      badges.push('🛕 Cultural heritage experience');
+    }
+
+    // 5. Free/budget trips
+    if (!trip.price || parseFloat(trip.price || "0") === 0) {
+      badges.push('💚 Free trip available');
+    }
+
+    // 6. Hidden gems (novelty boost)
+    if (scores.novelty > 0.8 && trip.region === 'Northern Province') {
+      badges.push('💎 Hidden gem in the North');
+    }
+
+    // Limit to 2-3 most relevant badges
+    return badges.slice(0, 3);
+  }
+
+  // Generate trending trips (public endpoint, no user-specific data)
+  async getTrendingTrips(limit: number = 10): Promise<TripRecommendation[]> {
+    // Get all active trips with organizer info
+    const candidateTrips = await db
+      .select()
+      .from(trips)
+      .leftJoin(users, eq(trips.organizerId, users.id))
+      .where(
+        and(
+          eq(trips.status, 'active'),
+          eq(trips.isDeleted, false),
+          gte(trips.date, new Date())
+        )
+      );
+
+    // Score for trending (mix of popularity, freshness, and regional diversity)
+    const scoredTrips = candidateTrips.map(row => {
+      const trip = { ...row.trips, organizer: row.users! };
+      
+      const popularityScore = ((trip.viewCount || 0) + (trip.bookingCount || 0) * 2) / 50;
+      const freshnessScore = this.calculateFreshnessScore(trip);
+      const seasonalityScore = this.calculateSeasonalityScore(trip, new Date());
+      const regionalDiversityScore = this.calculateRegionalDiversityScore(trip);
+      
+      // Use new weights: popularity 35%, seasonality 20%, freshness 10%, diversity 10%
+      const totalScore = 
+        popularityScore * 0.35 + 
+        seasonalityScore * 0.2 + 
+        freshnessScore * 0.1 + 
+        regionalDiversityScore * 0.1 +
+        0.25; // Base score for visibility
+
+      // Generate badges
+      const badges = this.generateSriLankaBadges(trip, null, {
+        popularity: popularityScore,
+        seasonality: seasonalityScore,
+        freshness: freshnessScore,
+        safety: 1.0,
+        novelty: regionalDiversityScore,
+      });
+
+      return {
+        trip,
+        score: Math.min(totalScore, 1.0),
+        reasons: badges.length > 0 ? badges : ['Trending destination'],
+        features: null,
+        seasonalityScore,
+        safetyScore: 1.0,
+        noveltyScore: regionalDiversityScore,
+        diversityScore: regionalDiversityScore,
+      };
+    });
+
+    // Sort by score and ensure regional balance
+    const sorted = scoredTrips.sort((a, b) => b.score - a.score);
+    const balanced = this.ensureRegionalBalance(sorted, limit * 2);
+    
+    return balanced.slice(0, limit);
   }
 }
 

@@ -17,9 +17,10 @@ import { useState } from "react";
 
 interface TripCardProps {
   trip: TripWithOrganizer & { isPinned?: boolean; isInterested?: boolean };
+  badges?: string[];
 }
 
-export default function TripCard({ trip }: TripCardProps) {
+export default function TripCard({ trip, badges }: TripCardProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -331,6 +332,26 @@ export default function TripCard({ trip }: TripCardProps) {
             <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2 line-clamp-2" data-testid={`trip-title-${trip.id}`}>
               {trip.title}
             </h3>
+            
+            {/* Display badges if available */}
+            {badges && badges.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2" data-testid={`trip-badges-${trip.id}`}>
+                {badges.slice(0, 2).map((badge, index) => (
+                  <Badge 
+                    key={index} 
+                    variant="secondary" 
+                    className="text-xs bg-green-100 text-green-700 hover:bg-green-200"
+                  >
+                    {badge}
+                  </Badge>
+                ))}
+                {badges.length > 2 && (
+                  <Badge variant="outline" className="text-xs text-gray-500">
+                    +{badges.length - 2} more
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
           
           <div className="space-y-2 sm:space-y-3 mb-4 text-gray-600 text-xs sm:text-sm">

@@ -1,0 +1,44 @@
+Goal
+Make our recommendation engine the USP of the platform by reworking the backend logic and frontend display. Current ML is not very useful for end-users. We must make it unique, simple, Sri Lanka–specific, and engaging.
+Backend Adjustments (ML Engine)
+Reuse existing ML scoring, but update weights using research insights:
+Popularity (pins, interested, questions): 35%
+Seasonality (peak/off-peak per region): 20%
+Freshness (newly posted trips): 10%
+Regional/Thematic diversity: 10%
+Safety & quality flags: 10%
+Novelty (hidden gems, offbeat): 5%
+User preferences (from onboarding + profile edits): 10%
+No percentages shown to users.
+Keep scores internal → expose only badges with reasons.
+Travel Preference Tab (User Input)
+Replace long profile survey with simple onboarding questions (3 quick taps):
+Vibe: 🏝 Beach · 🏔 Hills · 🏙 City · 🛕 Culture
+When: Weekends · Festivals · Long Holidays
+Travel Style: Solo · Friends · Family
+Save answers in profile as preferences.
+Allow users to edit preferences anytime via Profile → “Travel Style Settings.”
+Preferences only reorder results, not filter out trips.
+Badges (Frontend Display)
+Instead of % scores, show plain-language badges tied to Sri Lanka travel culture:
+⭐ Popular with 32 travelers (based on pins & interested)
+🌞 Best season in the Hill Country (based on current seasonal logic)
+✨ New this week (freshness)
+🐆 Great for safaris now
+🧘 Ayurveda & Wellness retreat
+🚂 Tea & Train views
+🌊 Surf season on the East Coast
+💚 Free trip available
+(System auto-selects up to 2–3 most relevant badges per card.)
+User Experience Flow
+New user → sees Trending Trips by default.
+Onboarding → quick 3-step preference setup (optional, skippable).
+Homepage → Trending Trips with badges instead of % scores.
+After 3+ actions (pins, interests, joins) → unlock “For You” tab (blends ML logic + user prefs).
+Profile → “Travel Style Settings” for editing preferences later.
+Acceptance Criteria
+ML backend still calculates using weights.
+Users only see badges & human-friendly reasons.
+Seasonal logic tied to Sri Lanka’s real travel calendar (Dec–Mar south/west, Jul–Aug east/north, off-season festivals/wellness).
+“Trending Trips” always blends iconic spots (Sigiriya, Ella, Galle) with offbeat gems (Jaffna, Kalpitiya, Knuckles).
+The recommendation system is positioned as the USP: “We suggest the right trip at the right time for you, in the Sri Lankan way.”
