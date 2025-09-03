@@ -830,7 +830,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update comment route
-  app.patch('/api/comments/:id', unifiedAuthGuard, async (req: any, res) => {
+  app.put('/api/comments/:id', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user!.id;
       const commentId = req.params.id;
