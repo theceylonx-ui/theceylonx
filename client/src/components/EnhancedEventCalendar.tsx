@@ -504,10 +504,10 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
                   <p className="text-gray-500 mb-4">No trips on this day with current filters.</p>
                   <div className="flex gap-2 justify-center">
                     <Button asChild variant="outline" size="sm">
-                      <Link href="/trips">Browse Trips</Link>
+                      <Link href="/browse-trips">Browse Trips</Link>
                     </Button>
                     <Button asChild size="sm">
-                      <Link href="/post">Post a Trip</Link>
+                      <Link href={`/post?date=${calendarState.selectedDate}`}>Post a Trip</Link>
                     </Button>
                   </div>
                 </div>

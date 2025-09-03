@@ -42,13 +42,17 @@ export default function PostTrip() {
   const queryClient = useQueryClient();
   const { isAuthenticated, isLoading } = useAuth();
 
+  // Get date parameter from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const selectedDate = urlParams.get('date') || '';
+
   const form = useForm<PostTripFormData>({
     resolver: zodResolver(postTripSchema),
     defaultValues: {
       title: "",
       fromLocation: "",
       toLocation: "",
-      date: "",
+      date: selectedDate,
       time: "",
       seatsAvailable: 1,
       price: "",
