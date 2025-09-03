@@ -297,6 +297,30 @@ export const reports = pgTable("reports", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Admin chat threads for report investigations
+export const adminChatThreads = pgTable("admin_chat_threads", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  reportId: varchar("report_id").notNull().references(() => reports.id, { onDelete: 'cascade' }),
+  adminId: varchar("admin_id").notNull(),
+  organizerId: varchar("organizer_id").notNull(),
+  isBlocked: boolean("is_blocked").default(false),
+  blockedAt: timestamp("blocked_at"),
+  blockedBy: varchar("blocked_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Admin chat messages
+export const adminChatMessages = pgTable("admin_chat_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  threadId: varchar("thread_id").notNull().references(() => adminChatThreads.id, { onDelete: 'cascade' }),
+  senderId: varchar("sender_id").notNull(), // admin or organizer ID
+  senderType: varchar("sender_type").notNull(), // 'admin' | 'organizer'
+  content: text("content").notNull(),
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Community Q&A Tables
 
 // Categories table for categorizing questions (renamed from topics for clarity)
@@ -900,6 +924,18 @@ export const insertReportSchema = createInsertSchema(reports).omit({
   createdAt: true,
 });
 
+// Admin chat insert schemas
+export const insertAdminChatThreadSchema = createInsertSchema(adminChatThreads).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAdminChatMessageSchema = createInsertSchema(adminChatMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Community Q&A insert schemas
 export const insertTopicSchema = createInsertSchema(topics).omit({
   id: true,
@@ -1070,6 +1106,25 @@ export type InsertRating = z.infer<typeof insertRatingSchema>;
 export type Rating = typeof ratings.$inferSelect;
 export type InsertReport = z.infer<typeof insertReportSchema>;
 export type Report = typeof reports.$inferSelect;
+
+// Admin Chat Types
+export type InsertAdminChatThread = z.infer<typeof insertAdminChatThreadSchema>;
+export type AdminChatThread = typeof adminChatThreads.$inferSelect;
+export type InsertAdminChatMessage = z.infer<typeof insertAdminChatMessageSchema>;
+export type AdminChatMessage = typeof adminChatMessages.$inferSelect;
+
+// Admin chat with enhanced details
+export type AdminChatThreadWithDetails = AdminChatThread & {
+  admin: User;
+  organizer: User;
+  report: Report;
+  messageCount: number;
+  lastMessage?: AdminChatMessage;
+};
+
+export type AdminChatMessageWithSender = AdminChatMessage & {
+  sender: User;
+};
 
 // Community Q&A Types
 export type InsertTopic = z.infer<typeof insertTopicSchema>;

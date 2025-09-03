@@ -1072,6 +1072,187 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Chat endpoints for report investigations
+  
+  // Create or get admin chat thread for a report
+  app.post('/api/admin/reports/:reportId/chat', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const { reportId } = req.params;
+      const adminId = req.user.id;
+      
+      // Check if user is admin
+      const adminUserIds = [
+        "bcc1d79a-d83a-4a99-8556-e1d367140e88", // PraDas S Agnya
+        "313a0e58-6745-4db7-91bd-31e69c7496ab", // Add more admin IDs as needed
+      ];
+      
+      if (!adminUserIds.includes(adminId)) {
+        return res.status(403).json({ message: "Access denied. Admin privileges required." });
+      }
+
+      // Check if thread already exists
+      let thread = await storage.getAdminChatThread(reportId);
+      
+      if (!thread) {
+        // Get the report to find organizer
+        const reports = await storage.getReports();
+        const report = reports.find(r => r.id === reportId);
+        
+        if (!report || !report.tripId) {
+          return res.status(404).json({ message: "Report or trip not found" });
+        }
+
+        // Get the trip to find organizer
+        const trip = await storage.getTrip(report.tripId);
+        if (!trip) {
+          return res.status(404).json({ message: "Trip not found" });
+        }
+
+        // Create new thread
+        const newThread = await storage.createAdminChatThread({
+          reportId,
+          adminId,
+          organizerId: trip.organizerId,
+        });
+        
+        thread = await storage.getAdminChatThread(reportId);
+      }
+
+      res.json(thread);
+    } catch (error) {
+      console.error("Error creating/getting admin chat thread:", error);
+      res.status(500).json({ message: "Failed to create chat thread" });
+    }
+  });
+
+  // Get admin chat messages
+  app.get('/api/admin/chat/:threadId/messages', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const { threadId } = req.params;
+      const userId = req.user.id;
+      
+      // Check if user is admin or the organizer
+      const adminUserIds = [
+        "bcc1d79a-d83a-4a99-8556-e1d367140e88", // PraDas S Agnya
+        "313a0e58-6745-4db7-91bd-31e69c7496ab", // Add more admin IDs as needed
+      ];
+      
+      // Get thread details to check permissions
+      const reports = await storage.getReports();
+      let hasAccess = false;
+      
+      for (const report of reports) {
+        const thread = await storage.getAdminChatThread(report.id);
+        if (thread?.id === threadId) {
+          hasAccess = adminUserIds.includes(userId) || thread.organizerId === userId;
+          break;
+        }
+      }
+      
+      if (!hasAccess) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const messages = await storage.getAdminChatMessages(threadId);
+      
+      // Mark messages as read
+      await storage.markAdminChatMessagesAsRead(threadId, userId);
+      
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching admin chat messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  // Send admin chat message
+  app.post('/api/admin/chat/:threadId/messages', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const { threadId } = req.params;
+      const { content } = req.body;
+      const userId = req.user.id;
+      
+      if (!content || !content.trim()) {
+        return res.status(400).json({ message: "Message content is required" });
+      }
+
+      // Check if user is admin or organizer and thread is not blocked
+      const adminUserIds = [
+        "bcc1d79a-d83a-4a99-8556-e1d367140e88", // PraDas S Agnya
+        "313a0e58-6745-4db7-91bd-31e69c7496ab", // Add more admin IDs as needed
+      ];
+      
+      const reports = await storage.getReports();
+      let thread = null;
+      let hasAccess = false;
+      let senderType = '';
+      
+      for (const report of reports) {
+        const foundThread = await storage.getAdminChatThread(report.id);
+        if (foundThread?.id === threadId) {
+          thread = foundThread;
+          if (adminUserIds.includes(userId)) {
+            hasAccess = true;
+            senderType = 'admin';
+          } else if (foundThread.organizerId === userId) {
+            hasAccess = true;
+            senderType = 'organizer';
+          }
+          break;
+        }
+      }
+      
+      if (!hasAccess || !thread) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      if (thread.isBlocked && senderType === 'organizer') {
+        return res.status(403).json({ message: "Chat is blocked by admin" });
+      }
+
+      const message = await storage.createAdminChatMessage({
+        threadId,
+        senderId: userId,
+        senderType,
+        content: content.trim(),
+      });
+
+      res.json(message);
+    } catch (error) {
+      console.error("Error sending admin chat message:", error);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  // Block/unblock admin chat
+  app.patch('/api/admin/chat/:threadId/block', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const { threadId } = req.params;
+      const { isBlocked } = req.body;
+      const adminId = req.user.id;
+      
+      // Check if user is admin
+      const adminUserIds = [
+        "bcc1d79a-d83a-4a99-8556-e1d367140e88", // PraDas S Agnya
+        "313a0e58-6745-4db7-91bd-31e69c7496ab", // Add more admin IDs as needed
+      ];
+      
+      if (!adminUserIds.includes(adminId)) {
+        return res.status(403).json({ message: "Access denied. Admin privileges required." });
+      }
+
+      const updatedThread = await storage.toggleAdminChatBlock(threadId, adminId, isBlocked);
+      
+      res.json({
+        ...updatedThread,
+        action: isBlocked ? 'blocked' : 'unblocked'
+      });
+    } catch (error) {
+      console.error("Error blocking/unblocking admin chat:", error);
+      res.status(500).json({ message: "Failed to update chat status" });
+    }
+  });
+
   // Admin route to delete trip
   app.delete('/api/admin/trips/:id', unifiedAuthGuard, async (req: any, res) => {
     try {

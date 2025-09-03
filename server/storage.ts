@@ -75,9 +75,22 @@ import {
   type InsertPinnedTrip,
   type UserTripFlags,
   type InsertUserTripFlags,
+  adminChatThreads,
+  adminChatMessages,
+  contactShares,
+  auditLogs,
+  type AdminChatThread,
+  type InsertAdminChatThread,
+  type AdminChatThreadWithDetails,
+  type AdminChatMessage,
+  type InsertAdminChatMessage,
+  type AdminChatMessageWithSender,
+  type ContactShare,
+  type InsertContactShare,
+  type AuditLog,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, ilike, desc, asc, gte, lte, count, sql, isNull } from "drizzle-orm";
+import { eq, and, or, ilike, desc, asc, gte, lte, count, sql, isNull, ne } from "drizzle-orm";
 
 // Contact redaction utilities
 export function redactContact<T extends { contactInfo?: string | null; whatsapp?: string | null; email?: string | null; phone?: string | null }>(userOrTrip: T): T & { contactRedacted?: boolean } {
@@ -705,6 +718,100 @@ export class DatabaseStorage implements IStorage {
       .where(eq(reports.id, reportId))
       .returning();
     return updatedReport;
+  }
+
+  // Admin Chat Operations
+  async createAdminChatThread(threadData: InsertAdminChatThread): Promise<AdminChatThread> {
+    const [thread] = await db.insert(adminChatThreads).values(threadData).returning();
+    return thread;
+  }
+
+  async getAdminChatThread(reportId: string): Promise<AdminChatThreadWithDetails | null> {
+    const [result] = await db
+      .select({
+        thread: adminChatThreads,
+        admin: users,
+        organizer: users,
+        report: reports,
+      })
+      .from(adminChatThreads)
+      .leftJoin(users, eq(adminChatThreads.adminId, users.id))
+      .leftJoin(users, eq(adminChatThreads.organizerId, users.id))
+      .leftJoin(reports, eq(adminChatThreads.reportId, reports.id))
+      .where(eq(adminChatThreads.reportId, reportId));
+
+    if (!result) return null;
+
+    // Get message count
+    const [messageCountResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(adminChatMessages)
+      .where(eq(adminChatMessages.threadId, result.thread.id));
+
+    // Get last message
+    const [lastMessage] = await db
+      .select()
+      .from(adminChatMessages)
+      .where(eq(adminChatMessages.threadId, result.thread.id))
+      .orderBy(desc(adminChatMessages.createdAt))
+      .limit(1);
+
+    return {
+      ...result.thread,
+      admin: result.admin!,
+      organizer: result.organizer!,
+      report: result.report!,
+      messageCount: messageCountResult.count,
+      lastMessage,
+    };
+  }
+
+  async toggleAdminChatBlock(threadId: string, adminId: string, isBlocked: boolean): Promise<AdminChatThread> {
+    const [updatedThread] = await db
+      .update(adminChatThreads)
+      .set({
+        isBlocked,
+        blockedAt: isBlocked ? new Date() : null,
+        blockedBy: isBlocked ? adminId : null,
+        updatedAt: new Date(),
+      })
+      .where(eq(adminChatThreads.id, threadId))
+      .returning();
+    return updatedThread;
+  }
+
+  async createAdminChatMessage(messageData: InsertAdminChatMessage): Promise<AdminChatMessage> {
+    const [message] = await db.insert(adminChatMessages).values(messageData).returning();
+    return message;
+  }
+
+  async getAdminChatMessages(threadId: string): Promise<AdminChatMessageWithSender[]> {
+    const messages = await db
+      .select({
+        message: adminChatMessages,
+        sender: users,
+      })
+      .from(adminChatMessages)
+      .leftJoin(users, eq(adminChatMessages.senderId, users.id))
+      .where(eq(adminChatMessages.threadId, threadId))
+      .orderBy(asc(adminChatMessages.createdAt));
+
+    return messages.map((row) => ({
+      ...row.message,
+      sender: row.sender!,
+    }));
+  }
+
+  async markAdminChatMessagesAsRead(threadId: string, userId: string): Promise<void> {
+    await db
+      .update(adminChatMessages)
+      .set({ isRead: true })
+      .where(
+        and(
+          eq(adminChatMessages.threadId, threadId),
+          ne(adminChatMessages.senderId, userId) // Don't mark own messages as read
+        )
+      );
   }
 
   // Community Q&A operations
