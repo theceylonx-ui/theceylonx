@@ -645,6 +645,28 @@ export class DatabaseStorage implements IStorage {
     return updatedComment;
   }
 
+  async getComment(id: string): Promise<CommentWithUser | null> {
+    const [comment] = await db
+      .select({
+        id: comments.id,
+        content: comments.content,
+        createdAt: comments.createdAt,
+        tripId: comments.tripId,
+        userId: comments.userId,
+        user: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+        },
+      })
+      .from(comments)
+      .innerJoin(users, eq(comments.userId, users.id))
+      .where(and(eq(comments.id, id), eq(comments.isDeleted, false)));
+    
+    return comment || null;
+  }
+
   async deleteComment(id: string): Promise<void> {
     await db
       .update(comments)

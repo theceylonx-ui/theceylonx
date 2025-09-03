@@ -841,8 +841,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check ownership - need to get comment first
-      const allComments = await storage.getTripComments(""); // TODO: Implement getComment method
-      const comment = allComments.find(c => c.id === commentId);
+      const comment = await storage.getComment(commentId);
       
       if (!comment) {
         return res.status(404).json({ message: "Comment not found" });
@@ -871,8 +870,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get comment details to check ownership and trip ownership
-      const comments = await storage.getTripComments(""); // We need a better way to get a single comment
-      const comment = comments.find(c => c.id === commentId);
+      const comment = await storage.getComment(commentId);
       
       if (!comment) {
         return res.status(404).json({ message: "Comment not found" });
