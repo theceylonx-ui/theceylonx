@@ -33,8 +33,9 @@ export function generateProfilePicture(seed?: string, style: AvatarStyle = 'avat
 }
 
 // Generate a random profile picture URL using DiceBear API (backward compatibility)
-export function generateRandomProfilePicture(seed?: string): string {
-  return generateProfilePicture(seed, 'avataaars');
+export function generateRandomProfilePicture(seed?: string, style?: AvatarStyle): string {
+  const usedStyle = style || AVATAR_STYLES[Math.floor(Math.random() * AVATAR_STYLES.length)];
+  return generateProfilePicture(seed, usedStyle);
 }
 
 // Get avatar options for selection

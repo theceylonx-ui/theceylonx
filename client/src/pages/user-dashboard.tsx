@@ -18,7 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { Check, X, RefreshCw, User as UserIcon, Heart, Clock, MessageSquare, Edit, Trash2 } from "lucide-react";
-import { generateRandomProfilePicture, getDisplayName, getInitials, type AvatarStyle } from "@/lib/profileUtils";
+import { generateRandomProfilePicture, getDisplayName, getInitials, type AvatarStyle, AVATAR_STYLES } from "@/lib/profileUtils";
 import { AvatarSelector } from "@/components/avatar-selector";
 import type { User, TripWithOrganizer, QuestionWithDetails } from "@shared/schema";
 
@@ -362,7 +362,21 @@ export default function UserDashboard() {
   };
 
   const generateNewProfilePicture = () => {
-    const newProfileUrl = generateRandomProfilePicture();
+    // Extract current style from the current avatar URL
+    let currentStyle: AvatarStyle = 'avataaars';
+    const currentUrl = selectedAvatarUrl || form.watch('profileImageUrl') || user?.profileImageUrl;
+    if (currentUrl) {
+      // Try to extract style from the URL
+      for (const style of AVATAR_STYLES) {
+        if (currentUrl.includes(`/${style}/`)) {
+          currentStyle = style;
+          break;
+        }
+      }
+    }
+    
+    // Generate new random picture with the same style
+    const newProfileUrl = generateRandomProfilePicture(undefined, currentStyle);
     form.setValue('profileImageUrl', newProfileUrl);
     setSelectedAvatarUrl(newProfileUrl);
   };
