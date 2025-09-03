@@ -31,6 +31,7 @@ import UserDeletion from "@/pages/user-deletion";
 import CalendarPage from "@/pages/calendar";
 import TravelStyleSettings from "@/pages/travel-style-settings";
 import ChatBuddy from "@/pages/chat-buddy";
+import AdminReportsPage from "@/pages/admin-reports";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -98,6 +99,7 @@ function Router() {
             <Route path="/chat-buddy" component={ChatBuddy} />
             <Route path="/user/delete" component={UserDeletion} />
             <Route path="/admin" component={AdminDashboardPage} />
+            <Route path="/admin/reports" component={AdminReportsPage} />
             <Route path="/report-trip/:id" component={ReportTripPage} />
           </>
         )}
