@@ -398,7 +398,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
                     variant={trip.isInterested ? "default" : "outline"}
                     className={`text-xs px-2 py-1 transition-all duration-200 ${
                       trip.isInterested 
-                        ? 'bg-yellow-500 text-white hover:bg-yellow-600 border-yellow-500' 
+                        ? 'bg-yellow-500 text-white hover:bg-yellow-600 border-yellow-500 shadow-md' 
                         : 'border-gray-300 text-gray-600 hover:bg-gray-50'
                     }`}
                     onClick={handleInterest}
@@ -409,7 +409,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
                     {interestMutation.isPending ? (
                       <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
                     ) : trip.isInterested ? (
-                      <span>⭐</span>
+                      <span className="text-yellow-200">⭐</span>
                     ) : (
                       <StarOff className="h-3 w-3" />
                     )}
@@ -420,7 +420,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
                     variant={trip.isPinned ? "default" : "outline"}
                     className={`text-xs px-2 py-1 transition-all duration-200 ${
                       trip.isPinned 
-                        ? 'bg-orange-500 text-white hover:bg-orange-600 border-orange-500' 
+                        ? 'bg-orange-500 text-white hover:bg-orange-600 border-orange-500 shadow-md' 
                         : 'border-gray-300 text-gray-600 hover:bg-gray-50'
                     }`}
                     onClick={handlePin}
@@ -431,7 +431,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
                     {pinMutation.isPending ? (
                       <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
                     ) : trip.isPinned ? (
-                      <span>📌</span>
+                      <span className="text-orange-200">📌</span>
                     ) : (
                       <PinOff className="h-3 w-3" />
                     )}
