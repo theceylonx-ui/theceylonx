@@ -241,26 +241,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Backfill images for existing trips
-  app.post('/api/trips/backfill-images', unifiedAuthGuard, async (req, res) => {
+  // Migrate existing trips to category-based images
+  app.post('/api/trips/migrate-to-categories', unifiedAuthGuard, async (req, res) => {
     try {
-      const { getSriLankanTripImage } = await import('@shared/sriLankaImages');
+      const { pickDefaultFromChoices, getSafeCategory } = await import('./services/imageSelectorService');
       
-      // Get all trips without images
-      const tripsWithoutImages = await storage.getTripsWithoutImages();
+      // Get all trips that need category-based images
+      const trips = await storage.getAllTrips();
       let updateCount = 0;
       
-      for (const trip of tripsWithoutImages) {
-        const imageUrl = getSriLankanTripImage(trip.region, trip.fromLocation, trip.toLocation);
-        await storage.updateTripImage(trip.id, imageUrl);
-        updateCount++;
+      for (const trip of trips) {
+        if (!trip.imageProvider || trip.imageProvider !== 'curated') {
+          const safeCategory = getSafeCategory(trip.category);
+          const seed = `${trip.title}-${trip.organizerId}`;
+          const imageSelection = pickDefaultFromChoices(safeCategory, seed);
+          
+          await storage.updateTrip(trip.id, {
+            category: safeCategory,
+            ...imageSelection
+          });
+          updateCount++;
+        }
       }
       
-      console.log(`Backfilled images for ${updateCount} trips`);
-      res.json({ message: `Successfully assigned images to ${updateCount} trips` });
+      console.log(`Migrated ${updateCount} trips to category-based images`);
+      res.json({ message: `Successfully migrated ${updateCount} trips to category-based images` });
     } catch (error) {
-      console.error("Error during image backfill:", error);
-      res.status(500).json({ message: "Failed to backfill images" });
+      console.error("Error during category migration:", error);
+      res.status(500).json({ message: "Failed to migrate trips" });
     }
   });
 
