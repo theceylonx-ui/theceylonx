@@ -981,6 +981,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adminUserIds = [
         "bcc1d79a-d83a-4a99-8556-e1d367140e88", // PraDas S Agnya
         "313a0e58-6745-4db7-91bd-31e69c7496ab", // Add more admin IDs as needed
+        "dev-admin-001", // Development Admin
+        "9848130a-1ba7-4b9c-9a2f-3e1a696160e1", // Current test user (temporary for testing)
       ];
       
       if (!adminUserIds.includes(req.user.id)) {
@@ -1005,6 +1007,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adminUserIds = [
         "bcc1d79a-d83a-4a99-8556-e1d367140e88", // PraDas S Agnya
         "313a0e58-6745-4db7-91bd-31e69c7496ab", // Add more admin IDs as needed
+        "dev-admin-001", // Development Admin
+        "9848130a-1ba7-4b9c-9a2f-3e1a696160e1", // Current test user (temporary for testing)
       ];
       
       if (!adminUserIds.includes(req.user.id)) {
@@ -1084,6 +1088,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adminUserIds = [
         "bcc1d79a-d83a-4a99-8556-e1d367140e88", // PraDas S Agnya
         "313a0e58-6745-4db7-91bd-31e69c7496ab", // Add more admin IDs as needed
+        "dev-admin-001", // Development Admin
+        "9848130a-1ba7-4b9c-9a2f-3e1a696160e1", // Current test user (temporary for testing)
       ];
       
       if (!adminUserIds.includes(adminId)) {
@@ -1235,6 +1241,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adminUserIds = [
         "bcc1d79a-d83a-4a99-8556-e1d367140e88", // PraDas S Agnya
         "313a0e58-6745-4db7-91bd-31e69c7496ab", // Add more admin IDs as needed
+        "dev-admin-001", // Development Admin
+        "9848130a-1ba7-4b9c-9a2f-3e1a696160e1", // Current test user (temporary for testing)
       ];
       
       if (!adminUserIds.includes(adminId)) {
@@ -1260,6 +1268,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adminUserIds = [
         "bcc1d79a-d83a-4a99-8556-e1d367140e88", // PraDas S Agnya
         "313a0e58-6745-4db7-91bd-31e69c7496ab", // Add more admin IDs as needed
+        "dev-admin-001", // Development Admin
+        "9848130a-1ba7-4b9c-9a2f-3e1a696160e1", // Current test user (temporary for testing)
       ];
       
       if (!adminUserIds.includes(req.user.id)) {
@@ -1282,6 +1292,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adminUserIds = [
         "bcc1d79a-d83a-4a99-8556-e1d367140e88", // PraDas S Agnya
         "313a0e58-6745-4db7-91bd-31e69c7496ab", // Add more admin IDs as needed
+        "dev-admin-001", // Development Admin
+        "9848130a-1ba7-4b9c-9a2f-3e1a696160e1", // Current test user (temporary for testing)
       ];
       
       if (!adminUserIds.includes(req.user.id)) {
@@ -1311,6 +1323,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adminUserIds = [
         "bcc1d79a-d83a-4a99-8556-e1d367140e88", // PraDas S Agnya
         "313a0e58-6745-4db7-91bd-31e69c7496ab", // Add more admin IDs as needed
+        "dev-admin-001", // Development Admin
+        "9848130a-1ba7-4b9c-9a2f-3e1a696160e1", // Current test user (temporary for testing)
       ];
       
       if (!adminUserIds.includes(req.user.id)) {
@@ -1340,6 +1354,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adminUserIds = [
         "bcc1d79a-d83a-4a99-8556-e1d367140e88", // PraDas S Agnya
         "313a0e58-6745-4db7-91bd-31e69c7496ab", // Add more admin IDs as needed
+        "dev-admin-001", // Development Admin
+        "9848130a-1ba7-4b9c-9a2f-3e1a696160e1", // Current test user (temporary for testing)
       ];
       
       if (!adminUserIds.includes(req.user.id)) {
