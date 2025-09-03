@@ -26,8 +26,7 @@ export const CATEGORY_CHOICES: Record<TripCategory, Array<ImageChoice>> = {
     { url: '/assets/category/roadtrip_01.jpg' },
     { url: '/assets/category/roadtrip_02.jpg' },
     { url: '/assets/category/roadtrip_03.jpg' },
-    { url: '/assets/category/roadtrip_04.jpg' },
-    { url: '/assets/category/roadtrip_05.jpg' }
+    { url: '/assets/category/roadtrip_04.jpg' }
   ],
   hiking: [
     { url: '/assets/category/hiking_01.jpg' },
@@ -78,13 +77,16 @@ export const CATEGORY_CHOICES: Record<TripCategory, Array<ImageChoice>> = {
     { url: '/assets/category/food_04.jpg' }
   ],
   adventure_sport: [
-    { url: '/assets/category/adventure_01.jpg' },
-    { url: '/assets/category/adventure_02.jpg' },
-    { url: '/assets/category/adventure_03.jpg' },
-    { url: '/assets/category/adventure_04.jpg' }
+    { url: '/assets/category/adventure_sport_01.jpg' },
+    { url: '/assets/category/adventure_sport_02.jpg' },
+    { url: '/assets/category/adventure_sport_03.jpg' },
+    { url: '/assets/category/adventure_sport_04.jpg' }
   ],
   unknown: [
-    { url: '/assets/category/generic_sl_01.jpg' }
+    { url: '/assets/category/unknown_01.jpg' },
+    { url: '/assets/category/unknown_02.jpg' },
+    { url: '/assets/category/unknown_03.jpg' },
+    { url: '/assets/category/unknown_04.jpg' }
   ]
 };
 
