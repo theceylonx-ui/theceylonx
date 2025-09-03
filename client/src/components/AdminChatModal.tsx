@@ -69,6 +69,45 @@ export function AdminChatModal({ isOpen, onClose, reportId, reportDetails }: Adm
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Default investigative messages based on report type
+  const getDefaultMessages = (reason: string) => {
+    const baseMessages = [
+      "Hi, I'm investigating a report about your trip listing. Could you please provide clarification on this matter?",
+      "We received a concern regarding your trip. Can you help us understand the situation better?",
+      "For platform safety, we need to review some details about your trip posting. Please respond at your earliest convenience.",
+      "Thank you for your cooperation during this investigation. We want to ensure all listings meet our community standards."
+    ];
+
+    const reasonSpecificMessages: Record<string, string[]> = {
+      "Suspicious Behavior": [
+        "We received a report about potentially suspicious behavior. Can you clarify your payment process and booking procedures?",
+        "For transparency, can you explain your payment collection method and provide any verification documents?",
+        "Please confirm that all payment requests follow our platform guidelines and local tourism regulations.",
+        "We want to ensure all travelers feel secure. Can you provide references or past trip testimonials?"
+      ],
+      "Fake Listing": [
+        "We need to verify the authenticity of your trip listing. Can you provide proof of the locations and services mentioned?",
+        "Please share recent photos or documentation that confirms the accuracy of your trip description.",
+        "Can you verify the accommodation and transportation details listed in your trip posting?",
+        "For platform integrity, we need confirmation that all photos and descriptions accurately represent your trip."
+      ],
+      "Harassment": [
+        "We received a serious report about inappropriate communication. Can you provide your perspective on the interaction?",
+        "Professional communication is essential for our platform. Can you explain the context of the reported messages?",
+        "We need to review communication standards. Please confirm you understand our community guidelines.",
+        "This is a serious matter. Can you assure us that all future communications will remain professional and respectful?"
+      ],
+      "Pricing Scam": [
+        "We need to verify your pricing structure. Can you explain any additional fees or charges not mentioned in the listing?",
+        "For transparency, please confirm all costs are clearly stated and there are no hidden charges.",
+        "Can you provide a detailed breakdown of what's included in your trip price?",
+        "We want to ensure fair pricing practices. Can you justify any pricing changes or additional costs?"
+      ]
+    };
+
+    return reasonSpecificMessages[reason] || baseMessages;
+  };
+
   // Create or get chat thread
   const createThreadMutation = useMutation({
     mutationFn: async () => {
@@ -280,6 +319,34 @@ export function AdminChatModal({ isOpen, onClose, reportId, reportDetails }: Adm
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
+
+        {/* Default Message Templates */}
+        {(!messages.length || messages.length === 0) && (
+          <div className="border-t pt-4 space-y-3">
+            <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              Quick Investigation Messages
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              {getDefaultMessages(reportDetails.reason).map((template, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  size="sm"
+                  className="text-left justify-start h-auto p-3 whitespace-normal"
+                  onClick={() => setMessage(template)}
+                  data-testid={`button-template-${index}`}
+                >
+                  <span className="text-xs text-blue-600 font-medium mr-2">#{index + 1}</span>
+                  <span className="text-sm">{template}</span>
+                </Button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Click any template to use it, or type your own message below.
+            </p>
+          </div>
+        )}
 
         {/* Message Input */}
         <div className="flex gap-2 pt-4">
