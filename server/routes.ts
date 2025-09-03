@@ -2542,7 +2542,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Parse filters (CSV format: "pinned,interested,my,truly_free")
       const requestedFilters = filters.split(',').map((f: string) => f.trim()).filter(Boolean);
       const userSpecificFilters = ['pinned', 'interested', 'my'];
-      const requiresAuth = requestedFilters.some((f: string) => userSpecificFilters.includes(f));
+      // Don't require auth for "all" or "truly_free" filters
+      const requiresAuth = requestedFilters.some((f: string) => userSpecificFilters.includes(f) && f !== 'all');
       
       // Check authentication for user-specific filters
       let userId: string | null = null;
@@ -2560,14 +2561,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Convert local date to Asia/Colombo timezone boundaries
-      const { zonedTimeToUtc, utcToZonedTime } = await import('date-fns-tz');
-      const colomboTimezone = 'Asia/Colombo';
-      
-      // Create start and end of day in Colombo time, then convert to UTC for DB query
-      const localDate = new Date(date + 'T00:00:00');
-      const startOfDayLocal = zonedTimeToUtc(`${date}T00:00:00`, colomboTimezone);
-      const endOfDayLocal = zonedTimeToUtc(`${date}T23:59:59.999`, colomboTimezone);
+      // Simple date boundaries for now
+      const startOfDayLocal = new Date(`${date}T00:00:00Z`);
+      const endOfDayLocal = new Date(`${date}T23:59:59.999Z`);
       
       // Get all trips for the date range
       const allTrips = await storage.getTripsInDateRange(startOfDayLocal, endOfDayLocal);
@@ -2722,7 +2718,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Parse filters for authentication check
       const requestedFilters = filters.split(',').map((f: string) => f.trim()).filter(Boolean);
       const userSpecificFilters = ['pinned', 'interested', 'my'];
-      const requiresAuth = requestedFilters.some((f: string) => userSpecificFilters.includes(f));
+      // Don't require auth for "all" or "truly_free" filters
+      const requiresAuth = requestedFilters.some((f: string) => userSpecificFilters.includes(f) && f !== 'all');
       
       // Check authentication if needed
       let userId: string | null = null;
@@ -2740,12 +2737,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Calculate month boundaries in Asia/Colombo timezone
-      const { zonedTimeToUtc } = await import('date-fns-tz');
-      const colomboTimezone = 'Asia/Colombo';
-      
+      // Calculate month boundaries
       const [year, monthNum] = month.split('-').map(Number);
-      const startOfMonth = zonedTimeToUtc(`${year}-${monthNum.toString().padStart(2, '0')}-01T00:00:00`, colomboTimezone);
+      const startOfMonth = new Date(`${year}-${monthNum.toString().padStart(2, '0')}-01T00:00:00Z`);
       const endOfMonth = new Date(startOfMonth);
       endOfMonth.setMonth(endOfMonth.getMonth() + 1);
       endOfMonth.setMilliseconds(endOfMonth.getMilliseconds() - 1); // Last millisecond of month
