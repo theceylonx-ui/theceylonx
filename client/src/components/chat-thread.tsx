@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
+import { getDisplayName, getInitials, generateRandomProfilePicture } from "@/lib/profileUtils";
 
 interface Message {
   id: string;
@@ -144,7 +145,7 @@ export function ChatThread({ threadId, userId, onBack }: ChatThreadProps) {
   }
 
   const otherUser = thread?.users.find(user => user.id !== userId);
-  const displayName = otherUser?.firstName || otherUser?.username || "Unknown User";
+  const displayName = getDisplayName(otherUser);
 
   return (
     <Card className="h-[600px] flex flex-col">
@@ -161,9 +162,9 @@ export function ChatThread({ threadId, userId, onBack }: ChatThreadProps) {
             </Button>
           )}
           <Avatar className="w-8 h-8">
-            <AvatarImage src={otherUser?.profileImageUrl} />
+            <AvatarImage src={otherUser?.profileImageUrl || generateRandomProfilePicture(otherUser?.id)} />
             <AvatarFallback>
-              {displayName[0]?.toUpperCase()}
+              {getInitials(otherUser)}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">

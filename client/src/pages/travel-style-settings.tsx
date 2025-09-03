@@ -70,9 +70,9 @@ export default function TravelStyleSettings() {
 
   // Fetch existing settings
   const { data: existingSettings, isLoading } = useQuery({
-    queryKey: ['/api/user/personalization'],
+    queryKey: ['/api/user/preferences'],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/user/personalization');
+      const response = await apiRequest('GET', '/api/user/preferences');
       return response.json();
     },
     enabled: !!user,
@@ -93,11 +93,11 @@ export default function TravelStyleSettings() {
   // Save mutation
   const saveMutation = useMutation({
     mutationFn: async (data: TravelStyleSettings) => {
-      const response = await apiRequest('POST', '/api/user/personalization', data);
+      const response = await apiRequest('PUT', '/api/user/preferences', data);
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user/personalization'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/preferences'] });
       queryClient.invalidateQueries({ queryKey: ['/api/recommendations/enhanced'] });
       toast({
         title: 'Settings saved!',

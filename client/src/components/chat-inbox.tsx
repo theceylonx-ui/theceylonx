@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { apiRequest } from "@/lib/queryClient";
+import { getDisplayName, getInitials, generateRandomProfilePicture } from "@/lib/profileUtils";
 
 interface ChatThread {
   id: string;
@@ -106,7 +107,7 @@ export function ChatInbox({ userId, onThreadSelect }: ChatInboxProps) {
             {threads.map((thread) => {
               // Get the other user in the conversation
               const otherUser = thread.otherUser;
-              const displayName = otherUser?.firstName || otherUser?.username || "Unknown User";
+              const displayName = getDisplayName(otherUser);
               
               return (
                 <div
@@ -117,9 +118,9 @@ export function ChatInbox({ userId, onThreadSelect }: ChatInboxProps) {
                 >
                   <div className="flex items-start gap-3">
                     <Avatar className="w-10 h-10">
-                      <AvatarImage src={otherUser?.profileImageUrl} />
+                      <AvatarImage src={otherUser?.profileImageUrl || generateRandomProfilePicture(otherUser?.id)} />
                       <AvatarFallback>
-                        {displayName[0]?.toUpperCase()}
+                        {getInitials(otherUser)}
                       </AvatarFallback>
                     </Avatar>
                     
