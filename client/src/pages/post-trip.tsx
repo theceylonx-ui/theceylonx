@@ -48,7 +48,7 @@ export default function PostTrip() {
   const selectedDate = urlParams.get('date') || '';
 
   // Fetch categories for dropdown
-  const { data: categoriesData } = useQuery({
+  const { data: categoriesData } = useQuery<{ categories: Array<{ value: string; label: string }> }>({
     queryKey: ["/api/categories"],
   });
 
