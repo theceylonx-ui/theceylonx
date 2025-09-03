@@ -126,7 +126,7 @@ export function AdminChatModal({ isOpen, onClose, reportId, reportDetails }: Adm
   });
 
   // Get messages
-  const { data: messages = [], refetch: refetchMessages } = useQuery({
+  const { data: messages = [], refetch: refetchMessages } = useQuery<ChatMessage[]>({
     queryKey: [`/api/admin/chat/${thread?.id}/messages`],
     enabled: !!thread?.id,
     refetchInterval: 3000, // Poll for new messages every 3 seconds
