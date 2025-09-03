@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
-import { MapPin, Calendar, Users, DollarSign, Phone, Star, Flag, ArrowLeft, Lock, Trash2, Heart } from "lucide-react";
+import { MapPin, Calendar, Users, DollarSign, Phone, Star, Flag, ArrowLeft, Lock, Trash2, Heart, Edit } from "lucide-react";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ import { useTrackInteraction } from "@/hooks/useRecommendations";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import type { TripWithOrganizer, CommentWithUser, TripInterestRequest } from "@shared/schema";
+import { EditContentDialog } from "@/components/EditContentDialog";
+import { ActionsMenu } from "@/components/ActionsMenu";
 
 interface TripDetailsProps {
   params: { id: string };
@@ -31,6 +33,8 @@ export default function TripDetails({ params }: TripDetailsProps) {
   const { mutate: trackInteraction } = useTrackInteraction();
   const [, setLocation] = useLocation();
   const [showContactLockedDialog, setShowContactLockedDialog] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   
   // Get tab from URL params
   const urlParams = new URLSearchParams(window.location.search);
@@ -152,6 +156,39 @@ export default function TripDetails({ params }: TripDetailsProps) {
     },
   });
 
+  const editCommentMutation = useMutation({
+    mutationFn: async ({ commentId, content }: { commentId: string; content: string }) => {
+      return await apiRequest("PUT", `/api/comments/${commentId}`, { content });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Comment updated successfully!",
+      });
+      setShowEditDialog(false);
+      setEditingCommentId(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/trips", id, "comments"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update comment. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const reportTripMutation = useMutation({
     mutationFn: async (reason: string) => {
       return await apiRequest("POST", "/api/reports", {
@@ -230,8 +267,28 @@ export default function TripDetails({ params }: TripDetailsProps) {
     return comment.userId === user.id || (trip && trip.organizerId === user.id);
   };
 
+  const canEditComment = (comment: CommentWithUser) => {
+    if (!user) return false;
+    // Only comment author can edit their own comment
+    return comment.userId === user.id;
+  };
+
   const handleDeleteComment = (commentId: string) => {
     deleteCommentMutation.mutate(commentId);
+  };
+
+  const handleEditComment = (comment: CommentWithUser) => {
+    setEditingCommentId(comment.id);
+    setShowEditDialog(true);
+  };
+
+  const handleSaveEditComment = (data: { content?: string }) => {
+    if (editingCommentId && data.content?.trim()) {
+      editCommentMutation.mutate({
+        commentId: editingCommentId,
+        content: data.content.trim()
+      });
+    }
   };
 
   const handleAddComment = () => {
@@ -614,17 +671,15 @@ export default function TripDetails({ params }: TripDetailsProps) {
                                 {new Date(comment.createdAt!).toLocaleDateString()}
                               </span>
                             </div>
-                            {canDeleteComment(comment) && (
-                              <Button
-                                variant="ghost"
+                            {(canEditComment(comment) || canDeleteComment(comment)) && (
+                              <ActionsMenu
+                                onEdit={canEditComment(comment) ? () => handleEditComment(comment) : undefined}
+                                onDelete={canDeleteComment(comment) ? () => handleDeleteComment(comment.id) : undefined}
+                                canEdit={canEditComment(comment)}
+                                canDelete={canDeleteComment(comment)}
+                                isDeleting={deleteCommentMutation.isPending}
                                 size="sm"
-                                onClick={() => handleDeleteComment(comment.id)}
-                                disabled={deleteCommentMutation.isPending}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                data-testid={`button-delete-comment-${comment.id}`}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                              />
                             )}
                           </div>
                           <p className="text-gray-700">{comment.content}</p>
@@ -645,6 +700,25 @@ export default function TripDetails({ params }: TripDetailsProps) {
       </div>
       
       <Footer />
+
+      {/* Edit Comment Dialog */}
+      <EditContentDialog
+        isOpen={showEditDialog}
+        onClose={() => {
+          setShowEditDialog(false);
+          setEditingCommentId(null);
+        }}
+        onSave={handleSaveEditComment}
+        isLoading={editCommentMutation.isPending}
+        title="Edit Comment"
+        initialContent={{
+          content: editingCommentId && comments 
+            ? comments.find(c => c.id === editingCommentId)?.content || ""
+            : ""
+        }}
+        fields={{ content: true }}
+        contentType="comment"
+      />
     </div>
   );
 }
