@@ -17,10 +17,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Check, X, RefreshCw, User as UserIcon, Heart, Clock, MessageSquare, Edit, Trash2 } from "lucide-react";
+import { Check, X, RefreshCw, User as UserIcon, Heart, Clock, MessageSquare, Edit, Trash2, Shield, AlertTriangle } from "lucide-react";
 import { generateRandomProfilePicture, getDisplayName, getInitials, type AvatarStyle, AVATAR_STYLES } from "@/lib/profileUtils";
 import { AvatarSelector } from "@/components/avatar-selector";
 import type { User, TripWithOrganizer, QuestionWithDetails } from "@shared/schema";
+import { AdminReportsTable } from "@/components/AdminReportsTable";
 
 const profileSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username must be less than 20 characters").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores").optional().or(z.literal('')),
@@ -44,6 +45,7 @@ export default function UserDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("my-trips");
+  const [isAdmin, setIsAdmin] = useState(false);
   const [selectedAvatarUrl, setSelectedAvatarUrl] = useState<string | null>(null);
 
   const form = useForm<ProfileFormData>({
@@ -336,6 +338,22 @@ export default function UserDashboard() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
+  // Check admin status
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (user?.id) {
+        const adminUserIds = [
+          "bcc1d79a-d83a-4a99-8556-e1d367140e88", // PraDas S Agnya
+          "313a0e58-6745-4db7-91bd-31e69c7496ab", // Add more admin IDs as needed
+          "dev-admin-001", // Development Admin
+          "9848130a-1ba7-4b9c-9a2f-3e1a696160e1", // Current test user (temporary for testing)
+        ];
+        setIsAdmin(adminUserIds.includes(user.id));
+      }
+    };
+    checkAdminStatus();
+  }, [user]);
+
   // Update form when user data loads
   useEffect(() => {
     if (user && !form.formState.isDirty) {
@@ -434,10 +452,16 @@ export default function UserDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-gray-100">
+          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'} bg-gray-100`}>
             <TabsTrigger value="my-trips" data-testid="tab-my-trips">Posted by Me</TabsTrigger>
             <TabsTrigger value="interest-requests" data-testid="tab-interest-requests">Interest Requests</TabsTrigger>
             <TabsTrigger value="profile" data-testid="tab-profile">Profile</TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="admin" data-testid="tab-admin" className="text-red-600 font-medium">
+                <Shield className="w-4 h-4 mr-1" />
+                Admin
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Posted by Me Tab */}
@@ -821,6 +845,42 @@ export default function UserDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Admin Tab */}
+          {isAdmin && (
+            <TabsContent value="admin">
+              <div className="space-y-6">
+                {/* Admin Header */}
+                <Card className="border-red-200 bg-red-50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-red-700">
+                      <Shield className="w-6 h-6" />
+                      Admin Dashboard
+                    </CardTitle>
+                    <p className="text-red-600">
+                      Manage reports, moderate content, and oversee platform safety.
+                    </p>
+                  </CardHeader>
+                </Card>
+
+                {/* Admin Reports Management */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5 text-orange-500" />
+                      Trip Reports Management
+                    </CardTitle>
+                    <p className="text-muted-foreground">
+                      Review and investigate reported trips. Click "Message" to communicate with organizers.
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <AdminReportsTable />
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
       
