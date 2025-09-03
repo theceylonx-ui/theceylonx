@@ -415,6 +415,38 @@ export default function TripDetails({ params }: TripDetailsProps) {
                 </Badge>
               </div>
               <div className="flex gap-2">
+                {/* Owner Controls */}
+                {user && user.id === trip.organizerId && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowEditDialog(true)}
+                      data-testid="button-edit-trip"
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm('Are you sure you want to delete this trip?')) {
+                          // TODO: Implement delete functionality
+                          toast({
+                            title: "Delete functionality coming soon",
+                            description: "Trip deletion will be available in the next update."
+                          });
+                        }
+                      }}
+                      data-testid="button-delete-trip"
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Delete
+                    </Button>
+                  </>
+                )}
+                
                 <Button
                   variant="outline"
                   size="sm"
@@ -428,8 +460,21 @@ export default function TripDetails({ params }: TripDetailsProps) {
               </div>
             </div>
 
+            {/* Trip Image */}
+            <div className="mt-6">
+              <img 
+                src={trip.imageUrl || `https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=300`}
+                alt={`${trip.title} - ${trip.region} Sri Lanka`}
+                className="w-full h-64 object-cover rounded-lg"
+                loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.src = 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=300';
+                }}
+              />
+            </div>
+
             {/* Trip Details Grid */}
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-6 mt-6">
               <div className="space-y-4">
                 <div className="flex items-center space-x-3" data-testid="trip-route">
                   <MapPin className="text-ceylon-blue h-5 w-5" />
