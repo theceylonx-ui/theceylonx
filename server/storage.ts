@@ -661,12 +661,13 @@ export class DatabaseStorage implements IStorage {
     const conditions = [eq(questions.isDeleted, false)];
     
     if (filters?.search) {
-      conditions.push(
-        or(
-          ilike(questions.title, `%${filters.search}%`),
-          ilike(questions.body, `%${filters.search}%`)
-        )
+      const searchCondition = or(
+        ilike(questions.title, `%${filters.search}%`),
+        ilike(questions.body, `%${filters.search}%`)
       );
+      if (searchCondition) {
+        conditions.push(searchCondition);
+      }
     }
     
     if (filters?.topic) {
@@ -695,13 +696,19 @@ export class DatabaseStorage implements IStorage {
       .select({
         id: questions.id,
         title: questions.title,
-        content: questions.body,
+        body: questions.body,
+        slug: questions.slug,
         tags: questions.tags,
         userId: questions.userId,
         topicId: questions.topicId,
+        isAnonymous: questions.isAnonymous,
+        views: questions.views,
         score: questions.score,
-        viewCount: questions.views,
+        votesCount: questions.votesCount,
+        answersCount: questions.answersCount,
         acceptedAnswerId: questions.acceptedAnswerId,
+        isDeleted: questions.isDeleted,
+        deletedAt: questions.deletedAt,
         createdAt: questions.createdAt,
         updatedAt: questions.updatedAt,
         user: {
@@ -1966,20 +1973,6 @@ export class DatabaseStorage implements IStorage {
         eq(votes.votableType, votableType),
         eq(votes.votableId, votableId)
       ));
-  }
-  // Notification methods for enhanced UX
-  async getUserNotifications(userId: string, limit = 50): Promise<Notification[]> {
-    return await db.select()
-      .from(notifications)
-      .where(eq(notifications.userId, userId))
-      .orderBy(desc(notifications.createdAt))
-      .limit(limit);
-  }
-
-  async markNotificationAsRead(notificationId: string): Promise<void> {
-    await db.update(notifications)
-      .set({ isRead: true, readAt: new Date() })
-      .where(eq(notifications.id, notificationId));
   }
 }
 
