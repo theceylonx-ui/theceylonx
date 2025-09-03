@@ -35,22 +35,22 @@ export default function TripCard({ trip, badges }: TripCardProps) {
       return response;
     },
     onMutate: async (pinned) => {
-      // Cancel outgoing refetches
+      // Cancel ALL trip-related queries
       await queryClient.cancelQueries({ queryKey: ['/api/trips'] });
       
       // Snapshot the previous value
       const previousTrips = queryClient.getQueryData(['/api/trips']);
       
-      // Optimistically update to the new value
-      queryClient.setQueryData(['/api/trips'], (oldData: any) => {
-        if (!oldData) return oldData;
-        
-        return {
-          ...oldData,
-          trips: oldData.trips.map((t: any) => 
-            t.id === trip.id ? { ...t, isPinned: pinned } : t
-          )
-        };
+      // Optimistically update ALL variations of trip queries
+      queryClient.getQueriesData({ queryKey: ['/api/trips'] }).forEach(([queryKey, data]) => {
+        if (data && typeof data === 'object' && 'trips' in data) {
+          queryClient.setQueryData(queryKey, {
+            ...data,
+            trips: (data as any).trips.map((t: any) => 
+              t.id === trip.id ? { ...t, isPinned: pinned } : t
+            )
+          });
+        }
       });
       
       return { previousTrips };
@@ -97,26 +97,26 @@ export default function TripCard({ trip, badges }: TripCardProps) {
       return response;
     },
     onMutate: async (interested) => {
-      // Cancel outgoing refetches
+      // Cancel ALL trip-related queries
       await queryClient.cancelQueries({ queryKey: ['/api/trips'] });
       
       // Snapshot the previous value
       const previousTrips = queryClient.getQueryData(['/api/trips']);
       
-      // Optimistically update to the new value - interested=true forces pinned=false
-      queryClient.setQueryData(['/api/trips'], (oldData: any) => {
-        if (!oldData) return oldData;
-        
-        return {
-          ...oldData,
-          trips: oldData.trips.map((t: any) => 
-            t.id === trip.id ? { 
-              ...t, 
-              isInterested: interested,
-              isPinned: interested ? false : t.isPinned // Force pinned=false when interested=true
-            } : t
-          )
-        };
+      // Optimistically update ALL variations of trip queries
+      queryClient.getQueriesData({ queryKey: ['/api/trips'] }).forEach(([queryKey, data]) => {
+        if (data && typeof data === 'object' && 'trips' in data) {
+          queryClient.setQueryData(queryKey, {
+            ...data,
+            trips: (data as any).trips.map((t: any) => 
+              t.id === trip.id ? { 
+                ...t, 
+                isInterested: interested,
+                isPinned: interested ? false : t.isPinned // Force pinned=false when interested=true
+              } : t
+            )
+          });
+        }
       });
       
       return { previousTrips };
