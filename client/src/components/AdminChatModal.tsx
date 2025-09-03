@@ -228,27 +228,29 @@ export function AdminChatModal({ isOpen, onClose, reportId, reportDetails }: Adm
                 </Badge>
               )}
             </div>
-            {thread && (
-              <Button
-                variant={thread.isBlocked ? "default" : "destructive"}
-                size="sm"
-                onClick={() => toggleBlockMutation.mutate(!thread.isBlocked)}
-                disabled={toggleBlockMutation.isPending}
-                data-testid={thread.isBlocked ? "button-unblock-chat" : "button-block-chat"}
-              >
-                {thread.isBlocked ? (
-                  <>
-                    <ShieldOff className="w-4 h-4 mr-1" />
-                    Unblock
-                  </>
-                ) : (
-                  <>
-                    <Shield className="w-4 h-4 mr-1" />
-                    Block
-                  </>
-                )}
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {thread && (
+                <Button
+                  variant={thread.isBlocked ? "default" : "destructive"}
+                  size="sm"
+                  onClick={() => toggleBlockMutation.mutate(!thread.isBlocked)}
+                  disabled={toggleBlockMutation.isPending}
+                  data-testid={thread.isBlocked ? "button-unblock-chat" : "button-block-chat"}
+                >
+                  {thread.isBlocked ? (
+                    <>
+                      <ShieldOff className="w-4 h-4 mr-1" />
+                      Unblock Chat
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="w-4 h-4 mr-1" />
+                      Block Chat
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           </DialogTitle>
         </DialogHeader>
 

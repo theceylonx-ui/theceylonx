@@ -745,18 +745,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAdminChatThread(reportId: string): Promise<AdminChatThreadWithDetails | null> {
-    const [result] = await db
-      .select({
-        thread: adminChatThreads,
-        admin: users,
-        organizer: users,
-        report: reports,
-      })
+    // Get the thread first
+    const [thread] = await db
+      .select()
       .from(adminChatThreads)
-      .leftJoin(users, eq(adminChatThreads.adminId, users.id))
-      .leftJoin(users, eq(adminChatThreads.organizerId, users.id))
-      .leftJoin(reports, eq(adminChatThreads.reportId, reports.id))
       .where(eq(adminChatThreads.reportId, reportId));
+
+    if (!thread) return null;
+
+    // Get admin user
+    const [admin] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, thread.adminId));
+
+    // Get organizer user  
+    const [organizer] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, thread.organizerId));
+
+    // Get report
+    const [report] = await db
+      .select()
+      .from(reports)
+      .where(eq(reports.id, thread.reportId));
 
     if (!result) return null;
 
