@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useTrackInteraction } from "@/hooks/useRecommendations";
@@ -29,6 +30,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
   const [newComment, setNewComment] = useState("");
   const { mutate: trackInteraction } = useTrackInteraction();
   const [, setLocation] = useLocation();
+  const [showContactLockedDialog, setShowContactLockedDialog] = useState(false);
   
   // Get tab from URL params
   const urlParams = new URLSearchParams(window.location.search);
@@ -422,27 +424,58 @@ export default function TripDetails({ params }: TripDetailsProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Button 
-                    onClick={isAuthenticated ? handleContact : () => window.location.href = '/auth/signin'}
-                    className={`w-full ${
-                      isAuthenticated 
-                        ? 'bg-ceylon-green hover:bg-ceylon-green/90' 
-                        : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                    }`}
-                    data-testid="button-contact"
-                  >
-                    {isAuthenticated ? (
-                      <>
-                        <Phone className="h-4 w-4 mr-2" />
-                        Contact
-                      </>
-                    ) : (
-                      <>
-                        <Lock className="h-4 w-4 mr-2" />
-                        Sign in to Contact
-                      </>
-                    )}
-                  </Button>
+                  <AlertDialog open={showContactLockedDialog} onOpenChange={setShowContactLockedDialog}>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        className={`w-full ${
+                          isAuthenticated 
+                            ? 'bg-ceylon-green hover:bg-ceylon-green/90' 
+                            : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                        }`}
+                        data-testid="button-contact"
+                        onClick={() => {
+                          if (!isAuthenticated) {
+                            window.location.href = '/auth/signin';
+                            return;
+                          }
+                          setShowContactLockedDialog(true);
+                        }}
+                      >
+                        {isAuthenticated ? (
+                          <>
+                            <Lock className="h-4 w-4 mr-2" />
+                            Contact
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="h-4 w-4 mr-2" />
+                            Sign in to Contact
+                          </>
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center space-x-2">
+                          <Lock className="h-5 w-5 text-ceylon-green" />
+                          <span>Contact is Locked</span>
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Contact details are kept private for your safety. To connect with the organizer:
+                          <br /><br />
+                          1. Send an interest request below
+                          2. Wait for the organizer to accept
+                          3. Once accepted, they can choose to share contact details in your private chat conversation
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogAction 
+                        onClick={() => setShowContactLockedDialog(false)}
+                        className="bg-ceylon-green hover:bg-ceylon-green/90"
+                      >
+                        Got it
+                      </AlertDialogAction>
+                    </AlertDialogContent>
+                  </AlertDialog>
 
                   {/* Clean Interest Request System */}
                   {isAuthenticated ? (

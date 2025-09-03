@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { MapPin, Calendar, Users, DollarSign, Mail, Lock, Pin, PinOff, Star, StarOff, Heart } from "lucide-react";
+import { MapPin, Calendar, Users, DollarSign, Mail, Lock, Pin, PinOff, Star, StarOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -453,19 +453,12 @@ export default function TripCard({ trip, badges }: TripCardProps) {
               
               <Button 
                 size="sm"
-                className={`text-xs px-2 py-1 transition-all duration-200 ${user 
-                  ? 'bg-ceylon-green text-white hover:bg-ceylon-green/90 shadow-sm hover:shadow-md' 
-                  : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                }`}
+                className="text-xs px-2 py-1 transition-all duration-200 bg-ceylon-green text-white hover:bg-ceylon-green/90 shadow-sm hover:shadow-md"
                 onClick={handleContact}
                 data-testid={`button-contact-${trip.id}`}
-                title={user ? "Send interest request" : "Sign in to show interest"}
+                title="Send interest request"
               >
-                {user ? (
-                  <Heart className="h-3 w-3" />
-                ) : (
-                  <Lock className="h-3 w-3" />
-                )}
+                Send Interest Request
               </Button>
             </div>
           </div>
