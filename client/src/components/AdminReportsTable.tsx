@@ -34,10 +34,7 @@ export function AdminReportsTable() {
   // Update report status
   const updateStatusMutation = useMutation({
     mutationFn: async ({ reportId, status, action }: { reportId: string; status: string; action?: string }) => {
-      return await apiRequest(`/api/admin/reports/${reportId}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({ status, action }),
-      });
+      return await apiRequest("PATCH", `/api/admin/reports/${reportId}/status`, { status, action });
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/reports"] });
@@ -58,7 +55,7 @@ export function AdminReportsTable() {
   const handleMessageOrganizer = async (report: Report) => {
     // First, get trip details to find organizer name
     try {
-      const trip = await apiRequest(`/api/trips/${report.tripId}`);
+      const trip = await apiRequest("GET", `/api/trips/${report.tripId}`);
       setSelectedReport({
         ...report,
         tripTitle: trip.title,
@@ -66,6 +63,7 @@ export function AdminReportsTable() {
       });
       setChatModalOpen(true);
     } catch (error) {
+      console.error("Error loading trip details:", error);
       toast({
         title: "Error",
         description: "Failed to load trip details",
