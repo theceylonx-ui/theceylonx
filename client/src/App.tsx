@@ -99,6 +99,7 @@ function Router() {
             <Route path="/chat-buddy" component={ChatBuddy} />
             <Route path="/user/delete" component={UserDeletion} />
             <Route path="/admin" component={AdminDashboardPage} />
+            <Route path="/admin/dashboard" component={AdminDashboard} />
             <Route path="/admin/reports" component={AdminReportsPage} />
             <Route path="/report-trip/:id" component={ReportTripPage} />
           </>

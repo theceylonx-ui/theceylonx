@@ -130,6 +130,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Re-enable Google OAuth routes for user sign-in
   app.use('/api/auth', authRouter);
 
+  // Initialize admin system and setup admin routes
+  const { adminService } = await import('./services/adminService');
+  const { setupSuperadmin } = await import('./middleware/adminAuth');
+  const adminRoutes = await import('./routes/adminRoutes');
+  
+  // Initialize admin system
+  await adminService.initializeAdminSystem();
+  
+  // Setup superadmin middleware (runs after auth)
+  app.use(setupSuperadmin);
+  
+  // Admin routes
+  app.use('/api/admin', adminRoutes.default);
+  
+  // Serve admin uploads
+  app.use('/uploads/admin', express.static('uploads/admin'));
+  
+  // Create upload directory if it doesn't exist
+  const { existsSync, mkdirSync } = await import('fs');
+  if (!existsSync('uploads/admin')) {
+    mkdirSync('uploads/admin', { recursive: true });
+  }
+
   // User profile routes
   app.get('/api/user', async (req, res) => {
     try {

@@ -20,7 +20,7 @@ import { z } from "zod";
 // PostgreSQL Enums for data integrity
 export const tripStatusEnum = pgEnum('trip_status', ['active', 'full', 'completed', 'cancelled']);
 export const difficultyEnum = pgEnum('difficulty', ['easy', 'moderate', 'challenging']);
-export const userRoleEnum = pgEnum('user_role', ['user', 'moderator', 'admin']);
+export const userRoleEnum = pgEnum('user_role', ['user', 'moderator', 'admin', 'superadmin']);
 export const reportStatusEnum = pgEnum('report_status', ['open', 'investigating', 'resolved', 'dismissed']);
 export const notificationPriorityEnum = pgEnum('notification_priority', ['critical', 'high', 'normal', 'low']);
 export const messageTypeEnum = pgEnum('message_type', ['text', 'contact_card']);
@@ -58,7 +58,7 @@ export const users = pgTable("users", {
   facebookId: varchar("facebook_id"),
   microsoftId: varchar("microsoft_id"),
   appleId: varchar("apple_id"),
-  // role: userRoleEnum("role").default("user"), // Temporarily disabled
+  roleId: varchar("role_id"), // References roles table
   emailVerified: boolean("email_verified").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -502,6 +502,49 @@ export const userPersonalization = pgTable("user_personalization", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Admin system tables for role-based access control
+
+// Roles table for admin system
+export const roles = pgTable("roles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull().unique(), // 'superadmin', 'admin', 'moderator', 'user'
+  permissions: jsonb("permissions").notNull().default('{}'), // Permissions JSONB
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Audit logs table for tracking admin actions
+export const auditLogs = pgTable("audit_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  actorUserId: varchar("actor_user_id").notNull(), // Who performed the action
+  action: varchar("action").notNull(), // 'role_change', 'upload', 'slide_edit', 'role_create'
+  targetType: varchar("target_type").notNull(), // 'user', 'media', 'role', 'slide'
+  targetId: varchar("target_id"), // ID of the affected entity
+  meta: jsonb("meta").default('{}'), // Additional context data
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("audit_logs_actor_idx").on(table.actorUserId),
+  index("audit_logs_action_idx").on(table.action),
+  index("audit_logs_created_at_idx").on(table.createdAt),
+]);
+
+// Media assets table for admin uploads
+export const mediaAssets = pgTable("media_assets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  filename: varchar("filename").notNull(), // Sanitized UUID filename
+  originalName: varchar("original_name").notNull(), // Original upload name
+  fileUrl: varchar("file_url").notNull(), // /uploads/admin/filename
+  mimeType: varchar("mime_type").notNull(),
+  fileSize: integer("file_size").notNull(), // Size in bytes
+  ownerId: varchar("owner_id").notNull(), // Admin who uploaded
+  type: varchar("type").notNull().default("image"), // 'image', 'slide'
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("media_assets_type_idx").on(table.type),
+  index("media_assets_owner_idx").on(table.ownerId),
+]);
+
 // User trip flags table for unified pinning and interest management
 export const userTripFlags = pgTable("user_trip_flags", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -544,39 +587,7 @@ export const regions = pgTable("regions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Media assets table for file management
-export const mediaAssets = pgTable("media_assets", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  ownerUserId: varchar("owner_user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  tripId: varchar("trip_id").references(() => trips.id, { onDelete: 'cascade' }),
-  url: varchar("url").notNull(),
-  filename: varchar("filename").notNull(),
-  mimeType: varchar("mime_type").notNull(),
-  fileSize: integer("file_size").notNull(),
-  width: integer("width"),
-  height: integer("height"),
-  createdAt: timestamp("created_at").defaultNow(),
-}, (table) => [
-  index("media_assets_owner_idx").on(table.ownerUserId),
-  index("media_assets_trip_idx").on(table.tripId),
-]);
-
-// Audit logs for admin and security tracking
-export const auditLogs = pgTable("audit_logs", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  actorUserId: varchar("actor_user_id").references(() => users.id, { onDelete: 'set null' }),
-  action: varchar("action").notNull(),
-  targetType: varchar("target_type").notNull(),
-  targetId: varchar("target_id").notNull(),
-  metadata: jsonb("metadata"),
-  ipAddress: varchar("ip_address"),
-  userAgent: text("user_agent"),
-  createdAt: timestamp("created_at").defaultNow(),
-}, (table) => [
-  index("audit_logs_actor_idx").on(table.actorUserId),
-  index("audit_logs_target_idx").on(table.targetType, table.targetId),
-  index("audit_logs_created_idx").on(table.createdAt.desc()),
-]);
+// Note: mediaAssets and auditLogs tables are defined in the admin section above
 
 // User follows table for social features
 export const userFollows = pgTable("user_follows", {
@@ -1179,6 +1190,44 @@ export type AnswerWithUserEnhanced = Answer & {
 
 // ML recommendation types
 export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
+
+// Admin system schemas and types
+export const insertRoleSchema = createInsertSchema(roles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMediaAssetSchema = createInsertSchema(mediaAssets).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Admin types
+export type InsertRole = z.infer<typeof insertRoleSchema>;
+export type Role = typeof roles.$inferSelect;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertMediaAsset = z.infer<typeof insertMediaAssetSchema>;
+export type MediaAsset = typeof mediaAssets.$inferSelect;
+
+// Admin permissions interface
+export interface AdminPermissions {
+  canManageUsers: boolean;
+  canManageContent: boolean;
+  canViewLogs: boolean;
+  canManageRoles: boolean;
+}
+
+// User with role details
+export type UserWithRole = User & {
+  role?: Role;
+};
 export type UserPreferences = typeof userPreferences.$inferSelect;
 export type InsertUserInteraction = z.infer<typeof insertUserInteractionSchema>;
 export type UserInteraction = typeof userInteractions.$inferSelect;

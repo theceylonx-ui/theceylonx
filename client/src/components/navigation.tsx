@@ -167,10 +167,10 @@ export default function Navigation() {
                       Travel Preferences
                     </DropdownMenuItem>
                   </Link>
-                  <Link href="/admin">
+                  <Link href="/admin/dashboard">
                     <DropdownMenuItem className="cursor-pointer" data-testid="user-menu-admin">
                       <User className="mr-2 h-4 w-4" />
-                      Smart Insights
+                      Admin Dashboard
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuSeparator />
