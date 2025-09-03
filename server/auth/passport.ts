@@ -10,25 +10,14 @@ import { JWTUser } from './jwt';
 // Google OAuth Strategy
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   // Use proper deployment URL for OAuth callbacks
-  // Prioritize actual hosting environment over NODE_ENV
-  const isReplit = !!process.env.REPLIT_DOMAINS;
-  const isLocalDev = !isReplit && (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV);
-  
-  let googleCallbackURL;
-  if (isLocalDev) {
-    googleCallbackURL = 'http://localhost:5000/api/auth/google/callback';
-  } else if (isReplit && process.env.REPLIT_DOMAINS) {
-    const replitDomain = process.env.REPLIT_DOMAINS.split(',')[0];
-    googleCallbackURL = `https://${replitDomain}/api/auth/google/callback`;
-  } else {
-    googleCallbackURL = (process.env.APP_URL || 'https://theceylonx.com') + '/api/auth/google/callback';
-  }
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const googleCallbackURL = isDevelopment 
+    ? 'http://localhost:5000/api/auth/google/callback'
+    : 'https://www.theceylonx.com/api/auth/google/callback';
     
   console.log('🔧 Google OAuth callback URL configured:', {
     NODE_ENV: process.env.NODE_ENV,
-    isReplit,
-    isLocalDev,
-    REPLIT_DOMAINS: process.env.REPLIT_DOMAINS,
+    isDevelopment,
     googleCallbackURL
   });
     
@@ -92,19 +81,10 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 // Facebook OAuth Strategy
 if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
   // Dynamic callback URL based on environment
-  // Prioritize actual hosting environment over NODE_ENV
-  const isReplit = !!process.env.REPLIT_DOMAINS;
-  const isLocalDev = !isReplit && (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV);
-  
-  let facebookCallbackURL;
-  if (isLocalDev) {
-    facebookCallbackURL = 'http://localhost:5000/api/auth/facebook/callback';
-  } else if (isReplit && process.env.REPLIT_DOMAINS) {
-    const replitDomain = process.env.REPLIT_DOMAINS.split(',')[0];
-    facebookCallbackURL = `https://${replitDomain}/api/auth/facebook/callback`;
-  } else {
-    facebookCallbackURL = (process.env.APP_URL || 'https://theceylonx.com') + '/api/auth/facebook/callback';
-  }
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const facebookCallbackURL = isDevelopment 
+    ? 'http://localhost:5000/api/auth/facebook/callback'
+    : 'https://www.theceylonx.com/api/auth/facebook/callback';
     
   passport.use(new FacebookStrategy({
     clientID: process.env.FACEBOOK_APP_ID,
