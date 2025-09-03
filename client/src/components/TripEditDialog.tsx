@@ -118,11 +118,24 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const updatedData = {
-      ...formData,
-      price: parseFloat(formData.price) || 0,
-      date: formData.date ? new Date(formData.date) : undefined,
-    };
+    // Only include fields that have actually changed to avoid date conversion issues
+    const updatedData: any = {};
+    
+    if (formData.title !== trip.title) updatedData.title = formData.title;
+    if (formData.fromLocation !== trip.fromLocation) updatedData.fromLocation = formData.fromLocation;
+    if (formData.toLocation !== trip.toLocation) updatedData.toLocation = formData.toLocation;
+    if (formData.time !== trip.time) updatedData.time = formData.time;
+    if (formData.seatsAvailable !== trip.seatsAvailable) updatedData.seatsAvailable = formData.seatsAvailable;
+    if (formData.price !== trip.price?.toString()) updatedData.price = parseFloat(formData.price) || 0;
+    if (formData.region !== trip.region) updatedData.region = formData.region;
+    if (formData.category !== trip.category) updatedData.category = formData.category;
+    if (formData.notes !== trip.notes) updatedData.notes = formData.notes;
+    
+    // Handle date separately to avoid conversion issues
+    const currentDate = trip.date ? new Date(trip.date).toISOString().split('T')[0] : "";
+    if (formData.date !== currentDate) {
+      updatedData.date = formData.date;
+    }
     
     updateTripMutation.mutate(updatedData);
   };
