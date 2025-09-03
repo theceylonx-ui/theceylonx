@@ -372,7 +372,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
           {trip.region}
         </Badge>
         
-        <Link href={`/trip/${trip.id}`}>
+        <Link href={`/trips/${trip.id}`}>
           <Button size="sm" variant="outline" className="h-6 text-xs">
             View Details
           </Button>
