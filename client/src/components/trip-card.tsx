@@ -55,8 +55,26 @@ export default function TripCard({ trip, badges }: TripCardProps) {
       
       return { previousTrips };
     },
-    onSuccess: (data, pinned) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/trips'] });
+    onSuccess: async (response, pinned) => {
+      const responseData = await response.json();
+      
+      // Update ALL trip cache entries with server response
+      queryClient.getQueriesData({ queryKey: ['/api/trips'] }).forEach(([queryKey, data]) => {
+        if (data && typeof data === 'object' && 'trips' in data) {
+          queryClient.setQueryData(queryKey, {
+            ...data,
+            trips: (data as any).trips.map((t: any) => 
+              t.id === trip.id ? { 
+                ...t, 
+                isPinned: responseData.pinned,
+                isInterested: responseData.interested
+              } : t
+            )
+          });
+        }
+      });
+      
+      // Only invalidate other endpoints, not main trips
       queryClient.invalidateQueries({ queryKey: ['/api/pinned-trips'] });
       queryClient.invalidateQueries({ queryKey: ['/api/interested-trips'] });
       queryClient.invalidateQueries({ queryKey: ['/api/calendar/aggregate'] });
@@ -121,8 +139,26 @@ export default function TripCard({ trip, badges }: TripCardProps) {
       
       return { previousTrips };
     },
-    onSuccess: (data, interested) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/trips'] });
+    onSuccess: async (response, interested) => {
+      const responseData = await response.json();
+      
+      // Update ALL trip cache entries with server response
+      queryClient.getQueriesData({ queryKey: ['/api/trips'] }).forEach(([queryKey, data]) => {
+        if (data && typeof data === 'object' && 'trips' in data) {
+          queryClient.setQueryData(queryKey, {
+            ...data,
+            trips: (data as any).trips.map((t: any) => 
+              t.id === trip.id ? { 
+                ...t, 
+                isInterested: responseData.interested,
+                isPinned: responseData.pinned
+              } : t
+            )
+          });
+        }
+      });
+      
+      // Only invalidate other endpoints, not main trips
       queryClient.invalidateQueries({ queryKey: ['/api/pinned-trips'] });
       queryClient.invalidateQueries({ queryKey: ['/api/interested-trips'] });
       queryClient.invalidateQueries({ queryKey: ['/api/calendar/aggregate'] });
