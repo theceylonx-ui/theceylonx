@@ -244,6 +244,28 @@ export interface IStorage {
   getThreadMessages(threadId: string, limit?: number, cursor?: string): Promise<(Message & { author: User })[]>;
   getThreadUsers(threadId: string): Promise<User[]>;
   
+  // Contact sharing operations
+  isThreadOrganizer(userId: string, threadId: string): Promise<boolean>;
+  createContactShare(contactShare: InsertContactShare): Promise<ContactShare>;
+  createAuditLog(action: string, actorUserId: string, metadata?: any): Promise<void>;
+  getRecentContactShares(threadId: string, hoursBack?: number): Promise<ContactShare[]>;
+  
+  // Admin/moderation operations
+  getContactSharesForAdmin(filters?: {
+    threadId?: string;
+    userId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    limit?: number;
+  }): Promise<(ContactShare & { user: User, threadDetails?: any })[]>;
+  getAuditLogs(filters?: {
+    action?: string;
+    userId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    limit?: number;
+  }): Promise<AuditLog[]>;
+  
   // Calendar Event operations
   createCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent>;
   getUserCalendarEvents(userId: string, startDate?: Date, endDate?: Date): Promise<CalendarEvent[]>;
@@ -575,10 +597,15 @@ export class DatabaseStorage implements IStorage {
     
     const result = await query;
     
-    const tripsWithOrganizers = result.map(({ trips: trip, users: organizer }) => ({
-      ...trip,
-      organizer: organizer!,
-    }));
+    const tripsWithOrganizers = result.map(({ trips: trip, users: organizer }) => {
+      // Apply contact redaction for search results - trips are public, no requesting user context
+      const redactedTrip = redactContact(trip);
+      
+      return {
+        ...redactedTrip,
+        organizer: organizer!,
+      };
+    });
     
     return { trips: tripsWithOrganizers, total };
   }
@@ -2006,6 +2033,130 @@ export class DatabaseStorage implements IStorage {
         eq(votes.votableType, votableType),
         eq(votes.votableId, votableId)
       ));
+  }
+
+  // Contact sharing operations
+  async isThreadOrganizer(userId: string, threadId: string): Promise<boolean> {
+    const thread = await this.getChatThread(threadId);
+    if (!thread?.tripId) return false;
+    
+    const trip = await this.getTrip(thread.tripId);
+    return trip?.organizerId === userId;
+  }
+
+  async createContactShare(contactShare: InsertContactShare): Promise<ContactShare> {
+    const [newContactShare] = await db
+      .insert(contactShares)
+      .values(contactShare)
+      .returning();
+    return newContactShare;
+  }
+
+  async createAuditLog(action: string, actorUserId: string, metadata?: any): Promise<void> {
+    await db
+      .insert(auditLogs)
+      .values({
+        action,
+        actorUserId,
+        targetType: 'contact_share',
+        targetId: metadata?.threadId || '',
+        metadata,
+      });
+  }
+
+  async getRecentContactShares(threadId: string, hoursBack: number = 1): Promise<ContactShare[]> {
+    const hoursAgo = new Date(Date.now() - hoursBack * 60 * 60 * 1000);
+    return await db
+      .select()
+      .from(contactShares)
+      .where(and(
+        eq(contactShares.threadId, threadId),
+        gte(contactShares.sharedAt, hoursAgo)
+      ))
+      .orderBy(desc(contactShares.sharedAt));
+  }
+
+  // Admin/moderation methods for contact sharing oversight
+  async getContactSharesForAdmin(filters?: {
+    threadId?: string;
+    userId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    limit?: number;
+  }): Promise<(ContactShare & { user: User, threadDetails?: any })[]> {
+    const conditions = [];
+    
+    if (filters?.threadId) {
+      conditions.push(eq(contactShares.threadId, filters.threadId));
+    }
+    
+    if (filters?.userId) {
+      conditions.push(eq(contactShares.sharedBy, filters.userId));
+    }
+    
+    if (filters?.startDate) {
+      conditions.push(gte(contactShares.sharedAt, filters.startDate));
+    }
+    
+    if (filters?.endDate) {
+      conditions.push(lte(contactShares.sharedAt, filters.endDate));
+    }
+
+    const query = db
+      .select()
+      .from(contactShares)
+      .leftJoin(users, eq(contactShares.sharedBy, users.id))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(contactShares.sharedAt));
+      
+    if (filters?.limit) {
+      query.limit(filters.limit);
+    }
+
+    const result = await query;
+    
+    return result.map(({ contact_shares: share, users: user }) => ({
+      ...share,
+      user: user!
+    }));
+  }
+
+  async getAuditLogs(filters?: {
+    action?: string;
+    userId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    limit?: number;
+  }): Promise<AuditLog[]> {
+    const conditions = [];
+    
+    if (filters?.action) {
+      conditions.push(eq(auditLogs.action, filters.action));
+    }
+    
+    if (filters?.userId) {
+      conditions.push(eq(auditLogs.actorUserId, filters.userId));
+    }
+    
+    if (filters?.startDate) {
+      conditions.push(gte(auditLogs.createdAt, filters.startDate));
+    }
+    
+    if (filters?.endDate) {
+      conditions.push(lte(auditLogs.createdAt, filters.endDate));
+    }
+
+    const query = db
+      .select()
+      .from(auditLogs)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(auditLogs.createdAt));
+      
+    if (filters?.limit) {
+      query.limit(filters.limit);
+    }
+
+    return await query;
   }
 }
 

@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Send, ArrowLeft, Users, MapPin, Phone, Mail, Share2 } from "lucide-react";
+import { Send, ArrowLeft, Users, MapPin, Phone, Mail, Share2, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
@@ -108,16 +111,28 @@ export function ChatThread({ threadId, userId, onBack }: ChatThreadProps) {
     },
   });
 
+  const [shareInfo, setShareInfo] = useState<{
+    remainingShares: number;
+    nextAllowedTime?: string;
+  }>({ remainingShares: 3 });
+
   const shareContactMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("POST", `/api/threads/${threadId}/share-contact`);
+    mutationFn: async (contactData: { phoneNumber?: string; email?: string }) => {
+      const response = await apiRequest("POST", `/api/threads/${threadId}/share-contact`, contactData);
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/threads", threadId, "messages"] });
       queryClient.invalidateQueries({ queryKey: ["/api/threads"] });
+      
+      // Update remaining shares info
+      if (data.remainingShares !== undefined) {
+        setShareInfo(prev => ({ ...prev, remainingShares: data.remainingShares }));
+      }
+      
       toast({
         title: "Contact Shared",
-        description: "Your contact details have been shared with the user.",
+        description: `Your contact details have been shared. ${data.remainingShares} shares remaining this hour.`,
       });
     },
     onError: (error: any) => {
@@ -132,6 +147,35 @@ export function ChatThread({ threadId, userId, onBack }: ChatThreadProps) {
         }, 500);
         return;
       }
+      
+      // Handle rate limiting specifically
+      if (error.message?.includes("Rate limit exceeded")) {
+        const errorData = JSON.parse(error.message.split(": ")[1] || "{}");
+        if (errorData.nextAllowedTime) {
+          setShareInfo(prev => ({ 
+            ...prev, 
+            remainingShares: 0,
+            nextAllowedTime: errorData.nextAllowedTime 
+          }));
+        }
+        toast({
+          title: "Rate Limited",
+          description: "You've reached the maximum of 3 contact shares per hour. Please wait before sharing again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Handle duplicate shares
+      if (error.message?.includes("already shared recently")) {
+        toast({
+          title: "Already Shared",
+          description: "These contact details were already shared recently.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       toast({
         title: "Error",
         description: error.message || "Failed to share contact",
@@ -184,9 +228,27 @@ export function ChatThread({ threadId, userId, onBack }: ChatThreadProps) {
   const displayName = getDisplayName(otherUser);
   const isOrganizer = thread?.trip?.organizerId === userId;
 
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [contactForm, setContactForm] = useState({
+    phoneNumber: '',
+    email: ''
+  });
+
   const handleShareContact = () => {
-    shareContactMutation.mutate();
+    if (!contactForm.phoneNumber && !contactForm.email) {
+      setShowContactForm(true);
+      return;
+    }
+    
+    shareContactMutation.mutate({
+      phoneNumber: contactForm.phoneNumber || undefined,
+      email: contactForm.email || undefined
+    });
+    setShowContactForm(false);
   };
+
+  const isRateLimited = shareInfo.remainingShares <= 0 && shareInfo.nextAllowedTime;
+  const canShare = !isRateLimited && (contactForm.phoneNumber || contactForm.email);
 
   return (
     <Card className="h-[600px] flex flex-col">
@@ -218,17 +280,77 @@ export function ChatThread({ threadId, userId, onBack }: ChatThreadProps) {
             )}
           </div>
           {isOrganizer && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleShareContact}
-              disabled={shareContactMutation.isPending}
-              className="ml-2"
-              data-testid="button-share-contact"
-            >
-              <Share2 className="w-4 h-4 mr-1" />
-              Share Contact
-            </Button>
+            <div className="ml-2 flex items-center gap-2">
+              {/* Rate limit indicator */}
+              {shareInfo.remainingShares < 3 && (
+                <div className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {shareInfo.remainingShares} left
+                </div>
+              )}
+              
+              <Dialog open={showContactForm} onOpenChange={setShowContactForm}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={shareContactMutation.isPending || isRateLimited}
+                    data-testid="button-share-contact"
+                  >
+                    <Share2 className="w-4 h-4 mr-1" />
+                    {isRateLimited ? "Rate Limited" : "Share Contact"}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Share Your Contact Details</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="phoneNumber">WhatsApp Number (optional)</Label>
+                      <Input
+                        id="phoneNumber"
+                        placeholder="+94 77 123 4567"
+                        value={contactForm.phoneNumber}
+                        onChange={(e) => setContactForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                        data-testid="input-phone-number"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email Address (optional)</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="your@email.com"
+                        value={contactForm.email}
+                        onChange={(e) => setContactForm(prev => ({ ...prev, email: e.target.value }))}
+                        data-testid="input-email"
+                      />
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      At least one contact method is required. You have {shareInfo.remainingShares} shares remaining this hour.
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleShareContact}
+                        disabled={shareContactMutation.isPending || !canShare}
+                        className="flex-1"
+                        data-testid="button-confirm-share"
+                      >
+                        {shareContactMutation.isPending ? "Sharing..." : "Share Contact"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowContactForm(false)}
+                        data-testid="button-cancel-share"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           )}
         </div>
       </CardHeader>

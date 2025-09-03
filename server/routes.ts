@@ -1080,6 +1080,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin endpoint for viewing contact sharing activity
+  app.get('/api/admin/contact-shares', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      // Check if user is admin
+      const adminUserIds = [
+        "bcc1d79a-d83a-4a99-8556-e1d367140e88", // PraDas S Agnya
+        "313a0e58-6745-4db7-91bd-31e69c7496ab", // Add more admin IDs as needed
+      ];
+      
+      if (!adminUserIds.includes(req.user.id)) {
+        return res.status(403).json({ message: "Access denied. Admin privileges required." });
+      }
+
+      const filters = {
+        threadId: req.query.threadId as string,
+        userId: req.query.userId as string,
+        startDate: req.query.startDate ? new Date(req.query.startDate as string) : undefined,
+        endDate: req.query.endDate ? new Date(req.query.endDate as string) : undefined,
+        limit: req.query.limit ? Number(req.query.limit) : 50
+      };
+
+      const contactShares = await storage.getContactSharesForAdmin(filters);
+      res.json({ contactShares });
+    } catch (error) {
+      console.error("Error fetching contact shares:", error);
+      res.status(500).json({ message: "Failed to fetch contact shares" });
+    }
+  });
+
+  // Admin endpoint for viewing audit logs
+  app.get('/api/admin/audit-logs', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      // Check if user is admin
+      const adminUserIds = [
+        "bcc1d79a-d83a-4a99-8556-e1d367140e88", // PraDas S Agnya
+        "313a0e58-6745-4db7-91bd-31e69c7496ab", // Add more admin IDs as needed
+      ];
+      
+      if (!adminUserIds.includes(req.user.id)) {
+        return res.status(403).json({ message: "Access denied. Admin privileges required." });
+      }
+
+      const filters = {
+        action: req.query.action as string,
+        userId: req.query.userId as string,
+        startDate: req.query.startDate ? new Date(req.query.startDate as string) : undefined,
+        endDate: req.query.endDate ? new Date(req.query.endDate as string) : undefined,
+        limit: req.query.limit ? Number(req.query.limit) : 100
+      };
+
+      const auditLogs = await storage.getAuditLogs(filters);
+      res.json({ auditLogs });
+    } catch (error) {
+      console.error("Error fetching audit logs:", error);
+      res.status(500).json({ message: "Failed to fetch audit logs" });
+    }
+  });
+
   // Admin route to edit trip
   app.patch('/api/admin/trips/:id', unifiedAuthGuard, async (req: any, res) => {
     try {
@@ -1995,38 +2053,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const threadId = req.params.threadId;
+      const { phoneNumber, email } = req.body;
 
-      // Verify user is in the thread
-      const isInThread = await storage.isUserInThread(threadId, userId);
-      if (!isInThread) {
-        return res.status(403).json({ message: "You are not a member of this chat thread" });
+      // Permission check: Ensure user is the organizer
+      const isOrganizer = await storage.isThreadOrganizer(userId, threadId);
+      if (!isOrganizer) {
+        return res.status(403).json({ error: "Only trip organizers can share contact details" });
       }
 
-      // Get the chat thread to verify user is the trip organizer
-      const thread = await storage.getChatThread(threadId);
-      if (!thread) {
-        return res.status(404).json({ message: "Thread not found" });
+      // Rate limiting check: 3 shares per hour per thread
+      const recentShares = await storage.getRecentContactShares(threadId, 1);
+      if (recentShares.length >= 3) {
+        return res.status(429).json({ 
+          error: "Rate limit exceeded: Maximum 3 contact shares per hour per thread",
+          nextAllowedTime: new Date(recentShares[0].sharedAt.getTime() + 60 * 60 * 1000)
+        });
       }
 
-      // Get trip details to verify organizer
-      if (!thread.tripId) {
-        return res.status(400).json({ message: "Thread is not associated with a trip" });
+      // Contact validation and normalization
+      const { normalizePhoneNumber, validateAndNormalizeEmail } = await import('./utils/contactValidation');
+      const normalizedContact = {
+        phoneNumber: phoneNumber ? normalizePhoneNumber(phoneNumber) : null,
+        email: email ? validateAndNormalizeEmail(email) : null
+      };
+
+      if (!normalizedContact.phoneNumber && !normalizedContact.email) {
+        return res.status(400).json({ error: "At least one contact method (phone or email) is required" });
       }
+
+      // Check for idempotency - prevent duplicate shares with same contact info
+      const isDuplicate = recentShares.some(share => 
+        share.phoneNumber === normalizedContact.phoneNumber && 
+        share.email === normalizedContact.email
+      );
       
-      const trip = await storage.getTrip(thread.tripId);
-      if (!trip || trip.organizerId !== userId) {
-        return res.status(403).json({ message: "Only the trip organizer can share contact details" });
+      if (isDuplicate) {
+        return res.status(409).json({ error: "Contact details already shared recently" });
       }
+
+      // Generate unique IDs
+      const { nanoid } = await import('nanoid');
+      const contactShareId = nanoid();
+
+      // Create contact share record for audit trail
+      const contactShare = await storage.createContactShare({
+        id: contactShareId,
+        threadId,
+        sharedBy: userId,
+        phoneNumber: normalizedContact.phoneNumber,
+        email: normalizedContact.email,
+        sharedAt: new Date()
+      });
+
+      // Create audit log entry
+      await storage.createAuditLog('SHARE_CONTACT', userId, {
+        threadId,
+        contactShareId: contactShare.id,
+        phoneNumber: !!normalizedContact.phoneNumber,
+        email: !!normalizedContact.email,
+        ipAddress: req.ip
+      });
 
       // Create contact sharing message
       const message = await storage.createMessage({
         threadId,
         authorId: userId,
-        body: "Contact details shared",
-        type: "contact_card",
+        body: `📞 Contact shared:\\n${normalizedContact.phoneNumber ? `WhatsApp: ${normalizedContact.phoneNumber}` : ''}${normalizedContact.email ? `\\nEmail: ${normalizedContact.email}` : ''}`,
+        type: "CONTACT_SHARE",
         payload: {
-          whatsapp: trip.contactInfo.includes('@') ? null : trip.contactInfo,
-          email: trip.contactInfo.includes('@') ? trip.contactInfo : null,
+          contactShareId: contactShare.id,
+          sharedContact: normalizedContact,
           note: "Contact details shared by organizer"
         },
       });
@@ -2052,7 +2148,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      res.json(message);
+      res.json({ 
+        success: true, 
+        message,
+        shareId: contactShare.id,
+        remainingShares: Math.max(0, 3 - recentShares.length - 1)
+      });
     } catch (error) {
       console.error("Error sharing contact:", error);
       res.status(500).json({ message: "Failed to share contact details" });
