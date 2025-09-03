@@ -18,7 +18,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { Check, X, RefreshCw, User as UserIcon, Heart, Clock, MessageSquare, Edit, Trash2 } from "lucide-react";
-import { generateRandomProfilePicture, getDisplayName, getInitials } from "@/lib/profileUtils";
+import { generateRandomProfilePicture, getDisplayName, getInitials, type AvatarStyle } from "@/lib/profileUtils";
+import { AvatarSelector } from "@/components/avatar-selector";
 import type { User, TripWithOrganizer, QuestionWithDetails } from "@shared/schema";
 
 const profileSchema = z.object({
@@ -43,6 +44,7 @@ export default function UserDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("my-trips");
+  const [selectedAvatarUrl, setSelectedAvatarUrl] = useState<string | null>(null);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -362,6 +364,12 @@ export default function UserDashboard() {
   const generateNewProfilePicture = () => {
     const newProfileUrl = generateRandomProfilePicture();
     form.setValue('profileImageUrl', newProfileUrl);
+    setSelectedAvatarUrl(newProfileUrl);
+  };
+
+  const handleAvatarSelect = (avatarUrl: string, style: AvatarStyle) => {
+    form.setValue('profileImageUrl', avatarUrl);
+    setSelectedAvatarUrl(avatarUrl);
   };
 
   const handleDeleteTrip = (tripId: string) => {
@@ -684,29 +692,38 @@ export default function UserDashboard() {
                         <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
                           <Avatar className="h-20 w-20">
                             <AvatarImage 
-                              src={form.watch('profileImageUrl') || user?.profileImageUrl || generateRandomProfilePicture(user?.id)} 
+                              src={selectedAvatarUrl || form.watch('profileImageUrl') || user?.profileImageUrl || generateRandomProfilePicture(user?.id)} 
                               alt="Profile picture" 
                             />
                             <AvatarFallback className="text-lg">
                               {getInitials(user)}
                             </AvatarFallback>
                           </Avatar>
-                          <div>
+                          <div className="flex-1">
                             <h3 className="font-medium text-gray-800">Profile Picture</h3>
-                            <p className="text-sm text-gray-600 mb-2">
-                              {user?.profileImageUrl ? 'Custom profile picture' : 'Auto-generated avatar'}
+                            <p className="text-sm text-gray-600 mb-3">
+                              {(selectedAvatarUrl || form.watch('profileImageUrl') || user?.profileImageUrl) ? 'Custom avatar selected' : 'Auto-generated avatar'}
                             </p>
-                            <Button 
-                              type="button" 
-                              variant="outline" 
-                              size="sm"
-                              onClick={generateNewProfilePicture}
-                              data-testid="button-generate-avatar"
-                              className="flex items-center gap-2"
-                            >
-                              <RefreshCw className="h-4 w-4" />
-                              Generate New Avatar
-                            </Button>
+                            <div className="flex flex-wrap gap-2">
+                              <AvatarSelector
+                                userId={user?.id || ''}
+                                currentAvatarUrl={selectedAvatarUrl || form.watch('profileImageUrl') || user?.profileImageUrl}
+                                onAvatarSelect={handleAvatarSelect}
+                                disabled={updateProfileMutation.isPending}
+                              />
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="sm"
+                                onClick={generateNewProfilePicture}
+                                data-testid="button-generate-avatar"
+                                className="flex items-center gap-2"
+                                disabled={updateProfileMutation.isPending}
+                              >
+                                <RefreshCw className="h-4 w-4" />
+                                Random
+                              </Button>
+                            </div>
                           </div>
                         </div>
 

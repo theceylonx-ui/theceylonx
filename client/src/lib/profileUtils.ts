@@ -1,9 +1,49 @@
 // Utility functions for user profile management
 
-// Generate a random profile picture URL using DiceBear API
-export function generateRandomProfilePicture(seed?: string): string {
+// Avatar styles available for selection
+export const AVATAR_STYLES = [
+  'avataaars',
+  'adventurer',
+  'adventurer-neutral',
+  'big-ears',
+  'big-ears-neutral',
+  'big-smile',
+  'bottts',
+  'croodles',
+  'croodles-neutral',
+  'fun-emoji',
+  'icons',
+  'identicon',
+  'lorelei',
+  'lorelei-neutral',
+  'micah',
+  'miniavs',
+  'open-peeps',
+  'personas',
+  'pixel-art',
+  'pixel-art-neutral'
+] as const;
+
+export type AvatarStyle = typeof AVATAR_STYLES[number];
+
+// Generate a profile picture URL using DiceBear API with specified style
+export function generateProfilePicture(seed?: string, style: AvatarStyle = 'avataaars'): string {
   const usedSeed = seed || Math.random().toString(36).substring(7);
-  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${usedSeed}&backgroundColor=b6e3f4,c0aede,d1d4f9&backgroundType=gradientLinear`;
+  return `https://api.dicebear.com/7.x/${style}/svg?seed=${usedSeed}&backgroundColor=b6e3f4,c0aede,d1d4f9&backgroundType=gradientLinear`;
+}
+
+// Generate a random profile picture URL using DiceBear API (backward compatibility)
+export function generateRandomProfilePicture(seed?: string): string {
+  return generateProfilePicture(seed, 'avataaars');
+}
+
+// Get avatar options for selection
+export function getAvatarOptions(userId: string): Array<{ style: AvatarStyle; url: string; name: string }> {
+  return AVATAR_STYLES.map(style => ({
+    style,
+    url: generateProfilePicture(userId, style),
+    name: style.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+  }));
 }
 
 // Generate display name based on user data
