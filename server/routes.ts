@@ -1988,6 +1988,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Share contact details in chat thread
+  app.post('/api/threads/:threadId/share-contact', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const threadId = req.params.threadId;
+
+      // Verify user is in the thread
+      const isInThread = await storage.isUserInThread(threadId, userId);
+      if (!isInThread) {
+        return res.status(403).json({ message: "You are not a member of this chat thread" });
+      }
+
+      // Get the chat thread to verify user is the trip organizer
+      const thread = await storage.getChatThread(threadId);
+      if (!thread) {
+        return res.status(404).json({ message: "Thread not found" });
+      }
+
+      // Get trip details to verify organizer
+      if (!thread.tripId) {
+        return res.status(400).json({ message: "Thread is not associated with a trip" });
+      }
+      
+      const trip = await storage.getTrip(thread.tripId);
+      if (!trip || trip.organizerId !== userId) {
+        return res.status(403).json({ message: "Only the trip organizer can share contact details" });
+      }
+
+      // Create contact sharing message
+      const message = await storage.createMessage({
+        threadId,
+        authorId: userId,
+        body: "Contact details shared",
+        messageType: "contact_share",
+        contactInfo: trip.contactInfo,
+      });
+
+      // Get other users in thread for notifications
+      const threadUsers = await storage.getThreadUsers(threadId);
+      const otherUsers = threadUsers.filter(user => user.id !== userId);
+
+      // Create notifications for other users
+      const currentUser = await storage.getUser(userId);
+      for (const otherUser of otherUsers) {
+        await storage.createNotification({
+          userId: otherUser.id,
+          type: "contact_shared",
+          category: "social",
+          priority: "high",
+          title: "Contact Details Shared",
+          message: `${currentUser?.firstName || 'Trip organizer'} shared their contact details with you`,
+          threadId: threadId,
+          relatedUserId: userId,
+          actionUrl: `/chat/${threadId}`,
+          isRead: false,
+        });
+      }
+
+      res.json(message);
+    } catch (error) {
+      console.error("Error sharing contact:", error);
+      res.status(500).json({ message: "Failed to share contact details" });
+    }
+  });
+
   app.get('/api/threads/:threadId', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;

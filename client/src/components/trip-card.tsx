@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { MapPin, Calendar, Users, DollarSign, Mail, Lock, Pin, PinOff, Star, StarOff } from "lucide-react";
+import { MapPin, Calendar, Users, DollarSign, Mail, Lock, Pin, PinOff, Star, StarOff, Heart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -231,31 +231,14 @@ export default function TripCard({ trip, badges }: TripCardProps) {
       return;
     }
     
-    if (trip.contactInfo.includes("@")) {
-      window.open(`mailto:${trip.contactInfo}`, "_blank");
-    } else {
-      // Normalize phone number for WhatsApp
-      let phoneNumber = trip.contactInfo.replace(/\D/g, "");
-      
-      // If number starts with 0, it's likely a local number
-      if (phoneNumber.startsWith('0')) {
-        // For Sri Lankan numbers (typical length after removing 0 is 9)
-        if (phoneNumber.length === 10) {
-          phoneNumber = '94' + phoneNumber.substring(1);
-        }
-        // For other countries, user should include country code manually
-        // We'll just remove the leading 0 and let them specify
-        else {
-          phoneNumber = phoneNumber.substring(1);
-        }
-      }
-      
-      // If number is very short (less than 10 digits), likely missing country code
-      // But we won't assume - user should provide complete international number
-      
-      console.log(`Opening WhatsApp for number: ${phoneNumber}`);
-      window.open(`https://wa.me/${phoneNumber}`, "_blank");
-    }
+    // Instead of directly contacting, send an interest request
+    // Contact details will only be shared by organizer in chat
+    interestMutation.mutate(true);
+    
+    toast({
+      title: "Interest Sent!",
+      description: "Your interest has been sent to the organizer. They can share contact details in the chat once they accept.",
+    });
   };
 
   const handleEditTrip = () => {
@@ -476,10 +459,10 @@ export default function TripCard({ trip, badges }: TripCardProps) {
                 }`}
                 onClick={handleContact}
                 data-testid={`button-contact-${trip.id}`}
-                title={user ? "Contact organizer" : "Sign in to contact"}
+                title={user ? "Send interest request" : "Sign in to show interest"}
               >
                 {user ? (
-                  <Mail className="h-3 w-3" />
+                  <Heart className="h-3 w-3" />
                 ) : (
                   <Lock className="h-3 w-3" />
                 )}

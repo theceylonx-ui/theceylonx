@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Send, ArrowLeft, Users, MapPin } from "lucide-react";
+import { Send, ArrowLeft, Users, MapPin, Phone, Mail, Share2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ interface Message {
   threadId: string;
   authorId: string;
   body: string;
+  messageType?: 'text' | 'contact_share';
+  contactInfo?: string;
   createdAt: string;
   author: {
     id: string;
@@ -36,6 +38,8 @@ interface ChatThreadData {
     title: string;
     origin: string;
     destination: string;
+    organizerId: string;
+    contactInfo: string;
   };
   users: Array<{
     id: string;
@@ -104,6 +108,38 @@ export function ChatThread({ threadId, userId, onBack }: ChatThreadProps) {
     },
   });
 
+  const shareContactMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", `/api/threads/${threadId}/share-contact`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/threads", threadId, "messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/threads"] });
+      toast({
+        title: "Contact Shared",
+        description: "Your contact details have been shared with the user.",
+      });
+    },
+    onError: (error: any) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/auth/signin";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: error.message || "Failed to share contact",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSendMessage = () => {
     if (!messageText.trim()) return;
     sendMessageMutation.mutate(messageText.trim());
@@ -146,6 +182,11 @@ export function ChatThread({ threadId, userId, onBack }: ChatThreadProps) {
 
   const otherUser = thread?.users.find(user => user.id !== userId);
   const displayName = getDisplayName(otherUser);
+  const isOrganizer = thread?.trip?.organizerId === userId;
+
+  const handleShareContact = () => {
+    shareContactMutation.mutate();
+  };
 
   return (
     <Card className="h-[600px] flex flex-col">
@@ -176,6 +217,19 @@ export function ChatThread({ threadId, userId, onBack }: ChatThreadProps) {
               </div>
             )}
           </div>
+          {isOrganizer && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleShareContact}
+              disabled={shareContactMutation.isPending}
+              className="ml-2"
+              data-testid="button-share-contact"
+            >
+              <Share2 className="w-4 h-4 mr-1" />
+              Share Contact
+            </Button>
+          )}
         </div>
       </CardHeader>
 
@@ -223,15 +277,39 @@ export function ChatThread({ threadId, userId, onBack }: ChatThreadProps) {
                       <div className="text-xs text-muted-foreground mb-1">
                         {isOwn ? "You" : authorName} • {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
                       </div>
-                      <div
-                        className={`rounded-lg px-3 py-2 ${
-                          isOwn
-                            ? "bg-primary text-primary-foreground ml-auto"
-                            : "bg-muted"
-                        }`}
-                      >
-                        <p className="text-sm whitespace-pre-wrap">{message.body}</p>
-                      </div>
+                      {message.messageType === 'contact_share' ? (
+                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-3 py-2">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Share2 className="w-4 h-4 text-blue-600" />
+                            <span className="text-sm font-medium text-blue-800 dark:text-blue-200">Contact Details Shared</span>
+                          </div>
+                          {message.contactInfo?.includes('@') ? (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Mail className="w-4 h-4 text-gray-600" />
+                              <a href={`mailto:${message.contactInfo}`} className="text-blue-600 hover:underline">
+                                {message.contactInfo}
+                              </a>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Phone className="w-4 h-4 text-gray-600" />
+                              <a href={`https://wa.me/${message.contactInfo?.replace(/\D/g, '')}`} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                                {message.contactInfo}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div
+                          className={`rounded-lg px-3 py-2 ${
+                            isOwn
+                              ? "bg-primary text-primary-foreground ml-auto"
+                              : "bg-muted"
+                          }`}
+                        >
+                          <p className="text-sm whitespace-pre-wrap">{message.body}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

@@ -235,6 +235,8 @@ export const messages = pgTable("messages", {
   threadId: varchar("thread_id").notNull(),
   authorId: varchar("author_id").notNull(),
   body: text("body").notNull(),
+  messageType: varchar("message_type").default("text"), // text, contact_share
+  contactInfo: varchar("contact_info"), // For contact sharing messages
   createdAt: timestamp("created_at").defaultNow(),
 });
 
