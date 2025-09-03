@@ -1,0 +1,126 @@
+“Switch trip-card images to Category-based (remove old), default on create, curated switch on edit”
+You are the lead engineer for Ceylon Expand. Replace the existing Replit-generated trip images with a Category-based system:
+Remove the old image pipeline entirely.
+On Add a Trip, when the organizer selects a Category, auto-assign a Sri Lanka–relevant default image from that category.
+On Edit Trip, organizer can switch to one of 4–5 curated images within the same category.
+No user uploads or external URLs. Only curated options.
+Keep everything backward-compatible where possible until a trip is edited or a new one is created.
+0) De-scope / Guardrails
+Do not mention or implement any future paid upload feature.
+Maintain privacy redaction rules already in place.
+Keep existing trips’ images until they are edited (then new rules apply).
+1) Remove old image source (backend + frontend)
+Search & delete/disable any logic that sets trip images from the previous default/stock mechanism (services, seeders, frontend placeholders).
+Document removed locations in MIGRATION_NOTES.md (paths + brief reason).
+2) Data model (Drizzle migrations)
+Add/ensure on trips:
+category ENUM('roadtrip','hiking','beach','culture','wellness','festival','workshop','wildlife','food','adventure_sport','unknown') DEFAULT 'unknown'
+imageUrl TEXT
+imageProvider TEXT DEFAULT 'curated'
+imageAttribution JSONB NULL
+imageFetchedAt TIMESTAMP NULL
+Indexes:
+CREATE INDEX trips_category_idx ON trips (category);
+Do not overwrite imageUrl of existing trips during migration.
+3) Curated image catalog (server-owned + Sri Lanka–specific)
+Create server/services/categoryImageMap.ts:
+export type TripCategory =
+  | 'roadtrip' | 'hiking' | 'beach' | 'culture' | 'wellness' | 'festival'
+  | 'workshop' | 'wildlife' | 'food' | 'adventure_sport' | 'unknown';
+
+export const CATEGORY_CHOICES: Record<TripCategory, Array<{
+  url: string;
+  attribution?: { authorName?: string; authorUrl?: string; sourceUrl?: string; license?: string };
+}>> = {
+  roadtrip:        [{url:'/assets/category/roadtrip_01.jpg'}, {url:'/assets/category/roadtrip_02.jpg'}, {url:'/assets/category/roadtrip_03.jpg'}, {url:'/assets/category/roadtrip_04.jpg'}, {url:'/assets/category/roadtrip_05.jpg'}],
+  hiking:          [{url:'/assets/category/hiking_01.jpg'}, {url:'/assets/category/hiking_02.jpg'}, {url:'/assets/category/hiking_03.jpg'}, {url:'/assets/category/hiking_04.jpg'}],
+  beach:           [{url:'/assets/category/beach_01.jpg'}, {url:'/assets/category/beach_02.jpg'}, {url:'/assets/category/beach_03.jpg'}, {url:'/assets/category/beach_04.jpg'}],
+  culture:         [{url:'/assets/category/culture_01.jpg'}, {url:'/assets/category/culture_02.jpg'}, {url:'/assets/category/culture_03.jpg'}, {url:'/assets/category/culture_04.jpg'}],
+  wellness:        [{url:'/assets/category/wellness_01.jpg'}, {url:'/assets/category/wellness_02.jpg'}, {url:'/assets/category/wellness_03.jpg'}, {url:'/assets/category/wellness_04.jpg'}],
+  festival:        [{url:'/assets/category/festival_01.jpg'}, {url:'/assets/category/festival_02.jpg'}, {url:'/assets/category/festival_03.jpg'}, {url:'/assets/category/festival_04.jpg'}],
+  workshop:        [{url:'/assets/category/workshop_01.jpg'}, {url:'/assets/category/workshop_02.jpg'}, {url:'/assets/category/workshop_03.jpg'}, {url:'/assets/category/workshop_04.jpg'}],
+  wildlife:        [{url:'/assets/category/wildlife_01.jpg'}, {url:'/assets/category/wildlife_02.jpg'}, {url:'/assets/category/wildlife_03.jpg'}, {url:'/assets/category/wildlife_04.jpg'}],
+  food:            [{url:'/assets/category/food_01.jpg'}, {url:'/assets/category/food_02.jpg'}, {url:'/assets/category/food_03.jpg'}, {url:'/assets/category/food_04.jpg'}],
+  adventure_sport: [{url:'/assets/category/adventure_01.jpg'}, {url:'/assets/category/adventure_02.jpg'}, {url:'/assets/category/adventure_03.jpg'}, {url:'/assets/category/adventure_04.jpg'}],
+  unknown:         [{url:'/assets/category/generic_sl_01.jpg'}]
+};
+Store these images in /public/assets/category/... or CDN under our control.
+All images must be Sri Lanka–relevant. Include attribution metadata if licenses require.
+4) Image selection service
+Create server/services/imageSelectorService.ts:
+import { CATEGORY_CHOICES, TripCategory } from './categoryImageMap';
+import { createHash } from 'crypto';
+
+export function getCuratedChoices(category: TripCategory) {
+  return CATEGORY_CHOICES[category] ?? CATEGORY_CHOICES.unknown;
+}
+
+export function pickDefaultFromChoices(category: TripCategory, seed: string) {
+  const choices = getCuratedChoices(category);
+  const idx = Number('0x' + createHash('md5').update(seed).digest('hex').slice(0,4)) % choices.length;
+  const chosen = choices[idx];
+  return {
+    imageUrl: chosen.url,
+    imageProvider: 'curated' as const,
+    imageAttribution: chosen.attribution ?? null,
+    imageFetchedAt: new Date()
+  };
+}
+
+export function isAllowedCategoryImage(category: TripCategory, url: string) {
+  return getCuratedChoices(category).some(c => c.url === url);
+}
+5) API behavior (create & edit)
+Create Trip (POST /api/trips)
+Request body includes category.
+After validation:
+If category is valid:
+Compute default via pickDefaultFromChoices(category, seed = title + organizerId).
+Set imageUrl, imageProvider, imageAttribution, imageFetchedAt.
+If category missing/unknown:
+Set category='unknown'; assign from unknown choices.
+Reject any imageUrl coming from client.
+Edit Trip (PUT /api/trips/:id)
+Allow changes to category.
+Allow field selectedCategoryImage (string URL).
+Validate with isAllowedCategoryImage(category, selectedCategoryImage). If valid, set as imageUrl and update attribution accordingly.
+If organizer changes category but doesn’t pick an image, auto-pick default for the new category.
+Only trip organizerId (or admin) may update these fields.
+Public endpoints
+GET /api/trips, GET /api/trips/:id return category, imageUrl, and imageAttribution (no contact details).
+6) Frontend updates
+Add a Trip
+Add Category dropdown (values from enum). Helper text:
+“We’ll set a matching cover image automatically based on your category.”
+No image picker here.
+Edit Trip
+Show Category dropdown.
+Show a Curated Image Picker grid (4–5 thumbnails from current category).
+Selecting a thumbnail sets selectedCategoryImage for the update call.
+Show live preview of the card.
+If category changes, reload the grid with that category’s choices.
+Browse Trips
+Always display trip.imageUrl.
+Optional info tooltip icon to show attribution (if present).
+7) Validation, security, performance
+Strip imageUrl from client payloads on create; only server assigns.
+On edit, only accept selectedCategoryImage that matches the category list.
+Rate-limit trip updates.
+Cache CATEGORY_CHOICES in memory; assets are static so no extra latency.
+8) Tests (must pass)
+Backend
+Create trip with category → assigns curated default.
+Edit trip: choose valid selectedCategoryImage → persists; invalid → 400.
+Changing category without picking image → new default auto-assigned.
+Existing trip (pre-change) keeps old image until edited.
+Frontend
+Category appears on create; no image picker there.
+Edit page shows curated grid and updates preview + persists.
+Browse cards render chosen image.
+9) Acceptance criteria
+Old image pipeline is removed; no snowy/irrelevant stock left.
+New trips: selecting a Category auto-sets a Sri Lanka–relevant image.
+Edited trips: organizer can switch among 4–5 curated images in that category only.
+No uploads or arbitrary URLs; server validates choices.
+All tests, lint, and typechecks pass.
+Proceed incrementally with clear commits. If a part already exists, verify and reuse. Fix any type/runtime/test errors encountered.
