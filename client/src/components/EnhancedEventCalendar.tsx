@@ -18,6 +18,7 @@ interface CalendarState {
   selectedDate: string // YYYY-MM-DD format in Asia/Colombo
   view: 'month' | 'week' | 'day'
   filters: {
+    all: boolean
     pinned: boolean
     interested: boolean
     my: boolean
@@ -82,10 +83,11 @@ const getInitialState = (): CalendarState => {
     selectedDate: params.get('date') || localStorage.getItem('calendar_date') || format(todayInColombo, 'yyyy-MM-dd'),
     view: (params.get('view') as any) || (localStorage.getItem('calendar_view') as any) || 'month',
     filters: {
+      all: params.get('filters')?.includes('all') || localStorage.getItem('calendar_filters_all') === 'true' || true,
       pinned: params.get('filters')?.includes('pinned') || localStorage.getItem('calendar_filters_pinned') === 'true' || false,
       interested: params.get('filters')?.includes('interested') || localStorage.getItem('calendar_filters_interested') === 'true' || false,
       my: params.get('filters')?.includes('my') || localStorage.getItem('calendar_filters_my') === 'true' || false,
-      free: params.get('filters')?.includes('free') || localStorage.getItem('calendar_filters_free') === 'true' || true,
+      free: params.get('filters')?.includes('free') || localStorage.getItem('calendar_filters_free') === 'true' || false,
     },
     region: params.get('region') || localStorage.getItem('calendar_region') || null,
     tags: params.get('tags')?.split(',').filter(Boolean) || (localStorage.getItem('calendar_tags')?.split(',').filter(Boolean)) || []
@@ -95,6 +97,7 @@ const getInitialState = (): CalendarState => {
 const saveStateToStorage = (state: CalendarState) => {
   localStorage.setItem('calendar_date', state.selectedDate)
   localStorage.setItem('calendar_view', state.view)
+  localStorage.setItem('calendar_filters_all', state.filters.all.toString())
   localStorage.setItem('calendar_filters_pinned', state.filters.pinned.toString())
   localStorage.setItem('calendar_filters_interested', state.filters.interested.toString())
   localStorage.setItem('calendar_filters_my', state.filters.my.toString())
@@ -110,6 +113,7 @@ const updateURLFromState = (state: CalendarState) => {
   
   // Build filters string
   const activeFilters = []
+  if (state.filters.all) activeFilters.push('all')
   if (state.filters.pinned) activeFilters.push('pinned')
   if (state.filters.interested) activeFilters.push('interested')
   if (state.filters.my) activeFilters.push('my')
@@ -128,6 +132,7 @@ const updateURLFromState = (state: CalendarState) => {
 // Build filters string for API calls
 const buildFiltersString = (filters: CalendarState['filters']) => {
   const activeFilters = []
+  if (filters.all) activeFilters.push('all')
   if (filters.pinned) activeFilters.push('pinned')
   if (filters.interested) activeFilters.push('interested')  
   if (filters.my) activeFilters.push('my')
@@ -183,12 +188,31 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
       return
     }
     
-    updateCalendarState({
-      filters: {
+    // Special handling for "all" filter - if toggled on, turn off other filters
+    let newFilters = { ...calendarState.filters }
+    
+    if (filterType === 'all' && !calendarState.filters.all) {
+      // Turn on "all" and turn off others
+      newFilters = {
+        all: true,
+        pinned: false,
+        interested: false,
+        my: false,
+        free: false
+      }
+    } else if (filterType !== 'all') {
+      // If any other filter is turned on, turn off "all"
+      newFilters = {
         ...calendarState.filters,
+        all: false,
         [filterType]: !calendarState.filters[filterType]
       }
-    })
+    } else {
+      // Toggling "all" off
+      newFilters[filterType] = !calendarState.filters[filterType]
+    }
+    
+    updateCalendarState({ filters: newFilters })
   }, [calendarState.filters, isAuthenticated, updateCalendarState])
   
   // Keyboard navigation handler
@@ -266,6 +290,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
     const dateStr = format(date, 'yyyy-MM-dd')
     const count = dayCountsMap.get(dateStr) || 0
     const isSelected = dateStr === calendarState.selectedDate
+    const hasEvents = count > 0
     
     return (
       <div 
@@ -282,9 +307,13 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
           }
         }}
       >
-        <span className="text-sm">{format(date, 'd')}</span>
+        <span className={`text-sm ${hasEvents ? 'font-bold' : 'font-normal'} ${
+          isSelected ? 'text-white' : hasEvents ? 'text-ceylon-green' : 'text-gray-700'
+        }`}>
+          {format(date, 'd')}
+        </span>
         {count > 0 && (
-          <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs flex items-center justify-center">
+          <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs flex items-center justify-center bg-ceylon-green text-white">
             {count > 9 ? '9+' : count}
           </Badge>
         )}
@@ -406,6 +435,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
+            <FilterToggle filterKey="all" icon={MapPin} label="All Trips" />
             <FilterToggle filterKey="free" icon={Heart} label="Free Trips" />
             <FilterToggle filterKey="pinned" icon={Pin} label="Pinned" requiresAuth />
             <FilterToggle filterKey="interested" icon={Star} label="Interested" requiresAuth />

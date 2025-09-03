@@ -2774,8 +2774,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Apply user-specific filters if requested
-      if (requestedFilters.length > 0 && userId) {
+      // Apply user-specific filters if requested (skip if "all" filter is active)
+      if (requestedFilters.length > 0 && !requestedFilters.includes('all') && userId) {
         const [pinnedTrips, interestedTrips] = await Promise.all([
           requestedFilters.includes('pinned') ? storage.getUserPinnedTrips(userId) : Promise.resolve([]),
           requestedFilters.includes('interested') ? storage.getUserInterestedTrips(userId) : Promise.resolve([])
