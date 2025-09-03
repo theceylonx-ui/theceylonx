@@ -56,8 +56,6 @@ export default function CalendarPage() {
                   <p>• <strong>View Details button:</strong> Click to see full trip information, comments, and join options</p>
                   <p>• <strong>Keyboard navigation:</strong> Use arrow keys to navigate dates, Enter to toggle day panel</p>
                   <p>• <strong>Trip status icons:</strong> ⭐ Interested, 📌 Pinned, 👤 Your Trip, 💚 Free Trip</p>
-                  <p>• <strong>Authentication:</strong> Sign in to use personal filters (Pinned, Interested, My Trips)</p>
-                  <p>• <strong>Filter persistence:</strong> Your filter choices are saved and persist across page refreshes</p>
                 </div>
               </CardContent>
             </Card>
