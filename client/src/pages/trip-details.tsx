@@ -35,6 +35,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
   const [showContactLockedDialog, setShowContactLockedDialog] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showTripEditDialog, setShowTripEditDialog] = useState(false);
   
   // Get tab from URL params
   const urlParams = new URLSearchParams(window.location.search);
@@ -218,6 +219,41 @@ export default function TripDetails({ params }: TripDetailsProps) {
       toast({
         title: "Error",
         description: "Failed to report trip. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteTripMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("DELETE", `/api/trips/${id}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Trip deleted successfully.",
+      });
+      // Navigate back to browse trips
+      setLocation("/browse-trips");
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/trips"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to delete trip. Please try again.",
         variant: "destructive",
       });
     },
@@ -421,7 +457,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setShowEditDialog(true)}
+                      onClick={() => setShowTripEditDialog(true)}
                       data-testid="button-edit-trip"
                     >
                       <Edit className="h-4 w-4 mr-1" />
@@ -431,18 +467,15 @@ export default function TripDetails({ params }: TripDetailsProps) {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        if (confirm('Are you sure you want to delete this trip?')) {
-                          // TODO: Implement delete functionality
-                          toast({
-                            title: "Delete functionality coming soon",
-                            description: "Trip deletion will be available in the next update."
-                          });
+                        if (confirm('Are you sure you want to delete this trip? This action cannot be undone.')) {
+                          deleteTripMutation.mutate();
                         }
                       }}
+                      disabled={deleteTripMutation.isPending}
                       data-testid="button-delete-trip"
                     >
                       <Trash2 className="h-4 w-4 mr-1" />
-                      Delete
+                      {deleteTripMutation.isPending ? 'Deleting...' : 'Delete'}
                     </Button>
                   </>
                 )}
@@ -763,6 +796,28 @@ export default function TripDetails({ params }: TripDetailsProps) {
         }}
         fields={{ content: true }}
         contentType="comment"
+      />
+
+      {/* Edit Trip Dialog */}
+      <EditContentDialog
+        isOpen={showTripEditDialog}
+        onClose={() => setShowTripEditDialog(false)}
+        onSave={(data) => {
+          // TODO: Implement trip edit functionality
+          toast({
+            title: "Edit functionality coming soon",
+            description: "Trip editing will be available in the next update with category and image selection."
+          });
+          setShowTripEditDialog(false);
+        }}
+        isLoading={false}
+        title="Edit Trip Details"
+        initialContent={{
+          title: trip?.title || "",
+          content: trip?.notes || ""
+        }}
+        fields={{ title: true, content: true }}
+        contentType="trip"
       />
     </div>
   );
