@@ -414,11 +414,9 @@ export default function TripDetails({ params }: TripDetailsProps) {
                     <p className="font-medium text-gray-800">
                       {trip.organizer.firstName} {trip.organizer.lastName}
                     </p>
-                    {isAuthenticated ? (
-                      <p className="text-sm text-gray-600">{trip.organizer.email}</p>
-                    ) : (
-                      <p className="text-sm text-gray-500 italic">Sign in to view contact details</p>
-                    )}
+                    <p className="text-sm text-gray-500 italic">
+                      Contact details shared privately through chat
+                    </p>
                   </div>
                 </div>
 
