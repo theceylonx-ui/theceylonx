@@ -455,6 +455,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Trip not found" });
       }
       
+      // Cannot pin own trip
+      if (trip.organizerId === userId) {
+        return res.status(200).json({ 
+          trip_id: tripId,
+          user_id: userId,
+          pinned: false,
+          interested: false,
+          message: "This is your own trip"
+        });
+      }
+      
       // Check current flags
       const currentFlags = await storage.getUserTripFlags(userId, tripId);
       

@@ -58,6 +58,15 @@ export default function TripCard({ trip, badges }: TripCardProps) {
     onSuccess: async (response, pinned) => {
       const responseData = await response.json();
       
+      // Check if this is user's own trip
+      if (responseData.message === "This is your own trip") {
+        toast({
+          title: 'This is your own trip',
+          description: 'You cannot pin trips you organize',
+        });
+        return;
+      }
+      
       // Update ALL trip cache entries with server response
       queryClient.getQueriesData({ queryKey: ['/api/trips'] }).forEach(([queryKey, data]) => {
         if (data && typeof data === 'object' && 'trips' in data) {
