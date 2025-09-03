@@ -18,6 +18,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import type { TripWithOrganizer, CommentWithUser, TripInterestRequest } from "@shared/schema";
 import { EditContentDialog } from "@/components/EditContentDialog";
+import { TripEditDialog } from "@/components/TripEditDialog";
 import { ActionsMenu } from "@/components/ActionsMenu";
 
 interface TripDetailsProps {
@@ -799,26 +800,13 @@ export default function TripDetails({ params }: TripDetailsProps) {
       />
 
       {/* Edit Trip Dialog */}
-      <EditContentDialog
-        isOpen={showTripEditDialog}
-        onClose={() => setShowTripEditDialog(false)}
-        onSave={(data) => {
-          // TODO: Implement trip edit functionality
-          toast({
-            title: "Edit functionality coming soon",
-            description: "Trip editing will be available in the next update with category and image selection."
-          });
-          setShowTripEditDialog(false);
-        }}
-        isLoading={false}
-        title="Edit Trip Details"
-        initialContent={{
-          title: trip?.title || "",
-          content: trip?.notes || ""
-        }}
-        fields={{ title: true, content: true }}
-        contentType="trip"
-      />
+      {trip && (
+        <TripEditDialog
+          isOpen={showTripEditDialog}
+          onClose={() => setShowTripEditDialog(false)}
+          trip={trip}
+        />
+      )}
     </div>
   );
 }
