@@ -458,16 +458,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check current flags
       const currentFlags = await storage.getUserTripFlags(userId, tripId);
       
-      // Option A: Prevent pinning if already interested
+      // Option B: Auto-remove interest when pinning (smooth UX)
+      let updateData: any = { pinned };
       if (pinned && currentFlags?.interested) {
-        return res.status(409).json({ 
-          error: "INTERESTED_ACTIVE", 
-          message: "This trip is marked as interested. Unmark to pin." 
-        });
+        // If pinning and currently interested, also remove interest
+        updateData.interested = false;
       }
       
       // Update or create the user trip flags
-      const tripFlags = await storage.upsertUserTripFlags(userId, tripId, { pinned });
+      const tripFlags = await storage.upsertUserTripFlags(userId, tripId, updateData);
       
       res.json({
         trip_id: tripId,
