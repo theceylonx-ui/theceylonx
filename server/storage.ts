@@ -276,7 +276,7 @@ export interface IStorage {
     startDate?: Date;
     endDate?: Date;
     limit?: number;
-  }): Promise<AuditLog[]>;
+  }): Promise<any[]>;
   
   // Calendar Event operations
   createCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent>;
@@ -681,6 +681,9 @@ export class DatabaseStorage implements IStorage {
         createdAt: comments.createdAt,
         tripId: comments.tripId,
         userId: comments.userId,
+        updatedAt: comments.updatedAt,
+        isDeleted: comments.isDeleted,
+        deletedAt: comments.deletedAt,
         user: {
           id: users.id,
           firstName: users.firstName,
