@@ -2539,11 +2539,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limitNum = Math.max(1, Math.min(50, parseInt(limit) || 20)); // Clamp limit to max 50
       const offset = (pageNum - 1) * limitNum;
       
-      // Parse filters (CSV format: "pinned,interested,my,truly_free")
+      // Parse filters (CSV format: "pinned,interested,my,truly_free,all")
       const requestedFilters = filters.split(',').map((f: string) => f.trim()).filter(Boolean);
       const userSpecificFilters = ['pinned', 'interested', 'my'];
       // Don't require auth for "all" or "truly_free" filters
-      const requiresAuth = requestedFilters.some((f: string) => userSpecificFilters.includes(f) && f !== 'all');
+      const requiresAuth = requestedFilters.some((f: string) => userSpecificFilters.includes(f));
       
       // Check authentication for user-specific filters
       let userId: string | null = null;

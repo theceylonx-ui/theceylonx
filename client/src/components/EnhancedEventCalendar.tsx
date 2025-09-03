@@ -263,7 +263,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
   
   // Get day events with proper error handling
   const { data: dayResponse, isLoading: isDayLoading, error: dayError } = useQuery<CalendarResponse>({
-    queryKey: ['/api/calendar/day', debouncedState.selectedDate, buildFiltersString(debouncedState.filters), debouncedState.region, debouncedState.tags.join(',')],
+    queryKey: [`/api/calendar/day?date=${debouncedState.selectedDate}&filters=${buildFiltersString(debouncedState.filters)}&region=${debouncedState.region || ''}&tags=${debouncedState.tags.join(',')}`],
     enabled: true,
     retry: (failureCount, error) => {
       // Don't retry on auth errors
@@ -277,7 +277,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
   // Get monthly day counts for calendar display
   const currentMonth = format(new Date(calendarState.selectedDate + 'T00:00:00'), 'yyyy-MM')
   const { data: monthCounts } = useQuery<DayCountsResponse>({
-    queryKey: ['/api/calendar/month', currentMonth, 'summary', buildFiltersString(debouncedState.filters), debouncedState.region, debouncedState.tags.join(',')],
+    queryKey: [`/api/calendar/month/${currentMonth}?summary=true&filters=${buildFiltersString(debouncedState.filters)}&region=${debouncedState.region || ''}&tags=${debouncedState.tags.join(',')}`],
     enabled: true,
     retry: false
   })
