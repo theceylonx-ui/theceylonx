@@ -143,6 +143,10 @@ export const trips = pgTable("trips", {
   index("trips_status_idx").on(table.status),
   index("trips_tags_gin_idx").using("gin", table.tags),
   index("trips_organizer_idx").on(table.organizerId),
+  // Calendar-specific indexes for efficient date range queries
+  index("trips_date_idx").on(table.date),
+  index("trips_seats_idx").on(table.seatsAvailable),
+  index("trips_status_seats_idx").on(table.status, table.seatsAvailable),
 ]);
 
 // Calendar events for aggregated view
@@ -477,6 +481,10 @@ export const userTripFlags = pgTable("user_trip_flags", {
 }, (table) => ({
   // Unique constraint to prevent duplicate entries for same user+trip
   uniqueUserTrip: unique().on(table.userId, table.tripId),
+  // Performance indexes for calendar filtering
+  userIdIndex: index("utf_user_id_idx").on(table.userId),
+  pinnedUserIndex: index("utf_pinned_user_idx").on(table.userId, table.pinned),
+  interestedUserIndex: index("utf_interested_user_idx").on(table.userId, table.interested),
 }));
 
 // Pinned trips table for user-specific trip pinning (legacy - keeping for migration)

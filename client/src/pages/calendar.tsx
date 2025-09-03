@@ -1,4 +1,4 @@
-import EventCalendar from "@/components/EventCalendar";
+import EnhancedEventCalendar from "@/components/EnhancedEventCalendar";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ export default function CalendarPage() {
 
 
           {/* Main Calendar */}
-          <EventCalendar />
+          <EnhancedEventCalendar />
           
           {/* Help Text */}
           <div className="mt-8 text-center">
@@ -49,11 +49,12 @@ export default function CalendarPage() {
               <CardContent className="p-6">
                 <h3 className="font-semibold text-blue-900 mb-2">How to Use Your Calendar</h3>
                 <div className="text-sm text-blue-800 space-y-1">
-                  <p>• <strong>Select a view</strong> from the dropdown: All Events, Pinned Trips, Interested Trips, My Trips, or Free Trips</p>
-                  <p>• <strong>Click any date</strong> on the calendar to see events for that specific day</p>
-                  <p>• <strong>Event icons</strong> show status: ⭐ Interested, 📌 Pinned, 👤 Your Trip, 💚 Free</p>
-                  <p>• <strong>Day preview panel</strong> automatically updates when you change dates or views</p>
-                  <p>• <strong>Click "View Details"</strong> on any event to see the full trip information</p>
+                  <p>• <strong>Use filter toggles</strong> to show Pinned, Interested, Your Trips, or Free Trips only</p>
+                  <p>• <strong>Click any date</strong> on the calendar to see trips for that specific day</p>
+                  <p>• <strong>Use keyboard arrows</strong> to navigate dates, Enter to toggle day panel</p>
+                  <p>• <strong>Trip icons</strong> show status: ⭐ Interested, 📌 Pinned, 👤 Your Trip, 💚 Free</p>
+                  <p>• <strong>Day counts</strong> appear on calendar dates showing number of available trips</p>
+                  <p>• <strong>Filters persist</strong> across page refreshes and are saved in your browser</p>
                 </div>
               </CardContent>
             </Card>

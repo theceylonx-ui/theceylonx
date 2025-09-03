@@ -2162,6 +2162,45 @@ export class DatabaseStorage implements IStorage {
 
     return await query;
   }
+
+  // Calendar-specific methods for enhanced calendar functionality
+  async getTripsInDateRange(startDate: Date, endDate: Date): Promise<TripWithOrganizer[]> {
+    const result = await db
+      .select()
+      .from(trips)
+      .leftJoin(users, eq(trips.organizerId, users.id))
+      .where(
+        and(
+          eq(trips.isDeleted, false),
+          gte(trips.date, startDate),
+          lte(trips.date, endDate)
+        )
+      )
+      .orderBy(trips.date, trips.time);
+    
+    return result.map(({ trips: trip, users: organizer }) => ({
+      ...trip,
+      organizer: organizer!,
+    }));
+  }
+
+  async getUserPinnedTrips(userId: string): Promise<TripWithOrganizer[]> {
+    const pinnedTripsWithDetails = await db
+      .select({
+        trip: trips,
+        organizer: users,
+      })
+      .from(userTripFlags)
+      .innerJoin(trips, eq(userTripFlags.tripId, trips.id))
+      .innerJoin(users, eq(trips.organizerId, users.id))
+      .where(and(eq(userTripFlags.userId, userId), eq(userTripFlags.pinned, true)))
+      .orderBy(desc(userTripFlags.updatedAt));
+
+    return pinnedTripsWithDetails.map(({ trip, organizer }) => ({
+      ...trip,
+      organizer,
+    }));
+  }
 }
 
 export const storage = new DatabaseStorage();

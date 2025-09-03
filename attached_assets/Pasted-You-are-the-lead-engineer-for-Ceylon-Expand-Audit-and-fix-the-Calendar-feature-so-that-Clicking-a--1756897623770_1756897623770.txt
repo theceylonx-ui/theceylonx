@@ -1,0 +1,117 @@
+You are the lead engineer for Ceylon Expand. Audit and fix the Calendar feature so that:
+Clicking a date shows that day’s trips (agenda panel).
+Filters Pinned / Interested / My Trips / Free work together and persist across navigation.
+Performance is snappy and timezone-correct (Asia/Colombo).
+Keep changes surgical, backward-compatible, and fully tested.
+0) Definitions (source of truth)
+Pinned: trips the user bookmarked (pinned_trips or equivalent).
+Interested: trips the user has an interest request for (trip_interest_requests where userId = current).
+My Trips: trips where organizerId = currentUserId.
+Free: trips with status = 'active' and seatsAvailable > 0 (not full/cancelled).
+Day click: clicking any calendar cell (month/week/day) selects a local date (Asia/Colombo), queries trips whose start datetime falls within that local day window [00:00, 23:59:59].
+1) Backend — API audit & implement
+Add/verify endpoint (idempotent):
+GET /api/calendar/day
+Query: date=YYYY-MM-DD  (local date in Asia/Colombo)
+       filters=pinned,interested,my,truly_free  (CSV; optional)
+       region?=string
+       tags?=CSV
+       page?=1
+       limit?=20
+Behavior:
+Convert date (string) to a Colombo-local start/end window.
+Build filter predicates:
+pinned → join pinned_trips on (userId, tripId)
+interested → join trip_interest_requests (status in ('pending','accepted')) for current user
+my → trips.organizerId = currentUserId
+truly_free → trips.status='active' AND trips.seatsAvailable > 0
+Allow multiple filters combined (logical AND across selected filters).
+Optional filters: region, tags[].
+Return paginated list: { items:[...], total, page, limit }. Redact organizer contacts from payload (use existing redaction util).
+Add/verify endpoint for month hydration (optional but recommended):
+GET /api/calendar/month
+Query: month=YYYY-MM  (e.g., 2025-09)
+       summary=true   (if true, return per-day counts only)
+       filters=...
+Returns:
+summary=true → { days:[ { date:'YYYY-MM-DD', count: 3 }, ... ] }
+summary=false → paginated full trips within that month.
+Indexes (if missing; Drizzle migrations):
+CREATE INDEX trips_date_idx ON trips (date);
+CREATE INDEX trips_status_idx ON trips (status);
+CREATE INDEX trips_seats_idx ON trips (seatsAvailable);
+For pinned/interested joins:
+CREATE INDEX pinned_trips_user_idx ON pinned_trips (userId);
+CREATE INDEX tir_user_idx ON trip_interest_requests (userId, status);
+Validation:
+Zod-validate query params; clamp limit (max 50).
+Enforce auth; anonymous users can still get day trips but user-specific filters (pinned/interested/my) require login; otherwise 401.
+2) Frontend — Calendar UX fixes
+State model:
+calendarState = {
+  selectedDate: 'YYYY-MM-DD', // Asia/Colombo
+  view: 'month' | 'week' | 'day',
+  filters: { pinned: false, interested: false, my: false, free: true },
+  region: null,
+  tags: []
+}
+Persist calendarState in URL (query string) and localStorage for back/refresh continuity.
+Day click behavior:
+On cell click:
+selectedDate = clickedDate
+Fetch GET /api/calendar/day?date=...&filters=...
+Open/right-panel Agenda with results (title, time range, seats, tags, region, status).
+Keyboard accessibility:
+Arrow keys move focus between dates.
+Enter triggers day selection.
+ARIA labels for each day cell (aria-label="September 12, 2025 — X trips").
+Filters UI:
+Toggle chips: Pinned, Interested, My Trips, Free.
+Multi-select AND logic. Disabled (greyed) if not authenticated for user-specific filters, with tooltip: “Sign in to use this filter.”
+Each toggle immediately re-queries day/month endpoints (debounce 150ms).
+Agenda panel:
+Empty state: “No trips on this day (with current filters).”
+Pagination controls if > limit.
+Trip card contact still redacted (privacy rule).
+Loading/error:
+Show skeletons during fetch.
+Toast on request error with retry.
+3) Edge cases & timezone
+Use Asia/Colombo (UTC+5:30) to compute day range:
+start = YYYY-MM-DDT00:00:00+05:30
+end = YYYY-MM-DDT23:59:59.999+05:30
+When converting to DB (UTC), adjust correctly.
+If trip spans days (future feature), for now filter by start date only (documented).
+4) Security & privacy
+Ensure responses never include organizer WhatsApp/email (use redaction).
+Rate-limit /api/calendar/*: 60 rpm per IP/user.
+Validate tags, region against allowed lists if available.
+5) Tests (add/repair)
+Backend integration tests
+GET /api/calendar/day with:
+No filters → returns all trips on date.
+free only → only active + seatsAvailable>0.
+pinned + interested + my combos for logged-in user.
+Anonymous user + pinned → 401.
+Timezone check: trip at 2025-09-03T00:15:00+05:30 appears on 2025-09-03.
+Pagination fields present; redaction applied.
+Frontend tests (lightweight)
+Clicking a date triggers fetch with correct date param.
+Toggling filters updates URL and re-fetches.
+Agenda renders empty state correctly.
+Keyboard navigation focuses cells and opens agenda on Enter.
+6) Performance
+Month hydration (/api/calendar/month?summary=true) to render counts on cells without fetching all trips.
+Client caches last response per date+filters key for 60s (stale-while-revalidate).
+Avoid N+1 in server; join only necessary tables for filters.
+7) Acceptance criteria (must pass)
+Clicking any date opens an Agenda list for that day (local time), with correct trips.
+Filters Pinned / Interested / My Trips / Free work individually and combined, with proper auth gating.
+Calendar state persists on back/refresh; URL reflects date & filters.
+Responses are privacy-safe (no contact leakage) and fast (<300ms p95 on warm DB).
+Tests pass; lint/typecheck clean; no regressions to existing trip search.
+8) Deliverables
+Backend: routes, validators, indexes, tests.
+Frontend: calendar state, handlers, agenda panel, filters UI, tests.
+Short CALENDAR_NOTES.md summarizing endpoints, filters logic, and TZ handling.
+Proceed incrementally with clear commits. If a piece already exists, verify correctness and wire it into this flow. Fix any errors encountered (type, runtime, lint, tests) before completion.

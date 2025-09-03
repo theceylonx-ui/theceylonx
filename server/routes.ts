@@ -2524,137 +2524,340 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Day-specific calendar endpoint with view filtering  
-  app.get('/api/calendar/day', unifiedAuthGuard, async (req: any, res: any) => {
+  // Enhanced calendar day endpoint with multi-filter support and proper timezone handling
+  app.get('/api/calendar/day', async (req: any, res: any) => {
     try {
-      const userId = req.user.id;
-      const { date, view = 'all', tz = 'Asia/Colombo' } = req.query;
+      const { date, filters = '', region, tags, page = '1', limit = '20' } = req.query;
       
-      if (!date || typeof date !== 'string') {
+      // Validate required parameters
+      if (!date || typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
         return res.status(400).json({ message: 'Date parameter is required (YYYY-MM-DD format)' });
       }
       
-      // Parse the date and create day boundaries in user timezone
-      const targetDate = new Date(date + 'T00:00:00');
-      if (isNaN(targetDate.getTime())) {
-        return res.status(400).json({ message: 'Invalid date format' });
+      // Parse and validate pagination
+      const pageNum = Math.max(1, parseInt(page) || 1);
+      const limitNum = Math.max(1, Math.min(50, parseInt(limit) || 20)); // Clamp limit to max 50
+      const offset = (pageNum - 1) * limitNum;
+      
+      // Parse filters (CSV format: "pinned,interested,my,truly_free")
+      const requestedFilters = filters.split(',').map((f: string) => f.trim()).filter(Boolean);
+      const userSpecificFilters = ['pinned', 'interested', 'my'];
+      const requiresAuth = requestedFilters.some((f: string) => userSpecificFilters.includes(f));
+      
+      // Check authentication for user-specific filters
+      let userId: string | null = null;
+      if (requiresAuth) {
+        try {
+          const authResult = await new Promise((resolve) => {
+            unifiedAuthGuard(req, res, (err?: any) => resolve(!err));
+          });
+          if (!authResult || !req.user?.id) {
+            return res.status(401).json({ message: 'Authentication required for user-specific filters' });
+          }
+          userId = req.user.id;
+        } catch (authError) {
+          return res.status(401).json({ message: 'Authentication required for user-specific filters' });
+        }
       }
       
-      // Create start and end of day boundaries
-      const startOfDay = new Date(targetDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(targetDate);
-      endOfDay.setHours(23, 59, 59, 999);
+      // Convert local date to Asia/Colombo timezone boundaries
+      const { zonedTimeToUtc, utcToZonedTime } = await import('date-fns-tz');
+      const colomboTimezone = 'Asia/Colombo';
       
-      let events: any[] = [];
+      // Create start and end of day in Colombo time, then convert to UTC for DB query
+      const localDate = new Date(date + 'T00:00:00');
+      const startOfDayLocal = zonedTimeToUtc(`${date}T00:00:00`, colomboTimezone);
+      const endOfDayLocal = zonedTimeToUtc(`${date}T23:59:59.999`, colomboTimezone);
       
-      // Helper function to format trip events with proper flags
-      const formatTripEventForDay = (trip: any, flags: { pinned: boolean; interested: boolean; mine: boolean; free: boolean }) => ({
-        id: `trip_${trip.id}`,
-        title: trip.title,
-        start: trip.startAt || trip.start_at,
-        end: trip.endAt || trip.end_at,
-        location: `${trip.fromLocation} → ${trip.toLocation}`,
-        flags
+      // Get all trips for the date range
+      const allTrips = await storage.getTripsInDateRange(startOfDayLocal, endOfDayLocal);
+      
+      // Apply region and tags filters on the retrieved trips
+      let filteredTrips = allTrips;
+      
+      // Apply region filter if specified
+      if (region && region !== 'any') {
+        filteredTrips = filteredTrips.filter(trip => trip.region === region);
+      }
+      
+      // Apply tags filter if specified (partial match)
+      if (tags) {
+        const tagList = tags.split(',').map((t: string) => t.trim()).filter(Boolean);
+        if (tagList.length > 0) {
+          filteredTrips = filteredTrips.filter(trip => {
+            const tripTags = trip.tags || [];
+            return tagList.some(tag => 
+              tripTags.some((tripTag: string) => 
+                tripTag.toLowerCase().includes(tag.toLowerCase())
+              )
+            );
+          });
+        }
+      }
+      
+      // If no filters requested, return all active trips
+      if (requestedFilters.length === 0) {
+        const activeTrips = filteredTrips.filter(trip => trip.status === 'active');
+        const total = activeTrips.length;
+        const paginatedTrips = activeTrips.slice(offset, offset + limitNum);
+        
+        const items = paginatedTrips.map(trip => ({
+          id: trip.id,
+          title: trip.title,
+          fromLocation: trip.fromLocation,
+          toLocation: trip.toLocation,
+          date: trip.date,
+          time: trip.time,
+          seatsAvailable: trip.seatsAvailable,
+          price: trip.price,
+          region: trip.region,
+          tags: trip.tags,
+          status: trip.status,
+          // Redact contact info for privacy
+          organizer: {
+            id: trip.organizerId,
+            // Add other safe organizer fields if needed, but no contact info
+          }
+        }));
+        
+        return res.json({
+          items,
+          total,
+          page: pageNum,
+          limit: limitNum
+        });
+      }
+      
+      // For user-specific filtering, we need user data
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required for filtering' });
+      }
+      
+      // Get user's pinned and interested trips for filtering
+      const [pinnedTrips, interestedRequests] = await Promise.all([
+        requestedFilters.includes('pinned') ? storage.getUserPinnedTrips(userId) : Promise.resolve([]),
+        requestedFilters.includes('interested') ? storage.getUserInterestedTrips(userId) : Promise.resolve([])
+      ]);
+      
+      const pinnedTripIds = new Set(pinnedTrips.map(trip => trip.id));
+      const interestedTripIds = new Set(interestedRequests.map(trip => trip.id));
+      
+      // Apply user-specific filters (logical AND across selected filters)
+      let userFilteredTrips = filteredTrips.filter(trip => {
+        // Check each requested filter
+        const filterResults = requestedFilters.map(filter => {
+          switch (filter) {
+            case 'pinned':
+              return pinnedTripIds.has(trip.id);
+            case 'interested':
+              return interestedTripIds.has(trip.id);
+            case 'my':
+              return trip.organizerId === userId;
+            case 'truly_free':
+              return trip.status === 'active' && trip.seatsAvailable > 0;
+            default:
+              return true; // Unknown filters are ignored
+          }
+        });
+        
+        // All filters must pass (logical AND)
+        return filterResults.every(result => result);
       });
       
-      // Filter trips that overlap with the selected date
-      const filterByDate = (trips: any[]) => {
-        return trips.filter(trip => {
-          const tripStart = new Date(trip.startAt || trip.start_at);
-          const tripEnd = new Date(trip.endAt || trip.end_at);
-          
-          // Include if trip overlaps with the selected day
-          return tripStart <= endOfDay && tripEnd >= startOfDay;
-        });
-      };
+      const total = userFilteredTrips.length;
+      const paginatedTrips = userFilteredTrips.slice(offset, offset + limitNum);
       
-      switch (view) {
-        case 'all': {
-          const trips = await storage.getUserTrips(userId);
-          const pinnedTripIds = new Set((await storage.getUserPinnedTrips(userId)).map(trip => trip.id));
-          const interestedTripIds = new Set((await storage.getUserInterestedTrips(userId)).map(trip => trip.id));
-          
-          const filteredTrips = filterByDate(trips);
-          events = filteredTrips.map(trip => formatTripEventForDay(trip, {
-            pinned: pinnedTripIds.has(trip.id),
-            interested: interestedTripIds.has(trip.id),
-            mine: trip.organizerId === userId,
-            free: !trip.price || Number(trip.price) === 0
-          }));
-          break;
+      // Format response with privacy redaction
+      const items = paginatedTrips.map(trip => ({
+        id: trip.id,
+        title: trip.title,
+        fromLocation: trip.fromLocation,
+        toLocation: trip.toLocation,
+        date: trip.date,
+        time: trip.time,
+        seatsAvailable: trip.seatsAvailable,
+        price: trip.price,
+        region: trip.region,
+        tags: trip.tags,
+        status: trip.status,
+        // Add user-specific flags for frontend
+        flags: {
+          pinned: pinnedTripIds.has(trip.id),
+          interested: interestedTripIds.has(trip.id),
+          mine: trip.organizerId === userId,
+          free: !trip.price || Number(trip.price) === 0
+        },
+        // Redacted organizer info (no contact details)
+        organizer: {
+          id: trip.organizerId,
+          // Add other safe fields if needed, but never contact info
         }
-
-        case 'pinned': {
-          const pinnedTrips = await storage.getUserPinnedTrips(userId);
-          const interestedTripIds = new Set((await storage.getUserInterestedTrips(userId)).map(trip => trip.id));
-          
-          const filteredTrips = filterByDate(pinnedTrips);
-          events = filteredTrips.map(trip => formatTripEventForDay(trip, {
-            pinned: true,
-            interested: interestedTripIds.has(trip.id),
-            mine: trip.organizerId === userId,
-            free: !trip.price || Number(trip.price) === 0
-          }));
-          break;
-        }
-
-        case 'interested': {
-          const interestedTrips = await storage.getUserInterestedTrips(userId);
-          const pinnedTripIds = new Set((await storage.getUserPinnedTrips(userId)).map(trip => trip.id));
-          
-          const filteredTrips = filterByDate(interestedTrips);
-          events = filteredTrips.map(trip => formatTripEventForDay(trip, {
-            pinned: pinnedTripIds.has(trip.id),
-            interested: true,
-            mine: trip.organizerId === userId,
-            free: !trip.price || Number(trip.price) === 0
-          }));
-          break;
-        }
-
-        case 'mine': {
-          const myTrips = await storage.getUserTrips(userId);
-          const pinnedTripIds = new Set((await storage.getUserPinnedTrips(userId)).map(trip => trip.id));
-          const interestedTripIds = new Set((await storage.getUserInterestedTrips(userId)).map(trip => trip.id));
-          
-          const filteredTrips = filterByDate(myTrips.filter(trip => trip.organizerId === userId));
-          events = filteredTrips.map(trip => formatTripEventForDay(trip, {
-            pinned: pinnedTripIds.has(trip.id),
-            interested: interestedTripIds.has(trip.id),
-            mine: true,
-            free: !trip.price || Number(trip.price) === 0
-          }));
-          break;
-        }
-
-        case 'free': {
-          const trips = await storage.getUserTrips(userId);
-          const pinnedTripIds = new Set((await storage.getUserPinnedTrips(userId)).map(trip => trip.id));
-          const interestedTripIds = new Set((await storage.getUserInterestedTrips(userId)).map(trip => trip.id));
-          
-          const freeTrips = trips.filter(trip => !trip.price || Number(trip.price) === 0);
-          const filteredTrips = filterByDate(freeTrips);
-          events = filteredTrips.map(trip => formatTripEventForDay(trip, {
-            pinned: pinnedTripIds.has(trip.id),
-            interested: interestedTripIds.has(trip.id),
-            mine: trip.organizerId === userId,
-            free: true
-          }));
-          break;
-        }
-
-        default:
-          return res.status(400).json({ message: "Invalid view parameter" });
-      }
+      }));
       
-      // Sort events by start time
-      events.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+      res.json({
+        items,
+        total,
+        page: pageNum,
+        limit: limitNum
+      });
       
-      res.json(events);
     } catch (error) {
       console.error("Failed to get calendar day events:", error);
       res.status(500).json({ message: "Failed to get calendar day events" });
+    }
+  });
+
+  // Calendar month endpoint for month view and day counts
+  app.get('/api/calendar/month', async (req: any, res: any) => {
+    try {
+      const { month, summary = 'false', filters = '', region, tags } = req.query;
+      
+      // Validate month parameter (YYYY-MM format)
+      if (!month || typeof month !== 'string' || !/^\d{4}-\d{2}$/.test(month)) {
+        return res.status(400).json({ message: 'Month parameter is required (YYYY-MM format)' });
+      }
+      
+      const isSummary = summary === 'true';
+      
+      // Parse filters for authentication check
+      const requestedFilters = filters.split(',').map((f: string) => f.trim()).filter(Boolean);
+      const userSpecificFilters = ['pinned', 'interested', 'my'];
+      const requiresAuth = requestedFilters.some((f: string) => userSpecificFilters.includes(f));
+      
+      // Check authentication if needed
+      let userId: string | null = null;
+      if (requiresAuth) {
+        try {
+          const authResult = await new Promise((resolve) => {
+            unifiedAuthGuard(req, res, (err?: any) => resolve(!err));
+          });
+          if (!authResult || !req.user?.id) {
+            return res.status(401).json({ message: 'Authentication required for user-specific filters' });
+          }
+          userId = req.user.id;
+        } catch (authError) {
+          return res.status(401).json({ message: 'Authentication required for user-specific filters' });
+        }
+      }
+      
+      // Calculate month boundaries in Asia/Colombo timezone
+      const { zonedTimeToUtc } = await import('date-fns-tz');
+      const colomboTimezone = 'Asia/Colombo';
+      
+      const [year, monthNum] = month.split('-').map(Number);
+      const startOfMonth = zonedTimeToUtc(`${year}-${monthNum.toString().padStart(2, '0')}-01T00:00:00`, colomboTimezone);
+      const endOfMonth = new Date(startOfMonth);
+      endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+      endOfMonth.setMilliseconds(endOfMonth.getMilliseconds() - 1); // Last millisecond of month
+      
+      // Get all trips in the month
+      const allTrips = await storage.getTripsInDateRange(startOfMonth, endOfMonth);
+      
+      // Apply base filters (region, tags)
+      let filteredTrips = allTrips;
+      
+      if (region && region !== 'any') {
+        filteredTrips = filteredTrips.filter(trip => trip.region === region);
+      }
+      
+      if (tags) {
+        const tagList = tags.split(',').map((t: string) => t.trim()).filter(Boolean);
+        if (tagList.length > 0) {
+          filteredTrips = filteredTrips.filter(trip => {
+            const tripTags = trip.tags || [];
+            return tagList.some(tag => 
+              tripTags.some((tripTag: string) => 
+                tripTag.toLowerCase().includes(tag.toLowerCase())
+              )
+            );
+          });
+        }
+      }
+      
+      // Apply user-specific filters if requested
+      if (requestedFilters.length > 0 && userId) {
+        const [pinnedTrips, interestedTrips] = await Promise.all([
+          requestedFilters.includes('pinned') ? storage.getUserPinnedTrips(userId) : Promise.resolve([]),
+          requestedFilters.includes('interested') ? storage.getUserInterestedTrips(userId) : Promise.resolve([])
+        ]);
+        
+        const pinnedTripIds = new Set(pinnedTrips.map(trip => trip.id));
+        const interestedTripIds = new Set(interestedTrips.map(trip => trip.id));
+        
+        filteredTrips = filteredTrips.filter(trip => {
+          const filterResults = requestedFilters.map(filter => {
+            switch (filter) {
+              case 'pinned':
+                return pinnedTripIds.has(trip.id);
+              case 'interested':
+                return interestedTripIds.has(trip.id);
+              case 'my':
+                return trip.organizerId === userId;
+              case 'truly_free':
+                return trip.status === 'active' && trip.seatsAvailable > 0;
+              default:
+                return true;
+            }
+          });
+          return filterResults.every(result => result);
+        });
+      }
+      
+      if (isSummary) {
+        // Return daily counts for the month
+        const dayCounts = new Map<string, number>();
+        
+        filteredTrips.forEach(trip => {
+          const tripDate = new Date(trip.date);
+          const dateKey = tripDate.toISOString().split('T')[0]; // YYYY-MM-DD
+          dayCounts.set(dateKey, (dayCounts.get(dateKey) || 0) + 1);
+        });
+        
+        const days = Array.from(dayCounts.entries()).map(([date, count]) => ({
+          date,
+          count
+        }));
+        
+        res.json({ days });
+      } else {
+        // Return full trip data with pagination
+        const { page = '1', limit = '50' } = req.query;
+        const pageNum = Math.max(1, parseInt(page) || 1);
+        const limitNum = Math.max(1, Math.min(50, parseInt(limit) || 50));
+        const offset = (pageNum - 1) * limitNum;
+        
+        const total = filteredTrips.length;
+        const paginatedTrips = filteredTrips.slice(offset, offset + limitNum);
+        
+        const items = paginatedTrips.map(trip => ({
+          id: trip.id,
+          title: trip.title,
+          fromLocation: trip.fromLocation,
+          toLocation: trip.toLocation,
+          date: trip.date,
+          time: trip.time,
+          seatsAvailable: trip.seatsAvailable,
+          price: trip.price,
+          region: trip.region,
+          tags: trip.tags,
+          status: trip.status,
+          organizer: {
+            id: trip.organizerId,
+            // No contact info for privacy
+          }
+        }));
+        
+        res.json({
+          items,
+          total,
+          page: pageNum,
+          limit: limitNum
+        });
+      }
+      
+    } catch (error) {
+      console.error("Failed to get calendar month data:", error);
+      res.status(500).json({ message: "Failed to get calendar month data" });
     }
   });
 
