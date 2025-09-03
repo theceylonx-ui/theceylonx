@@ -345,23 +345,27 @@ export default function TripCard({ trip, badges }: TripCardProps) {
     return colors[region] || 'bg-gray-500';
   };
 
+  // Sri Lankan regional image fallbacks
+  const sriLankanImages: Record<string, string> = {
+    'southern': 'https://images.unsplash.com/photo-1605540436563-5bca919ae766?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Stilt fishermen
+    'central': 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Tea plantation
+    'north central': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Sigiriya
+    'eastern': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Surf waves
+    'northern': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Hindu kovil
+    'western': 'https://images.unsplash.com/photo-1605540436563-5bca919ae766?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Colombo
+    'uva': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Elephant safari
+    'sabaragamuwa': 'https://images.unsplash.com/photo-1571115764595-644a1f56a55c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Mountain forest
+  };
+
   const getTripImage = () => {
     // Use database image first, fallback to regional mapping
     if (trip.imageUrl) {
+      // If it's a local asset path, ensure it works in both dev and production
+      if (trip.imageUrl.startsWith('/assets/')) {
+        return trip.imageUrl;
+      }
       return trip.imageUrl;
     }
-    
-    // Sri Lankan regional image fallbacks
-    const sriLankanImages: Record<string, string> = {
-      'southern': 'https://images.unsplash.com/photo-1605540436563-5bca919ae766?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Stilt fishermen
-      'central': 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Tea plantation
-      'north central': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Sigiriya
-      'eastern': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Surf waves
-      'northern': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Hindu kovil
-      'western': 'https://images.unsplash.com/photo-1605540436563-5bca919ae766?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Colombo
-      'uva': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Elephant safari
-      'sabaragamuwa': 'https://images.unsplash.com/photo-1571115764595-644a1f56a55c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200', // Mountain forest
-    };
     
     return sriLankanImages[trip.region.toLowerCase()] || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
   };
@@ -376,7 +380,14 @@ export default function TripCard({ trip, badges }: TripCardProps) {
             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
             onError={(e) => {
-              e.currentTarget.src = 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
+              // First fallback: try regional image
+              const regionalImage = sriLankanImages[trip.region.toLowerCase()];
+              if (e.currentTarget.src !== regionalImage && regionalImage) {
+                e.currentTarget.src = regionalImage;
+              } else {
+                // Final fallback: generic Sri Lanka image
+                e.currentTarget.src = 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
+              }
             }}
           />
           <div className="absolute top-3 right-3">
