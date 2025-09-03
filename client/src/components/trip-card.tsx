@@ -261,6 +261,15 @@ export default function TripCard({ trip, badges }: TripCardProps) {
       return;
     }
     
+    // Check if user is trip owner - show friendly message and do nothing
+    if (user.id === trip.organizerId) {
+      toast({
+        title: 'This is your own trip',
+        description: 'You cannot pin trips you organize',
+      });
+      return;
+    }
+    
     // If trying to pin but trip is interested, automatically remove interest and pin
     if (!trip.isPinned && trip.isInterested) {
       toast({
@@ -285,6 +294,15 @@ export default function TripCard({ trip, badges }: TripCardProps) {
     
     if (!user) {
       window.location.href = '/auth/signin';
+      return;
+    }
+    
+    // Check if user is trip owner - show friendly message and do nothing
+    if (user.id === trip.organizerId) {
+      toast({
+        title: 'This is your own trip',
+        description: 'You cannot mark interest on trips you organize',
+      });
       return;
     }
     
@@ -447,19 +465,23 @@ export default function TripCard({ trip, badges }: TripCardProps) {
                 <>
                   <Button
                     size="sm"
-                    variant={trip.isInterested ? "default" : "outline"}
+                    variant={isOwner ? "outline" : (trip.isInterested ? "default" : "outline")}
                     className={`text-xs px-2 py-1 transition-all duration-200 ${
-                      trip.isInterested 
-                        ? 'bg-yellow-500 text-white hover:bg-yellow-600 border-yellow-500 shadow-md' 
-                        : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                      isOwner
+                        ? 'border-gray-300 text-gray-400 hover:bg-gray-50 cursor-pointer opacity-60'
+                        : trip.isInterested 
+                          ? 'bg-yellow-500 text-white hover:bg-yellow-600 border-yellow-500 shadow-md' 
+                          : 'border-gray-300 text-gray-600 hover:bg-gray-50'
                     }`}
                     onClick={handleInterest}
                     disabled={interestMutation.isPending}
                     data-testid={`button-interested-${trip.id}`}
-                    title={trip.isInterested ? "Remove interest" : "Mark as interested"}
+                    title={isOwner ? "This is your own trip" : (trip.isInterested ? "Remove interest" : "Mark as interested")}
                   >
                     {interestMutation.isPending ? (
                       <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    ) : isOwner ? (
+                      <StarOff className="h-3 w-3" />
                     ) : trip.isInterested ? (
                       <span className="text-yellow-200">⭐</span>
                     ) : (
@@ -469,19 +491,23 @@ export default function TripCard({ trip, badges }: TripCardProps) {
                   
                   <Button
                     size="sm"
-                    variant={trip.isPinned ? "default" : "outline"}
+                    variant={isOwner ? "outline" : (trip.isPinned ? "default" : "outline")}
                     className={`text-xs px-2 py-1 transition-all duration-200 ${
-                      trip.isPinned 
-                        ? 'bg-orange-500 text-white hover:bg-orange-600 border-orange-500 shadow-md' 
-                        : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                      isOwner
+                        ? 'border-gray-300 text-gray-400 hover:bg-gray-50 cursor-pointer opacity-60'
+                        : trip.isPinned 
+                          ? 'bg-orange-500 text-white hover:bg-orange-600 border-orange-500 shadow-md' 
+                          : 'border-gray-300 text-gray-600 hover:bg-gray-50'
                     }`}
                     onClick={handlePin}
                     disabled={pinMutation.isPending}
                     data-testid={`button-pin-${trip.id}`}
-                    title={trip.isPinned ? "Unpin trip" : "Pin trip"}
+                    title={isOwner ? "This is your own trip" : (trip.isPinned ? "Unpin trip" : "Pin trip")}
                   >
                     {pinMutation.isPending ? (
                       <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    ) : isOwner ? (
+                      <PinOff className="h-3 w-3" />
                     ) : trip.isPinned ? (
                       <span className="text-orange-200">📌</span>
                     ) : (
