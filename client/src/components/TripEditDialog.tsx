@@ -24,8 +24,8 @@ interface CategoryOption {
 }
 
 interface ImageOption {
-  imageUrl: string;
-  description: string;
+  url: string;
+  description?: string;
 }
 
 export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
@@ -121,7 +121,7 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
     const updatedData = {
       ...formData,
       price: parseFloat(formData.price) || 0,
-      imageUrl: selectedImage,
+      date: formData.date ? new Date(formData.date) : undefined,
     };
     
     updateTripMutation.mutate(updatedData);
@@ -305,16 +305,16 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
                         ? "border-ceylon-green ring-2 ring-ceylon-green/50"
                         : "border-gray-200 hover:border-ceylon-green/50"
                     }`}
-                    onClick={() => setSelectedImage(image.imageUrl)}
+                    onClick={() => setSelectedImage(image.url)}
                   >
                     <img
-                      src={image.imageUrl}
-                      alt={image.description}
+                      src={image.url}
+                      alt={image.description || "Trip image"}
                       className="w-full h-24 object-cover"
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-all" />
-                    {selectedImage === image.imageUrl && (
+                    {selectedImage === image.url && (
                       <div className="absolute top-1 right-1 bg-ceylon-green text-white rounded-full p-1">
                         <Camera className="h-3 w-3" />
                       </div>
