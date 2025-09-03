@@ -414,9 +414,10 @@ export default function TripDetails({ params }: TripDetailsProps) {
                     <p className="font-medium text-gray-800">
                       {trip.organizer.firstName} {trip.organizer.lastName}
                     </p>
-                    <p className="text-sm text-gray-500 italic">
-                      Contact details shared privately through chat
-                    </p>
+                    <div className="flex items-center space-x-2 text-sm text-gray-500">
+                      <Lock className="h-4 w-4" />
+                      <span className="italic">Contact details shared privately through chat</span>
+                    </div>
                   </div>
                 </div>
 
