@@ -2542,8 +2542,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Parse filters (CSV format: "pinned,interested,my,truly_free,all")
       const requestedFilters = filters.split(',').map((f: string) => f.trim()).filter(Boolean);
       const userSpecificFilters = ['pinned', 'interested', 'my'];
-      // Don't require auth for "all" or "truly_free" filters
-      const requiresAuth = requestedFilters.some((f: string) => userSpecificFilters.includes(f));
+      // Don't require auth for "all" or "truly_free" filters, or when no filters are specified
+      const requiresAuth = requestedFilters.length > 0 && requestedFilters.some((f: string) => userSpecificFilters.includes(f)) && !requestedFilters.includes('all');
+      
       
       // Check authentication for user-specific filters
       let userId: string | null = null;
@@ -2625,14 +2626,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // For user-specific filtering, we need user data
-      if (!userId) {
+      if (requiresAuth && !userId) {
         return res.status(401).json({ message: 'Authentication required for filtering' });
       }
       
-      // Get user's pinned and interested trips for filtering
+      // Get user's pinned and interested trips for filtering (only if user is authenticated)
       const [pinnedTrips, interestedRequests] = await Promise.all([
-        requestedFilters.includes('pinned') ? storage.getUserPinnedTrips(userId) : Promise.resolve([]),
-        requestedFilters.includes('interested') ? storage.getUserInterestedTrips(userId) : Promise.resolve([])
+        requestedFilters.includes('pinned') && userId ? storage.getUserPinnedTrips(userId) : Promise.resolve([]),
+        requestedFilters.includes('interested') && userId ? storage.getUserInterestedTrips(userId) : Promise.resolve([])
       ]);
       
       const pinnedTripIds = new Set(pinnedTrips.map(trip => trip.id));
@@ -2718,8 +2719,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Parse filters for authentication check
       const requestedFilters = filters.split(',').map((f: string) => f.trim()).filter(Boolean);
       const userSpecificFilters = ['pinned', 'interested', 'my'];
-      // Don't require auth for "all" or "truly_free" filters
-      const requiresAuth = requestedFilters.some((f: string) => userSpecificFilters.includes(f) && f !== 'all');
+      // Don't require auth for "all" or "truly_free" filters, or when no filters are specified
+      const requiresAuth = requestedFilters.length > 0 && requestedFilters.some((f: string) => userSpecificFilters.includes(f)) && !requestedFilters.includes('all');
       
       // Check authentication if needed
       let userId: string | null = null;
