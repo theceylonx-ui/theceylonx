@@ -2592,8 +2592,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // If no filters requested, return all active trips
-      if (requestedFilters.length === 0) {
+      // If no filters requested or "all" filter is included, return all active trips
+      if (requestedFilters.length === 0 || requestedFilters.includes('all')) {
+        console.log('🔧 Using "all" filter path, found', filteredTrips.length, 'trips');
         const activeTrips = filteredTrips.filter(trip => trip.status === 'active');
         const total = activeTrips.length;
         const paginatedTrips = activeTrips.slice(offset, offset + limitNum);
