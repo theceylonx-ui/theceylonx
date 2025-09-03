@@ -98,6 +98,11 @@ app.use((req, res, next) => {
     // doesn't interfere with the other routes
     if (app.get("env") === "development") {
       console.log('Setting up Vite for development...');
+      // Serve static assets from public folder BEFORE Vite setup
+      const path = await import('path');
+      const publicPath = path.resolve(import.meta.dirname, '..', 'public');
+      app.use(express.static(publicPath));
+      console.log('Static assets served from:', publicPath);
       await setupVite(app, server);
     } else {
       console.log('Setting up static file serving for production...');
