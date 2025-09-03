@@ -207,7 +207,18 @@ export default function TripCard({ trip, badges }: TripCardProps) {
       return;
     }
     
-    pinMutation.mutate(!trip.isPinned);
+    // If trying to pin but trip is interested, first remove interest
+    if (!trip.isPinned && trip.isInterested) {
+      // First unmark interest, then pin
+      interestMutation.mutate(false, {
+        onSuccess: () => {
+          // After successfully removing interest, pin the trip
+          setTimeout(() => pinMutation.mutate(true), 100);
+        }
+      });
+    } else {
+      pinMutation.mutate(!trip.isPinned);
+    }
   };
 
   const handleInterest = (e: React.MouseEvent) => {
@@ -437,15 +448,11 @@ export default function TripCard({ trip, badges }: TripCardProps) {
               <Button 
                 size="sm"
                 className="text-xs px-2 py-1 transition-all duration-200 bg-ceylon-blue text-white hover:bg-ceylon-blue/90 shadow-sm hover:shadow-md"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  // Let the Link component handle the navigation
-                }}
                 data-testid={`button-view-${trip.id}`}
                 title="View trip details"
+                asChild
               >
-                View
+                <span>View</span>
               </Button>
             </div>
           </div>
