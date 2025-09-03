@@ -53,7 +53,7 @@ export const users = pgTable("users", {
   facebookId: varchar("facebook_id"),
   microsoftId: varchar("microsoft_id"),
   appleId: varchar("apple_id"),
-  role: userRoleEnum("role").default("user"),
+  // role: userRoleEnum("role").default("user"), // Temporarily disabled
   emailVerified: boolean("email_verified").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -110,14 +110,14 @@ export const trips = pgTable("trips", {
   contactInfo: varchar("contact_info").notNull(),
   notes: text("notes"),
   organizerId: varchar("organizer_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  status: tripStatusEnum("status").default("active"),
+  status: varchar("status").default("active"),
   
   // Optional enhanced fields for better recommendations
   tags: jsonb("tags"), // JSONB for GIN index support
   priceMin: decimal("price_min", { precision: 10, scale: 2 }), // Optional: minimum price range
   priceMax: decimal("price_max", { precision: 10, scale: 2 }), // Optional: maximum price range
   duration: varchar("duration"), // Optional: duration like '1 day', '2-3 days', '1 week'
-  difficulty: difficultyEnum("difficulty"),
+  difficulty: varchar("difficulty"),
   buddyFriendly: boolean("buddy_friendly").default(false), // Optional: suitable for solo travelers
   
   // Seasonality and safety

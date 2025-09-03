@@ -108,6 +108,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Allow requests with no origin (mobile apps, curl, etc.)
       if (!origin) return callback(null, true);
       
+      // Allow Replit and localhost development domains
+      if (origin && (origin.includes('.replit.dev') || origin.includes('127.0.0.1') || origin.includes('localhost'))) {
+        return callback(null, true);
+      }
+      
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
