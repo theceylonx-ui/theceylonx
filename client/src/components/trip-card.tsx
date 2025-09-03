@@ -222,24 +222,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
     interestMutation.mutate(!trip.isInterested);
   };
 
-  const handleContact = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!user) {
-      window.location.href = '/auth/signin';
-      return;
-    }
-    
-    // Instead of directly contacting, send an interest request
-    // Contact details will only be shared by organizer in chat
-    interestMutation.mutate(true);
-    
-    toast({
-      title: "Interest Sent!",
-      description: "Your interest has been sent to the organizer. They can share contact details in the chat once they accept.",
-    });
-  };
+  // Removed handleContact function as View button now uses Link navigation
 
   const handleEditTrip = () => {
     setShowEditDialog(true);
@@ -453,12 +436,16 @@ export default function TripCard({ trip, badges }: TripCardProps) {
               
               <Button 
                 size="sm"
-                className="text-xs px-2 py-1 transition-all duration-200 bg-ceylon-green text-white hover:bg-ceylon-green/90 shadow-sm hover:shadow-md"
-                onClick={handleContact}
-                data-testid={`button-contact-${trip.id}`}
-                title="Send interest request"
+                className="text-xs px-2 py-1 transition-all duration-200 bg-ceylon-blue text-white hover:bg-ceylon-blue/90 shadow-sm hover:shadow-md"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  // Let the Link component handle the navigation
+                }}
+                data-testid={`button-view-${trip.id}`}
+                title="View trip details"
               >
-                Send Interest Request
+                View
               </Button>
             </div>
           </div>
