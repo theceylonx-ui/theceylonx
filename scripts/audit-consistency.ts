@@ -2,7 +2,21 @@ import { db } from '../server/db';
 import { users, trips, comments, questions, answers } from '../shared/schema';
 import { sql, eq, isNull, or } from 'drizzle-orm';
 import { normalizeUserForUI } from '../server/utils/userNormalization';
-import chalk from 'chalk';
+// Simple console coloring without external dependencies
+const chalk = {
+  blue: (text: string) => `\x1b[34m${text}\x1b[0m`,
+  yellow: (text: string) => `\x1b[33m${text}\x1b[0m`,
+  green: (text: string) => `\x1b[32m${text}\x1b[0m`,
+  red: (text: string) => `\x1b[31m${text}\x1b[0m`,
+  gray: (text: string) => `\x1b[90m${text}\x1b[0m`,
+  bold: {
+    blue: (text: string) => `\x1b[1m\x1b[34m${text}\x1b[0m`,
+    yellow: (text: string) => `\x1b[1m\x1b[33m${text}\x1b[0m`,
+    green: (text: string) => `\x1b[1m\x1b[32m${text}\x1b[0m`,
+    red: (text: string) => `\x1b[1m\x1b[31m${text}\x1b[0m`,
+    cyan: (text: string) => `\x1b[1m\x1b[36m${text}\x1b[0m`,
+  }
+};
 
 interface AuditResults {
   score: number;
@@ -335,7 +349,7 @@ function printAuditReport(results: AuditResults) {
 
   // Overall score
   const scoreColor = results.score >= 80 ? chalk.green : results.score >= 60 ? chalk.yellow : chalk.red;
-  console.log(`\n${chalk.bold('Overall Score:')} ${scoreColor(results.score)}/${results.maxScore}`);
+  console.log(`\nOverall Score: ${scoreColor(results.score)}/${results.maxScore}`);
 
   // Telemetry summary
   console.log(`\n${chalk.bold.cyan('📊 Telemetry Summary:')}`);
@@ -418,7 +432,7 @@ async function runConsistencyAudit() {
 }
 
 // Run if executed directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   runConsistencyAudit();
 }
 
