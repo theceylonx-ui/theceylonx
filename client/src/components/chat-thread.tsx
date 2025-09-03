@@ -172,7 +172,7 @@ export function ChatThread({ threadId, userId, onBack }: ChatThreadProps) {
             {thread && thread.trip && (
               <div className="text-sm text-muted-foreground flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
-                {thread.trip.origin || 'Unknown'} → {thread.trip.destination || 'Unknown'}
+                {thread.trip.title || `${thread.trip.origin || 'Unknown'} → ${thread.trip.destination || 'Unknown'}`}
               </div>
             )}
           </div>

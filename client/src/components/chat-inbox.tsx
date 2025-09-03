@@ -143,7 +143,7 @@ export function ChatInbox({ userId, onThreadSelect }: ChatInboxProps) {
                       
                       <div className="text-sm text-muted-foreground mb-2">
                         {thread.trip ? (
-                          <>Trip: {thread.trip.origin || 'Unknown'} → {thread.trip.destination || 'Unknown'}</>
+                          <>Trip: {thread.trip.title || `${thread.trip.origin || 'Unknown'} → ${thread.trip.destination || 'Unknown'}`}</>
                         ) : (
                           <>Trip: General Chat</>
                         )}
