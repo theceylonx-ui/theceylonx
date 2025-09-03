@@ -365,7 +365,8 @@ export class DatabaseStorage implements IStorage {
   async createTrip(trip: InsertTrip): Promise<Trip> {
     const tripData = {
       ...trip,
-      price: typeof trip.price === 'number' ? trip.price.toString() : trip.price
+      price: typeof trip.price === 'number' ? trip.price.toString() : trip.price,
+      status: (trip.status as any) || 'active'
     };
     const [newTrip] = await db.insert(trips).values(tripData).returning();
     return newTrip;
@@ -388,6 +389,7 @@ export class DatabaseStorage implements IStorage {
     const tripData = {
       ...trip,
       price: trip.price !== undefined ? (typeof trip.price === 'number' ? trip.price.toString() : trip.price) : undefined,
+      status: trip.status as any,
       updatedAt: new Date()
     };
     const [updatedTrip] = await db
@@ -638,7 +640,10 @@ export class DatabaseStorage implements IStorage {
 
   // Questions
   async createQuestion(questionData: InsertQuestion): Promise<Question> {
-    const [question] = await db.insert(questions).values(questionData).returning();
+    const [question] = await db.insert(questions).values({
+      ...questionData,
+      slug: questionData.slug || questionData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
+    }).returning();
     return question;
   }
 
@@ -671,7 +676,7 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
-    const whereClause = and(...conditions);
+    const whereClause = conditions.length > 1 ? and(...conditions) : conditions[0];
     
     // Build order by
     let orderBy: any;
@@ -690,13 +695,12 @@ export class DatabaseStorage implements IStorage {
       .select({
         id: questions.id,
         title: questions.title,
-        body: questions.body,
+        content: questions.body,
         tags: questions.tags,
         userId: questions.userId,
         topicId: questions.topicId,
-        isAnonymous: questions.isAnonymous,
-        votesCount: questions.votesCount,
-        answersCount: questions.answersCount,
+        score: questions.score,
+        viewCount: questions.views,
         acceptedAnswerId: questions.acceptedAnswerId,
         createdAt: questions.createdAt,
         updatedAt: questions.updatedAt,
@@ -715,7 +719,6 @@ export class DatabaseStorage implements IStorage {
         topic: {
           id: topics.id,
           name: topics.name,
-          slug: topics.slug,
           description: topics.description,
           createdAt: topics.createdAt,
         },
@@ -1006,7 +1009,7 @@ export class DatabaseStorage implements IStorage {
     // Get current vote after upsert
     const currentVote = value === 0 ? null : await this.getUserVote(userId, votableType, votableId);
     
-    return { vote: currentVote, score: newScore };
+    return { vote: currentVote || null, score: newScore };
   }
 
   private async calculateScore(votableType: 'question' | 'answer', votableId: string): Promise<number> {
@@ -1963,6 +1966,20 @@ export class DatabaseStorage implements IStorage {
         eq(votes.votableType, votableType),
         eq(votes.votableId, votableId)
       ));
+  }
+  // Notification methods for enhanced UX
+  async getUserNotifications(userId: string, limit = 50): Promise<Notification[]> {
+    return await db.select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt))
+      .limit(limit);
+  }
+
+  async markNotificationAsRead(notificationId: string): Promise<void> {
+    await db.update(notifications)
+      .set({ isRead: true, readAt: new Date() })
+      .where(eq(notifications.id, notificationId));
   }
 }
 

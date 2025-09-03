@@ -1,0 +1,116 @@
+You are the lead backend engineer for Ceylon Expand. Apply the following surgical improvements and fix all errors without changing unrelated behavior. Keep changes minimal, safe, and production-ready.
+0) Objectives
+✅ Harden auth, data model, security, and notifications.
+✅ Add missing infra tables (chat, notifications, moderation).
+✅ Make cookies, CORS, and OAuth work correctly on theceylonx.com and localhost.
+✅ Add indexes/FKs/enums to prevent bad data.
+✅ Add observability (health, logs) and a seed script.
+✅ Run typecheck, lint, tests; fix all errors and regressions.
+1) Environment & Server Hardening
+Ensure app.set('trust proxy', 1) is enabled behind Replit/any proxy.
+Use Secure + SameSite=Lax cookies in prod; Secure=false only in dev.
+Implement strict CORS: allow only https://www.theceylonx.com and http://localhost:5173.
+Respect COOKIE_DOMAIN only in prod: .theceylonx.com.
+Add helmet() with CSP allowing our origin, images, and fonts only.
+Limit JSON body size to 2mb.
+.env keys (create if missing):
+NODE_ENV=development
+PORT=5000
+DATABASE_URL=...
+JWT_ACCESS_SECRET=...
+JWT_REFRESH_SECRET=...
+CORS_ALLOWED_ORIGINS=https://www.theceylonx.com,http://localhost:5173
+COOKIE_DOMAIN=.theceylonx.com
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+FACEBOOK_CLIENT_ID=...
+FACEBOOK_CLIENT_SECRET=...
+BASE_URL_API=https://www.theceylonx.com/api
+2) Drizzle Schema: Enums, FKs, Indexes (idempotent migrations)
+Convert to Postgres ENUMs:
+trip_status_enum('active','full','completed','cancelled')
+difficulty_enum('easy','moderate','challenging')
+Add constraints & uniques:
+users.email UNIQUE NULLS NOT DISTINCT
+users.googleId UNIQUE, users.facebookId UNIQUE
+trips.organizerId → users.id ON DELETE CASCADE
+(votes.userId, votableType, votableId) UNIQUE
+(ratings.userId, rateeUserId) UNIQUE
+(trip_interest_requests.userId, tripId) UNIQUE
+Indexes for hot paths:
+trips(region, date), trips(status)
+If tags/flags are JSONB, add GIN indexes.
+user_interactions(userId, timestamp DESC)
+Soft deletes: add deletedAt TIMESTAMP to trips, questions, answers, comments.
+3) Add Missing Core Tables
+Create Drizzle models + migrations for:
+chat_messages(id, threadId, senderId, content, createdAt)
+notification_events(id, userId, type, payload JSONB, isRead BOOL DEFAULT false, createdAt, deliveredAt)
+media_assets(id, ownerUserId, tripId?, url, width, height, mime, createdAt)
+audit_logs(id, actorUserId, action, targetType, targetId, meta JSONB, createdAt)
+follows(followerId, followeeId, createdAt) with UNIQUE pair
+moderation_flags(id, reporterId, targetType, targetId, reason, status ENUM('open','closed'), createdAt, resolvedBy?)
+regions(id, name) and add FK from trips.region (or use regionId)
+4) API Layers & Contracts (add/repair routes)
+Notifications
+GET /api/notifications?unread=true&page=&limit= → list with pagination
+POST /api/notifications/mark-read { ids:[] } → 204
+Interest lifecycle hooks
+On POST /api/trips/:id/interest → create notification_events for organizer.
+On accept/decline → create notification for requester, and create/join trip chat thread.
+Health
+GET /api/health → { db:'ok', queue:'ok', time:..., commit:... }
+Explain recs (non-breaking)
+Ensure GET /api/recommendations/personalized returns factors:{...} per item.
+5) WebSockets & Real-time
+Keep payloads minimal; deliver chat and notification “nudge” only.
+On new notification row, push via WS if user online; otherwise they’ll get it via GET /api/notifications.
+6) Security & Validation
+Zod validate every incoming body/query; normalize error format:
+{ ok:false, error:{ code, message, fields? }, meta:{ requestId, t } }
+Sanitize/validate external links (e.g., WhatsApp).
+Strip EXIF from uploaded images; verify MIME.
+RBAC: users.role in ('user','moderator','admin'); gate admin/mod routes.
+7) Observability
+Add pino logger with requestId.
+Log request start/stop, status, and duration.
+Log DB query duration (warn > 300ms).
+8) Seed & Fixtures
+Create scripts/seed.ts to seed:
+2 users (organizer, joiner), 12 diverse trips (regions/dates/tags/difficulty), a couple of Q&A threads, interest requests, follows, and a few notifications.
+Include a small set of chat_messages linked to one accepted interest.
+9) Rate Limiting
+Per IP+user: auth routes, trip creation, Q&A post.
+Reasonable defaults: 10/min for writes, 60/min for reads per route family.
+10) OAuth & Cookies (prod/dev parity)
+Verify Google/Facebook callback URLs match:
+Prod: https://www.theceylonx.com/api/auth/{provider}/callback
+Dev: http://localhost:5000/api/auth/{provider}/callback
+Ensure refresh-token revocation on logout (delete from auth_sessions).
+11) Tests & Tooling
+Add minimal integration tests (auth → create trip → search → interest → accept → chat → notifications).
+Run and fix:
+npm run typecheck
+npm run lint --fix
+npm run test
+No TODOs left failing CI.
+12) Backlog Error Sweep (clean up legacy ML/prompt mismatches)
+Remove or migrate any older ML prompt/services not used by EnhancedRecommendationService.
+Ensure only the enhanced service is wired; keep baseline for A/B but guard by flag.
+Verify all imports/paths are correct; remove dead code and unused envs.
+13) Acceptance Criteria (do not skip)
+All must pass before completion:
+Auth flow: Google login works in dev & prod; cookies set correctly; refresh works; logout revokes session.
+Trip flow: Create → Search → Interest → Organizer Accept → Chat thread auto-available to both.
+Notifications: Requester & organizer see correct notifications; GET /api/notifications paginates; mark-read works; WS pushes when online.
+Recs: /api/recommendations/personalized returns items with factors and no runtime errors.
+Security: Helmet/CSP active; rate limits enforced; Zod errors return uniform shape; uploads validated.
+Perf: Hot queries use indexes (no seq scans on trips search); health endpoint shows db:'ok'.
+DX: npm run seed populates sample data; npm run typecheck and tests pass.
+14) Deliverables
+Updated code with migrations.
+MIGRATION_NOTES.md summarizing schema changes (up/down).
+SEED_NOTES.md with test users, passwords, and demo flows.
+Postman/Insomnia collection for core endpoints.
+One-page OPERATIONS.md (env vars, start commands, known ports, prod flags).
+Now proceed. Make changes incrementally with clear commits. If an item is already correct, verify and check it off. Fix any compilation/runtime/test errors you encounter. Do not introduce breaking changes beyond what’s specified.

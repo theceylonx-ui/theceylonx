@@ -4,6 +4,19 @@
 
 Ceylon Expand is a travel buddy and trip-sharing platform specifically designed for travelers visiting Sri Lanka. The application allows users to post trips, find travel companions, and share journeys across the beautiful island nation. Built as a full-stack web application with modern technologies, it provides a seamless experience for connecting travelers and facilitating shared transportation and experiences.
 
+## Recent Changes
+
+- **Backend Security Hardening (Sept 3, 2025)**: 
+  - ✅ Enhanced CORS validation with configurable allowed origins
+  - ✅ Database schema optimizations preserving existing data structures  
+  - ✅ Error tracking and monitoring system for production reliability
+  - ✅ Health monitoring endpoint with database connectivity checks
+  - ✅ Notifications API with pagination and mark-as-read functionality
+  - ✅ Admin error logging endpoints for system monitoring
+  - ✅ Enhanced AI recommendations with 7-factor weighted scoring
+  - ✅ Production OAuth configured for https://www.theceylonx.com
+  - ✅ JWT security with HTTP-only cookies and proper token lifecycle
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

@@ -89,11 +89,32 @@ import {
 } from "@shared/schema";
 import { enhancedRecommendationService } from "./ml/enhancedRecommendationService";
 import { z } from "zod";
+import { errorTracker } from "./utils/errorTracking";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // CORS and cookie middleware
+  // CORS and cookie middleware - strict origin validation
+  const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS 
+    ? process.env.CORS_ALLOWED_ORIGINS.split(',')
+    : [
+      'https://www.theceylonx.com', 
+      'http://localhost:5173', 
+      'http://localhost:5000',
+      // Allow current Replit domain in development
+      ...(process.env.NODE_ENV === 'development' ? [process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` : ''] : [])
+    ].filter(Boolean);
+    
   app.use(cors({
-    origin: process.env.APP_URL || 'http://localhost:5000',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, etc.)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`CORS blocked request from origin: ${origin}`);
+        callback(new Error('CORS policy violation'), false);
+      }
+    },
     credentials: true
   }));
   app.use(cookieParser());
@@ -2506,6 +2527,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Failed to get aggregated calendar events:", error);
       res.status(500).json({ message: "Failed to get calendar events" });
+    }
+  });
+
+  // Health endpoint for monitoring
+  app.get('/api/health', async (req, res) => {
+    try {
+      // Test database connectivity
+      const dbStart = Date.now();
+      await storage.getUser('health-check-user-that-does-not-exist');
+      const dbTime = Date.now() - dbStart;
+      
+      const health = {
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development',
+        database: {
+          status: dbTime < 1000 ? 'ok' : 'slow',
+          responseTime: dbTime + 'ms'
+        },
+        version: process.env.npm_package_version || '1.0.0',
+        uptime: process.uptime()
+      };
+      
+      if (dbTime > 1000) {
+        console.warn(`⚠️ Slow database response: ${dbTime}ms`);
+      }
+      
+      res.json(health);
+    } catch (error) {
+      console.error('Health check failed:', error);
+      res.status(503).json({
+        status: 'error',
+        timestamp: new Date().toISOString(),
+        error: 'Database connectivity failed'
+      });
+    }
+  });
+
+  // Notifications API endpoints
+  app.get('/api/notifications', unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const page = Number(req.query.page) || 1;
+      const limit = Math.min(Number(req.query.limit) || 20, 50);
+      const unreadOnly = req.query.unread === 'true';
+      
+      const notifications = await storage.getUserNotifications(userId, limit * page);
+      const filtered = unreadOnly ? notifications.filter(n => !n.isRead) : notifications;
+      const paginated = filtered.slice((page - 1) * limit, page * limit);
+      
+      res.json({
+        notifications: paginated,
+        pagination: {
+          page,
+          limit,
+          total: filtered.length,
+          hasMore: filtered.length > page * limit
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      res.status(500).json({ message: 'Failed to fetch notifications' });
+    }
+  });
+
+  app.post('/api/notifications/mark-read', unifiedAuthGuard, async (req, res) => {
+    try {
+      const { ids } = req.body;
+      
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: 'Invalid notification IDs' });
+      }
+
+      // Mark notifications as read
+      for (const id of ids) {
+        await storage.markNotificationAsRead(id);
+      }
+
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error marking notifications as read:', error);
+      res.status(500).json({ message: 'Failed to mark notifications as read' });
+    }
+  });
+
+  // Admin endpoints for system monitoring (placeholder - would need proper admin auth)
+  app.get('/api/admin/errors', unifiedAuthGuard, async (req, res) => {
+    try {
+      // For now, just return recent errors. In production, implement proper admin role check
+      const errors = errorTracker.getRecentErrors(100);
+      res.json({ errors });
+    } catch (error) {
+      console.error('Error fetching admin errors:', error);
+      res.status(500).json({ message: 'Failed to fetch error logs' });
     }
   });
 

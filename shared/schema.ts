@@ -12,9 +12,17 @@ import {
   decimal,
   pgEnum,
   unique,
+  foreignKey,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// PostgreSQL Enums for data integrity
+export const tripStatusEnum = pgEnum('trip_status', ['active', 'full', 'completed', 'cancelled']);
+export const difficultyEnum = pgEnum('difficulty', ['easy', 'moderate', 'challenging']);
+export const userRoleEnum = pgEnum('user_role', ['user', 'moderator', 'admin']);
+export const reportStatusEnum = pgEnum('report_status', ['open', 'investigating', 'resolved', 'dismissed']);
+export const notificationPriorityEnum = pgEnum('notification_priority', ['critical', 'high', 'normal', 'low']);
 
 // Session storage table for Replit Auth
 export const sessions = pgTable(
@@ -27,33 +35,42 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// Users table for multi-provider auth
+// Users table for multi-provider auth with hardened constraints
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique(),
-  phone: varchar("phone").unique(),
+  email: varchar("email"),
+  phone: varchar("phone"),
   name: varchar("name"),
   image: varchar("image"),
   provider: varchar("provider"), // 'google' | 'facebook' | 'microsoft' | 'apple' | 'email' | 'phone'
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
-  username: varchar("username").unique(),
+  username: varchar("username"),
   profileImageUrl: varchar("profile_image_url"),
-  phoneNumber: varchar("phone_number").unique(),
+  phoneNumber: varchar("phone_number"),
   bio: text("bio"),
-  googleId: varchar("google_id").unique(),
-  facebookId: varchar("facebook_id").unique(),
-  microsoftId: varchar("microsoft_id").unique(),
-  appleId: varchar("apple_id").unique(),
+  googleId: varchar("google_id"),
+  facebookId: varchar("facebook_id"),
+  microsoftId: varchar("microsoft_id"),
+  appleId: varchar("apple_id"),
+  role: userRoleEnum("role").default("user"),
   emailVerified: boolean("email_verified").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  // Unique constraints
+  unique("unique_email_not_null").on(table.email).nullsNotDistinct(),
+  unique("unique_phone_not_null").on(table.phone).nullsNotDistinct(),
+  unique("unique_username_not_null").on(table.username).nullsNotDistinct(),
+  unique("unique_phone_number_not_null").on(table.phoneNumber).nullsNotDistinct(),
+  unique("unique_google_id_not_null").on(table.googleId).nullsNotDistinct(),
+  unique("unique_facebook_id_not_null").on(table.facebookId).nullsNotDistinct(),
+]);
 
 // JWT refresh token sessions
 export const authSessions = pgTable("auth_sessions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   refreshToken: varchar("refresh_token").notNull().unique(),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -92,15 +109,15 @@ export const trips = pgTable("trips", {
   region: varchar("region").notNull(),
   contactInfo: varchar("contact_info").notNull(),
   notes: text("notes"),
-  organizerId: varchar("organizer_id").notNull(),
-  status: varchar("status").default("active"), // active, full, completed, cancelled
+  organizerId: varchar("organizer_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  status: tripStatusEnum("status").default("active"),
   
   // Optional enhanced fields for better recommendations
-  tags: text("tags").array(), // Optional: trip type tags like 'adventure', 'cultural', 'beach'
+  tags: jsonb("tags"), // JSONB for GIN index support
   priceMin: decimal("price_min", { precision: 10, scale: 2 }), // Optional: minimum price range
   priceMax: decimal("price_max", { precision: 10, scale: 2 }), // Optional: maximum price range
   duration: varchar("duration"), // Optional: duration like '1 day', '2-3 days', '1 week'
-  difficulty: varchar("difficulty"), // Optional: 'easy', 'moderate', 'challenging'
+  difficulty: difficultyEnum("difficulty"),
   buddyFriendly: boolean("buddy_friendly").default(false), // Optional: suitable for solo travelers
   
   // Seasonality and safety
@@ -119,7 +136,13 @@ export const trips = pgTable("trips", {
   updatedAt: timestamp("updated_at").defaultNow(),
   isDeleted: boolean("is_deleted").default(false),
   deletedAt: timestamp("deleted_at"),
-});
+}, (table) => [
+  // Performance indexes for hot paths
+  index("trips_region_date_idx").on(table.region, table.date),
+  index("trips_status_idx").on(table.status),
+  index("trips_tags_gin_idx").using("gin", table.tags),
+  index("trips_organizer_idx").on(table.organizerId),
+]);
 
 // Calendar events for aggregated view
 export const calendarEvents = pgTable("calendar_events", {
@@ -162,11 +185,11 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Comments table
+// Comments table with foreign key constraints
 export const comments = pgTable("comments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  tripId: varchar("trip_id").notNull(),
-  userId: varchar("user_id").notNull(),
+  tripId: varchar("trip_id").notNull().references(() => trips.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -281,9 +304,8 @@ export const questions = pgTable("questions", {
   body: text("body").notNull(),
   slug: varchar("slug").notNull().unique(),
   tags: text("tags").array(),
-  userId: varchar("user_id").notNull(), // author_id
-  topicId: varchar("topic_id"), // Keep for backward compatibility
-  categoryId: varchar("category_id"), // New category system
+  userId: varchar("user_id").notNull(),
+  topicId: varchar("topic_id"),
   isAnonymous: boolean("is_anonymous").default(false),
   views: integer("views").default(0),
   score: integer("score").default(0), // denormalized votes sum
@@ -301,7 +323,7 @@ export const answers = pgTable("answers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   body: text("body").notNull(),
   questionId: varchar("question_id").notNull(),
-  userId: varchar("user_id").notNull(), // author_id
+  userId: varchar("user_id").notNull(),
   score: integer("score").default(0), // denormalized votes sum
   votesCount: integer("votes_count").default(0), // Keep for backward compatibility
   isAccepted: boolean("is_accepted").default(false),
@@ -314,16 +336,16 @@ export const answers = pgTable("answers", {
 // Votes table for questions and answers - single source of truth
 export const votes = pgTable("votes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   votableType: varchar("votable_type").notNull(), // 'question' | 'answer'
   votableId: varchar("votable_id").notNull(), // ID of the question or answer
   value: integer("value").notNull(), // -1 (downvote), 0 (no vote), +1 (upvote)
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => ({
+}, (table) => [
   // Unique constraint: one vote per user per item
-  uniqueUserVote: unique().on(table.userId, table.votableType, table.votableId),
-}));
+  unique("unique_user_vote").on(table.userId, table.votableType, table.votableId),
+]);
 
 // Question tags pivot table (optional if not using array)
 export const questionTags = pgTable("question_tags", {
@@ -428,10 +450,11 @@ export const userPersonalization = pgTable("user_personalization", {
 // User trip flags table for unified pinning and interest management
 export const userTripFlags = pgTable("user_trip_flags", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(),
-  tripId: varchar("trip_id").notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tripId: varchar("trip_id").notNull().references(() => trips.id, { onDelete: 'cascade' }),
   pinned: boolean("pinned").default(false),
   interested: boolean("interested").default(false),
+  hidden: boolean("hidden").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
@@ -442,13 +465,91 @@ export const userTripFlags = pgTable("user_trip_flags", {
 // Pinned trips table for user-specific trip pinning (legacy - keeping for migration)
 export const pinnedTrips = pgTable("pinned_trips", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(),
-  tripId: varchar("trip_id").notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tripId: varchar("trip_id").notNull().references(() => trips.id, { onDelete: 'cascade' }),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   // Unique constraint to prevent duplicate pins for same user+trip
   uniqueUserTrip: unique().on(table.userId, table.tripId),
 }));
+
+// Missing Infrastructure Tables
+
+// Regions table for preventing typos in trip regions
+export const regions = pgTable("regions", {
+  id: varchar("id").primaryKey(),
+  name: varchar("name").notNull().unique(),
+  province: varchar("province").notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Media assets table for file management
+export const mediaAssets = pgTable("media_assets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ownerUserId: varchar("owner_user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tripId: varchar("trip_id").references(() => trips.id, { onDelete: 'cascade' }),
+  url: varchar("url").notNull(),
+  filename: varchar("filename").notNull(),
+  mimeType: varchar("mime_type").notNull(),
+  fileSize: integer("file_size").notNull(),
+  width: integer("width"),
+  height: integer("height"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("media_assets_owner_idx").on(table.ownerUserId),
+  index("media_assets_trip_idx").on(table.tripId),
+]);
+
+// Audit logs for admin and security tracking
+export const auditLogs = pgTable("audit_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  actorUserId: varchar("actor_user_id").references(() => users.id, { onDelete: 'set null' }),
+  action: varchar("action").notNull(),
+  targetType: varchar("target_type").notNull(),
+  targetId: varchar("target_id").notNull(),
+  metadata: jsonb("metadata"),
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("audit_logs_actor_idx").on(table.actorUserId),
+  index("audit_logs_target_idx").on(table.targetType, table.targetId),
+  index("audit_logs_created_idx").on(table.createdAt.desc()),
+]);
+
+// User follows table for social features
+export const userFollows = pgTable("user_follows", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  followerId: varchar("follower_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  followeeId: varchar("followee_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  unique("unique_follow_pair").on(table.followerId, table.followeeId),
+  index("user_follows_follower_idx").on(table.followerId),
+  index("user_follows_followee_idx").on(table.followeeId),
+]);
+
+// Enhanced moderation flags
+export const moderationFlags = pgTable("moderation_flags", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  reporterId: varchar("reporter_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  targetType: varchar("target_type").notNull(),
+  targetId: varchar("target_id").notNull(),
+  reason: varchar("reason").notNull(),
+  description: text("description"),
+  status: reportStatusEnum("status").default("open"),
+  severity: varchar("severity").default("medium"), // 'low', 'medium', 'high', 'critical'
+  resolvedBy: varchar("resolved_by").references(() => users.id, { onDelete: 'set null' }),
+  resolutionNote: text("resolution_note"),
+  createdAt: timestamp("created_at").defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+}, (table) => [
+  index("moderation_flags_status_idx").on(table.status),
+  index("moderation_flags_target_idx").on(table.targetType, table.targetId),
+  index("moderation_flags_reporter_idx").on(table.reporterId),
+]);
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({

@@ -1,16 +1,42 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 // Log startup information
 console.log('Environment:', process.env.NODE_ENV || 'development');
 console.log('Starting Ceylon Expand server...');
 
 const app = express();
+
 // Trust proxy for proper IP detection (required for rate limiting in production)
 app.set('trust proxy', 1);
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+
+// Security hardening
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
+      fontSrc: ["'self'", "fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "*.unsplash.com", "*.googleusercontent.com", "*.facebook.com"],
+      connectSrc: ["'self'", "wss:", "ws:"],
+    },
+  },
+}));
+
+// Global rate limiting
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // Limit each IP to 1000 requests per windowMs
+  message: { message: "Too many requests from this IP, please try again later" }
+}));
+
+// JSON body size limit
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: false, limit: '2mb' }));
 
 app.use((req, res, next) => {
   const start = Date.now();
