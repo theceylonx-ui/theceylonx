@@ -2594,7 +2594,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // If no filters requested or "all" filter is included, return all active trips
       if (requestedFilters.length === 0 || requestedFilters.includes('all')) {
-        console.log('🔧 Using "all" filter path, found', filteredTrips.length, 'trips');
         const activeTrips = filteredTrips.filter(trip => trip.status === 'active');
         const total = activeTrips.length;
         const paginatedTrips = activeTrips.slice(offset, offset + limitNum);
@@ -2631,6 +2630,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'Authentication required for filtering' });
       }
       
+      // If only "truly_free" filter (without user-specific filters), handle directly
+      if (requestedFilters.length === 1 && requestedFilters[0] === 'truly_free') {
+        const freeTrips = filteredTrips.filter(trip => trip.status === 'active' && trip.seatsAvailable > 0);
+        const total = freeTrips.length;
+        const paginatedTrips = freeTrips.slice(offset, offset + limitNum);
+        
+        const items = paginatedTrips.map(trip => ({
+          id: trip.id,
+          title: trip.title,
+          fromLocation: trip.fromLocation,
+          toLocation: trip.toLocation,
+          date: trip.date,
+          time: trip.time,
+          seatsAvailable: trip.seatsAvailable,
+          price: trip.price,
+          region: trip.region,
+          tags: trip.tags,
+          status: trip.status,
+          organizer: {
+            id: trip.organizerId,
+          }
+        }));
+        
+        return res.json({
+          items,
+          total,
+          page: pageNum,
+          limit: limitNum
+        });
+      }
+      
       // Get user's pinned and interested trips for filtering (only if user is authenticated)
       const [pinnedTrips, interestedRequests] = await Promise.all([
         requestedFilters.includes('pinned') && userId ? storage.getUserPinnedTrips(userId) : Promise.resolve([]),
@@ -2640,7 +2670,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pinnedTripIds = new Set(pinnedTrips.map(trip => trip.id));
       const interestedTripIds = new Set(interestedRequests.map(trip => trip.id));
       
-      // Apply user-specific filters (logical AND across selected filters)
+      // Apply filters (logical AND across selected filters)
       let userFilteredTrips = filteredTrips.filter(trip => {
         // Check each requested filter
         const filterResults = requestedFilters.map(filter => {
@@ -2650,7 +2680,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             case 'interested':
               return interestedTripIds.has(trip.id);
             case 'my':
-              return trip.organizerId === userId;
+              return userId ? trip.organizerId === userId : false;
             case 'truly_free':
               return trip.status === 'active' && trip.seatsAvailable > 0;
             default:
@@ -2721,7 +2751,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const requestedFilters = filters.split(',').map((f: string) => f.trim()).filter(Boolean);
       const userSpecificFilters = ['pinned', 'interested', 'my'];
       // Don't require auth for "all" or "truly_free" filters, or when no filters are specified
-      const requiresAuth = requestedFilters.length > 0 && requestedFilters.some((f: string) => userSpecificFilters.includes(f)) && !requestedFilters.includes('all');
+      const requiresAuth = requestedFilters.length > 0 && requestedFilters.some((f: string) => userSpecificFilters.includes(f)) && !requestedFilters.includes('all') && !requestedFilters.includes('truly_free');
       
       // Check authentication if needed
       let userId: string | null = null;
@@ -2770,11 +2800,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Apply user-specific filters if requested (skip if "all" filter is active)
-      if (requestedFilters.length > 0 && !requestedFilters.includes('all') && userId) {
+      // Apply filters if requested (skip if "all" filter is active)
+      if (requestedFilters.length > 0 && !requestedFilters.includes('all')) {
         const [pinnedTrips, interestedTrips] = await Promise.all([
-          requestedFilters.includes('pinned') ? storage.getUserPinnedTrips(userId) : Promise.resolve([]),
-          requestedFilters.includes('interested') ? storage.getUserInterestedTrips(userId) : Promise.resolve([])
+          requestedFilters.includes('pinned') && userId ? storage.getUserPinnedTrips(userId) : Promise.resolve([]),
+          requestedFilters.includes('interested') && userId ? storage.getUserInterestedTrips(userId) : Promise.resolve([])
         ]);
         
         const pinnedTripIds = new Set(pinnedTrips.map(trip => trip.id));
@@ -2788,7 +2818,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               case 'interested':
                 return interestedTripIds.has(trip.id);
               case 'my':
-                return trip.organizerId === userId;
+                return userId ? trip.organizerId === userId : false;
               case 'truly_free':
                 return trip.status === 'active' && trip.seatsAvailable > 0;
               default:

@@ -277,7 +277,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
   // Get monthly day counts for calendar display
   const currentMonth = format(new Date(calendarState.selectedDate + 'T00:00:00'), 'yyyy-MM')
   const { data: monthCounts } = useQuery<DayCountsResponse>({
-    queryKey: [`/api/calendar/month/${currentMonth}?summary=true&filters=${buildFiltersString(debouncedState.filters)}&region=${debouncedState.region || ''}&tags=${debouncedState.tags.join(',')}`],
+    queryKey: [`/api/calendar/month?month=${currentMonth}&summary=true&filters=${buildFiltersString(debouncedState.filters)}&region=${debouncedState.region || ''}&tags=${debouncedState.tags.join(',')}`],
     enabled: true,
     retry: false
   })
