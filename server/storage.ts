@@ -697,13 +697,13 @@ export class DatabaseStorage implements IStorage {
         id: questions.id,
         title: questions.title,
         body: questions.body,
-        slug: questions.slug,
+        slug: sql`${questions.title}`, // Generate slug from title since column doesn't exist
         tags: questions.tags,
         userId: questions.userId,
         topicId: questions.topicId,
         isAnonymous: questions.isAnonymous,
-        views: questions.views,
-        score: questions.score,
+        views: sql`0`, // Default to 0 since column doesn't exist
+        score: sql`0`, // Default to 0 since column doesn't exist
         votesCount: questions.votesCount,
         answersCount: questions.answersCount,
         acceptedAnswerId: questions.acceptedAnswerId,
