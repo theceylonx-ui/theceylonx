@@ -207,13 +207,17 @@ export default function TripCard({ trip, badges }: TripCardProps) {
       return;
     }
     
-    // If trying to pin but trip is interested, first remove interest
+    // If trying to pin but trip is interested, automatically remove interest and pin
     if (!trip.isPinned && trip.isInterested) {
+      toast({
+        title: 'Switching to Pin',
+        description: 'Removing interest to pin this trip',
+      });
       // First unmark interest, then pin
       interestMutation.mutate(false, {
         onSuccess: () => {
           // After successfully removing interest, pin the trip
-          setTimeout(() => pinMutation.mutate(true), 100);
+          pinMutation.mutate(true);
         }
       });
     } else {
