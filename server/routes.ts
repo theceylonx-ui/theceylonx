@@ -264,23 +264,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Category and image management routes
+  app.get('/api/categories', async (req, res) => {
+    try {
+      const { CATEGORY_LABELS, TRIP_CATEGORIES } = await import('./services/categoryImageMap');
+      res.json({
+        categories: TRIP_CATEGORIES.map(cat => ({
+          value: cat,
+          label: CATEGORY_LABELS[cat]
+        }))
+      });
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      res.status(500).json({ message: "Failed to fetch categories" });
+    }
+  });
+
+  app.get('/api/categories/:category/images', async (req, res) => {
+    try {
+      const { getCuratedChoices } = await import('./services/imageSelectorService');
+      const { category } = req.params;
+      
+      const choices = getCuratedChoices(category as any);
+      res.json({ images: choices });
+    } catch (error) {
+      console.error("Error fetching category images:", error);
+      res.status(500).json({ message: "Failed to fetch category images" });
+    }
+  });
+
   // Trip routes
   app.post('/api/trips', unifiedAuthGuard, async (req, res) => {
     try {
       const userId = req.user!.id;
       console.log("Creating trip with data:", { ...req.body, organizerId: userId });
       
-      const tripData = insertTripSchema.parse({ ...req.body, organizerId: userId });
+      // Strip any client-provided image fields for security
+      const { imageUrl, imageProvider, imageAttribution, imageFetchedAt, selectedCategoryImage, ...clientData } = req.body;
+      
+      const tripData = insertTripSchema.parse({ ...clientData, organizerId: userId });
       console.log("Trip data validated successfully:", tripData);
       
-      // Auto-assign image if none provided
-      if (!tripData.imageUrl) {
-        const { getSriLankanTripImage } = await import('@shared/sriLankaImages');
-        tripData.imageUrl = getSriLankanTripImage(tripData.region, tripData.fromLocation, tripData.toLocation);
-        console.log("Auto-assigned image for trip:", tripData.imageUrl);
-      }
+      // Auto-assign category-based image
+      const { pickDefaultFromChoices, getSafeCategory } = await import('./services/imageSelectorService');
+      const safeCategory = getSafeCategory(tripData.category);
+      const seed = `${tripData.title}-${userId}`;
+      const imageSelection = pickDefaultFromChoices(safeCategory, seed);
       
-      const trip = await storage.createTrip(tripData);
+      // Merge image data with trip data
+      const tripWithImage = {
+        ...tripData,
+        category: safeCategory,
+        ...imageSelection
+      };
+      
+      console.log("Auto-assigned category image:", imageSelection.imageUrl);
+      
+      const trip = await storage.createTrip(tripWithImage);
       res.json(trip);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -409,13 +449,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       const tripId = req.params.id;
       
-      // Check if user is the organizer
+      // Check if user is the organizer or admin
       const trip = await storage.getTrip(tripId);
-      if (!trip || trip.organizerId !== userId) {
+      const isAdmin = req.user?.role === 'admin';
+      if (!trip || (trip.organizerId !== userId && !isAdmin)) {
         return res.status(403).json({ message: "Not authorized to update this trip" });
       }
       
-      const updatedTrip = await storage.updateTrip(tripId, req.body);
+      const { selectedCategoryImage, ...updateData } = req.body;
+      let finalUpdateData = { ...updateData };
+      
+      // Handle category-based image selection
+      if (updateData.category || selectedCategoryImage) {
+        const { 
+          isAllowedCategoryImage, 
+          getSafeCategory, 
+          pickDefaultFromChoices,
+          getImageAttribution 
+        } = await import('./services/imageSelectorService');
+        
+        const newCategory = getSafeCategory(updateData.category || trip.category);
+        
+        if (selectedCategoryImage) {
+          // Validate the selected image is allowed for this category
+          if (!isAllowedCategoryImage(newCategory, selectedCategoryImage)) {
+            return res.status(400).json({ 
+              message: "Selected image is not valid for this category" 
+            });
+          }
+          
+          // Apply the selected image
+          finalUpdateData = {
+            ...finalUpdateData,
+            category: newCategory,
+            imageUrl: selectedCategoryImage,
+            imageProvider: 'curated',
+            imageAttribution: getImageAttribution(newCategory, selectedCategoryImage),
+            imageFetchedAt: new Date()
+          };
+        } else if (updateData.category && updateData.category !== trip.category) {
+          // Category changed but no specific image selected - auto-pick default
+          const seed = `${trip.title}-${trip.organizerId}`;
+          const imageSelection = pickDefaultFromChoices(newCategory, seed);
+          
+          finalUpdateData = {
+            ...finalUpdateData,
+            category: newCategory,
+            ...imageSelection
+          };
+        }
+      }
+      
+      const updatedTrip = await storage.updateTrip(tripId, finalUpdateData);
       res.json(updatedTrip);
     } catch (error) {
       console.error("Error updating trip:", error);

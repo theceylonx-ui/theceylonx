@@ -24,6 +24,10 @@ export const userRoleEnum = pgEnum('user_role', ['user', 'moderator', 'admin']);
 export const reportStatusEnum = pgEnum('report_status', ['open', 'investigating', 'resolved', 'dismissed']);
 export const notificationPriorityEnum = pgEnum('notification_priority', ['critical', 'high', 'normal', 'low']);
 export const messageTypeEnum = pgEnum('message_type', ['text', 'contact_card']);
+export const tripCategoryEnum = pgEnum('trip_category', [
+  'roadtrip', 'hiking', 'beach', 'culture', 'wellness', 'festival', 
+  'workshop', 'wildlife', 'food', 'adventure_sport', 'unknown'
+]);
 
 // Session storage table for Replit Auth
 export const sessions = pgTable(
@@ -130,8 +134,12 @@ export const trips = pgTable("trips", {
   bookingCount: integer("booking_count").default(0),
   freshBoost: decimal("fresh_boost", { precision: 3, scale: 2 }).default('1.0'), // New listing boost that decays
   
-  // Image URL for the trip (user uploaded or auto-assigned)
-  imageUrl: varchar("image_url"),
+  // Category-based image system
+  category: tripCategoryEnum("category").default("unknown"),
+  imageUrl: text("image_url"),
+  imageProvider: text("image_provider").default("curated"),
+  imageAttribution: jsonb("image_attribution"),
+  imageFetchedAt: timestamp("image_fetched_at"),
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -147,6 +155,8 @@ export const trips = pgTable("trips", {
   index("trips_date_idx").on(table.date),
   index("trips_seats_idx").on(table.seatsAvailable),
   index("trips_status_seats_idx").on(table.status, table.seatsAvailable),
+  // Category-based image system indexes
+  index("trips_category_idx").on(table.category),
 ]);
 
 // Calendar events for aggregated view

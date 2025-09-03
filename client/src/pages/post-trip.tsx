@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { z } from "zod";
 import Navigation from "@/components/navigation";
@@ -18,7 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Camera } from "lucide-react";
 import { Link } from "wouter";
 
 const postTripSchema = z.object({
@@ -30,6 +30,7 @@ const postTripSchema = z.object({
   seatsAvailable: z.number().min(1, "At least 1 seat is required").max(10, "Maximum 10 seats allowed"),
   price: z.string().optional(),
   region: z.string().min(1, "Region is required"),
+  category: z.string().min(1, "Category is required"),
   contactInfo: z.string().min(1, "Contact information is required"),
   notes: z.string().optional(),
 });
@@ -46,6 +47,11 @@ export default function PostTrip() {
   const urlParams = new URLSearchParams(window.location.search);
   const selectedDate = urlParams.get('date') || '';
 
+  // Fetch categories for dropdown
+  const { data: categoriesData } = useQuery({
+    queryKey: ["/api/categories"],
+  });
+
   const form = useForm<PostTripFormData>({
     resolver: zodResolver(postTripSchema),
     defaultValues: {
@@ -57,6 +63,7 @@ export default function PostTrip() {
       seatsAvailable: 1,
       price: "",
       region: "",
+      category: "",
       contactInfo: "",
       notes: "",
     },
@@ -217,6 +224,37 @@ export default function PostTrip() {
                             <SelectItem value="uva">Uva Province</SelectItem>
                           </SelectContent>
                         </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Camera className="w-4 h-4" />
+                          Trip Category
+                        </FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-category">
+                              <SelectValue placeholder="Select Category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categoriesData?.categories?.map((cat: any) => (
+                              <SelectItem key={cat.value} value={cat.value}>
+                                {cat.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription className="text-sm text-blue-600">
+                          We'll automatically assign a beautiful Sri Lanka image based on your category
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
