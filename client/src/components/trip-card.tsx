@@ -3,20 +3,19 @@ import { MapPin, Calendar, Users, DollarSign, Mail, Lock, Pin, PinOff, Star, Sta
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
-import { generateRandomProfilePicture, getDisplayName, getInitials } from "@/lib/profileUtils";
+import { UserDisplay } from "@/components/ui/user-display";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { TripWithOrganizer } from "@shared/schema";
+import type { TripWithNormalizedOrganizer } from "@shared/schema";
 import { ActionsMenu } from "@/components/ActionsMenu";
 import { EditContentDialog } from "@/components/EditContentDialog";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { useState } from "react";
 
 interface TripCardProps {
-  trip: TripWithOrganizer & { isPinned?: boolean; isInterested?: boolean };
+  trip: TripWithNormalizedOrganizer & { isPinned?: boolean; isInterested?: boolean };
   badges?: string[];
 }
 
@@ -459,16 +458,13 @@ export default function TripCard({ trip, badges }: TripCardProps) {
           </div>
           
           <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-            <div className="flex items-center space-x-2" data-testid={`trip-organizer-${trip.id}`}>
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={trip.organizer?.profileImageUrl || generateRandomProfilePicture(trip.organizer?.id)} />
-                <AvatarFallback className="text-xs">
-                  {trip.organizer ? getInitials(trip.organizer) : 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-xs sm:text-sm text-gray-600 truncate max-w-[100px] sm:max-w-[120px]">
-                {trip.organizer ? getDisplayName(trip.organizer) : 'Unknown'}
-              </span>
+            <div data-testid={`trip-organizer-${trip.id}`}>
+              <UserDisplay 
+                user={trip.organizer}
+                avatarSize="md"
+                className="gap-2"
+                nameClassName="text-xs sm:text-sm text-gray-600 truncate max-w-[100px] sm:max-w-[120px]"
+              />
             </div>
             
             <div className="flex items-center space-x-1 sm:space-x-2">

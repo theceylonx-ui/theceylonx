@@ -91,6 +91,8 @@ import {
 import { enhancedRecommendationService } from "./ml/enhancedRecommendationService";
 import { z } from "zod";
 import { errorTracker } from "./utils/errorTracking";
+import { normalizeUserForUI, normalizeUsersForUI, trackUserNormalizationFallback } from "./utils/userNormalization";
+import type { NormalizedUser } from "./utils/userNormalization";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // CORS and cookie middleware - strict origin validation
@@ -167,7 +169,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      res.json(userData);
+      // Normalize user data for UI consumption
+      const normalizedUser = normalizeUserForUI(userData);
+      if (!normalizedUser) {
+        return res.status(500).json({ message: "Failed to process user data" });
+      }
+      
+      res.json(normalizedUser);
     } catch (error) {
       console.error("❌ Error in /api/user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -408,8 +416,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }));
       }
       
+      // Normalize organizer data in all trips
+      const normalizedTrips = tripsWithFlags.map(trip => {
+        const normalizedOrganizer = normalizeUserForUI(trip.organizer);
+        return {
+          ...trip,
+          organizer: normalizedOrganizer
+        };
+      });
+
       res.json({
-        trips: tripsWithFlags,
+        trips: normalizedTrips,
         pagination: {
           page,
           limit,
@@ -469,7 +486,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error tracking trip view:", viewError);
       }
       
-      res.json(trip);
+      // Normalize user data in trip response
+      const normalizedTrip = {
+        ...trip,
+        organizer: normalizeUserForUI(trip.organizer),
+        comments: trip.comments?.map((comment: any) => ({
+          ...comment,
+          user: normalizeUserForUI(comment.user)
+        })) || []
+      };
+
+      res.json(normalizedTrip);
     } catch (error) {
       console.error("Error fetching trip:", error);
       res.status(500).json({ message: "Failed to fetch trip" });
@@ -2318,7 +2345,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const messages = await storage.getThreadMessages(threadId, limit, cursor);
-      res.json(messages);
+      // Normalize user data in messages
+      const normalizedMessages = messages.map((message: any) => ({
+        ...message,
+        sender: normalizeUserForUI(message.sender)
+      }));
+      res.json(normalizedMessages);
     } catch (error) {
       console.error("Error fetching thread messages:", error);
       res.status(500).json({ message: "Failed to fetch messages" });
@@ -2512,7 +2544,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         trip = await storage.getTrip(thread.tripId);
       }
 
-      res.json({ ...thread, users: threadUsers, trip });
+      // Normalize user data in thread response
+      const normalizedThreadUsers = normalizeUsersForUI(threadUsers);
+      const normalizedTrip = trip ? {
+        ...trip,
+        organizer: normalizeUserForUI(trip.organizer)
+      } : null;
+      
+      res.json({ ...thread, users: normalizedThreadUsers, trip: normalizedTrip });
     } catch (error) {
       console.error("Error fetching chat thread:", error);
       res.status(500).json({ message: "Failed to fetch chat thread" });
@@ -2555,7 +2594,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get all accepted participants for this trip
       const acceptedUsers = await storage.getAcceptedTripParticipants(tripId);
-      res.json(acceptedUsers);
+      const normalizedUsers = normalizeUsersForUI(acceptedUsers);
+      res.json(normalizedUsers);
     } catch (error) {
       console.error("Error fetching chat users:", error);
       res.status(500).json({ message: "Failed to fetch chat users" });
@@ -2594,7 +2634,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const messages = await storage.getThreadMessages(chatThread.id);
-      res.json({ thread: chatThread, messages });
+      // Normalize user data in messages
+      const normalizedMessages = messages.map((message: any) => ({
+        ...message,
+        sender: normalizeUserForUI(message.sender)
+      }));
+      res.json({ thread: chatThread, messages: normalizedMessages });
     } catch (error) {
       console.error("Error fetching chat thread:", error);
       res.status(500).json({ message: "Failed to fetch chat thread" });

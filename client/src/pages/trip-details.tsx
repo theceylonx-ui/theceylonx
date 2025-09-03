@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserDisplay } from "@/components/ui/user-display";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,7 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTrackInteraction } from "@/hooks/useRecommendations";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import type { TripWithOrganizer, CommentWithUser, TripInterestRequest } from "@shared/schema";
+import type { TripWithNormalizedOrganizer, CommentWithUser, TripInterestRequest } from "@shared/schema";
 import { EditContentDialog } from "@/components/EditContentDialog";
 import { TripEditDialog } from "@/components/TripEditDialog";
 import { ActionsMenu } from "@/components/ActionsMenu";
@@ -53,7 +54,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
     }
   }, [user, id, trackInteraction]);
 
-  const { data: trip, isLoading: tripLoading } = useQuery<TripWithOrganizer>({
+  const { data: trip, isLoading: tripLoading } = useQuery<TripWithNormalizedOrganizer>({
     queryKey: ["/api/trips", id],
     queryFn: async () => {
       const response = await fetch(`/api/trips/${id}`);
@@ -541,21 +542,17 @@ export default function TripDetails({ params }: TripDetailsProps) {
 
               <div>
                 <h3 className="font-semibold text-gray-800 mb-3">Trip Organizer</h3>
-                <div className="flex items-center space-x-3 mb-4" data-testid="trip-organizer">
-                  <Avatar>
-                    <AvatarImage src={trip.organizer.profileImageUrl || ""} />
-                    <AvatarFallback>
-                      {trip.organizer.firstName?.[0]}{trip.organizer.lastName?.[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium text-gray-800">
-                      {trip.organizer.firstName} {trip.organizer.lastName}
-                    </p>
-                    <div className="flex items-center space-x-2 text-sm text-gray-500">
-                      <Lock className="h-4 w-4" />
-                      <span className="italic">Contact details shared privately through chat</span>
-                    </div>
+                <div className="mb-4" data-testid="trip-organizer">
+                  <UserDisplay 
+                    user={trip.organizer}
+                    avatarSize="lg"
+                    layout="horizontal"
+                    className="mb-2"
+                    nameClassName="font-medium text-gray-800"
+                  />
+                  <div className="flex items-center space-x-2 text-sm text-gray-500 ml-12">
+                    <Lock className="h-4 w-4" />
+                    <span className="italic">Contact details shared privately through chat</span>
                   </div>
                 </div>
 
@@ -734,18 +731,14 @@ export default function TripDetails({ params }: TripDetailsProps) {
                   {comments && comments.length > 0 ? (
                     comments.map((comment) => (
                       <div key={comment.id} className="flex space-x-3 p-4 bg-gray-50 rounded-lg" data-testid={`comment-${comment.id}`}>
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={comment.user.profileImageUrl || ""} />
-                          <AvatarFallback>
-                            {comment.user.firstName?.[0]}{comment.user.lastName?.[0]}
-                          </AvatarFallback>
-                        </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-1">
                             <div className="flex items-center space-x-2">
-                              <span className="font-medium text-gray-800">
-                                {comment.user.firstName} {comment.user.lastName}
-                              </span>
+                              <UserDisplay 
+                                user={comment.user}
+                                avatarSize="sm"
+                                nameClassName="font-medium text-gray-800"
+                              />
                               <span className="text-sm text-gray-500">
                                 {new Date(comment.createdAt!).toLocaleDateString()}
                               </span>
@@ -804,7 +797,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
         <TripEditDialog
           isOpen={showTripEditDialog}
           onClose={() => setShowTripEditDialog(false)}
-          trip={trip}
+          trip={trip as any}
         />
       )}
     </div>

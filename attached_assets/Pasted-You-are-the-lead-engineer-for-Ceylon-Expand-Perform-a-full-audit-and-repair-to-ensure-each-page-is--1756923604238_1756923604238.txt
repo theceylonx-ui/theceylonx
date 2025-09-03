@@ -1,0 +1,109 @@
+You are the lead engineer for Ceylon Expand. Perform a full audit and repair to ensure each page is user-friendly, consistent with its backing tables, and resilient to missing user/profile data. Apply surgical fixes only; do not change feature scope.
+0) Scope (pages ↔ tables to verify)
+Landing (/) → trips, users
+Browse Trips (/browse-trips) → trips, users, trip_features
+Trip Details (/trips/:id) → trips, users, comments, ratings, reports, trip_interest_requests
+Post Trip (/post) → trips, categories, users
+User Dashboard (/dashboard) → trips, users, questions, trip_interest_requests, user_preferences
+Preferences (/preferences, /travel-style-settings) → user_preferences, users, user_personalization
+Community (/community) → questions, topics, users, answers, votes
+Question Detail (/question/:id) → questions, answers, users, votes
+Chat (/chat/*) → chat_threads, messages, users, trips
+Admin (/admin) → users, roles, audit_logs, media_assets, trips, reports
+Report Trip (/report-trip/:id) → reports, trips, users
+1) Cross-cutting “User Identity” rules (fix missing names/avatars safely)
+DB & constraints
+Ensure users has: id (PK), email (nullable true), name (nullable true), avatarUrl (nullable), provider, roleId/fk.
+Add generated fallback fields (if missing):
+displayName computed at read time: prefer name; else left-part of email; else "Traveler" + shortId.
+Do NOT make name NOT NULL; keep auth flexibility. Use read-time fallback + UI placeholders.
+API serialization (server)
+Create util normalizeUserForUI(u) returning { id, displayName, avatarUrl, initials } with rules:
+displayName: as above.
+initials: first letters of words from displayName; else “TR”.
+avatarUrl: keep if valid; else null.
+Use this util in all endpoints returning users.
+UI fallbacks
+Everywhere a name/avatar is rendered:
+If no avatar → show initials avatar.
+If no name → show displayName from API.
+Never show “undefined”/blank.
+Backfill job (one-time)
+Create script scripts/backfill_display_names.ts to fill missing name from email prefix where safe; log only—do not overwrite existing names.
+2) Consistency & UX checklist per page (implement tests + fixes)
+For each page in Section 0:
+API contract audit
+Verify the page calls a single stable endpoint (no N+1 in UI).
+Add Zod schemas for response. Reject if critical fields missing; provide defaults for optional ones (e.g., ratings = 0, comments = []).
+Null-safe rendering
+Names/avatars: use normalized user object.
+Dates: format with locale; handle missing timezone gracefully (Asia/Colombo default).
+Counts (views, seats): show 0 instead of blank.
+Empty states & loading
+Add skeletons; empty lists display clear copy (“No trips yet”).
+Errors → human copy + retry button.
+Actions disabled states
+Buttons requiring auth (e.g., “Show Interest”) are disabled with tooltip if unauthenticated.
+Privacy
+Ensure organizer contact fields are never returned here (use existing redaction).
+3) Automated “relationship” verifications (DB & API)
+Add a test suite tests/consistency/*.spec.ts that executes for the seed dataset:
+Foreign keys & cascading
+trips.organizerId → users.id (ON DELETE RESTRICT).
+comments.userId → users.id, comments.tripId → trips.id, etc.
+Existence checks
+For every object shown on a page, assert related user exists and UI displays displayName fallback if name missing.
+Count correctness
+Verify ratings count, interest count, comments count match aggregates.
+4) Seed data for edge cases (expand seed)
+Extend npm run seed to include:
+Users: one with no name, one with no avatarUrl.
+Trips: one missing optional fields (price, tags), one full.
+Community: questions/answers with minimal user data.
+Chat: thread/messages where sender has no name.
+Reports: at least one open report.
+5) Page-specific acceptance checks (implement Playwright/Cypress e2e)
+Create e2e/pages.spec.ts with per-page assertions:
+Landing: Featured cards render with displayName/initials; clicking a card opens Trip Details.
+Browse Trips: Filters persist; cards render normalized organizer; empty state for no results.
+Trip Details: Comments/ratings show fallback names and initials; “Show Interest” gated by login.
+Post Trip: Category required, validation messages clear; on success, redirect to new trip.
+Dashboard: Sections for “My Trips”, “Interested”, show normalized names; no raw nulls.
+Preferences: Loads/saves; if user has no name, UI still displays displayName.
+Community: Q/A lists show normalized author; votes render 0 safely.
+Question Detail: Answers render displayName; best-answer badge visible when set.
+Chat: Messages from users w/o name show initials avatar + displayName; timestamps readable.
+Admin: Tables show emails + roles; changing role updates UI; logs show recent actions.
+Report Trip: Submitting a report validates reason; success toast; admin sees it in logs.
+6) Telemetry guardrails (low-overhead)
+Add lightweight counters (pino logs or simple metrics) for:
+“user_display_fallback_used” (increment when API had to synthesize displayName).
+“avatar_placeholder_used”.
+Surface these on Admin Dashboard KPI (small counts) to track data hygiene.
+7) Output: Unified “Consistency Report”
+Create CLI npm run audit:consistency that:
+Runs unit + integration + e2e tests.
+Prints a summary table:
+Pages checked
+Issues found (schema, null rendering, perf)
+Missing names/avatars count from seed
+Pass/Fail with pointers to files to fix
+8) Fix policy & priority
+P0: Any crash, blank screens, or leakage of undefined/null where user sees it.
+P1: Missing empty states, inconsistent date/number formatting, action buttons without disabled messaging.
+P2: Minor copy/spacing issues.
+9) Acceptance Criteria (must pass)
+No page renders raw null/undefined for user names/avatars—displayName/initials always present.
+All listed pages load with valid API schemas (Zod-validated) and show proper empty/loading/error states.
+E2E tests pass for navigation and primary actions.
+Redaction still enforced; no contact leakage anywhere.
+npm run audit:consistency prints a green summary.
+Seed includes edge cases; UI remains usable.
+Admin Dashboard shows telemetry counters for fallback name/avatar usage.
+10) Deliverables
+Code updates (schemas, utils, UI fallbacks).
+New tests: unit, integration, e2e.
+scripts/backfill_display_names.ts (one-time helper).
+AUDIT_NOTES.md with discovered issues & fixes.
+CONSISTENCY_REPORT.md snapshot from npm run audit:consistency.
+Proceed incrementally with clear commits. If a component already meets the criteria, verify and mark as passed. Fix any type/lint/test errors you encounter.

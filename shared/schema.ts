@@ -1115,6 +1115,16 @@ export type InsertTrip = z.infer<typeof insertTripSchema>;
 export type Trip = typeof trips.$inferSelect;
 export type TripWithOrganizer = Trip & { organizer: User };
 
+// Normalized version for UI with properly handled user data
+export type TripWithNormalizedOrganizer = Omit<TripWithOrganizer, 'organizer'> & {
+  organizer: {
+    id: string;
+    displayName: string;
+    avatarUrl: string | null;
+    initials: string;
+  } | null;
+};
+
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type NotificationType = z.infer<typeof notificationTypeSchema>;
