@@ -771,27 +771,27 @@ export class DatabaseStorage implements IStorage {
       .from(reports)
       .where(eq(reports.id, thread.reportId));
 
-    if (!result) return null;
+    if (!admin || !organizer || !report) return null;
 
     // Get message count
     const [messageCountResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(adminChatMessages)
-      .where(eq(adminChatMessages.threadId, result.thread.id));
+      .where(eq(adminChatMessages.threadId, thread.id));
 
     // Get last message
     const [lastMessage] = await db
       .select()
       .from(adminChatMessages)
-      .where(eq(adminChatMessages.threadId, result.thread.id))
+      .where(eq(adminChatMessages.threadId, thread.id))
       .orderBy(desc(adminChatMessages.createdAt))
       .limit(1);
 
     return {
-      ...result.thread,
-      admin: result.admin!,
-      organizer: result.organizer!,
-      report: result.report!,
+      ...thread,
+      admin: admin!,
+      organizer: organizer!,
+      report: report!,
       messageCount: messageCountResult.count,
       lastMessage,
     };
