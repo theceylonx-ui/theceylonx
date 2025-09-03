@@ -30,8 +30,13 @@ export default function TripCard({ trip, badges }: TripCardProps) {
 
   const pinMutation = useMutation({
     mutationFn: async (pinned: boolean) => {
-      const response = await apiRequest('POST', `/api/trips/${trip.id}/pin`, { pinned });
-      return response;
+      if (pinned) {
+        const response = await apiRequest('POST', `/api/trips/${trip.id}/pin`, {});
+        return response;
+      } else {
+        const response = await apiRequest('DELETE', `/api/trips/${trip.id}/pin`, {});
+        return response;
+      }
     },
     onMutate: async (pinned) => {
       // Cancel ALL trip-related queries
@@ -55,44 +60,34 @@ export default function TripCard({ trip, badges }: TripCardProps) {
       return { previousTrips };
     },
     onSuccess: async (response, pinned) => {
-      const responseData = await response.json();
-      
-      // Check if this is user's own trip
-      if (responseData.message === "This is your own trip") {
-        toast({
-          title: 'This is your own trip',
-          description: 'You cannot pin trips you organize',
+      // The new API returns 204 No Content for successful pin/unpin
+      if (response.status === 204) {
+        // Update ALL trip cache entries optimistically  
+        queryClient.getQueriesData({ queryKey: ['/api/trips'] }).forEach(([queryKey, data]) => {
+          if (data && typeof data === 'object' && 'trips' in data) {
+            queryClient.setQueryData(queryKey, {
+              ...data,
+              trips: (data as any).trips.map((t: any) => 
+                t.id === trip.id ? { 
+                  ...t, 
+                  isPinned: pinned
+                } : t
+              )
+            });
+          }
         });
-        return;
+        
+        // Invalidate related endpoints to refresh from server
+        queryClient.invalidateQueries({ queryKey: ['/api/user/pins'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/user/history'] });
+        
+        queryClient.invalidateQueries({ queryKey: ['/api/calendar/aggregate'] });
+        
+        toast({
+          title: pinned ? 'Trip pinned!' : 'Trip unpinned',
+          description: pinned ? 'Trip added to your pins' : 'Trip removed from your pins',
+        });
       }
-      
-      // Update ALL trip cache entries with server response
-      queryClient.getQueriesData({ queryKey: ['/api/trips'] }).forEach(([queryKey, data]) => {
-        if (data && typeof data === 'object' && 'trips' in data) {
-          queryClient.setQueryData(queryKey, {
-            ...data,
-            trips: (data as any).trips.map((t: any) => 
-              t.id === trip.id ? { 
-                ...t, 
-                isPinned: responseData.pinned,
-                isInterested: responseData.interested
-              } : t
-            )
-          });
-        }
-      });
-      
-      // Only invalidate other endpoints, not main trips
-      queryClient.invalidateQueries({ queryKey: ['/api/pinned-trips'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/interested-trips'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar/aggregate'] });
-      
-      toast({
-        title: pinned ? 'Trip Pinned' : 'Trip Unpinned',
-        description: pinned 
-          ? 'Trip has been added to your pinned trips' 
-          : 'Trip has been removed from your pinned trips',
-      });
     },
     onError: (error: any, pinned, context) => {
       // Rollback optimistic update on error
@@ -119,8 +114,13 @@ export default function TripCard({ trip, badges }: TripCardProps) {
 
   const interestMutation = useMutation({
     mutationFn: async (interested: boolean) => {
-      const response = await apiRequest('POST', `/api/trips/${trip.id}/interest`, { interested });
-      return response;
+      if (interested) {
+        const response = await apiRequest('POST', `/api/trips/${trip.id}/interest`, {});
+        return response;
+      } else {
+        const response = await apiRequest('POST', `/api/trips/${trip.id}/interest/withdraw`, {});
+        return response;
+      }
     },
     onMutate: async (interested) => {
       // Cancel ALL trip-related queries
@@ -148,44 +148,35 @@ export default function TripCard({ trip, badges }: TripCardProps) {
       return { previousTrips };
     },
     onSuccess: async (response, interested) => {
-      const responseData = await response.json();
-      
-      // Check if this is user's own trip
-      if (responseData.message === "This is your own trip") {
-        toast({
-          title: 'This is your own trip',
-          description: 'You cannot mark interest on trips you organize',
+      // Handle different response types from new API
+      if (response.status === 201 || response.status === 409 || response.status === 204) {
+        // Update ALL trip cache entries optimistically  
+        queryClient.getQueriesData({ queryKey: ['/api/trips'] }).forEach(([queryKey, data]) => {
+          if (data && typeof data === 'object' && 'trips' in data) {
+            queryClient.setQueryData(queryKey, {
+              ...data,
+              trips: (data as any).trips.map((t: any) => 
+                t.id === trip.id ? { 
+                  ...t, 
+                  isInterested: interested
+                } : t
+              )
+            });
+          }
         });
-        return;
+        
+        // Invalidate related endpoints to refresh from server
+        queryClient.invalidateQueries({ queryKey: ['/api/user/pins'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/user/history'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/calendar/aggregate'] });
+        
+        toast({
+          title: interested ? 'Interest request created!' : 'Interest withdrawn',
+          description: interested 
+            ? 'Your interest has been recorded' 
+            : 'Interest removed from this trip',
+        });
       }
-      
-      // Update ALL trip cache entries with server response
-      queryClient.getQueriesData({ queryKey: ['/api/trips'] }).forEach(([queryKey, data]) => {
-        if (data && typeof data === 'object' && 'trips' in data) {
-          queryClient.setQueryData(queryKey, {
-            ...data,
-            trips: (data as any).trips.map((t: any) => 
-              t.id === trip.id ? { 
-                ...t, 
-                isInterested: responseData.interested,
-                isPinned: responseData.pinned
-              } : t
-            )
-          });
-        }
-      });
-      
-      // Only invalidate other endpoints, not main trips
-      queryClient.invalidateQueries({ queryKey: ['/api/pinned-trips'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/interested-trips'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar/aggregate'] });
-      
-      toast({
-        title: interested ? 'Marked as Interested' : 'Removed Interest',
-        description: interested 
-          ? 'Trip has been marked as interested' 
-          : 'Trip interest has been removed',
-      });
     },
     onError: (error: any, interested, context) => {
       // Rollback optimistic update on error

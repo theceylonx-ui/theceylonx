@@ -22,6 +22,7 @@ import { generateRandomProfilePicture, getDisplayName, getInitials, type AvatarS
 import { AvatarSelector } from "@/components/avatar-selector";
 import type { User, TripWithOrganizer, QuestionWithDetails } from "@shared/schema";
 import { AdminReportsTable } from "@/components/AdminReportsTable";
+import { UserHistoryTab } from "@/components/UserHistoryTab";
 
 const profileSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username must be less than 20 characters").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores").optional().or(z.literal('')),
@@ -452,9 +453,13 @@ export default function UserDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'} bg-gray-100`}>
+          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'} bg-gray-100`}>
             <TabsTrigger value="my-trips" data-testid="tab-my-trips">Posted by Me</TabsTrigger>
             <TabsTrigger value="interest-requests" data-testid="tab-interest-requests">Interest Requests</TabsTrigger>
+            <TabsTrigger value="history" data-testid="tab-history">
+              <Clock className="w-4 h-4 mr-1" />
+              History
+            </TabsTrigger>
             <TabsTrigger value="profile" data-testid="tab-profile">Profile</TabsTrigger>
             {isAdmin && (
               <TabsTrigger value="admin" data-testid="tab-admin" className="text-red-600 font-medium">
@@ -693,6 +698,11 @@ export default function UserDashboard() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* History Tab */}
+          <TabsContent value="history">
+            <UserHistoryTab />
           </TabsContent>
 
           {/* Profile Tab */}

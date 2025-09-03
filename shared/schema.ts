@@ -272,9 +272,9 @@ export const contactShares = pgTable("contact_shares", {
 // Trip Interest Requests table for "I'm Interested" functionality
 export const tripInterestRequests = pgTable("trip_interest_requests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  tripId: varchar("trip_id").notNull(),
-  userId: varchar("user_id").notNull(),
-  status: varchar("status").default("pending"), // pending, accepted, declined
+  tripId: varchar("trip_id").notNull().references(() => trips.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  status: varchar("status").notNull().default("pending"), // pending, accepted, declined, withdrawn
   message: text("message"), // Optional message from interested user
   chatThreadId: varchar("chat_thread_id"), // Created when accepted
   createdAt: timestamp("created_at").defaultNow(),
@@ -282,6 +282,31 @@ export const tripInterestRequests = pgTable("trip_interest_requests", {
 }, (table) => ({
   // Prevent duplicate interest requests for same user+trip
   uniqueUserTrip: unique().on(table.tripId, table.userId),
+}));
+
+// Pinned trips table for user bookmarks
+export const pinnedTrips = pgTable("pinned_trips", {
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tripId: varchar("trip_id").notNull().references(() => trips.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  // Primary key constraint on userId, tripId
+  primaryKey: [table.userId, table.tripId],
+  // Index for efficient queries
+  userIdIdx: index("pinned_trips_user_id_idx").on(table.userId),
+}));
+
+// User action history table for audit trail
+export const userHistory = pgTable("user_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  action: varchar("action").notNull(), // PIN, UNPIN, INTEREST, WITHDRAW, INTEREST_ACCEPTED, INTEREST_DECLINED
+  tripId: varchar("trip_id").notNull().references(() => trips.id, { onDelete: 'cascade' }),
+  meta: jsonb("meta"), // {source:'ui', note:'...'}
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  // Index for user history queries
+  userIdCreatedAtIdx: index("user_history_user_id_created_at_idx").on(table.userId, table.createdAt),
 }));
 
 // Ratings table
@@ -564,16 +589,6 @@ export const userTripFlags = pgTable("user_trip_flags", {
   interestedUserIndex: index("utf_interested_user_idx").on(table.userId, table.interested),
 }));
 
-// Pinned trips table for user-specific trip pinning (legacy - keeping for migration)
-export const pinnedTrips = pgTable("pinned_trips", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  tripId: varchar("trip_id").notNull().references(() => trips.id, { onDelete: 'cascade' }),
-  createdAt: timestamp("created_at").defaultNow(),
-}, (table) => ({
-  // Unique constraint to prevent duplicate pins for same user+trip
-  uniqueUserTrip: unique().on(table.userId, table.tripId),
-}));
 
 // Missing Infrastructure Tables
 
@@ -1261,3 +1276,7 @@ export type MessageWithContactCard = Message & {
   author?: User;
   canViewContactDetails?: boolean;
 };
+
+// User history types
+export type UserHistoryEntry = typeof userHistory.$inferSelect;
+export type InsertUserHistoryEntry = typeof userHistory.$inferInsert;

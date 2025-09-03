@@ -1,0 +1,114 @@
+You are the lead engineer for Ceylon Expand. Make Pinned and Interested actions durable in the backend so they persist across logout/login and are available for future reference. Do not rely on localStorage for source of truth.
+0) Goals
+Persist Pinned and Interested actions server-side (Postgres) tied to userId.
+Expose APIs to read/write these states and render them on Browse Trips, Calendar, and Dashboard.
+Add a compact user_history log for key actions (pin/unpin, interest/withdraw/accept/decline).
+Keep idempotent endpoints; no duplicates; safe to re-click.
+1) Schema (Drizzle migrations)
+Create/ensure these tables & constraints:
+-- Pinned trips (durable bookmarks)
+pinned_trips (
+  userId varchar not null references users(id) on delete cascade,
+  tripId varchar not null references trips(id) on delete cascade,
+  createdAt timestamp not null default now(),
+  primary key (userId, tripId)
+);
+
+-- Interest requests already exist; ensure durability & uniqueness
+trip_interest_requests (
+  id uuid primary key,
+  userId varchar not null references users(id) on delete cascade,
+  tripId varchar not null references trips(id) on delete cascade,
+  status varchar not null check (status in ('pending','accepted','declined','withdrawn')),
+  message text null,
+  createdAt timestamp not null default now(),
+  updatedAt timestamp not null default now(),
+  unique (userId, tripId)  -- one live thread per user/trip
+);
+
+-- User action history (audit-lite for the user)
+user_history (
+  id uuid primary key,
+  userId varchar not null references users(id) on delete cascade,
+  action varchar not null check (action in ('PIN','UNPIN','INTEREST','WITHDRAW','INTEREST_ACCEPTED','INTEREST_DECLINED')),
+  tripId varchar not null references trips(id) on delete cascade,
+  meta jsonb null,        -- {source:'ui', note:'...'}
+  createdAt timestamp not null default now()
+);
+
+-- Helpful indexes
+create index on pinned_trips(userId);
+create index on trip_interest_requests(userId);
+create index on user_history(userId, createdAt desc);
+2) API (REST, idempotent)
+Add/update these endpoints:
+# PIN / UNPIN
+POST   /api/trips/:tripId/pin          → 204  (upsert pinned_trips)
+DELETE /api/trips/:tripId/pin          → 204  (delete pinned_trips)
+
+# LIST USER’S PINNED
+GET    /api/user/pins?page=&limit=     → 200 { items:[trip...], total, page, limit }
+
+# INTEREST REQUEST LIFECYCLE (if not already)
+POST   /api/trips/:tripId/interest     → 201 { requestId, status:'pending' } (upsert or 409 if already pending)
+POST   /api/trips/:tripId/interest/withdraw → 204 (set status='withdrawn')
+
+# USER HISTORY
+GET    /api/user/history?page=&limit=  → 200 { items:[{action, tripId, createdAt, meta, trip:{...}}], total, page, limit }
+Rules
+Require auth for all endpoints above (401 if not logged in).
+Idempotency: POST /pin should succeed even if already pinned (no duplicates); return 204.
+On each pin/unpin/interest/withdraw/accept/decline event, insert a row in user_history.
+3) Services & Guards
+Add a small service userActionsService with:
+pinTrip(userId, tripId)
+unpinTrip(userId, tripId)
+createOrGetInterest(userId, tripId, message?)
+withdrawInterest(userId, tripId)
+Each writes to user_history after success.
+Ensure organizer accept/decline flows also append INTEREST_ACCEPTED / INTEREST_DECLINED for the requester.
+4) Frontend Wiring
+On Browse Trips and Trip Details:
+“Pin” button → calls POST /pin; “Unpin” → DELETE /pin.
+“Interested” → existing call; “Withdraw” → withdraw endpoint.
+Button states should query initial status via:
+GET /api/user/pins (or a lightweight GET /api/trips/:id/user-state returning { pinned, interestedStatus }).
+On User Dashboard:
+Add tabs/lists for Pinned and Interested (pending/accepted/declined/withdrawn).
+Add a History tab: reverse-chronological from /api/user/history.
+Important: Do not store source of truth in localStorage. You may cache UI state for speed, but always hydrate from API at load.
+5) Calendar & Filters Integration
+Calendar filters Pinned / Interested / My Trips / Free must use the durable backend data:
+For Pinned, join pinned_trips by userId.
+For Interested, join trip_interest_requests where status in ('pending','accepted').
+Ensure anonymous users cannot select “Pinned/Interested” (gate with tooltip “Sign in to use this”).
+6) Edge Cases & Migrations
+If historically pins were only in client state, ignore; new server endpoints become source of truth.
+If you want anonymous pre-login “pins,” add a deviceId cookie and a merge on login (optional, not required now). Keep code prepared for future merge.
+7) Telemetry & Admin
+Increment lightweight counters:
+pin_created, pin_removed, interest_created, interest_withdrawn.
+Surface counts on /admin/dashboard KPI cards.
+Expose GET /api/admin/user/:id/history for admin review (role-gated).
+8) Validation & Security
+Zod-validate path params; 404 if trip not found.
+Rate-limit write endpoints (e.g., 20/min per user).
+All responses must continue to redact organizer contact info.
+9) Tests (must pass)
+Unit:
+Pin twice → one row in pinned_trips, two entries in user_history (PIN then maybe no duplicate; acceptable to log only first PIN).
+Unpin then pin again → states correct; history logs both.
+Interest create → unique per (userId, tripId); withdraw updates status.
+Integration:
+Logout → login again → pinned & interested states still present.
+Calendar filters return correct trips based on durable tables.
+E2E:
+User pins three trips, logs out/in → pins still visible on Dashboard → Pinned.
+10) Acceptance Criteria
+Pinned and Interested states persist in DB and survive logout/login.
+Browse Trips, Trip Details, Dashboard, Calendar all hydrate from backend state.
+User History shows time-ordered actions with linked trip info.
+Endpoints are idempotent, validated, and rate-limited.
+Admin dashboard shows aggregate counts.
+Tests, lint, typecheck pass.
+Proceed incrementally with clear commits. Reuse existing trip_interest_requests where applicable. Fix any type/runtime/test issues encountered.

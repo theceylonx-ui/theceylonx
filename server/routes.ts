@@ -586,87 +586,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Pinned trips endpoints
-  app.post('/api/trips/:id/pin', unifiedAuthGuard, async (req, res) => {
+  // Pin/Unpin trip endpoints (idempotent)
+  app.post('/api/trips/:tripId/pin', unifiedAuthGuard, async (req, res) => {
     try {
+      const { userActionsService } = await import('./services/userActionsService');
       const userId = req.user!.id;
-      const tripId = req.params.id;
-      const { pinned } = req.body;
+      const tripId = req.params.tripId;
       
-      // Check if trip exists
-      const trip = await storage.getTrip(tripId);
-      if (!trip) {
+      await userActionsService.pinTrip(userId, tripId);
+      res.status(204).send(); // No content - idempotent success
+    } catch (error) {
+      console.error("Error pinning trip:", error);
+      if (error instanceof Error && error.message === 'Trip not found') {
         return res.status(404).json({ message: "Trip not found" });
       }
-      
-      // Cannot pin own trip
-      if (trip.organizerId === userId) {
-        return res.status(200).json({ 
-          trip_id: tripId,
-          user_id: userId,
-          pinned: false,
-          interested: false,
-          message: "This is your own trip"
-        });
-      }
-      
-      // Check current flags
-      const currentFlags = await storage.getUserTripFlags(userId, tripId);
-      
-      // Option B: Auto-remove interest when pinning (smooth UX)
-      let updateData: any = { pinned };
-      if (pinned && currentFlags?.interested) {
-        // If pinning and currently interested, also remove interest
-        updateData.interested = false;
-      }
-      
-      // Update or create the user trip flags
-      const tripFlags = await storage.upsertUserTripFlags(userId, tripId, updateData);
-      
-      res.json({
-        trip_id: tripId,
-        user_id: userId,
-        pinned: tripFlags.pinned,
-        interested: tripFlags.interested
-      });
-    } catch (error) {
-      console.error("Error updating pin status:", error);
-      res.status(500).json({ message: "Failed to update pin status" });
+      res.status(500).json({ message: "Failed to pin trip" });
     }
   });
 
-  app.delete('/api/trips/:id/pin', unifiedAuthGuard, async (req, res) => {
+  app.delete('/api/trips/:tripId/pin', unifiedAuthGuard, async (req, res) => {
     try {
+      const { userActionsService } = await import('./services/userActionsService');
       const userId = req.user!.id;
-      const tripId = req.params.id;
+      const tripId = req.params.tripId;
       
-      // Check if trip exists
-      const trip = await storage.getTrip(tripId);
-      if (!trip) {
-        return res.status(404).json({ message: "Trip not found" });
-      }
-      
-      // Update flags to unpin
-      const tripFlags = await storage.upsertUserTripFlags(userId, tripId, { pinned: false });
-      
-      res.json({
-        trip_id: tripId,
-        user_id: userId,
-        pinned: tripFlags.pinned,
-        interested: tripFlags.interested
-      });
+      await userActionsService.unpinTrip(userId, tripId);
+      res.status(204).send(); // No content - idempotent success
     } catch (error) {
       console.error("Error unpinning trip:", error);
       res.status(500).json({ message: "Failed to unpin trip" });
     }
   });
 
-  app.get('/api/pinned-trips', unifiedAuthGuard, async (req, res) => {
+  // Get user's pinned trips with pagination  
+  app.get('/api/user/pins', unifiedAuthGuard, async (req, res) => {
     try {
       const userId = req.user!.id;
-      // Get only trips that are pinned but NOT interested (following precedence rules)
-      const pinnedTrips = await storage.getUserPinnedTripsOnly(userId);
-      res.json(pinnedTrips);
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+      const offset = (page - 1) * limit;
+
+      // Get pinned trips with pagination using pure SQL for efficiency
+      const { db } = await import('./db');
+      const { pinnedTrips, trips, users } = await import('../shared/schema');
+      const { eq, desc } = await import('drizzle-orm');
+      
+      const pinnedTripsData = await db
+        .select({
+          trip: trips,
+          user: users,
+          pinnedAt: pinnedTrips.createdAt
+        })
+        .from(pinnedTrips)
+        .innerJoin(trips, eq(pinnedTrips.tripId, trips.id))
+        .innerJoin(users, eq(trips.organizerId, users.id))
+        .where(eq(pinnedTrips.userId, userId))
+        .orderBy(desc(pinnedTrips.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      // Get total count
+      const { sql } = await import('drizzle-orm');
+      const [totalResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(pinnedTrips)
+        .where(eq(pinnedTrips.userId, userId));
+
+      const total = totalResult.count;
+
+      // Format response with normalized user data
+      const items = pinnedTripsData.map(item => ({
+        ...item.trip,
+        organizer: normalizeUserForUI(item.user),
+        pinnedAt: item.pinnedAt
+      }));
+
+      res.json({
+        items,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      });
     } catch (error) {
       console.error("Error fetching pinned trips:", error);
       res.status(500).json({ message: "Failed to fetch pinned trips" });
@@ -685,77 +686,140 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // New unified flag-based interest system
-  app.post('/api/trips/:id/interest', unifiedAuthGuard, async (req, res) => {
+  // Interest request lifecycle endpoints
+  app.post('/api/trips/:tripId/interest', unifiedAuthGuard, async (req, res) => {
     try {
+      const { userActionsService } = await import('./services/userActionsService');
       const userId = req.user!.id;
-      const tripId = req.params.id;
-      const { interested } = req.body;
+      const tripId = req.params.tripId;
+      const { message } = req.body;
 
-      // Check if trip exists
-      const trip = await storage.getTrip(tripId);
-      if (!trip) {
-        return res.status(404).json({ message: "Trip not found" });
-      }
-
-      // Cannot mark interest on own trip
-      if (trip.organizerId === userId) {
-        return res.status(200).json({ 
-          trip_id: tripId,
-          user_id: userId,
-          pinned: false,
-          interested: false,
-          message: "This is your own trip"
-        });
-      }
-
-      // Update or create the user trip flags with precedence rule: interested=true forces pinned=false
-      const tripFlags = await storage.upsertUserTripFlags(userId, tripId, { interested });
+      const result = await userActionsService.createOrGetInterest(userId, tripId, message);
       
-      // Create notification for trip organizer if marking as interested
-      if (interested) {
-        await storage.createNotification({
-          userId: trip.organizerId,
-          type: "interest_request",
-          category: "trips",
-          priority: "high",
-          title: "Trip Marked as Interested",
-          message: `Someone is interested in your trip "${trip.title}"`,
-          relatedTripId: tripId,
-          actionUrl: `/trips/${tripId}`,
-          isRead: false,
+      if (result.isNew) {
+        res.status(201).json({ 
+          requestId: result.requestId, 
+          status: result.status 
+        });
+      } else {
+        res.status(409).json({ 
+          message: "Interest request already exists or reactivated",
+          requestId: result.requestId, 
+          status: result.status 
         });
       }
-
-      res.json({
-        trip_id: tripId,
-        user_id: userId,
-        pinned: tripFlags.pinned,
-        interested: tripFlags.interested
-      });
     } catch (error) {
-      console.error("Error updating interest flag:", error);
-      res.status(500).json({ message: "Failed to update interest" });
+      console.error("Error creating interest request:", error);
+      if (error instanceof Error) {
+        if (error.message === 'Trip not found') {
+          return res.status(404).json({ message: "Trip not found" });
+        }
+        if (error.message.includes('already exists') || error.message.includes('already accepted')) {
+          return res.status(409).json({ message: error.message });
+        }
+      }
+      res.status(500).json({ message: "Failed to create interest request" });
     }
   });
 
-  // Get current user's flags for a specific trip
-  app.get('/api/trips/:id/flags', unifiedAuthGuard, async (req, res) => {
+  // Withdraw interest request
+  app.post('/api/trips/:tripId/interest/withdraw', unifiedAuthGuard, async (req, res) => {
+    try {
+      const { userActionsService } = await import('./services/userActionsService');
+      const userId = req.user!.id;
+      const tripId = req.params.tripId;
+      
+      await userActionsService.withdrawInterest(userId, tripId);
+      res.status(204).send(); // No content - idempotent success
+    } catch (error) {
+      console.error("Error withdrawing interest:", error);
+      if (error instanceof Error && error.message === 'No interest request found') {
+        return res.status(404).json({ message: "No interest request found" });
+      }
+      res.status(500).json({ message: "Failed to withdraw interest" });
+    }
+  });
+
+  // Get user action history with pagination
+  app.get('/api/user/history', unifiedAuthGuard, async (req, res) => {
     try {
       const userId = req.user!.id;
-      const tripId = req.params.id;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+      const offset = (page - 1) * limit;
+
+      // Get user history with trip and organizer details
+      const { db } = await import('./db');
+      const { userHistory, trips, users } = await import('../shared/schema');
+      const { eq, desc } = await import('drizzle-orm');
       
-      const flags = await storage.getUserTripFlags(userId, tripId);
-      
+      const historyData = await db
+        .select({
+          history: userHistory,
+          trip: trips,
+          organizer: users
+        })
+        .from(userHistory)
+        .innerJoin(trips, eq(userHistory.tripId, trips.id))
+        .innerJoin(users, eq(trips.organizerId, users.id))
+        .where(eq(userHistory.userId, userId))
+        .orderBy(desc(userHistory.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      // Get total count
+      const { sql } = await import('drizzle-orm');
+      const [totalResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(userHistory)
+        .where(eq(userHistory.userId, userId));
+
+      const total = totalResult.count;
+
+      // Format response with normalized user data
+      const items = historyData.map(item => ({
+        action: item.history.action,
+        tripId: item.history.tripId,
+        createdAt: item.history.createdAt,
+        meta: item.history.meta,
+        trip: {
+          ...item.trip,
+          organizer: normalizeUserForUI(item.organizer)
+        }
+      }));
+
       res.json({
-        trip_id: tripId,
-        user_id: userId,
-        pinned: flags?.pinned ?? false,
-        interested: flags?.interested ?? false
+        items,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
       });
     } catch (error) {
-      console.error("Error fetching trip flags:", error);
-      res.status(500).json({ message: "Failed to fetch trip flags" });
+      console.error("Error fetching user history:", error);
+      res.status(500).json({ message: "Failed to fetch user history" });
+    }
+  });
+
+  // Get trip state for current user (pinned, interested status)
+  app.get('/api/trips/:tripId/user-state', unifiedAuthGuard, async (req, res) => {
+    try {
+      const { userActionsService } = await import('./services/userActionsService');
+      const userId = req.user!.id;
+      const tripId = req.params.tripId;
+      
+      const [pinned, interestedStatus] = await Promise.all([
+        userActionsService.isPinned(userId, tripId),
+        userActionsService.getInterestStatus(userId, tripId)
+      ]);
+      
+      res.json({
+        pinned,
+        interestedStatus
+      });
+    } catch (error) {
+      console.error("Error fetching user trip state:", error);
+      res.status(500).json({ message: "Failed to fetch trip state" });
     }
   });
 
