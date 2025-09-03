@@ -113,8 +113,8 @@ export function AdminChatModal({ isOpen, onClose, reportId, reportDetails }: Adm
     mutationFn: async () => {
       return await apiRequest("POST", `/api/admin/reports/${reportId}/chat`);
     },
-    onSuccess: (data) => {
-      setThread(data);
+    onSuccess: (data: any) => {
+      setThread(data as ChatThread);
     },
     onError: (error) => {
       toast({

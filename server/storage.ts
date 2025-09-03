@@ -87,7 +87,6 @@ import {
   type AdminChatMessageWithSender,
   type ContactShare,
   type InsertContactShare,
-  type AuditLog,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, ilike, desc, asc, gte, lte, count, sql, isNull, ne } from "drizzle-orm";
