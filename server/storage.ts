@@ -437,7 +437,10 @@ export class DatabaseStorage implements IStorage {
     const shouldRedact = shouldRedactContact(requestingUserId, trip.organizerId);
     const redactedTrip = shouldRedact ? redactContact(trip) : trip;
     
-    return { ...redactedTrip, organizer: organizer! };
+    // Also redact organizer's contact information if not the trip organizer
+    const redactedOrganizer = shouldRedact ? redactContact(organizer!) : organizer!;
+    
+    return { ...redactedTrip, organizer: redactedOrganizer };
   }
 
   async updateTrip(id: string, trip: Partial<InsertTrip>): Promise<Trip> {
@@ -600,10 +603,11 @@ export class DatabaseStorage implements IStorage {
     const tripsWithOrganizers = result.map(({ trips: trip, users: organizer }) => {
       // Apply contact redaction for search results - trips are public, no requesting user context
       const redactedTrip = redactContact(trip);
+      const redactedOrganizer = redactContact(organizer!);
       
       return {
         ...redactedTrip,
-        organizer: organizer!,
+        organizer: redactedOrganizer,
       };
     });
     
