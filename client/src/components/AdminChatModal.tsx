@@ -111,9 +111,7 @@ export function AdminChatModal({ isOpen, onClose, reportId, reportDetails }: Adm
   // Create or get chat thread
   const createThreadMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(`/api/admin/reports/${reportId}/chat`, {
-        method: "POST",
-      });
+      return await apiRequest("POST", `/api/admin/reports/${reportId}/chat`);
     },
     onSuccess: (data) => {
       setThread(data);
@@ -137,10 +135,7 @@ export function AdminChatModal({ isOpen, onClose, reportId, reportDetails }: Adm
   // Send message
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
-      return await apiRequest(`/api/admin/chat/${thread!.id}/messages`, {
-        method: "POST",
-        body: JSON.stringify({ content }),
-      });
+      return await apiRequest("POST", `/api/admin/chat/${thread!.id}/messages`, { content });
     },
     onSuccess: () => {
       setMessage("");
@@ -158,16 +153,13 @@ export function AdminChatModal({ isOpen, onClose, reportId, reportDetails }: Adm
   // Block/unblock chat
   const toggleBlockMutation = useMutation({
     mutationFn: async (isBlocked: boolean) => {
-      return await apiRequest(`/api/admin/chat/${thread!.id}/block`, {
-        method: "PATCH",
-        body: JSON.stringify({ isBlocked }),
-      });
+      return await apiRequest("PATCH", `/api/admin/chat/${thread!.id}/block`, { isBlocked });
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setThread(prev => prev ? { ...prev, ...data } : null);
       toast({
         title: "Success",
-        description: data.action === 'blocked' ? "Chat blocked successfully" : "Chat unblocked successfully",
+        description: data.isBlocked ? "Chat blocked successfully" : "Chat unblocked successfully",
       });
     },
     onError: (error) => {

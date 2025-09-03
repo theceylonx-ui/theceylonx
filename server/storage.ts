@@ -517,9 +517,26 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log('🔍 getUserQuestions called for userId:', userId);
       
-      // Ultra-simple query to test
+      // Simple query without problematic columns
       const result = await db
-        .select()
+        .select({
+          id: questions.id,
+          title: questions.title,
+          body: questions.body,
+          tags: questions.tags,
+          userId: questions.userId,
+          topicId: questions.topicId,
+          isAnonymous: questions.isAnonymous,
+          views: questions.views,
+          score: questions.score,
+          votesCount: questions.votesCount,
+          answersCount: questions.answersCount,
+          acceptedAnswerId: questions.acceptedAnswerId,
+          createdAt: questions.createdAt,
+          updatedAt: questions.updatedAt,
+          isDeleted: questions.isDeleted,
+          deletedAt: questions.deletedAt,
+        })
         .from(questions)
         .where(and(eq(questions.userId, userId), eq(questions.isDeleted, false)))
         .orderBy(desc(questions.createdAt));
@@ -529,11 +546,12 @@ export class DatabaseStorage implements IStorage {
       // Return minimal structure
       return result.map(question => ({
         ...question,
+        slug: `question-${question.id}`, // Generate slug from ID
         user: { id: userId, name: 'Test User', email: null, phone: null, image: null, provider: null, firstName: 'Test', lastName: 'User', username: null, profileImageUrl: null, phoneNumber: null, bio: null, googleId: null, facebookId: null, microsoftId: null, appleId: null, emailVerified: false, createdAt: new Date(), updatedAt: new Date() },
         topic: { id: question.topicId || '', name: 'General', slug: 'general', description: null, createdAt: new Date() },
         answers: [],
-        votesCount: 0,
-        answersCount: 0,
+        votesCount: question.votesCount || 0,
+        answersCount: question.answersCount || 0,
       }));
     } catch (error) {
       console.error('❌ Error in getUserQuestions:', error);
