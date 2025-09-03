@@ -1,0 +1,90 @@
+You are the lead engineer for Ceylon Expand. Build a secure Admin Dashboard (backstage) accessible at:
+👉 www.theceylonx.com/admin
+0) Super Admin Setup
+On first login, check if user email is in SUPERADMIN_EMAILS.
+For now, whitelist:
+SUPERADMIN_EMAILS=theceylonx@gmail.com
+First login with this email → role = superadmin.
+Superadmin can manage roles/permissions and promote/demote users.
+1) Roles & Permissions
+Roles table:
+roles(id, name ENUM[superadmin, admin, moderator, user], permissions JSONB, createdAt)
+Users table: extend with roleId foreign key.
+Permissions JSONB example:
+{
+  "canManageUsers": true,
+  "canManageContent": true,
+  "canViewLogs": true,
+  "canManageRoles": false
+}
+Default mapping:
+Superadmin → all permissions.
+Admin → manage users, manage content, view logs.
+Moderator → manage content, view logs.
+User → none (regular platform usage).
+2) Authentication
+Use existing OAuth (Google + Replit).
+Restrict /admin/* to admin|superadmin|moderator.
+If unauthorized → redirect to /unauthorized.
+JWT stored in secure cookies.
+3) Admin API (/api/admin/*)
+Dashboard
+GET /api/admin/dashboard → summary: total users, total trips, flagged reports.
+Users
+GET /api/admin/users?search= → list users with pagination + search.
+PUT /api/admin/users/:id/role → change role.
+GET /api/admin/users/:id → fetch single user details.
+Content
+POST /api/admin/media → upload image (drag/drop).
+Store under /uploads/admin/.
+DB: media_assets(id, fileUrl, ownerId, type, createdAt).
+GET /api/admin/media?type=slides → list slide images.
+PUT /api/admin/slides/:id → update/change slide image.
+Roles
+GET /api/admin/roles → list roles.
+POST /api/admin/roles → create role with permissions JSON.
+PUT /api/admin/roles/:id → update permissions.
+Logs
+GET /api/admin/logs?page= → paginated audit logs.
+4) Audit Logging
+Add audit_logs table:
+audit_logs(id, actorUserId, action, targetType, targetId, meta JSONB, createdAt)
+Log events: role changes, uploads, slide edits, new role creation.
+Display latest 20 in /admin/logs.
+5) Admin UI (React + Tailwind + Shadcn/UI)
+Sidebar Navigation (Meta Business Suite style):
+Dashboard
+Users
+Content
+Roles
+Logs
+Dashboard Page: KPI cards (total users, total trips, flagged reports) + recent actions feed.
+Users Page: Table with name, email, role → inline role dropdown. Search bar.
+Content Page: Upload images (drag-drop), see current slides, replace/delete.
+Roles Page: Table of roles + permissions JSON → Add/Edit role.
+Logs Page: Paginated table of audit logs.
+6) Local Uploads
+Store uploaded images in /uploads/admin.
+Restrict type: images only (jpg, png, webp).
+Limit file size: 2MB.
+Serve via /media/admin/:filename.
+Sanitize filename → UUIDs.
+7) Custom Domain Mapping
+In Replit, open Web Settings → Custom Domains.
+Add www.theceylonx.com.
+Set up DNS in your registrar (Namecheap/Cloudflare):
+Add CNAME www → cname.repl.co.
+For /admin, React router will serve the admin app (same domain, different route).
+Verify SSL cert is issued (Replit handles HTTPS automatically).
+8) Acceptance Criteria
+/admin is accessible only via Gmail/Replit OAuth.
+theceylonx@gmail.com is always superadmin.
+Dashboard shows KPIs + recent logs.
+Users page lists/searches users, roles editable.
+Content page uploads images to /uploads/admin, lists slides, allows replace.
+Roles page lists roles, allows creation with JSON permissions.
+Logs page shows paginated audit logs.
+All actions are logged in audit_logs.
+Sidebar navigation + clean UI like Meta Business Suite.
+Custom domain www.theceylonx.com/admin works with SSL.
+👉 Now proceed: scaffold the /admin React app with sidebar layout, build the backend /api/admin/* routes, wire OAuth auth check, set up roles + audit log, and integrate local uploads.
