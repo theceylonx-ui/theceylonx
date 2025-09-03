@@ -2632,7 +2632,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // If only "truly_free" filter (without user-specific filters), handle directly
       if (requestedFilters.length === 1 && requestedFilters[0] === 'truly_free') {
-        const freeTrips = filteredTrips.filter(trip => trip.status === 'active' && trip.seatsAvailable > 0);
+        const freeTrips = filteredTrips.filter(trip => {
+          const price = trip.price;
+          const isFree = !price || price === null || price === 'null' || price === 'NaN' || price === '0' || price === 0 || isNaN(parseFloat(price));
+          return trip.status === 'active' && trip.seatsAvailable > 0 && isFree;
+        });
         const total = freeTrips.length;
         const paginatedTrips = freeTrips.slice(offset, offset + limitNum);
         
@@ -2682,7 +2686,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             case 'my':
               return userId ? trip.organizerId === userId : false;
             case 'truly_free':
-              return trip.status === 'active' && trip.seatsAvailable > 0;
+              const price = trip.price;
+              const isFree = !price || price === null || price === 'null' || price === 'NaN' || price === '0' || price === 0 || isNaN(parseFloat(price));
+              return trip.status === 'active' && trip.seatsAvailable > 0 && isFree;
             default:
               return true; // Unknown filters are ignored
           }
@@ -2820,7 +2826,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               case 'my':
                 return userId ? trip.organizerId === userId : false;
               case 'truly_free':
-                return trip.status === 'active' && trip.seatsAvailable > 0;
+                const price = trip.price;
+                const isFree = !price || price === null || price === 'null' || price === 'NaN' || price === '0' || price === 0 || isNaN(parseFloat(price));
+                return trip.status === 'active' && trip.seatsAvailable > 0 && isFree;
               default:
                 return true;
             }
