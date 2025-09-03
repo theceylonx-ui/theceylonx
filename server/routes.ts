@@ -545,7 +545,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Cannot mark interest on own trip
       if (trip.organizerId === userId) {
-        return res.status(400).json({ message: "Cannot mark interest on your own trip" });
+        return res.status(200).json({ 
+          trip_id: tripId,
+          user_id: userId,
+          pinned: false,
+          interested: false,
+          message: "This is your own trip"
+        });
       }
 
       // Update or create the user trip flags with precedence rule: interested=true forces pinned=false
