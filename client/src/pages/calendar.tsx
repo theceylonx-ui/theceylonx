@@ -49,12 +49,15 @@ export default function CalendarPage() {
               <CardContent className="p-6">
                 <h3 className="font-semibold text-blue-900 mb-2">How to Use Your Calendar</h3>
                 <div className="text-sm text-blue-800 space-y-1">
-                  <p>• <strong>Use filter toggles</strong> to show Pinned, Interested, Your Trips, or Free Trips only</p>
-                  <p>• <strong>Click any date</strong> on the calendar to see trips for that specific day</p>
-                  <p>• <strong>Use keyboard arrows</strong> to navigate dates, Enter to toggle day panel</p>
-                  <p>• <strong>Trip icons</strong> show status: ⭐ Interested, 📌 Pinned, 👤 Your Trip, 💚 Free</p>
-                  <p>• <strong>Day counts</strong> appear on calendar dates showing number of available trips</p>
-                  <p>• <strong>Filters persist</strong> across page refreshes and are saved in your browser</p>
+                  <p>• <strong>Filter toggles:</strong> Use "All Trips", "Free Trips", "Pinned", "Interested", or "My Trips" to filter what you see</p>
+                  <p>• <strong>Bold dates:</strong> Calendar dates appear bold with green count badges when trips are available</p>
+                  <p>• <strong>Free Trips filter:</strong> Shows only trips with no cost (marked with 💚 Free Trip badge)</p>
+                  <p>• <strong>Click any date:</strong> View all trips for that specific day in the day preview panel</p>
+                  <p>• <strong>View Details button:</strong> Click to see full trip information, comments, and join options</p>
+                  <p>• <strong>Keyboard navigation:</strong> Use arrow keys to navigate dates, Enter to toggle day panel</p>
+                  <p>• <strong>Trip status icons:</strong> ⭐ Interested, 📌 Pinned, 👤 Your Trip, 💚 Free Trip</p>
+                  <p>• <strong>Authentication:</strong> Sign in to use personal filters (Pinned, Interested, My Trips)</p>
+                  <p>• <strong>Filter persistence:</strong> Your filter choices are saved and persist across page refreshes</p>
                 </div>
               </CardContent>
             </Card>
