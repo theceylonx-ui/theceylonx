@@ -79,6 +79,34 @@ import {
 import { db } from "./db";
 import { eq, and, or, ilike, desc, asc, gte, lte, count, sql, isNull } from "drizzle-orm";
 
+// Contact redaction utilities
+export function redactContact<T extends { contactInfo?: string | null; whatsapp?: string | null; email?: string | null; phone?: string | null }>(userOrTrip: T): T & { contactRedacted?: boolean } {
+  return {
+    ...userOrTrip,
+    contactInfo: undefined,
+    whatsapp: undefined,
+    email: undefined, 
+    phone: undefined,
+    contactRedacted: true
+  } as T & { contactRedacted?: boolean };
+}
+
+export function shouldRedactContact(userId?: string, resourceOwnerId?: string): boolean {
+  // Only show contact details to the owner themselves
+  return !userId || userId !== resourceOwnerId;
+}
+
+// Permission helpers for contact sharing
+export function canShareContact(userId: string, threadId: string, storage: DatabaseStorage): Promise<boolean> {
+  // Check if user is the trip organizer
+  return storage.isThreadOrganizer(userId, threadId);
+}
+
+export function canViewContactMessage(userId: string, threadId: string, storage: DatabaseStorage): Promise<boolean> {
+  // Check if user is organizer or accepted participant of the trip's thread
+  return storage.isUserInThread(threadId, userId);
+}
+
 export interface IStorage {
   // User operations (for Replit auth)
   getUser(id: string): Promise<User | undefined>;
@@ -372,7 +400,7 @@ export class DatabaseStorage implements IStorage {
     return newTrip;
   }
 
-  async getTrip(id: string): Promise<TripWithOrganizer | undefined> {
+  async getTrip(id: string, requestingUserId?: string): Promise<TripWithOrganizer | undefined> {
     const result = await db
       .select()
       .from(trips)
@@ -382,7 +410,12 @@ export class DatabaseStorage implements IStorage {
     if (result.length === 0) return undefined;
     
     const { trips: trip, users: organizer } = result[0];
-    return { ...trip, organizer: organizer! };
+    
+    // Apply contact redaction if not the trip organizer
+    const shouldRedact = shouldRedactContact(requestingUserId, trip.organizerId);
+    const redactedTrip = shouldRedact ? redactContact(trip) : trip;
+    
+    return { ...redactedTrip, organizer: organizer! };
   }
 
   async updateTrip(id: string, trip: Partial<InsertTrip>): Promise<Trip> {

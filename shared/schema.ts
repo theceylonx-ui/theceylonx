@@ -23,6 +23,7 @@ export const difficultyEnum = pgEnum('difficulty', ['easy', 'moderate', 'challen
 export const userRoleEnum = pgEnum('user_role', ['user', 'moderator', 'admin']);
 export const reportStatusEnum = pgEnum('report_status', ['open', 'investigating', 'resolved', 'dismissed']);
 export const notificationPriorityEnum = pgEnum('notification_priority', ['critical', 'high', 'normal', 'low']);
+export const messageTypeEnum = pgEnum('message_type', ['text', 'contact_card']);
 
 // Session storage table for Replit Auth
 export const sessions = pgTable(
@@ -235,10 +236,24 @@ export const messages = pgTable("messages", {
   threadId: varchar("thread_id").notNull(),
   authorId: varchar("author_id").notNull(),
   body: text("body").notNull(),
-  messageType: varchar("message_type").default("text"), // text, contact_share
-  contactInfo: varchar("contact_info"), // For contact sharing messages
+  type: messageTypeEnum("type").default("text"),
+  payload: jsonb("payload"), // For structured contact data
   createdAt: timestamp("created_at").defaultNow(),
-});
+  isDeleted: boolean("is_deleted").default(false),
+}, (table) => ({
+  threadIdCreatedAtIdx: index("messages_thread_id_created_at_idx").on(table.threadId, table.createdAt),
+}));
+
+// Contact shares audit table
+export const contactShares = pgTable("contact_shares", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  threadId: varchar("thread_id").notNull(),
+  organizerId: varchar("organizer_id").notNull(),
+  payload: jsonb("payload").notNull(),
+  sharedAt: timestamp("shared_at").defaultNow(),
+}, (table) => ({
+  threadIdIdx: index("contact_shares_thread_id_idx").on(table.threadId),
+}));
 
 // Trip Interest Requests table for "I'm Interested" functionality
 export const tripInterestRequests = pgTable("trip_interest_requests", {
@@ -1104,3 +1119,13 @@ export type UserPersonalization = typeof userPersonalization.$inferSelect;
 // Pinned trips types
 export type PinnedTrip = typeof pinnedTrips.$inferSelect;
 export type InsertPinnedTrip = typeof pinnedTrips.$inferInsert;
+
+// Contact sharing types
+export type ContactShare = typeof contactShares.$inferSelect;
+export type InsertContactShare = typeof contactShares.$inferInsert;
+
+// Enhanced message types with contact card support
+export type MessageWithContactCard = Message & {
+  author?: User;
+  canViewContactDetails?: boolean;
+};

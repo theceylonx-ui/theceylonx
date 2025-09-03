@@ -294,6 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/trips', async (req, res) => {
     try {
+      const userId = (req as any).user?.id; // May be undefined for unauthenticated users  
       const page = req.query.page ? Number(req.query.page) : 1;
       const limit = req.query.limit ? Number(req.query.limit) : 8;
       const offset = (page - 1) * limit;
@@ -352,13 +353,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/trips/:id', async (req, res) => {
     try {
-      const trip = await storage.getTrip(req.params.id);
+      const userId = (req as any).user?.id; // May be undefined for unauthenticated users
+      const trip = await storage.getTrip(req.params.id, userId);
       if (!trip) {
         return res.status(404).json({ message: "Trip not found" });
       }
       
       // Track trip view (for authenticated users and anonymous users)
-      const userId = (req as any).user?.id; // Get user if authenticated
+      const viewerUserId = userId; // Use already defined userId
       const viewerIp = req.ip || req.connection.remoteAddress;
       const userAgent = req.get('User-Agent');
       
@@ -2021,8 +2023,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         threadId,
         authorId: userId,
         body: "Contact details shared",
-        messageType: "contact_share",
-        contactInfo: trip.contactInfo,
+        type: "contact_card",
+        payload: {
+          whatsapp: trip.contactInfo.includes('@') ? null : trip.contactInfo,
+          email: trip.contactInfo.includes('@') ? trip.contactInfo : null,
+          note: "Contact details shared by organizer"
+        },
       });
 
       // Get other users in thread for notifications

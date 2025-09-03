@@ -1,0 +1,94 @@
+You are the lead engineer for Ceylon Expand. Implement a privacy feature so organizer WhatsApp/email never show on trip cards or public APIs; they are revealed only inside the trip chat after the organizer clicks Share Contact. Keep changes surgical and backward-compatible.
+0) Objective
+Redact organizer contact details (WhatsApp, email) from all public trip listings and detail views.
+Add a Share Contact action in the accepted trip chat. When clicked by the organizer, send a special contact card message visible to participants of that trip thread only.
+Ensure contacts are never exposed to non-accepted users or via public endpoints.
+Full audit + tests.
+1) Data & Migrations (Drizzle)
+If organizer contact lives on users or trips, keep storage as-is but add a privacy wrapper. Also add:
+chat_messages.type ENUM('text','contact_card') DEFAULT 'text'
+chat_messages.payload JSONB NULL (for structured contact data)
+chat_threads(id, tripId, organizerId) if not present (or reuse existing)
+contact_shares(id, threadId, organizerId, sharedAt TIMESTAMP, payload JSONB)
+Indexes: chat_messages(threadId, createdAt), contact_shares(threadId)
+No PII denormalization into list endpoints. Contacts remain only in users/trips private fields and contact_card messages.
+2) Redaction Layer (Server)
+Create a small util: redactContact(userOrTrip) → returns object with whatsapp, email, phone removed or replaced with { locked: true }.
+Apply redaction in:
+GET /api/trips (list)
+GET /api/trips/:id (details)
+Any search/recommendation payloads
+Ensure organizer still sees their own contacts in their dashboard endpoints, but never in public responses.
+3) Permissions
+Define helper: canShareContact(userId, threadId) → true only if userId === thread.organizerId.
+Define helper: canViewContactMessage(userId, threadId) → true only for organizer and accepted participants of that trip’s thread.
+Disallow share until the interest request is accepted and chat thread exists.
+4) Chat API — Share Contact
+Add routes:
+POST /api/chat/threads/:threadId/share-contact
+→ 201 { messageId, type:'contact_card' }
+
+GET  /api/chat/threads/:threadId/messages
+→ returns messages; if type==='contact_card', include payload only if canViewContactMessage(...)
+Behavior:
+On POST, server pulls the organizer’s current contact fields (prefer per-trip override if you have one; else from user profile), validates/sanitizes, and writes a chat_messages row:
+{
+  type: 'contact_card',
+  payload: {
+    whatsapp: '+94xxxxxxx',   // optional
+    email: 'name@example.com'  // optional
+    note: 'Safe to contact via WhatsApp 9am–6pm'
+  }
+}
+Emit WebSocket event chat:message with type:'contact_card' (payload stripped server-side for unauthorized listeners).
+5) Frontend (Minimal UI)
+Trip Card / Trip Details: replace visible contact with a lock UI:
+Badge “Contact details are private”
+CTA: “Request to Join & Open Chat”
+Chat Thread (accepted users):
+If current user is organizer: show button Share Contact (top of thread and in composer kebab menu).
+Confirmation modal copy:
+“Share your WhatsApp/email with this trip’s participants? This will be visible only in this chat.”
+On success: render a Contact Card message:
+WhatsApp (tap to open)
+Email (tap to mailto)
+Small “Shared by Organizer” label + timestamp
+Non-accepted users in chat (shouldn’t exist): block with 403 and UI toast.
+Copy text suggestions
+Locked badge: “🔒 Contact details are shared only after the organizer accepts you.”
+Button: “Share Contact”
+Toast success: “Contact shared with participants.”
+6) Security & Privacy
+Never include contact fields in trip JSON or recommendation payloads.
+Return contacts only inside contact_card messages to authorized users.
+Sanitize contact fields:
+Normalize E.164 for WhatsApp/phone; validate email.
+Rate-limit share-contact to 3 per hour per thread; idempotent if payload unchanged.
+Add audit_logs entry: { action:'SHARE_CONTACT', actorUserId, threadId, tripId }.
+7) WebSockets
+Broadcast chat:message event on share; payload for unauthorized sockets must exclude payload body for contact_card (send stub {type:'contact_card', redacted:true}).
+8) Tests (Integration)
+Public trip list/detail: assert no whatsapp/email leakage.
+Attempt to fetch messages as:
+Unrelated user → should not receive contact_card payload.
+Accepted participant → should receive payload.
+Organizer can call POST /share-contact only after acceptance; before acceptance → 403.
+Redaction unit tests on serializers.
+9) Admin/Moderation
+Admin API can view contact_card for moderation only (rbac: admin|moderator); never displayed publicly.
+Add ability to retract contact messages (soft delete) in case of abuse:
+DELETE /api/chat/messages/:id → organizer or admin; message becomes {deleted: true}.
+10) Acceptance Criteria
+No public endpoint leaks organizer WhatsApp/email.
+Accepted participants see a clear Contact Card once organizer shares.
+Organizer-only action; enforced by server.
+WebSocket and REST both conform to visibility rules.
+Logs/audit written; rate limits applied.
+All new tests pass; typecheck/lint clean.
+11) Deliverables
+Drizzle migration(s) & model updates.
+New endpoints + handlers + guards.
+Frontend UI changes (lock badge, CTA, chat button, modal, contact card component).
+Tests (API + minimal UI test if applicable).
+OPERATIONS.md section describing configuration & behavior.
+Proceed incrementally with clear commits. If something already exists, verify and reuse. Fix any errors encountered (type, runtime, lint, tests) before completion.
