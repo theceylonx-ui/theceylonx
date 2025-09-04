@@ -1,0 +1,104 @@
+“Restructure Ask a Question / Community Page for Better UX & Consistency”
+You are the lead engineer for Ceylon Expand. Restructure the Community / Ask a Question system (/community and /question/:id) for a better user experience while keeping full CRUD and anonymity features.
+0) Core Goals
+Improve clarity & discoverability (easy to browse, search, and post).
+Make Ask a Question flow smooth and intuitive.
+Ensure anonymous posting works perfectly across create/edit/delete.
+Enforce consistency (no undefined/null names, fallback display names/avatars always shown).
+Align UI structure with modern Q&A platforms (Quora, Stack Overflow style).
+1) Community Page (/community)
+Header Section
+Keep title/subtitle but simplify text hierarchy.
+Add subtle stats bar below subtitle: “12,430 Questions · 38,210 Answers · 2,940 Topics.”
+Primary CTA
+If authenticated → prominent “Ask a Question” button.
+If unauthenticated → same button, but triggers sign-in prompt instead of redirecting.
+Content Controls (moved into sticky top bar)
+Search bar (full width, placeholder: “Search questions about Sri Lanka travel…”).
+Topic filter (dropdown with categories; “Others” last).
+Sort options: Top, New, Unanswered.
+Keep filters sticky as user scrolls.
+Question List (cards → feed-like style)
+Layout: full-width cards with:
+Title (clickable → Question Detail).
+Body preview (2 lines, ellipses).
+Author info (normalized user, or “Anonymous”).
+Badges: Topic, Tags.
+Stats: Votes, Answers, Timestamp.
+Expand on hover → show preview of first answer.
+Pagination → keep but modernize UI (Next/Prev + page count).
+2) Create Question Dialog
+Open in modal dialog, not redirect.
+Form fields:
+Title (required, min 10 chars).
+Body (required, min 20 chars, support basic Markdown).
+Topic (dropdown, optional).
+Tags (chips input, optional).
+Anonymous toggle (“Hide my name and post as Anonymous”).
+Add inline validation (live character counts).
+Show preview of “how your question will look” before posting.
+Submit → call POST /api/community/questions.
+3) Question Detail Page (/question/:id)
+Question Display
+Full content at top with rich formatting.
+Author info:
+If anonymous → show “Anonymous” + placeholder avatar.
+Else → normalized displayName + avatar initials.
+Actions:
+Upvote/Downvote (with count).
+Share (social links + copy URL).
+Edit/Delete (visible to author or admin).
+Answers Section
+Each answer in card layout with:
+Author info (same normalization rules).
+Upvote/Downvote.
+Timestamp.
+Edit/Delete if owner.
+“Best Answer” marking: only question author can mark.
+Answer form: visible only if authenticated.
+Navigation
+Breadcrumb: “Community > Topic > Question Title.”
+Related questions sidebar → show 3–5 similar ones.
+4) Backend & Data Flow
+POST /api/community/questions
+Accepts { title, content, topicId?, tags?, isAnonymous }.
+Requires auth.
+Writes isAnonymous flag to DB.
+PUT /api/community/questions/:id
+Auth required; only author or admin.
+Editable fields: title, content, topicId, tags, isAnonymous.
+Updates updatedAt.
+DELETE /api/community/questions/:id
+Author or admin only.
+Soft delete → deletedAt + hide in UI.
+GET /api/community/questions
+Supports search, topicId, sort, page.
+Returns list with normalized user or { displayName: "Anonymous" }.
+GET /api/community/questions/:id
+Returns question, answers, votes, author normalized.
+Redact details if isAnonymous=true.
+User History + Logs
+Insert events into user_history + audit_logs for ASK_QUESTION, EDIT_QUESTION, DELETE_QUESTION.
+5) UI Enhancements
+Empty States:
+No questions in topic → “Be the first to ask a question about this topic.”
+No search results → show CTA to post.
+Loading States: skeletons for cards + detail page.
+Error States: retry button with friendly copy.
+Mobile Optimized: cards stack vertically, filters collapse into dropdown.
+6) Tests
+Authenticated user posts → visible in feed.
+Anonymous user posts → shows “Anonymous,” never leaks real name.
+Author edits question → updates in feed + detail.
+Author deletes → disappears from feed (soft delete).
+Sorting/filtering works correctly.
+Unauthenticated → can view but must sign in to post/vote/answer.
+7) Acceptance Criteria
+Community page has modern Q&A layout with sticky filters.
+Ask Question flow works with modal dialog + preview.
+Anonymous toggle works across post/edit/delete.
+Author-only controls enforced for edit/delete.
+Detail page shows full content, answers, related sidebar.
+User history + audit logs track actions.
+All empty/loading/error states covered.
+100% consistency: no null/undefined names/avatars.
