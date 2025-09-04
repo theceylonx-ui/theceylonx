@@ -334,6 +334,7 @@ function ProfileEditor({ profile, onUpdate }: any) {
   const [isLoading, setIsLoading] = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [selectedAvatarStyle, setSelectedAvatarStyle] = useState<string | null>(null);
+  const [previewAvatarUrl, setPreviewAvatarUrl] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -497,7 +498,7 @@ function ProfileEditor({ profile, onUpdate }: any) {
                         })}
                       </div>
                     </div>
-                  ) : (
+                  ) : !previewAvatarUrl ? (
                     <div>
                       <div className="flex items-center justify-between mb-4">
                         <h4 className="font-medium">
@@ -507,7 +508,10 @@ function ProfileEditor({ profile, onUpdate }: any) {
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => setSelectedAvatarStyle(null)}
+                          onClick={() => {
+                            setSelectedAvatarStyle(null);
+                            setPreviewAvatarUrl(null);
+                          }}
                         >
                           ← Back
                         </Button>
@@ -517,44 +521,102 @@ function ProfileEditor({ profile, onUpdate }: any) {
                         <Button
                           type="button"
                           className="w-full bg-ceylon-green hover:bg-ceylon-green-dark text-white"
-                          onClick={async () => {
-                            try {
-                              // Generate random avatar within selected style
-                              const randomSeed = Math.random().toString(36).substring(7);
-                              const randomUrl = `https://api.dicebear.com/7.x/${selectedAvatarStyle}/svg?seed=${randomSeed}&size=128`;
-                              
-                              // Update profile with new avatar immediately
-                              const response = await apiRequest('PUT', '/api/profile/picture', {
-                                profileImageUrl: randomUrl
-                              });
-                              
-                              if (response.ok) {
-                                setFormData({...formData, profileImageUrl: randomUrl});
-                                setShowAvatarPicker(false);
-                                setSelectedAvatarStyle(null);
-                                toast({
-                                  title: "Avatar updated!",
-                                  description: `Random ${selectedAvatarStyle.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} avatar selected and saved.`,
-                                });
-                              }
-                            } catch (error) {
-                              console.error('Avatar update error:', error);
-                              toast({
-                                title: "Error",
-                                description: "Failed to update avatar. Please try again.",
-                                variant: "destructive",
-                              });
-                            }
+                          onClick={() => {
+                            // Generate random avatar within selected style for preview
+                            const randomSeed = Math.random().toString(36).substring(7);
+                            const randomUrl = `https://api.dicebear.com/7.x/${selectedAvatarStyle}/svg?seed=${randomSeed}&size=128`;
+                            setPreviewAvatarUrl(randomUrl);
                           }}
                           data-testid="button-choose-random"
                         >
-                          🎲 Choose Random & Update Profile
+                          🎲 Choose Random
                         </Button>
                       </div>
                       
                       <p className="text-sm text-gray-600 text-center">
-                        Click to get a random avatar in this style and update your profile
+                        Click to generate a random avatar in this style
                       </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-medium">Preview Avatar</h4>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setPreviewAvatarUrl(null);
+                          }}
+                        >
+                          ← Try Another
+                        </Button>
+                      </div>
+                      
+                      {/* Preview the generated avatar */}
+                      <div className="text-center mb-6">
+                        <div className="inline-block p-4 bg-gray-50 rounded-lg mb-4">
+                          <img
+                            src={previewAvatarUrl}
+                            alt="Preview Avatar"
+                            className="w-24 h-24 rounded-full"
+                          />
+                        </div>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Do you like this {selectedAvatarStyle?.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} avatar?
+                        </p>
+                        
+                        <div className="space-y-3">
+                          <Button
+                            type="button"
+                            className="w-full bg-ceylon-green hover:bg-ceylon-green-dark text-white"
+                            onClick={async () => {
+                              try {
+                                // Update profile with the previewed avatar
+                                const response = await apiRequest('PUT', '/api/profile/picture', {
+                                  profileImageUrl: previewAvatarUrl
+                                });
+                                
+                                if (response.ok) {
+                                  setFormData({...formData, profileImageUrl: previewAvatarUrl});
+                                  setShowAvatarPicker(false);
+                                  setSelectedAvatarStyle(null);
+                                  setPreviewAvatarUrl(null);
+                                  toast({
+                                    title: "Avatar updated!",
+                                    description: `Your new ${selectedAvatarStyle?.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} avatar has been saved.`,
+                                  });
+                                }
+                              } catch (error) {
+                                console.error('Avatar update error:', error);
+                                toast({
+                                  title: "Error",
+                                  description: "Failed to update avatar. Please try again.",
+                                  variant: "destructive",
+                                });
+                              }
+                            }}
+                            data-testid="button-use-avatar"
+                          >
+                            ✅ Use This Avatar & Update Profile
+                          </Button>
+                          
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => {
+                              // Generate another random avatar
+                              const randomSeed = Math.random().toString(36).substring(7);
+                              const randomUrl = `https://api.dicebear.com/7.x/${selectedAvatarStyle}/svg?seed=${randomSeed}&size=128`;
+                              setPreviewAvatarUrl(randomUrl);
+                            }}
+                            data-testid="button-try-another"
+                          >
+                            🎲 Try Another Random
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   )}
                   
