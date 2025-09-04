@@ -516,7 +516,7 @@ export default function QuestionDetailPage() {
                         />
                       ) : (
                         <p className="text-gray-700 whitespace-pre-wrap">
-                          {answer.body.replace(/<[^>]*>/g, '')}
+                          {answer.body.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()}
                         </p>
                       )}
                     </div>

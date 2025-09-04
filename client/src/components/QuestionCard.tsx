@@ -75,7 +75,7 @@ export function QuestionCard({ question, onEdit, onDelete, currentUserId, showPr
 
         {/* Question Body Preview */}
         <p className="text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
-          {bodyPreview}
+          {bodyPreview.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()}
         </p>
 
         {/* Tags and Topic */}
