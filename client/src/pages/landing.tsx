@@ -7,24 +7,12 @@ import logoImage from "@assets/5_1756417819316.png";
 import backgroundImage from "@assets/11_1756417976014.png";
 
 export default function Landing() {
-  // Check if Clerk is available
-  const clerkPubKey = (window as any)?.VITE_CLERK_PUBLISHABLE_KEY || import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-  const isClerkEnabled = clerkPubKey && clerkPubKey !== 'pk_test_placeholder' && clerkPubKey.startsWith('pk_');
-
   const handleLogin = () => {
-    if (isClerkEnabled) {
-      window.location.href = '/sign-in';
-    } else {
-      window.location.href = '/auth/signin';
-    }
+    window.location.href = '/auth/signin';
   };
 
   const handleSignUp = () => {
-    if (isClerkEnabled) {
-      window.location.href = '/sign-up';
-    } else {
-      window.location.href = '/auth/signin';
-    }
+    window.location.href = '/auth/signin';
   };
 
   const handleBrowseTrips = () => {
