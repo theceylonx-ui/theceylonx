@@ -1297,6 +1297,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Legacy methods - will be removed in future versions
+  
+  // TODO: Fix TypeScript errors in audit logging and contact sharing
+  // These errors don't affect voting functionality
 
   // ML Recommendations implementation
   async getUserPreferences(userId: string): Promise<UserPreferences | undefined> {
