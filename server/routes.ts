@@ -1939,6 +1939,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const result = await storage.upsertVote(userId, votableType, votableId, value);
       
+      // Determine response message
+      let message = "";
+      if (value === 0) {
+        message = "Vote cleared";
+      } else if (value === 1) {
+        message = "Upvoted successfully";
+      } else {
+        message = "Vote processed";
+      }
+      
       // Create notification for upvotes only (to reduce spam)
       if (value === 1) {
         try {
@@ -1984,7 +1994,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         vote: result.vote,
         score: result.score,
-        message: value === 0 ? "Vote cleared" : value === 1 ? "Upvoted" : "Downvoted"
+        message: message
       });
     } catch (error) {
       console.error("Error processing vote:", error);
