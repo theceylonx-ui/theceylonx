@@ -66,10 +66,8 @@ export default function VotingControls({
         queryClient.invalidateQueries({ queryKey: ['/api/questions'] }); // Also try without the specific question ID
       }
       
-      toast({ 
-        title: response.message,
-        description: `New score: ${response.score}`
-      });
+      // Don't show toast for vote actions to reduce noise
+      // The score is already updating visually
     },
     onError: (error) => {
       // Revert optimistic update to the original score from props
