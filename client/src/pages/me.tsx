@@ -15,7 +15,9 @@ import {
   Activity,
   MapPin,
   Calendar,
-  Mail
+  Mail,
+  Home,
+  ArrowLeft
 } from "lucide-react";
 import { getDisplayName, getInitials } from "@/lib/profileUtils";
 import { Button } from "@/components/ui/button";
@@ -61,6 +63,19 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Navigation Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <Button
+            variant="outline"
+            onClick={() => setLocation('/')}
+            className="flex items-center gap-2"
+            data-testid="button-home"
+          >
+            <Home className="h-4 w-4" />
+            Back to Home
+          </Button>
+        </div>
+
         {/* Profile Header */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
           <div className="flex items-center space-x-6">
@@ -288,9 +303,27 @@ function ProfileEditor({ profile, onUpdate }: any) {
     bio: profile.bio || '',
     location: profile.location || '',
     languages: profile.languages || [],
-    links: profile.linksJson || {}
+    links: profile.linksJson || {},
+    profileImageUrl: profile.profileImageUrl || ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+
+  // Predefined avatar options
+  const avatarOptions = [
+    'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1521119989659-a83eee488004?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1463453091185-61582044d556?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=150&h=150&fit=crop&crop=face'
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -323,6 +356,83 @@ function ProfileEditor({ profile, onUpdate }: any) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Profile Picture Selection */}
+          <div className="space-y-4">
+            <Label>Profile Picture</Label>
+            <div className="flex items-center space-x-4">
+              <Avatar className="h-20 w-20">
+                <AvatarImage src={formData.profileImageUrl} alt="Profile" />
+                <AvatarFallback className="text-lg">
+                  {getInitials(profile)}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowAvatarPicker(true)}
+                >
+                  Change Avatar
+                </Button>
+                {formData.profileImageUrl && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="ml-2"
+                    onClick={() => setFormData({...formData, profileImageUrl: ''})}
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Avatar Selection Modal */}
+            {showAvatarPicker && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
+                  <h3 className="text-lg font-semibold mb-4">Choose Your Avatar</h3>
+                  <div className="grid grid-cols-4 gap-3 mb-4">
+                    {avatarOptions.map((url, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        className={`relative rounded-full overflow-hidden border-2 transition-all ${
+                          formData.profileImageUrl === url 
+                            ? 'border-ceylon-green ring-2 ring-ceylon-green ring-offset-2' 
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        onClick={() => setFormData({...formData, profileImageUrl: url})}
+                      >
+                        <img
+                          src={url}
+                          alt={`Avatar option ${index + 1}`}
+                          className="w-16 h-16 object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowAvatarPicker(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => setShowAvatarPicker(false)}
+                    >
+                      Done
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label htmlFor="displayName">Display Name</Label>
@@ -376,36 +486,128 @@ function ProfileEditor({ profile, onUpdate }: any) {
 
 // Travel Preferences Component (reuse existing logic)
 function TravelPreferences({ preferences, onUpdate }: any) {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { toast } = useToast();
+  
+  const handleUpdateClick = () => {
+    setIsUpdating(true);
+    toast({
+      title: "Redirecting...",
+      description: "Taking you to travel preferences settings.",
+    });
+    setTimeout(() => {
+      window.location.href = '/travel-style-settings';
+    }, 500);
+  };
+
+  const completionPercentage = () => {
+    let completed = 0;
+    let total = 4;
+    if (preferences?.vibe?.length > 0) completed++;
+    if (preferences?.when?.length > 0) completed++;
+    if (preferences?.companions?.length > 0) completed++;
+    if (preferences?.interests?.length > 0) completed++;
+    return Math.round((completed / total) * 100);
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Travel Style Preferences</CardTitle>
+        <CardTitle className="flex items-center justify-between">
+          Travel Style Preferences
+          <Badge variant={completionPercentage() === 100 ? "default" : "secondary"} className="ml-2">
+            {completionPercentage()}% Complete
+          </Badge>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
-            Your travel preferences help us recommend better trips for you.
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-600">
+              Your travel preferences help us recommend better trips for you.
+            </p>
+            {completionPercentage() < 100 && (
+              <div className="w-32 bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-ceylon-green h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${completionPercentage()}%` }}
+                ></div>
+              </div>
+            )}
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>Travel Vibe</Label>
+              <Label className="flex items-center gap-2">
+                Travel Vibe
+                {preferences?.vibe?.length > 0 && <span className="text-green-600 text-sm">✓</span>}
+              </Label>
               <div className="flex flex-wrap gap-2 mt-2">
-                {preferences?.vibe?.map((item: string) => (
-                  <Badge key={item} variant="secondary">{item}</Badge>
-                )) || <span className="text-sm text-gray-500">None selected</span>}
+                {preferences?.vibe?.length > 0 ? (
+                  preferences.vibe.map((item: string) => (
+                    <Badge key={item} variant="default" className="bg-ceylon-green">{item}</Badge>
+                  ))
+                ) : (
+                  <span className="text-sm text-gray-500 italic">None selected - update your preferences!</span>
+                )}
               </div>
             </div>
             <div>
-              <Label>When You Travel</Label>
+              <Label className="flex items-center gap-2">
+                When You Travel
+                {preferences?.when?.length > 0 && <span className="text-green-600 text-sm">✓</span>}
+              </Label>
               <div className="flex flex-wrap gap-2 mt-2">
-                {preferences?.when?.map((item: string) => (
-                  <Badge key={item} variant="secondary">{item}</Badge>
-                )) || <span className="text-sm text-gray-500">None selected</span>}
+                {preferences?.when?.length > 0 ? (
+                  preferences.when.map((item: string) => (
+                    <Badge key={item} variant="default" className="bg-ceylon-green">{item}</Badge>
+                  ))
+                ) : (
+                  <span className="text-sm text-gray-500 italic">None selected - update your preferences!</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <Label className="flex items-center gap-2">
+                Travel Companions
+                {preferences?.companions?.length > 0 && <span className="text-green-600 text-sm">✓</span>}
+              </Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {preferences?.companions?.length > 0 ? (
+                  preferences.companions.map((item: string) => (
+                    <Badge key={item} variant="default" className="bg-ceylon-green">{item}</Badge>
+                  ))
+                ) : (
+                  <span className="text-sm text-gray-500 italic">None selected - update your preferences!</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <Label className="flex items-center gap-2">
+                Interests
+                {preferences?.interests?.length > 0 && <span className="text-green-600 text-sm">✓</span>}
+              </Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {preferences?.interests?.length > 0 ? (
+                  preferences.interests.slice(0, 3).map((item: string) => (
+                    <Badge key={item} variant="default" className="bg-ceylon-green">{item}</Badge>
+                  ))
+                ) : (
+                  <span className="text-sm text-gray-500 italic">None selected - update your preferences!</span>
+                )}
+                {preferences?.interests?.length > 3 && (
+                  <Badge variant="secondary">+{preferences.interests.length - 3} more</Badge>
+                )}
               </div>
             </div>
           </div>
-          <Button onClick={() => window.location.href = '/travel-style-settings'}>
-            Update Travel Preferences
+          <Button 
+            onClick={handleUpdateClick}
+            disabled={isUpdating}
+            className="w-full"
+            data-testid="button-update-preferences"
+          >
+            {isUpdating ? "Redirecting..." : "Update Travel Preferences"}
           </Button>
         </div>
       </CardContent>
@@ -474,18 +676,47 @@ function UserActivity() {
             ) : trips?.length > 0 ? (
               <div className="space-y-4">
                 {trips.map((trip: any) => (
-                  <div key={trip.id} className="border rounded-lg p-4">
-                    <h3 className="font-semibold">{trip.title}</h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {trip.fromLocation} → {trip.toLocation}
-                    </p>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                      <span>Price: ${trip.price}</span>
-                      <span>Seats: {trip.seatsAvailable}</span>
-                      <Badge variant={trip.status === 'active' ? 'default' : 'secondary'}>
-                        {trip.status}
-                      </Badge>
+                  <div key={trip.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg">{trip.title}</h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {trip.fromLocation} → {trip.toLocation}
+                        </p>
+                        <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                          <span>💰 ${trip.price}</span>
+                          <span>👥 {trip.seatsAvailable} seats</span>
+                          <span>📅 {trip.date ? new Date(trip.date).toLocaleDateString() : 'Date TBD'}</span>
+                          <Badge variant={trip.status === 'active' ? 'default' : 'secondary'} className="ml-2">
+                            {trip.status}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2 ml-4">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => window.location.href = `/trip/${trip.id}`}
+                          data-testid={`button-view-trip-${trip.id}`}
+                        >
+                          View Details
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-blue-600 hover:text-blue-700"
+                          onClick={() => window.location.href = `/trip/${trip.id}/edit`}
+                          data-testid={`button-edit-trip-${trip.id}`}
+                        >
+                          ✏️ Edit
+                        </Button>
+                      </div>
                     </div>
+                    {trip.notes && (
+                      <div className="mt-3 p-2 bg-gray-50 rounded text-sm">
+                        <strong>Notes:</strong> {trip.notes}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -672,7 +903,6 @@ function PrivacySettings({ privacy, onUpdate }: any) {
   const { toast } = useToast();
   const [settings, setSettings] = useState({
     visibility: privacy?.visibility ?? 'public',
-    dmPolicy: privacy?.dmPolicy ?? 'everyone',
     showOnline: privacy?.showOnline ?? true,
     showJoinedTrips: privacy?.showJoinedTrips ?? true,
     cityVisibility: privacy?.cityVisibility ?? 'show'
@@ -720,18 +950,7 @@ function PrivacySettings({ privacy, onUpdate }: any) {
           </select>
         </div>
 
-        <div>
-          <Label>Direct Message Policy</Label>
-          <select
-            value={settings.dmPolicy}
-            onChange={(e) => setSettings({...settings, dmPolicy: e.target.value})}
-            className="w-full mt-2 p-2 border rounded"
-          >
-            <option value="everyone">Everyone can message</option>
-            <option value="followers">Followers only</option>
-            <option value="nobody">Nobody</option>
-          </select>
-        </div>
+        {/* Direct Message Policy removed - messaging is handled through trip-based chat system */}
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
