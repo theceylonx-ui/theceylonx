@@ -333,10 +333,7 @@ function ProfileEditor({ profile, onUpdate }: any) {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
-
-  // Predefined avatar options
-  // Get diverse avatar options using DiceBear API with different styles
-  const avatarOptions = getAvatarOptions(profile?.id || 'default');
+  const [selectedAvatarStyle, setSelectedAvatarStyle] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -401,17 +398,20 @@ function ProfileEditor({ profile, onUpdate }: any) {
               </div>
             </div>
 
-            {/* Enhanced Avatar Selection Modal */}
+            {/* Simple Avatar Selection Modal */}
             {showAvatarPicker && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-semibold">Choose Your Avatar</h3>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => setShowAvatarPicker(false)}
+                      onClick={() => {
+                        setShowAvatarPicker(false);
+                        setSelectedAvatarStyle(null);
+                      }}
                     >
                       ✕
                     </Button>
@@ -422,9 +422,6 @@ function ProfileEditor({ profile, onUpdate }: any) {
                     <h4 className="font-medium mb-3 flex items-center gap-2">
                       📸 Upload Your Own Picture
                     </h4>
-                    <p className="text-sm text-gray-600 mb-3">
-                      Upload a custom profile picture (max 5MB, JPG/PNG)
-                    </p>
                     <ObjectUploader
                       onGetUploadParameters={async () => {
                         const response = await apiRequest('POST', '/api/profile/upload-url');
@@ -443,6 +440,7 @@ function ProfileEditor({ profile, onUpdate }: any) {
                         }).then(() => {
                           setFormData({...formData, profileImageUrl: uploadUrl});
                           setShowAvatarPicker(false);
+                          setSelectedAvatarStyle(null);
                           toast({
                             title: "Profile picture updated!",
                             description: "Your new profile picture has been saved.",
@@ -466,83 +464,93 @@ function ProfileEditor({ profile, onUpdate }: any) {
                   {/* Divider */}
                   <div className="flex items-center gap-4 mb-6">
                     <div className="flex-1 h-px bg-gray-200"></div>
-                    <span className="text-sm text-gray-500">or choose from avatars</span>
+                    <span className="text-sm text-gray-500">or choose avatar style</span>
                     <div className="flex-1 h-px bg-gray-200"></div>
                   </div>
                   
-                  {/* Random Avatar Button */}
-                  <div className="mb-4">
+                  {/* Avatar Style Selection */}
+                  {!selectedAvatarStyle ? (
+                    <div>
+                      <h4 className="font-medium mb-3">Select Avatar Style:</h4>
+                      <div className="grid grid-cols-2 gap-3 mb-4">
+                        {AVATAR_STYLES.slice(0, 8).map((styleName) => {
+                          const displayName = styleName.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                          const sampleUrl = `https://api.dicebear.com/7.x/${styleName}/svg?seed=sample-${styleName}&size=48`;
+                          
+                          return (
+                            <button
+                              key={styleName}
+                              type="button"
+                              className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                              onClick={() => setSelectedAvatarStyle(styleName)}
+                              data-testid={`style-option-${styleName}`}
+                            >
+                              <img
+                                src={sampleUrl}
+                                alt={displayName}
+                                className="w-8 h-8 rounded-full"
+                                loading="lazy"
+                              />
+                              <span className="text-sm font-medium">{displayName}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-medium">
+                          {selectedAvatarStyle.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} Style
+                        </h4>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedAvatarStyle(null)}
+                        >
+                          ← Back
+                        </Button>
+                      </div>
+                      
+                      <div className="text-center mb-6">
+                        <Button
+                          type="button"
+                          className="w-full bg-ceylon-green hover:bg-ceylon-green-dark text-white"
+                          onClick={() => {
+                            // Generate random avatar within selected style
+                            const randomSeed = Math.random().toString(36).substring(7);
+                            const randomUrl = `https://api.dicebear.com/7.x/${selectedAvatarStyle}/svg?seed=${randomSeed}&size=128`;
+                            setFormData({...formData, profileImageUrl: randomUrl});
+                            setShowAvatarPicker(false);
+                            setSelectedAvatarStyle(null);
+                            toast({
+                              title: "Avatar updated!",
+                              description: `Random ${selectedAvatarStyle.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} avatar selected.`,
+                            });
+                          }}
+                          data-testid="button-choose-random"
+                        >
+                          🎲 Choose Random
+                        </Button>
+                      </div>
+                      
+                      <p className="text-sm text-gray-600 text-center">
+                        Click "Choose Random" to get a random avatar in this style
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-end space-x-2 mt-6">
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full"
                       onClick={() => {
-                        const randomIndex = Math.floor(Math.random() * avatarOptions.length);
-                        const randomOption = avatarOptions[randomIndex];
-                        setFormData({...formData, profileImageUrl: randomOption.url});
+                        setShowAvatarPicker(false);
+                        setSelectedAvatarStyle(null);
                       }}
                     >
-                      🎲 Choose Random Avatar
-                    </Button>
-                  </div>
-
-                  {/* Avatar Options Grid - Grouped by Style */}
-                  <div className="space-y-6 mb-6 max-h-96 overflow-y-auto">
-                    {/* Group avatars by style */}
-                    {AVATAR_STYLES.slice(0, 8).map((styleName) => {
-                      const styleOptions = avatarOptions.filter(option => option.style === styleName);
-                      const displayName = styleName.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-                      
-                      return (
-                        <div key={styleName} className="border rounded-lg p-4 bg-gray-50">
-                          <h4 className="font-medium text-sm mb-3 text-gray-700">{displayName}</h4>
-                          <div className="grid grid-cols-4 gap-2">
-                            {styleOptions.map((option) => (
-                              <div key={`${option.style}-${option.variation}`} className="text-center">
-                                <button
-                                  type="button"
-                                  className={`relative rounded-full overflow-hidden border-2 transition-all hover:scale-105 ${
-                                    formData.profileImageUrl === option.url 
-                                      ? 'border-ceylon-green ring-2 ring-ceylon-green ring-offset-2' 
-                                      : 'border-gray-200 hover:border-gray-300'
-                                  }`}
-                                  onClick={() => setFormData({...formData, profileImageUrl: option.url})}
-                                  data-testid={`avatar-option-${option.style}-${option.variation}`}
-                                >
-                                  <img
-                                    src={option.url}
-                                    alt={`${option.name} ${option.variation}`}
-                                    className="w-12 h-12 object-cover"
-                                    loading="lazy"
-                                  />
-                                  {formData.profileImageUrl === option.url && (
-                                    <div className="absolute inset-0 bg-ceylon-green bg-opacity-20 flex items-center justify-center">
-                                      <div className="text-white text-sm">✓</div>
-                                    </div>
-                                  )}
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  
-                  <div className="flex justify-end space-x-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowAvatarPicker(false)}
-                    >
                       Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={() => setShowAvatarPicker(false)}
-                      className="bg-ceylon-green hover:bg-ceylon-green-dark"
-                    >
-                      Done
                     </Button>
                   </div>
                 </div>
