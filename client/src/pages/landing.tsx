@@ -7,8 +7,24 @@ import logoImage from "@assets/5_1756417819316.png";
 import backgroundImage from "@assets/11_1756417976014.png";
 
 export default function Landing() {
+  // Check if Clerk is available
+  const clerkPubKey = (window as any)?.VITE_CLERK_PUBLISHABLE_KEY || import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  const isClerkEnabled = clerkPubKey && clerkPubKey !== 'pk_test_placeholder' && clerkPubKey.startsWith('pk_');
+
   const handleLogin = () => {
-    window.location.href = '/auth/signin';
+    if (isClerkEnabled) {
+      window.location.href = '/sign-in';
+    } else {
+      window.location.href = '/auth/signin';
+    }
+  };
+
+  const handleSignUp = () => {
+    if (isClerkEnabled) {
+      window.location.href = '/sign-up';
+    } else {
+      window.location.href = '/auth/signin';
+    }
   };
 
   const handleBrowseTrips = () => {
@@ -50,7 +66,7 @@ export default function Landing() {
                 Sign In
               </Button>
               <Button 
-                onClick={handleLogin} 
+                onClick={handleSignUp} 
                 className="bg-ceylon-green text-white hover:bg-ceylon-green/90 shadow-sm"
                 data-testid="button-signup"
               >

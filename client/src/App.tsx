@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ClerkProvider } from "@clerk/clerk-react";
 import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
@@ -34,6 +35,8 @@ import TravelStyleSettings from "@/pages/travel-style-settings";
 import ProfilePage from "@/pages/me";
 import ChatBuddy from "@/pages/chat-buddy";
 import AdminReportsPage from "@/pages/admin-reports";
+import ClerkSignInPage from "@/pages/clerk-sign-in";
+import ClerkSignUpPage from "@/pages/clerk-sign-up";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -69,6 +72,8 @@ function Router() {
             <Route path="/auth/signin" component={AuthSignInPage} />
             <Route path="/auth/magic" component={AuthMagicPage} />
             <Route path="/auth/callback" component={AuthCallbackPage} />
+            <Route path="/sign-in" component={ClerkSignInPage} />
+            <Route path="/sign-up" component={ClerkSignUpPage} />
             <Route path="/destination/:city" component={DestinationPage} />
             <Route path="/preferences" component={PreferencesPage} />
             <Route path="/chat" component={ChatPage} />
@@ -93,6 +98,8 @@ function Router() {
             <Route path="/contact-us" component={ContactUs} />
             <Route path="/faq" component={FAQ} />
             <Route path="/auth/signin" component={AuthSignInPage} />
+            <Route path="/sign-in" component={ClerkSignInPage} />
+            <Route path="/sign-up" component={ClerkSignUpPage} />
             <Route path="/destination/:city" component={DestinationPage} />
             <Route path="/preferences" component={PreferencesPage} />
             <Route path="/travel-style-settings" component={TravelStyleSettings} />
@@ -119,8 +126,12 @@ function Router() {
   );
 }
 
+// Check if Clerk is configured
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const isClerkEnabled = clerkPubKey && clerkPubKey !== 'pk_test_placeholder' && clerkPubKey.startsWith('pk_');
+
 function App() {
-  return (
+  const AppContent = (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
@@ -128,6 +139,18 @@ function App() {
       </TooltipProvider>
     </QueryClientProvider>
   );
+
+  // Only wrap with ClerkProvider if proper key is provided
+  if (isClerkEnabled) {
+    return (
+      <ClerkProvider publishableKey={clerkPubKey}>
+        {AppContent}
+      </ClerkProvider>
+    );
+  }
+
+  // Fall back to existing auth system
+  return AppContent;
 }
 
 export default App;

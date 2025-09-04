@@ -7,12 +7,31 @@ import { JWTUser } from "./auth/jwt";
 
 // Unified auth helper function
 async function getAuthenticatedUser(req: any): Promise<UnifiedUser | null> {
+  console.log('🔍 /api/auth/me called - checking auth methods');
   try {
-    // First try JWT authentication (for Google/Facebook OAuth users)
+    // First try Clerk authentication
+    const { getClerkUser } = await import('./auth/clerk');
+    const clerkUser = getClerkUser(req);
+    if (clerkUser) {
+      console.log('✅ Clerk user found:', clerkUser.id);
+      return {
+        id: clerkUser.id,
+        email: clerkUser.email,
+        name: clerkUser.name,
+        provider: 'clerk',
+        firstName: clerkUser.firstName,
+        lastName: clerkUser.lastName,
+        username: clerkUser.username,
+        profileImageUrl: clerkUser.profileImageUrl
+      };
+    }
+    
+    // Then try JWT authentication (for Google/Facebook OAuth users)
     const { getCurrentUser } = await import('./auth/jwt');
     const jwtUser = await getCurrentUser(req);
     
     if (jwtUser) {
+      console.log('✅ JWT user found:', jwtUser.id);
       return {
         id: jwtUser.id,
         email: jwtUser.email,
@@ -23,9 +42,11 @@ async function getAuthenticatedUser(req: any): Promise<UnifiedUser | null> {
     }
     
     // Fallback to Replit Auth
+    console.log('🔍 Trying Replit Auth fallback, isAuthenticated:', typeof req.isAuthenticated);
     if (req.isAuthenticated && req.isAuthenticated()) {
       const user = req.user as any;
       if ((user as any)?.claims?.sub) {
+        console.log('✅ Replit user found:', user.claims.sub);
         return {
           id: user.claims.sub,
           email: user.claims.email,
@@ -35,10 +56,11 @@ async function getAuthenticatedUser(req: any): Promise<UnifiedUser | null> {
         };
       }
     }
+    console.log('❌ No authentication method worked');
     
     return null;
   } catch (error) {
-    console.error("Auth error:", error);
+    console.error("❌ Auth error:", error);
     return null;
   }
 }

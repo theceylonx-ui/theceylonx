@@ -18,11 +18,12 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "*.clerk.dev", "*.clerk.com", "js.stripe.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com", "*.clerk.dev", "*.clerk.com"],
       fontSrc: ["'self'", "fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "*.unsplash.com", "*.googleusercontent.com", "*.facebook.com", "api.dicebear.com"],
-      connectSrc: ["'self'", "wss:", "ws:"],
+      imgSrc: ["'self'", "data:", "*.unsplash.com", "*.googleusercontent.com", "*.facebook.com", "api.dicebear.com", "*.clerk.dev", "*.clerk.com"],
+      connectSrc: ["'self'", "wss:", "ws:", "*.clerk.dev", "*.clerk.com", "api.clerk.dev", "api.clerk.com"],
+      frameSrc: ["'self'", "*.clerk.dev", "*.clerk.com", "js.stripe.com"],
     },
   },
 }));
