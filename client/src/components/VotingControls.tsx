@@ -48,16 +48,14 @@ export default function VotingControls({
       return response as unknown as { vote: any; score: number; message: string };
     },
     onMutate: async (newValue) => {
-      // Optimistic update
-      const previousValue = currentVote?.voteType === 'up' ? 1 : (currentVote?.voteType === 'down' ? -1 : 0);
-      const scoreDelta = newValue - previousValue;
-      setOptimisticScore(prev => prev + scoreDelta);
+      // No optimistic update - wait for server response for accurate count
+      // This prevents score discrepancies when multiple users vote
     },
     onSuccess: (response) => {
-      // Update actual score from server response
+      // Use the exact score returned from server (this is the calculated total)
       setOptimisticScore(response.score);
       
-      // Invalidate related queries
+      // Invalidate related queries to refresh data
       queryClient.invalidateQueries({ queryKey: [`/api/votes/${votableType}/${votableId}`] });
       if (votableType === 'question') {
         queryClient.invalidateQueries({ queryKey: [`/api/questions/${votableId}`] });
@@ -71,7 +69,7 @@ export default function VotingControls({
       });
     },
     onError: (error) => {
-      // Revert optimistic update
+      // Revert optimistic update to the original score from props
       setOptimisticScore(currentScore);
       toast({ 
         title: "Failed to process vote", 
