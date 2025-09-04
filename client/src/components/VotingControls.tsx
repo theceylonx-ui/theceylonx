@@ -55,19 +55,14 @@ export default function VotingControls({
       // Use the exact score returned from server (this is the calculated total)
       setOptimisticScore(response.score);
       
-      // Invalidate related queries to refresh data
+      // Invalidate all relevant queries to ensure fresh data everywhere
       queryClient.invalidateQueries({ queryKey: [`/api/votes/${votableType}/${votableId}`] });
-      if (votableType === 'question') {
-        queryClient.invalidateQueries({ queryKey: [`/api/questions/${votableId}`] });
-        queryClient.invalidateQueries({ queryKey: [`/api/questions`] });
-      } else {
-        // For answers, also invalidate the parent question to refresh answer counts
-        queryClient.invalidateQueries({ queryKey: [`/api/questions`] });
-        queryClient.invalidateQueries({ queryKey: ['/api/questions'] }); // Also try without the specific question ID
-      }
+      queryClient.invalidateQueries({ queryKey: [`/api/questions`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
       
-      // Don't show toast for vote actions to reduce noise
-      // The score is already updating visually
+      // Force immediate refetch to update UI
+      queryClient.refetchQueries({ queryKey: [`/api/questions`] });
+      queryClient.refetchQueries({ queryKey: ['/api/questions'] });
     },
     onError: (error) => {
       // Revert optimistic update to the original score from props
