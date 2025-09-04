@@ -74,7 +74,7 @@ export function QuestionCard({ question, onEdit, onDelete, currentUserId, showPr
 
         {/* Question Body Preview */}
         <p className="text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
-          {bodyPreview.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()}
+          {bodyPreview.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim()}
         </p>
 
         {/* Tags and Topic */}
@@ -122,7 +122,7 @@ export function QuestionCard({ question, onEdit, onDelete, currentUserId, showPr
           <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
             <div className="flex items-center gap-1">
               <ThumbsUp className="h-4 w-4" />
-              <span>{question.votesCount || 0}</span>
+              <span>{question.votesCount || question.score || 0}</span>
             </div>
             
             <div className="flex items-center gap-1">
@@ -143,10 +143,10 @@ export function QuestionCard({ question, onEdit, onDelete, currentUserId, showPr
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
               <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Top Answer:</div>
               <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
-                {question.answers[0].body.length > 100 
+                {(question.answers[0].body.length > 100 
                   ? question.answers[0].body.substring(0, 100) + "..."
                   : question.answers[0].body
-                }
+                ).replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim()}
               </p>
             </div>
           </div>
