@@ -1257,6 +1257,7 @@ export class DatabaseStorage implements IStorage {
       ));
     
     const upVotes = Number(upVotesResult[0]?.count || 0);
+    console.log(`📊 Vote calculation for ${votableType} ${votableId}: ${upVotes} votes`);
     return upVotes;
   }
 
