@@ -382,14 +382,11 @@ export const questions = pgTable("questions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   title: varchar("title").notNull(),
   body: text("body").notNull(),
-  slug: varchar("slug").notNull().unique(),
   tags: text("tags").array(),
   userId: varchar("user_id").notNull(),
   topicId: varchar("topic_id"),
   isAnonymous: boolean("is_anonymous").default(false),
-  views: integer("views").default(0),
-  score: integer("score").default(0), // denormalized votes sum
-  votesCount: integer("votes_count").default(0), // Keep for backward compatibility
+  votesCount: integer("votes_count").default(0),
   answersCount: integer("answers_count").default(0),
   acceptedAnswerId: varchar("accepted_answer_id"),
   createdAt: timestamp("created_at").defaultNow(),

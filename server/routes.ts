@@ -1654,25 +1654,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("📝 Received question data:", JSON.stringify(req.body, null, 2));
       
-      // Generate a slug from the title
-      const generateSlug = (title: string): string => {
-        return title
-          .toLowerCase()
-          .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-          .replace(/\s+/g, '-') // Replace spaces with hyphens
-          .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
-          .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
-          .substring(0, 50); // Limit length
-      };
-      
-      // Add slug to the request data
-      const questionDataWithSlug = {
-        ...req.body,
-        slug: generateSlug(req.body.title),
-        userId
-      };
-      
-      const questionData = insertQuestionSchema.parse(questionDataWithSlug);
+      const questionData = insertQuestionSchema.parse({ ...req.body, userId });
       console.log("📝 Creating question:", { 
         title: questionData.title, 
         topicId: questionData.topicId, 
