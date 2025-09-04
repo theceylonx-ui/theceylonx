@@ -59,8 +59,11 @@ export default function VotingControls({
       queryClient.invalidateQueries({ queryKey: [`/api/votes/${votableType}/${votableId}`] });
       if (votableType === 'question') {
         queryClient.invalidateQueries({ queryKey: [`/api/questions/${votableId}`] });
-      } else {
         queryClient.invalidateQueries({ queryKey: [`/api/questions`] });
+      } else {
+        // For answers, also invalidate the parent question to refresh answer counts
+        queryClient.invalidateQueries({ queryKey: [`/api/questions`] });
+        queryClient.invalidateQueries({ queryKey: ['/api/questions'] }); // Also try without the specific question ID
       }
       
       toast({ 
