@@ -3,7 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ClerkProvider } from "@clerk/clerk-react";
+// import { ClerkProvider } from "@clerk/clerk-react";
 import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
@@ -127,14 +127,14 @@ function Router() {
 }
 
 function App() {
-  // Check if Clerk is properly configured
-  const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-  const isClerkEnabled = clerkPubKey && 
-    clerkPubKey !== 'pk_test_placeholder' && 
-    clerkPubKey.startsWith('pk_') &&
-    clerkPubKey.length > 50; // Basic validation for real key
+  // Temporarily disable Clerk until properly configured
+  // const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  // const isClerkEnabled = clerkPubKey && 
+  //   clerkPubKey !== 'pk_test_placeholder' && 
+  //   clerkPubKey.startsWith('pk_') &&
+  //   clerkPubKey.length > 50;
 
-  const AppContent = (
+  return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
@@ -142,23 +142,6 @@ function App() {
       </TooltipProvider>
     </QueryClientProvider>
   );
-
-  // Only use Clerk if we have a valid configuration
-  if (isClerkEnabled) {
-    try {
-      return (
-        <ClerkProvider publishableKey={clerkPubKey!}>
-          {AppContent}
-        </ClerkProvider>
-      );
-    } catch (error) {
-      console.warn('Clerk initialization failed, falling back to existing auth:', error);
-      return AppContent;
-    }
-  }
-
-  // Use existing auth system by default
-  return AppContent;
 }
 
 export default App;

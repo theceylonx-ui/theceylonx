@@ -2,57 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "../lib/queryClient";
 
 export function useAuth() {
-  // Check if Clerk is available and configured
-  const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-  const isClerkEnabled = clerkPubKey && 
-    clerkPubKey !== 'pk_test_placeholder' && 
-    clerkPubKey.startsWith('pk_') &&
-    clerkPubKey.length > 50;
-
-  // Try to use Clerk auth if available
-  let clerkAuth = null;
-  try {
-    if (isClerkEnabled && typeof window !== 'undefined') {
-      const { useAuth: useClerkAuth } = require("@clerk/clerk-react");
-      clerkAuth = useClerkAuth();
-    }
-  } catch (error) {
-    console.log('Clerk not available, using fallback auth');
-  }
-
-  // Use Clerk auth if properly loaded
-  if (clerkAuth && clerkAuth.isLoaded && clerkAuth.isSignedIn) {
-    const transformedClerkUser = clerkAuth.user ? {
-      id: clerkAuth.user.id,
-      email: clerkAuth.user.emailAddresses?.[0]?.emailAddress || '',
-      firstName: clerkAuth.user.firstName,
-      lastName: clerkAuth.user.lastName,
-      username: clerkAuth.user.username,
-      profileImageUrl: clerkAuth.user.imageUrl,
-      name: clerkAuth.user.fullName,
-      provider: 'clerk'
-    } : null;
-    const logoutMutation = useMutation({
-      mutationFn: async () => {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          credentials: 'include',
-        });
-      },
-      onSuccess: () => {
-        queryClient.clear();
-        window.location.href = '/';
-      },
-    });
-
-    return {
-      user: transformedClerkUser,
-      isLoading: !clerkAuth.isLoaded,
-      isAuthenticated: clerkAuth.isSignedIn && !!transformedClerkUser,
-      logout: () => logoutMutation.mutate(),
-      isLoggingOut: logoutMutation.isPending,
-    };
-  }
+  // Clerk integration temporarily disabled - using existing auth system
 
   // Fall back to existing auth system
   const { data: user, isLoading, error } = useQuery({
@@ -70,17 +20,7 @@ export function useAuth() {
         'Pragma': 'no-cache'
       };
 
-      // Add Clerk token if available
-      if (clerkAuth && clerkAuth.getToken) {
-        try {
-          const token = await clerkAuth.getToken();
-          if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-          }
-        } catch (error) {
-          console.log('No Clerk token available');
-        }
-      }
+      // Clerk token handling disabled
 
       const res = await fetch(`/api/auth/me?_t=${timestamp}`, {
         credentials: 'include',
