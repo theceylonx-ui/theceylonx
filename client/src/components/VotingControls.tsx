@@ -48,8 +48,10 @@ export default function VotingControls({
       return response as unknown as { vote: any; score: number; message: string };
     },
     onMutate: async (newValue) => {
-      // No optimistic update - wait for server response for accurate count
-      // This prevents score discrepancies when multiple users vote
+      // Simple optimistic update - will be corrected by server response
+      const previousValue = currentVote?.voteType === 'up' ? 1 : (currentVote?.voteType === 'down' ? -1 : 0);
+      const scoreDelta = newValue - previousValue;
+      setOptimisticScore(prev => prev + scoreDelta);
     },
     onSuccess: (response) => {
       // Use the exact score returned from server (this is the calculated total)
