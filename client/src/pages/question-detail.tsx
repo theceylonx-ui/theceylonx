@@ -295,7 +295,7 @@ export default function QuestionDetailPage() {
                 <VotingControls 
                   votableType="question"
                   votableId={question.id}
-                  currentScore={question.score || question.votesCount || 0}
+                  currentScore={question.votesCount || 0}
                   className=""
                 />
                 <div className="flex items-center text-sm text-gray-500">

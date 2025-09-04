@@ -133,7 +133,7 @@ export function QuestionCard({ question, onEdit, onDelete, currentUserId, showPr
             
             <div className="flex items-center gap-1">
               <Eye className="h-4 w-4" />
-              <span>{question.views || 0}</span>
+              <span>0</span>
             </div>
           </div>
         </div>
