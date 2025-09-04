@@ -401,28 +401,21 @@ export const answers = pgTable("answers", {
   body: text("body").notNull(),
   questionId: varchar("question_id").notNull(),
   userId: varchar("user_id").notNull(),
-  score: integer("score").default(0), // denormalized votes sum
-  votesCount: integer("votes_count").default(0), // Keep for backward compatibility
+  votesCount: integer("votes_count").default(0),
   isAccepted: boolean("is_accepted").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  isDeleted: boolean("is_deleted").default(false),
-  deletedAt: timestamp("deleted_at"),
 });
 
-// Votes table for questions and answers - single source of truth
+// Votes table for questions and answers
 export const votes = pgTable("votes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  votableType: varchar("votable_type").notNull(), // 'question' | 'answer'
-  votableId: varchar("votable_id").notNull(), // ID of the question or answer
-  value: integer("value").notNull(), // -1 (downvote), 0 (no vote), +1 (upvote)
+  userId: varchar("user_id").notNull(),
+  questionId: varchar("question_id"),
+  answerId: varchar("answer_id"),
+  voteType: varchar("vote_type").notNull(), // 'up' | 'down'
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => [
-  // Unique constraint: one vote per user per item
-  unique("unique_user_vote").on(table.userId, table.votableType, table.votableId),
-]);
+});
 
 // Question tags pivot table (optional if not using array)
 export const questionTags = pgTable("question_tags", {

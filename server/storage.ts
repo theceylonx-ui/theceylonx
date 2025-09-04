@@ -1207,29 +1207,30 @@ export class DatabaseStorage implements IStorage {
   async upsertVote(userId: string, votableType: 'question' | 'answer', votableId: string, value: number): Promise<{ vote: Vote | null; score: number }> {
     // First, try to find existing vote
     const existingVote = await this.getUserVote(userId, votableType, votableId);
+    const isQuestion = votableType === 'question';
+    const voteType = value > 0 ? 'up' : 'down';
     
     if (value === 0) {
       // Clear vote (delete if exists)
       if (existingVote) {
         await db.delete(votes).where(and(
           eq(votes.userId, userId),
-          eq(votes.votableType, votableType),
-          eq(votes.votableId, votableId)
+          isQuestion ? eq(votes.questionId, votableId) : eq(votes.answerId, votableId)
         ));
       }
     } else {
       // Create or update vote
       if (existingVote) {
         await db.update(votes)
-          .set({ value, updatedAt: new Date() })
+          .set({ voteType })
           .where(eq(votes.id, existingVote.id));
       } else {
-        await db.insert(votes).values({
+        const voteData = {
           userId,
-          votableType,
-          votableId,
-          value
-        });
+          voteType,
+          ...(isQuestion ? { questionId: votableId } : { answerId: votableId })
+        };
+        await db.insert(votes).values(voteData);
       }
     }
     
@@ -1244,37 +1245,39 @@ export class DatabaseStorage implements IStorage {
   }
 
   private async calculateScore(votableType: 'question' | 'answer', votableId: string): Promise<number> {
+    const isQuestion = votableType === 'question';
     const result = await db
-      .select({ totalScore: sql<number>`COALESCE(SUM(${votes.value}), 0)` })
+      .select({ 
+        upVotes: sql<number>`COUNT(CASE WHEN ${votes.voteType} = 'up' THEN 1 END)`,
+        downVotes: sql<number>`COUNT(CASE WHEN ${votes.voteType} = 'down' THEN 1 END)`
+      })
       .from(votes)
-      .where(and(
-        eq(votes.votableType, votableType),
-        eq(votes.votableId, votableId)
-      ));
+      .where(isQuestion ? eq(votes.questionId, votableId) : eq(votes.answerId, votableId));
     
-    return result[0]?.totalScore || 0;
+    const { upVotes, downVotes } = result[0] || { upVotes: 0, downVotes: 0 };
+    return Number(upVotes) - Number(downVotes);
   }
 
   private async updateScore(votableType: 'question' | 'answer', votableId: string, score: number): Promise<void> {
     if (votableType === 'question') {
       await db.update(questions)
-        .set({ score, votesCount: Math.abs(score) }) // Keep backward compatibility
+        .set({ votesCount: score })
         .where(eq(questions.id, votableId));
     } else {
       await db.update(answers)
-        .set({ score, votesCount: Math.abs(score) }) // Keep backward compatibility
+        .set({ votesCount: score })
         .where(eq(answers.id, votableId));
     }
   }
 
   async getUserVote(userId: string, votableType: 'question' | 'answer', votableId: string): Promise<Vote | undefined> {
+    const isQuestion = votableType === 'question';
     const [vote] = await db
       .select()
       .from(votes)
       .where(and(
         eq(votes.userId, userId),
-        eq(votes.votableType, votableType),
-        eq(votes.votableId, votableId)
+        isQuestion ? eq(votes.questionId, votableId) : eq(votes.answerId, votableId)
       ));
     
     return vote;
