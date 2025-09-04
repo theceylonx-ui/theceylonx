@@ -126,11 +126,14 @@ function Router() {
   );
 }
 
-// Check if Clerk is configured
-const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-const isClerkEnabled = clerkPubKey && clerkPubKey !== 'pk_test_placeholder' && clerkPubKey.startsWith('pk_');
-
 function App() {
+  // Check if Clerk is properly configured
+  const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  const isClerkEnabled = clerkPubKey && 
+    clerkPubKey !== 'pk_test_placeholder' && 
+    clerkPubKey.startsWith('pk_') &&
+    clerkPubKey.length > 50; // Basic validation for real key
+
   const AppContent = (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -140,16 +143,21 @@ function App() {
     </QueryClientProvider>
   );
 
-  // Only wrap with ClerkProvider if proper key is provided
+  // Only use Clerk if we have a valid configuration
   if (isClerkEnabled) {
-    return (
-      <ClerkProvider publishableKey={clerkPubKey}>
-        {AppContent}
-      </ClerkProvider>
-    );
+    try {
+      return (
+        <ClerkProvider publishableKey={clerkPubKey!}>
+          {AppContent}
+        </ClerkProvider>
+      );
+    } catch (error) {
+      console.warn('Clerk initialization failed, falling back to existing auth:', error);
+      return AppContent;
+    }
   }
 
-  // Fall back to existing auth system
+  // Use existing auth system by default
   return AppContent;
 }
 
