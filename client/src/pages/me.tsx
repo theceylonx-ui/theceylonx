@@ -137,7 +137,7 @@ export default function ProfilePage() {
 
         {/* Navigation Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7 bg-white rounded-lg shadow-sm p-1">
+          <TabsList className="grid w-full grid-cols-6 bg-white rounded-lg shadow-sm p-1">
             <TabsTrigger value="overview" className="flex items-center space-x-2">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -153,10 +153,6 @@ export default function ProfilePage() {
             <TabsTrigger value="activity" className="flex items-center space-x-2">
               <Activity className="h-4 w-4" />
               <span className="hidden sm:inline">Activity</span>
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex items-center space-x-2">
-              <Bell className="h-4 w-4" />
-              <span className="hidden sm:inline">Notifications</span>
             </TabsTrigger>
             <TabsTrigger value="security" className="flex items-center space-x-2">
               <Shield className="h-4 w-4" />
@@ -188,10 +184,7 @@ export default function ProfilePage() {
             <UserActivity />
           </TabsContent>
 
-          {/* Notifications Tab */}
-          <TabsContent value="notifications" className="space-y-6">
-            <NotificationSettings notifications={notifications} onUpdate={refetch} />
-          </TabsContent>
+          {/* Notification settings tab removed - notification bell functionality remains active */}
 
           {/* Security Tab */}
           <TabsContent value="security" className="space-y-6">
@@ -615,6 +608,129 @@ function TravelPreferences({ preferences, onUpdate }: any) {
   );
 }
 
+// Saved Trips Component
+function SavedTrips() {
+  const { user } = useAuth();
+  const [activeSubTab, setActiveSubTab] = useState("pinned");
+  
+  const { data: pinnedTrips, isLoading: pinnedLoading } = useQuery({
+    queryKey: ['/api/me/pinned-trips'],
+    enabled: !!user,
+  });
+
+  const { data: interestedTrips, isLoading: interestedLoading } = useQuery({
+    queryKey: ['/api/me/interested-trips'],
+    enabled: !!user,
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Saved Trips</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="pinned">📌 Pinned</TabsTrigger>
+            <TabsTrigger value="interested">💫 Interested</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="pinned" className="mt-6">
+            {pinnedLoading ? (
+              <div>Loading pinned trips...</div>
+            ) : pinnedTrips?.length > 0 ? (
+              <div className="space-y-4">
+                {pinnedTrips.map((item: any) => (
+                  <div key={item.trip.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg">{item.trip.title}</h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {item.trip.fromLocation} → {item.trip.toLocation}
+                        </p>
+                        <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                          <span>💰 ${item.trip.price}</span>
+                          <span>👥 {item.trip.seatsAvailable} seats</span>
+                          <span>📅 {new Date(item.trip.date).toLocaleDateString()}</span>
+                          <Badge variant="secondary">
+                            Pinned {new Date(item.createdAt).toLocaleDateString()}
+                          </Badge>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.location.href = `/trips/${item.trip.id}`}
+                      >
+                        View Trip
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No pinned trips yet.</p>
+                <Button className="mt-4" onClick={() => window.location.href = '/browse-trips'}>
+                  Browse Trips to Pin
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="interested" className="mt-6">
+            {interestedLoading ? (
+              <div>Loading interested trips...</div>
+            ) : interestedTrips?.length > 0 ? (
+              <div className="space-y-4">
+                {interestedTrips.map((item: any) => (
+                  <div key={item.trip.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg">{item.trip.title}</h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {item.trip.fromLocation} → {item.trip.toLocation}
+                        </p>
+                        <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                          <span>💰 ${item.trip.price}</span>
+                          <span>👥 {item.trip.seatsAvailable} seats</span>
+                          <span>📅 {new Date(item.trip.date).toLocaleDateString()}</span>
+                          <Badge variant={item.status === 'pending' ? 'secondary' : 'default'}>
+                            Interest {item.status}
+                          </Badge>
+                        </div>
+                        {item.message && (
+                          <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                            <strong>Your message:</strong> {item.message}
+                          </div>
+                        )}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.location.href = `/trips/${item.trip.id}`}
+                      >
+                        View Trip
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No interested trips yet.</p>
+                <Button className="mt-4" onClick={() => window.location.href = '/browse-trips'}>
+                  Browse Trips to Join
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  );
+}
+
 // User Activity Component
 function UserActivity() {
   const { user } = useAuth();
@@ -649,13 +765,53 @@ function UserActivity() {
             ) : questions?.length > 0 ? (
               <div className="space-y-4">
                 {questions.map((question: any) => (
-                  <div key={question.id} className="border rounded-lg p-4">
-                    <h3 className="font-semibold">{question.title}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{question.body}</p>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                      <span>Score: {question.score || 0}</span>
-                      <span>Views: {question.views || 0}</span>
-                      <span>Answers: {question.answersCount || 0}</span>
+                  <div key={question.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg">{question.title}</h3>
+                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{question.body}</p>
+                        <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                          <span>📈 Score: {question.score || 0}</span>
+                          <span>👀 Views: {question.views || 0}</span>
+                          <span>💬 Answers: {question.answersCount || 0}</span>
+                          <Badge variant={question.acceptedAnswerId ? 'default' : 'secondary'}>
+                            {question.acceptedAnswerId ? 'Answered' : 'Open'}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2 ml-4">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => window.location.href = `/question/${question.id}`}
+                          data-testid={`button-view-question-${question.id}`}
+                        >
+                          View
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-blue-600 hover:text-blue-700"
+                          onClick={() => window.location.href = `/question/${question.id}/edit`}
+                          data-testid={`button-edit-question-${question.id}`}
+                        >
+                          ✏️ Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => {
+                            if(confirm('Are you sure you want to delete this question?')) {
+                              // Add delete functionality
+                              console.log('Delete question:', question.id);
+                            }
+                          }}
+                          data-testid={`button-delete-question-${question.id}`}
+                        >
+                          🗑️ Delete
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -731,9 +887,7 @@ function UserActivity() {
           </TabsContent>
 
           <TabsContent value="saved" className="mt-6">
-            <div className="text-center py-8">
-              <p className="text-gray-500">Saved items feature coming soon!</p>
-            </div>
+            <SavedTrips />
           </TabsContent>
         </Tabs>
       </CardContent>
@@ -741,112 +895,7 @@ function UserActivity() {
   );
 }
 
-// Notification Settings Component
-function NotificationSettings({ notifications, onUpdate }: any) {
-  const { toast } = useToast();
-  const [settings, setSettings] = useState({
-    emailOn: notifications?.emailOn ?? true,
-    pushOn: notifications?.pushOn ?? true,
-    digest: notifications?.digest ?? 'instant',
-    categories: notifications?.categoriesJson ?? {
-      trip: 'instant',
-      answers: 'instant',
-      votes: 'digest',
-      reports: 'instant',
-      dm: 'instant',
-      interest: 'instant'
-    }
-  });
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSave = async () => {
-    setIsLoading(true);
-    try {
-      const response = await apiRequest('PATCH', '/api/me/notifications', settings);
-      if (response.ok) {
-        toast({
-          title: "Notifications Updated",
-          description: "Your notification preferences have been saved.",
-        });
-        onUpdate();
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update notification settings.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Notification Settings</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label>Email Notifications</Label>
-            <input
-              type="checkbox"
-              checked={settings.emailOn}
-              onChange={(e) => setSettings({...settings, emailOn: e.target.checked})}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <Label>Push Notifications</Label>
-            <input
-              type="checkbox"
-              checked={settings.pushOn}
-              onChange={(e) => setSettings({...settings, pushOn: e.target.checked})}
-            />
-          </div>
-        </div>
-
-        <div>
-          <Label>Digest Frequency</Label>
-          <select
-            value={settings.digest}
-            onChange={(e) => setSettings({...settings, digest: e.target.value})}
-            className="w-full mt-2 p-2 border rounded"
-          >
-            <option value="instant">Instant</option>
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-          </select>
-        </div>
-
-        <div className="space-y-4">
-          <h3 className="font-medium">Notification Categories</h3>
-          {Object.entries(settings.categories).map(([key, value]) => (
-            <div key={key} className="flex items-center justify-between">
-              <Label className="capitalize">{key.replace('_', ' ')}</Label>
-              <select
-                value={value as string}
-                onChange={(e) => setSettings({
-                  ...settings,
-                  categories: { ...settings.categories, [key]: e.target.value }
-                })}
-                className="p-1 border rounded text-sm"
-              >
-                <option value="instant">Instant</option>
-                <option value="digest">Digest</option>
-                <option value="off">Off</option>
-              </select>
-            </div>
-          ))}
-        </div>
-
-        <Button onClick={handleSave} disabled={isLoading}>
-          {isLoading ? "Saving..." : "Save Settings"}
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
+// NotificationSettings component removed - notification bell functionality remains active
 
 // Security Settings Component
 function SecuritySettings({ profile }: any) {
@@ -945,7 +994,6 @@ function PrivacySettings({ privacy, onUpdate }: any) {
             className="w-full mt-2 p-2 border rounded"
           >
             <option value="public">Public - Everyone can see</option>
-            <option value="friends">Friends only</option>
             <option value="private">Private</option>
           </select>
         </div>

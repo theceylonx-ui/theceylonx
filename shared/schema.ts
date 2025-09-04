@@ -625,17 +625,7 @@ export const regions = pgTable("regions", {
 
 // Note: mediaAssets and auditLogs tables are defined in the admin section above
 
-// User follows table for social features
-export const userFollows = pgTable("user_follows", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  followerId: varchar("follower_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  followeeId: varchar("followee_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  createdAt: timestamp("created_at").defaultNow(),
-}, (table) => [
-  unique("unique_follow_pair").on(table.followerId, table.followeeId),
-  index("user_follows_follower_idx").on(table.followerId),
-  index("user_follows_followee_idx").on(table.followeeId),
-]);
+// User follows table removed - not needed for travel buddy platform
 
 // Enhanced moderation flags
 export const moderationFlags = pgTable("moderation_flags", {
