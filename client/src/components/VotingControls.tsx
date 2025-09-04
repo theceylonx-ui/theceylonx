@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ThumbsUp, ThumbsDown } from "lucide-react";
+import { ThumbsUp } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -48,8 +48,8 @@ export default function VotingControls({
       return response as unknown as { vote: any; score: number; message: string };
     },
     onMutate: async (newValue) => {
-      // Simple optimistic update - will be corrected by server response
-      const previousValue = currentVote?.voteType === 'up' ? 1 : (currentVote?.voteType === 'down' ? -1 : 0);
+      // Simple optimistic update for upvotes only
+      const previousValue = currentVote?.voteType === 'up' ? 1 : 0;
       const scoreDelta = newValue - previousValue;
       setOptimisticScore(prev => prev + scoreDelta);
     },
@@ -91,14 +91,14 @@ export default function VotingControls({
       return;
     }
     
-    // If clicking the same vote, clear it (set to 0)
-    const currentUserVote = currentVote?.voteType === 'up' ? 1 : (currentVote?.voteType === 'down' ? -1 : 0);
+    // If clicking the same upvote, clear it (set to 0)
+    const currentUserVote = currentVote?.voteType === 'up' ? 1 : 0;
     const finalValue = currentUserVote === value ? 0 : value;
     voteMutation.mutate(finalValue);
   };
 
   return (
-    <div className={`flex items-center gap-1 ${className}`} data-testid="voting-controls">
+    <div className={`flex items-center gap-2 ${className}`} data-testid="voting-controls">
       <Button
         variant={currentVote?.voteType === 'up' ? "default" : "outline"}
         size="sm"
@@ -114,25 +114,12 @@ export default function VotingControls({
         className={`font-semibold text-sm min-w-[20px] text-center ${
           optimisticScore > 0 
             ? 'text-green-600 dark:text-green-400' 
-            : optimisticScore < 0 
-            ? 'text-red-600 dark:text-red-400'
             : 'text-gray-600 dark:text-gray-400'
         }`}
         data-testid="vote-score"
       >
         {optimisticScore}
       </span>
-      
-      <Button
-        variant={currentVote?.voteType === 'down' ? "destructive" : "outline"}
-        size="sm"
-        onClick={() => handleVote(-1)}
-        disabled={voteMutation.isPending}
-        className="p-1.5 h-7 w-7"
-        data-testid="downvote-button"
-      >
-        <ThumbsDown className="h-3.5 w-3.5" />
-      </Button>
     </div>
   );
 }
