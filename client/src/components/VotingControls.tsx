@@ -44,7 +44,7 @@ export default function VotingControls({
     },
     onMutate: async (newValue) => {
       // Optimistic update
-      const previousValue = currentVote?.value || 0;
+      const previousValue = currentVote?.voteType === 'up' ? 1 : (currentVote?.voteType === 'down' ? -1 : 0);
       const scoreDelta = newValue - previousValue;
       setOptimisticScore(prev => prev + scoreDelta);
     },
@@ -87,14 +87,15 @@ export default function VotingControls({
     }
     
     // If clicking the same vote, clear it (set to 0)
-    const finalValue = currentVote?.value === value ? 0 : value;
+    const currentUserVote = currentVote?.voteType === 'up' ? 1 : (currentVote?.voteType === 'down' ? -1 : 0);
+    const finalValue = currentUserVote === value ? 0 : value;
     voteMutation.mutate(finalValue);
   };
 
   return (
     <div className={`flex items-center gap-1 ${className}`} data-testid="voting-controls">
       <Button
-        variant={currentVote?.value === 1 ? "default" : "outline"}
+        variant={currentVote?.voteType === 'up' ? "default" : "outline"}
         size="sm"
         onClick={() => handleVote(1)}
         disabled={voteMutation.isPending}
@@ -118,7 +119,7 @@ export default function VotingControls({
       </span>
       
       <Button
-        variant={currentVote?.value === -1 ? "destructive" : "outline"}
+        variant={currentVote?.voteType === 'down' ? "destructive" : "outline"}
         size="sm"
         onClick={() => handleVote(-1)}
         disabled={voteMutation.isPending}
