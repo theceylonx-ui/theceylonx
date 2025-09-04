@@ -3643,7 +3643,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const normalizedPath = objectStorageService.normalizeObjectEntityPath(profileImageUrl);
         
         // Update user profile with new image URL
-        const updatedProfile = await storage.updateUserProfile(userId, {
+        const updatedProfile = await storage.updateUser(userId, {
           profileImageUrl: normalizedPath
         });
 

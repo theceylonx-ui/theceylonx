@@ -19,7 +19,7 @@ import {
   Home,
   ArrowLeft
 } from "lucide-react";
-import { getDisplayName, getInitials } from "@/lib/profileUtils";
+import { getDisplayName, getInitials, getAvatarOptions } from "@/lib/profileUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -202,6 +202,21 @@ export default function ProfilePage() {
   );
 }
 
+// Helper function to calculate travel preferences completion
+function calculatePreferencesCompletion(preferences: any): number {
+  if (!preferences) return 0;
+  
+  let completed = 0;
+  let total = 4; // vibe, when, companions, interests
+  
+  if (preferences.vibe?.length > 0) completed++;
+  if (preferences.when?.length > 0) completed++;
+  if (preferences.companions?.length > 0) completed++;
+  if (preferences.interests?.length > 0) completed++;
+  
+  return Math.round((completed / total) * 100);
+}
+
 // Profile Overview Component
 function ProfileOverview({ profile, stats, preferences }: any) {
   return (
@@ -233,11 +248,27 @@ function ProfileOverview({ profile, stats, preferences }: any) {
                 {profile.bio ? "✓" : "○"}
               </span>
             </div>
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between items-center text-sm">
               <span>Travel Preferences</span>
-              <span className={preferences ? "text-green-600" : "text-gray-400"}>
-                {preferences ? "✓" : "○"}
-              </span>
+              <div className="flex items-center gap-2">
+                {preferences ? (
+                  <>
+                    <div className="w-16 bg-gray-200 rounded-full h-1.5">
+                      <div 
+                        className="bg-ceylon-green h-1.5 rounded-full transition-all duration-300"
+                        style={{ 
+                          width: `${calculatePreferencesCompletion(preferences)}%` 
+                        }}
+                      />
+                    </div>
+                    <span className="text-ceylon-green text-xs font-medium">
+                      {calculatePreferencesCompletion(preferences)}%
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-gray-400">○</span>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -304,20 +335,8 @@ function ProfileEditor({ profile, onUpdate }: any) {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   // Predefined avatar options
-  const avatarOptions = [
-    'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-    'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
-    'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&h=150&fit=crop&crop=face',
-    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face',
-    'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=150&h=150&fit=crop&crop=face',
-    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face',
-    'https://images.unsplash.com/photo-1521119989659-a83eee488004?w=150&h=150&fit=crop&crop=face',
-    'https://images.unsplash.com/photo-1463453091185-61582044d556?w=150&h=150&fit=crop&crop=face',
-    'https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=150&h=150&fit=crop&crop=face'
-  ];
+  // Get diverse avatar options using DiceBear API with different styles
+  const avatarOptions = getAvatarOptions(profile?.id || 'default');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -449,31 +468,35 @@ function ProfileEditor({ profile, onUpdate }: any) {
                   </div>
                   
                   {/* Avatar Options Grid */}
-                  <div className="grid grid-cols-5 gap-3 mb-6">
-                    {avatarOptions.map((url, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        className={`relative rounded-full overflow-hidden border-2 transition-all hover:scale-105 ${
-                          formData.profileImageUrl === url 
-                            ? 'border-ceylon-green ring-2 ring-ceylon-green ring-offset-2' 
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                        onClick={() => setFormData({...formData, profileImageUrl: url})}
-                        data-testid={`avatar-option-${index}`}
-                      >
-                        <img
-                          src={url}
-                          alt={`Avatar option ${index + 1}`}
-                          className="w-16 h-16 object-cover"
-                          loading="lazy"
-                        />
-                        {formData.profileImageUrl === url && (
-                          <div className="absolute inset-0 bg-ceylon-green bg-opacity-20 flex items-center justify-center">
-                            <div className="text-white text-xl">✓</div>
-                          </div>
-                        )}
-                      </button>
+                  <div className="grid grid-cols-4 gap-3 mb-6">
+                    {avatarOptions.map((option, index) => (
+                      <div key={option.style} className="text-center">
+                        <button
+                          type="button"
+                          className={`relative rounded-full overflow-hidden border-2 transition-all hover:scale-105 ${
+                            formData.profileImageUrl === option.url 
+                              ? 'border-ceylon-green ring-2 ring-ceylon-green ring-offset-2' 
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                          onClick={() => setFormData({...formData, profileImageUrl: option.url})}
+                          data-testid={`avatar-option-${option.style}`}
+                        >
+                          <img
+                            src={option.url}
+                            alt={option.name}
+                            className="w-16 h-16 object-cover"
+                            loading="lazy"
+                          />
+                          {formData.profileImageUrl === option.url && (
+                            <div className="absolute inset-0 bg-ceylon-green bg-opacity-20 flex items-center justify-center">
+                              <div className="text-white text-xl">✓</div>
+                            </div>
+                          )}
+                        </button>
+                        <p className="text-xs text-gray-600 mt-1 truncate">
+                          {option.name}
+                        </p>
+                      </div>
                     ))}
                   </div>
                   
