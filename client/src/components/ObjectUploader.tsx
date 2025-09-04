@@ -83,7 +83,7 @@ export function ObjectUploader({
       });
 
       // Call completion handler with the upload URL
-      onComplete?.(url);
+      onComplete?.(url.split('?')[0]); // Remove query parameters from URL
 
     } catch (error) {
       console.error("Upload error:", error);

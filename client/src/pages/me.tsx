@@ -435,7 +435,9 @@ function ProfileEditor({ profile, onUpdate }: any) {
                         };
                       }}
                       onComplete={(uploadUrl) => {
-                        // Update profile with uploaded image
+                        console.log('Upload completed, URL:', uploadUrl);
+                        
+                        // Update profile with uploaded image URL directly
                         apiRequest('PUT', '/api/profile/picture', {
                           profileImageUrl: uploadUrl
                         }).then(() => {
@@ -446,6 +448,7 @@ function ProfileEditor({ profile, onUpdate }: any) {
                             description: "Your new profile picture has been saved.",
                           });
                         }).catch((error) => {
+                          console.error('Profile update error:', error);
                           toast({
                             title: "Error",
                             description: "Failed to update profile picture.",
@@ -467,6 +470,22 @@ function ProfileEditor({ profile, onUpdate }: any) {
                     <div className="flex-1 h-px bg-gray-200"></div>
                   </div>
                   
+                  {/* Random Avatar Button */}
+                  <div className="mb-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        const randomIndex = Math.floor(Math.random() * avatarOptions.length);
+                        const randomOption = avatarOptions[randomIndex];
+                        setFormData({...formData, profileImageUrl: randomOption.url});
+                      }}
+                    >
+                      🎲 Choose Random Avatar
+                    </Button>
+                  </div>
+
                   {/* Avatar Options Grid */}
                   <div className="grid grid-cols-4 gap-3 mb-6">
                     {avatarOptions.map((option, index) => (

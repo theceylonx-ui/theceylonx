@@ -40,13 +40,17 @@ export function generateRandomProfilePicture(seed?: string, style?: AvatarStyle)
   return generateProfilePicture(seed, usedStyle);
 }
 
-// Get avatar options for selection
+// Get avatar options for selection with randomized seeds for variety
 export function getAvatarOptions(userId: string): Array<{ style: AvatarStyle; url: string; name: string }> {
-  return AVATAR_STYLES.map(style => ({
-    style,
-    url: generateProfilePicture(userId, style),
-    name: style.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-  }));
+  return AVATAR_STYLES.map((style, index) => {
+    // Create different seeds for each style to get variety
+    const seed = `${userId}-${style}-${index}`;
+    return {
+      style,
+      url: generateProfilePicture(seed, style),
+      name: style.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+    };
+  });
 }
 
 // Generate display name based on user data - general version
