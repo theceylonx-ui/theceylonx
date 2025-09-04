@@ -61,9 +61,9 @@ export default function CommunityPage() {
     setCurrentPage(1);
   }, [searchQuery, selectedTopic, sortBy]);
 
-  const handleEditQuestion = (question: QuestionWithDetails) => {
+  const handleEditQuestion = (questionId: string) => {
     // TODO: Implement edit functionality
-    console.log("Edit question:", question.id);
+    console.log("Edit question:", questionId);
   };
 
   const handleDeleteQuestion = (questionId: string) => {
@@ -161,7 +161,7 @@ export default function CommunityPage() {
                   Ceylon Expand Community
                 </h1>
                 <p className="text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed">
-                  Ask questions, share knowledge, and connect with fellow travelers exploring Sri Lanka
+                  Ask questions, share knowledge, and connect with fellow travelers exploring Sri Lanka.
                 </p>
               </div>
               
