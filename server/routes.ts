@@ -3602,6 +3602,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Object Storage Routes for Profile Pictures
+  try {
+    const { ObjectStorageService } = await import('./objectStorage');
+    const objectStorageService = new ObjectStorageService();
+
+    // Get upload URL for profile picture
+    app.post('/api/profile/upload-url', unifiedAuthGuard, async (req: any, res) => {
+      try {
+        const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+        res.json({ uploadURL });
+      } catch (error) {
+        console.error("Error getting upload URL:", error);
+        res.status(500).json({ error: "Failed to get upload URL" });
+      }
+    });
+
+    // Serve uploaded profile pictures
+    app.get("/objects/:objectPath(*)", async (req, res) => {
+      try {
+        const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+        objectStorageService.downloadObject(objectFile, res);
+      } catch (error) {
+        console.error("Error serving object:", error);
+        res.status(404).json({ error: "Object not found" });
+      }
+    });
+
+    // Update profile picture after upload
+    app.put('/api/profile/picture', unifiedAuthGuard, async (req: any, res) => {
+      try {
+        const userId = req.user.id;
+        const { profileImageUrl } = req.body;
+
+        if (!profileImageUrl) {
+          return res.status(400).json({ error: "profileImageUrl is required" });
+        }
+
+        // Normalize the object path
+        const normalizedPath = objectStorageService.normalizeObjectEntityPath(profileImageUrl);
+        
+        // Update user profile with new image URL
+        const updatedProfile = await storage.updateUserProfile(userId, {
+          profileImageUrl: normalizedPath
+        });
+
+        res.json(updatedProfile);
+      } catch (error) {
+        console.error("Error updating profile picture:", error);
+        res.status(500).json({ error: "Failed to update profile picture" });
+      }
+    });
+  } catch (error) {
+    console.warn('Object storage not available:', error);
+  }
+
   // Notifications API endpoints
   app.get('/api/notifications', unifiedAuthGuard, async (req, res) => {
     try {

@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { ObjectUploader } from "@/components/ObjectUploader";
 
 export default function ProfilePage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -381,31 +382,101 @@ function ProfileEditor({ profile, onUpdate }: any) {
               </div>
             </div>
 
-            {/* Avatar Selection Modal */}
+            {/* Enhanced Avatar Selection Modal */}
             {showAvatarPicker && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
-                  <h3 className="text-lg font-semibold mb-4">Choose Your Avatar</h3>
-                  <div className="grid grid-cols-4 gap-3 mb-4">
+                <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-semibold">Choose Your Avatar</h3>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAvatarPicker(false)}
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                  
+                  {/* Upload Custom Picture Section */}
+                  <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                    <h4 className="font-medium mb-3 flex items-center gap-2">
+                      📸 Upload Your Own Picture
+                    </h4>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Upload a custom profile picture (max 5MB, JPG/PNG)
+                    </p>
+                    <ObjectUploader
+                      onGetUploadParameters={async () => {
+                        const response = await apiRequest('POST', '/api/profile/upload-url');
+                        const data = await response.json();
+                        return {
+                          method: 'PUT' as const,
+                          url: data.uploadURL,
+                        };
+                      }}
+                      onComplete={(uploadUrl) => {
+                        // Update profile with uploaded image
+                        apiRequest('PUT', '/api/profile/picture', {
+                          profileImageUrl: uploadUrl
+                        }).then(() => {
+                          setFormData({...formData, profileImageUrl: uploadUrl});
+                          setShowAvatarPicker(false);
+                          toast({
+                            title: "Profile picture updated!",
+                            description: "Your new profile picture has been saved.",
+                          });
+                        }).catch((error) => {
+                          toast({
+                            title: "Error",
+                            description: "Failed to update profile picture.",
+                            variant: "destructive",
+                          });
+                        });
+                      }}
+                      buttonClassName="w-full"
+                      accept="image/*"
+                    >
+                      📁 Choose File to Upload
+                    </ObjectUploader>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="flex-1 h-px bg-gray-200"></div>
+                    <span className="text-sm text-gray-500">or choose from avatars</span>
+                    <div className="flex-1 h-px bg-gray-200"></div>
+                  </div>
+                  
+                  {/* Avatar Options Grid */}
+                  <div className="grid grid-cols-5 gap-3 mb-6">
                     {avatarOptions.map((url, index) => (
                       <button
                         key={index}
                         type="button"
-                        className={`relative rounded-full overflow-hidden border-2 transition-all ${
+                        className={`relative rounded-full overflow-hidden border-2 transition-all hover:scale-105 ${
                           formData.profileImageUrl === url 
                             ? 'border-ceylon-green ring-2 ring-ceylon-green ring-offset-2' 
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                         onClick={() => setFormData({...formData, profileImageUrl: url})}
+                        data-testid={`avatar-option-${index}`}
                       >
                         <img
                           src={url}
                           alt={`Avatar option ${index + 1}`}
                           className="w-16 h-16 object-cover"
+                          loading="lazy"
                         />
+                        {formData.profileImageUrl === url && (
+                          <div className="absolute inset-0 bg-ceylon-green bg-opacity-20 flex items-center justify-center">
+                            <div className="text-white text-xl">✓</div>
+                          </div>
+                        )}
                       </button>
                     ))}
                   </div>
+                  
                   <div className="flex justify-end space-x-2">
                     <Button
                       type="button"
@@ -417,6 +488,7 @@ function ProfileEditor({ profile, onUpdate }: any) {
                     <Button
                       type="button"
                       onClick={() => setShowAvatarPicker(false)}
+                      className="bg-ceylon-green hover:bg-ceylon-green-dark"
                     >
                       Done
                     </Button>
