@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
@@ -23,6 +23,11 @@ export default function VotingControls({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [optimisticScore, setOptimisticScore] = useState(currentScore);
+  
+  // Update optimistic score when currentScore changes (from props)
+  useEffect(() => {
+    setOptimisticScore(currentScore);
+  }, [currentScore]);
 
   // Get current user's vote
   const { data: voteData } = useQuery<{ vote: any }>({
