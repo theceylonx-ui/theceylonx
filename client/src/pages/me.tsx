@@ -19,7 +19,7 @@ import {
   Home,
   ArrowLeft
 } from "lucide-react";
-import { getDisplayName, getInitials, getAvatarOptions } from "@/lib/profileUtils";
+import { getDisplayName, getInitials, getAvatarOptions, AVATAR_STYLES } from "@/lib/profileUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -486,37 +486,47 @@ function ProfileEditor({ profile, onUpdate }: any) {
                     </Button>
                   </div>
 
-                  {/* Avatar Options Grid */}
-                  <div className="grid grid-cols-4 gap-3 mb-6">
-                    {avatarOptions.map((option, index) => (
-                      <div key={option.style} className="text-center">
-                        <button
-                          type="button"
-                          className={`relative rounded-full overflow-hidden border-2 transition-all hover:scale-105 ${
-                            formData.profileImageUrl === option.url 
-                              ? 'border-ceylon-green ring-2 ring-ceylon-green ring-offset-2' 
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          onClick={() => setFormData({...formData, profileImageUrl: option.url})}
-                          data-testid={`avatar-option-${option.style}`}
-                        >
-                          <img
-                            src={option.url}
-                            alt={option.name}
-                            className="w-16 h-16 object-cover"
-                            loading="lazy"
-                          />
-                          {formData.profileImageUrl === option.url && (
-                            <div className="absolute inset-0 bg-ceylon-green bg-opacity-20 flex items-center justify-center">
-                              <div className="text-white text-xl">✓</div>
-                            </div>
-                          )}
-                        </button>
-                        <p className="text-xs text-gray-600 mt-1 truncate">
-                          {option.name}
-                        </p>
-                      </div>
-                    ))}
+                  {/* Avatar Options Grid - Grouped by Style */}
+                  <div className="space-y-6 mb-6 max-h-96 overflow-y-auto">
+                    {/* Group avatars by style */}
+                    {AVATAR_STYLES.slice(0, 8).map((styleName) => {
+                      const styleOptions = avatarOptions.filter(option => option.style === styleName);
+                      const displayName = styleName.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                      
+                      return (
+                        <div key={styleName} className="border rounded-lg p-4 bg-gray-50">
+                          <h4 className="font-medium text-sm mb-3 text-gray-700">{displayName}</h4>
+                          <div className="grid grid-cols-4 gap-2">
+                            {styleOptions.map((option) => (
+                              <div key={`${option.style}-${option.variation}`} className="text-center">
+                                <button
+                                  type="button"
+                                  className={`relative rounded-full overflow-hidden border-2 transition-all hover:scale-105 ${
+                                    formData.profileImageUrl === option.url 
+                                      ? 'border-ceylon-green ring-2 ring-ceylon-green ring-offset-2' 
+                                      : 'border-gray-200 hover:border-gray-300'
+                                  }`}
+                                  onClick={() => setFormData({...formData, profileImageUrl: option.url})}
+                                  data-testid={`avatar-option-${option.style}-${option.variation}`}
+                                >
+                                  <img
+                                    src={option.url}
+                                    alt={`${option.name} ${option.variation}`}
+                                    className="w-12 h-12 object-cover"
+                                    loading="lazy"
+                                  />
+                                  {formData.profileImageUrl === option.url && (
+                                    <div className="absolute inset-0 bg-ceylon-green bg-opacity-20 flex items-center justify-center">
+                                      <div className="text-white text-sm">✓</div>
+                                    </div>
+                                  )}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                   
                   <div className="flex justify-end space-x-2">

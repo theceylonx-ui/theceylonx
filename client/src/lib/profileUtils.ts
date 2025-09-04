@@ -40,17 +40,24 @@ export function generateRandomProfilePicture(seed?: string, style?: AvatarStyle)
   return generateProfilePicture(seed, usedStyle);
 }
 
-// Get avatar options for selection with randomized seeds for variety
-export function getAvatarOptions(userId: string): Array<{ style: AvatarStyle; url: string; name: string }> {
-  return AVATAR_STYLES.map((style, index) => {
-    // Create different seeds for each style to get variety
-    const seed = `${userId}-${style}-${index}`;
-    return {
-      style,
-      url: generateProfilePicture(seed, style),
-      name: style.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-    };
+// Get avatar options for selection with multiple variations per style
+export function getAvatarOptions(userId: string): Array<{ style: AvatarStyle; url: string; name: string; variation: number }> {
+  const options: Array<{ style: AvatarStyle; url: string; name: string; variation: number }> = [];
+  
+  AVATAR_STYLES.forEach((style) => {
+    // Generate 4 different variations for each style
+    for (let i = 0; i < 4; i++) {
+      const seed = `${userId}-${style}-var${i}`;
+      options.push({
+        style,
+        url: generateProfilePicture(seed, style),
+        name: style.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+        variation: i + 1
+      });
+    }
   });
+  
+  return options;
 }
 
 // Generate display name based on user data - general version
