@@ -1,5 +1,7 @@
 import {
   users,
+  userNotifications,
+  userPrivacy,
   trips,
   comments,
   ratings,

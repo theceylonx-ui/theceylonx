@@ -60,6 +60,12 @@ export const users = pgTable("users", {
   appleId: varchar("apple_id"),
   roleId: varchar("role_id"), // References roles table
   emailVerified: boolean("email_verified").default(false),
+  // New profile fields for redesigned system
+  displayName: text("display_name"),
+  location: text("location"),
+  languages: text("languages").array(),
+  linksJson: jsonb("links_json").default(sql`'{}'::jsonb`),
+  profileCompletePct: integer("profile_complete_pct").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
@@ -513,6 +519,31 @@ export const userPersonalization = pgTable("user_personalization", {
   isPaused: boolean("is_paused").default(false), // User can pause personalization
   resetAt: timestamp("reset_at"), // When user last reset recommendations
   abTestGroup: varchar("ab_test_group").default('personalized'), // 'baseline' | 'personalized'
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User notifications settings for redesigned profile system
+export const userNotifications = pgTable("user_notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  emailOn: boolean("email_on").default(true),
+  pushOn: boolean("push_on").default(true),
+  categoriesJson: jsonb("categories_json").default(sql`'{"trip":"instant","answers":"instant","votes":"digest","reports":"instant","dm":"instant","interest":"instant"}'::jsonb`),
+  digest: varchar("digest", { enum: ['instant', 'daily', 'weekly'] }).default('instant'),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User privacy settings for redesigned profile system
+export const userPrivacy = pgTable("user_privacy", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  visibility: varchar("visibility", { enum: ['public', 'friends', 'private'] }).default('public'),
+  dmPolicy: varchar("dm_policy", { enum: ['everyone', 'followers', 'nobody'] }).default('everyone'),
+  showOnline: boolean("show_online").default(true),
+  showJoinedTrips: boolean("show_joined_trips").default(true),
+  cityVisibility: varchar("city_visibility", { enum: ['show', 'hide'] }).default('show'),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -1270,3 +1301,9 @@ export type MessageWithContactCard = Message & {
 // User history types
 export type UserHistoryEntry = typeof userHistory.$inferSelect;
 export type InsertUserHistoryEntry = typeof userHistory.$inferInsert;
+
+// New profile system types
+export type UserNotifications = typeof userNotifications.$inferSelect;
+export type InsertUserNotifications = typeof userNotifications.$inferInsert;
+export type UserPrivacy = typeof userPrivacy.$inferSelect;
+export type InsertUserPrivacy = typeof userPrivacy.$inferInsert;

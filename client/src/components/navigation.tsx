@@ -155,8 +155,8 @@ export default function Navigation() {
                     </div>
                   </div>
                   <DropdownMenuSeparator />
-                  <Link href="/dashboard">
-                    <DropdownMenuItem className="cursor-pointer" data-testid="user-menu-dashboard">
+                  <Link href="/me">
+                    <DropdownMenuItem className="cursor-pointer" data-testid="user-menu-profile">
                       <User className="mr-2 h-4 w-4" />
                       My Profile
                     </DropdownMenuItem>

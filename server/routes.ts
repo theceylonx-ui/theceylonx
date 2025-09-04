@@ -2068,6 +2068,160 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // NEW PROFILE SYSTEM - /api/me/* endpoints
+  
+  // Get aggregated profile data
+  app.get('/api/me', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Get user profile
+      const profile = await storage.getUser(userId);
+      if (!profile) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Get preferences (existing)
+      const preferences = await storage.getUserPreferences(userId);
+      
+      // Get privacy settings - using placeholder for now
+      const privacy = null; // await storage.getUserPrivacy(userId);
+      
+      // Get notification settings - using existing notifications
+      const notifications = await storage.getUserNotifications(userId);
+      
+      // Get stats - using existing methods
+      const [userQuestions, userTrips] = await Promise.all([
+        storage.getUserQuestions(userId),
+        storage.getUserTrips(userId)
+      ]);
+      
+      res.json({
+        profile,
+        preferences,
+        privacy,
+        notifications,
+        stats: {
+          questions_count: userQuestions?.length || 0,
+          trips_count: userTrips?.length || 0,
+          saved_count: 0 // Implement if needed
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching profile data:", error);
+      res.status(500).json({ message: "Failed to fetch profile data" });
+    }
+  });
+  
+  // Update profile
+  app.patch('/api/me/profile', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { displayName, username, bio, location, languages, links, profileImageUrl } = req.body;
+      
+      // Check username uniqueness if provided
+      if (username && username.trim()) {
+        const existingUser = await storage.getUserByUsername(username.trim());
+        if (existingUser && existingUser.id !== userId) {
+          return res.status(400).json({ message: "Username is already taken" });
+        }
+      }
+      
+      const updateData = {
+        displayName: displayName?.trim() || null,
+        username: username?.trim() || null,
+        bio: bio?.trim() || null,
+        location: location?.trim() || null,
+        languages: languages || null,
+        linksJson: links || null,
+        profileImageUrl: profileImageUrl?.trim() || null,
+      };
+      
+      const updatedUser = await storage.updateUser(userId, updateData);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      if (error instanceof Error && error.message.includes('unique')) {
+        return res.status(400).json({ message: "Username is already taken" });
+      }
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // Avatar upload endpoint
+  app.post('/api/me/avatar', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Return Cloudinary signature for upload
+      // This would be implemented with Cloudinary SDK
+      res.json({
+        signature: "placeholder_signature",
+        upload_url: "placeholder_upload_url",
+        folder: `users/${userId}`
+      });
+    } catch (error) {
+      console.error("Error generating avatar upload URL:", error);
+      res.status(500).json({ message: "Failed to generate upload URL" });
+    }
+  });
+
+  // Update notification settings
+  app.patch('/api/me/notifications', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { emailOn, pushOn, categoriesJson, digest } = req.body;
+      
+      // Placeholder for notification settings
+      const settings = { emailOn, pushOn, categoriesJson, digest };
+      
+      res.json(settings);
+    } catch (error) {
+      console.error("Error updating notification settings:", error);
+      res.status(500).json({ message: "Failed to update notification settings" });
+    }
+  });
+
+  // Update privacy settings
+  app.patch('/api/me/privacy', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { visibility, dmPolicy, showOnline, showJoinedTrips, cityVisibility } = req.body;
+      
+      // Placeholder for privacy settings
+      const settings = { visibility, dmPolicy, showOnline, showJoinedTrips, cityVisibility };
+      
+      res.json(settings);
+    } catch (error) {
+      console.error("Error updating privacy settings:", error);
+      res.status(500).json({ message: "Failed to update privacy settings" });
+    }
+  });
+
+  // Get user activity (questions)
+  app.get('/api/me/activity/questions', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const questions = await storage.getUserQuestions(userId);
+      res.json(questions);
+    } catch (error) {
+      console.error("Error fetching user questions:", error);
+      res.status(500).json({ message: "Failed to fetch questions" });
+    }
+  });
+
+  // Get user activity (trips)
+  app.get('/api/me/activity/trips', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const trips = await storage.getUserTrips(userId);
+      res.json(trips);
+    } catch (error) {
+      console.error("Error fetching user trips:", error);
+      res.status(500).json({ message: "Failed to fetch trips" });
+    }
+  });
+
   app.put('/api/user/preferences', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;

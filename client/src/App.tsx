@@ -31,6 +31,7 @@ import ChatPage from "@/pages/chat";
 import UserDeletion from "@/pages/user-deletion";
 import CalendarPage from "@/pages/calendar";
 import TravelStyleSettings from "@/pages/travel-style-settings";
+import ProfilePage from "@/pages/me";
 import ChatBuddy from "@/pages/chat-buddy";
 import AdminReportsPage from "@/pages/admin-reports";
 
@@ -95,6 +96,7 @@ function Router() {
             <Route path="/destination/:city" component={DestinationPage} />
             <Route path="/preferences" component={PreferencesPage} />
             <Route path="/travel-style-settings" component={TravelStyleSettings} />
+            <Route path="/me" component={ProfilePage} />
             <Route path="/chat" component={ChatPage} />
             <Route path="/chat/:threadId" component={ChatPage} />
             <Route path="/chat-buddy" component={ChatBuddy} />

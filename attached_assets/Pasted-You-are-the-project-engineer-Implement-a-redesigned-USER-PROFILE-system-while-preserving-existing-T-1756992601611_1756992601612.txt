@@ -1,0 +1,87 @@
+You are the project engineer. Implement a redesigned USER PROFILE system while preserving existing Travel Preferences. Stack: React (Vite), Express + TypeScript, Drizzle ORM, Neon Postgres. Add Clerk for auth and Cloudinary for avatars. Keep current userPreferences flows unchanged.
+
+# HIGH-LEVEL GOAL
+- Create clean user-only profile area at routes /me/* with tabs:
+  - Overview (/me)
+  - Profile (/me/profile)
+  - Preferences (/me/preferences) — REUSE existing logic & schema
+  - Activity (/me/activity with sub-tabs questions, trips, saved)
+  - Notifications (/me/notifications)
+  - Security (/me/security)
+  - Privacy (/me/privacy)
+- Replace current “user dashboard” experience with /me while keeping old links working.
+- Hide Admin Dashboard link in avatar menu unless role allows (no hardcoded IDs).
+
+────────────────────────────────────────
+A) DEPENDENCIES & ENV
+────────────────────────────────────────
+1) Install:
+   - Frontend: @clerk/clerk-react, @tanstack/react-query, zod, axios, @cloudinary/url-gen
+   - Backend: clerk-sdk-node, zod, cloudinary, multer (for form-data if needed), @types/jsonwebtoken if required by existing code
+2) Add env variables to Replit/Env:
+   - CLERK_PUBLISHABLE_KEY=<key>
+   - CLERK_SECRET_KEY=<key>
+   - CLOUDINARY_CLOUD_NAME=<name>
+   - CLOUDINARY_API_KEY=<key>
+   - CLOUDINARY_API_SECRET=<secret>
+   - DATABASE_URL=<already present for Neon>
+3) Wire Clerk:
+   - FRONTEND: Wrap app with <ClerkProvider publishableKey=...>. Use <SignedIn>/<SignedOut>.
+   - BACKEND: Add a middleware verifyClerkJwt that reads Authorization: Bearer <token>, verifies with Clerk, and attaches req.auth.userId + email.
+   - Ensure existing JWT/Replit auth paths still function; prefer Clerk for new routes.
+
+────────────────────────────────────────
+B) DATABASE (Drizzle / Neon)
+────────────────────────────────────────
+Do NOT change existing userPreferences table or its handlers.
+
+1) Create/extend tables (new migration):
+   - users: add columns if missing
+     - display_name text null
+     - username text unique null
+     - location text null
+     - languages text[] null
+     - links_json jsonb default '{}'::jsonb
+     - profile_image_url text null
+     - profile_complete_pct int default 0 not null
+   - user_notifications (new):
+     - id uuid pk default gen_random_uuid()
+     - user_id uuid not null references users(id) on delete cascade
+     - email_on boolean default true
+     - push_on boolean default true
+     - categories_json jsonb default '{"trip":"instant","answers":"instant","votes":"digest","reports":"instant","dm":"instant","interest":"instant"}'::jsonb
+     - digest text check (digest in ('instant','daily','weekly')) default 'instant'
+     - created_at timestamptz default now()
+     - updated_at timestamptz default now()
+   - user_privacy (new):
+     - id uuid pk default gen_random_uuid()
+     - user_id uuid not null references users(id) on delete cascade
+     - visibility text check (visibility in ('public','friends','private')) default 'public'
+     - dm_policy text check (dm_policy in ('everyone','followers','nobody')) default 'everyone'
+     - show_online boolean default true
+     - show_joined_trips boolean default true
+     - city_visibility text check (city_visibility in ('show','hide')) default 'show'
+     - created_at timestamptz default now()
+     - updated_at timestamptz default now()
+2) Backfill script:
+   - For all existing users, insert defaults into user_notifications and user_privacy if missing.
+   - Compute profile_complete_pct based on fields present: avatar(25), display_name(25), bio(15), preferences(25 if exists), verified email(10).
+
+────────────────────────────────────────
+C) BACKEND API (Express + TS)
+────────────────────────────────────────
+Create routes under /api/me*. All require verifyClerkJwt (or current auth guard if running locally without Clerk keys).
+
+- GET /api/me
+  Returns aggregated:
+   { profile: users row, preferences: userPreferences row (EXISTING), privacy, notifications, stats: {questions_count, trips_count, saved_count} }
+
+- PATCH /api/me/profile
+  Body zod schema:
+   { display_name?: string, username?: string, bio?: string, location?: string, languages?: string[], links?: {instagram?:string, facebook?:string, tiktok?:string, website?:string}, profile_image_url?: string }
+  Enforce username uniqueness if provided.
+
+- POST /api/me/avatar
+  Accept signed upload init:
+   -> server returns Cloudinary signature + folder 'users/<userId>'
+  ALT: if client directly uploads, accept a secure_url and persist to users.p_
