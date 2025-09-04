@@ -13,6 +13,7 @@ import TripDetails from "@/pages/trip-details";
 import UserDashboard from "@/pages/user-dashboard";
 import FAQ from "@/pages/faq";
 import Community from "@/pages/community";
+import CommunityNew from "@/pages/community-new";
 import QuestionDetail from "@/pages/question-detail";
 import SafetyGuidelines from "@/pages/safety-guidelines";
 import TermsOfService from "@/pages/terms-of-service";
@@ -56,7 +57,7 @@ function Router() {
             <Route path="/" component={Landing} />
             <Route path="/browse-trips" component={BrowseTrips} />
             <Route path="/trips/:id" component={TripDetails} />
-            <Route path="/community" component={Community} />
+            <Route path="/community" component={CommunityNew} />
             <Route path="/question/:id" component={QuestionDetail} />
             <Route path="/calendar" component={CalendarPage} />
             <Route path="/safety-guidelines" component={SafetyGuidelines} />
@@ -82,7 +83,7 @@ function Router() {
             <Route path="/post" component={PostTrip} />
             <Route path="/trips/:id" component={TripDetails} />
             <Route path="/dashboard" component={UserDashboard} />
-            <Route path="/community" component={Community} />
+            <Route path="/community" component={CommunityNew} />
             <Route path="/question/:id" component={QuestionDetail} />
             <Route path="/calendar" component={CalendarPage} />
             <Route path="/safety-guidelines" component={SafetyGuidelines} />

@@ -1,3 +1,5 @@
+import type { User } from "@shared/schema";
+
 // Utility functions for user profile management
 
 // Avatar styles available for selection
@@ -47,15 +49,16 @@ export function getAvatarOptions(userId: string): Array<{ style: AvatarStyle; ur
   }));
 }
 
-// Generate display name based on user data
+// Generate display name based on user data - general version
 export function getDisplayName(user: {
   username?: string | null;
   firstName?: string | null;
   lastName?: string | null;
-  id: string;
+  email?: string | null;
+  id?: string;
 } | null | undefined): string {
-  if (!user || !user.id) {
-    return 'Unknown User';
+  if (!user) {
+    return 'Anonymous';
   }
   
   if (user.username) {
@@ -70,8 +73,20 @@ export function getDisplayName(user: {
     return user.firstName;
   }
   
-  // Fallback to user ID
-  return `User ${user.id.slice(0, 8)}`;
+  if (user.lastName) {
+    return user.lastName;
+  }
+  
+  if (user.email) {
+    return user.email.split('@')[0];
+  }
+  
+  // Fallback to user ID if available
+  if (user.id) {
+    return `User ${user.id.slice(0, 8)}`;
+  }
+  
+  return 'User';
 }
 
 // Get initials for avatar fallback
@@ -79,9 +94,10 @@ export function getInitials(user: {
   username?: string | null;
   firstName?: string | null;
   lastName?: string | null;
+  email?: string | null;
 } | null | undefined): string {
   if (!user) {
-    return 'U';
+    return 'A';
   }
   
   if (user.username) {
@@ -94,6 +110,14 @@ export function getInitials(user: {
   
   if (user.firstName) {
     return user.firstName.slice(0, 2).toUpperCase();
+  }
+  
+  if (user.lastName) {
+    return user.lastName.slice(0, 2).toUpperCase();
+  }
+  
+  if (user.email) {
+    return user.email[0].toUpperCase();
   }
   
   return 'U';
