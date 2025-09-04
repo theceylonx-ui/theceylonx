@@ -30,21 +30,20 @@ export function QuestionCard({ question, onEdit, onDelete, currentUserId, showPr
     : question.body;
 
   return (
-    <Card 
-      className="hover:shadow-md transition-all duration-200 border-l-4 border-l-transparent hover:border-l-ceylon-blue"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <CardContent className="p-6">
-        {/* Question Header */}
-        <div className="flex items-start justify-between gap-4 mb-3">
-          <div className="flex-1 min-w-0">
-            <Link href={`/question/${question.id}`}>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 hover:text-ceylon-blue cursor-pointer line-clamp-2">
+    <Link href={`/question/${question.id}`} className="block">
+      <Card 
+        className="hover:shadow-md transition-all duration-200 border-l-4 border-l-transparent hover:border-l-ceylon-blue cursor-pointer"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <CardContent className="p-6">
+          {/* Question Header */}
+          <div className="flex items-start justify-between gap-4 mb-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 hover:text-ceylon-blue line-clamp-2">
                 {question.title}
               </h3>
-            </Link>
-          </div>
+            </div>
           
           {/* Action buttons for author */}
           {isAuthor && (
@@ -152,7 +151,8 @@ export function QuestionCard({ question, onEdit, onDelete, currentUserId, showPr
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
