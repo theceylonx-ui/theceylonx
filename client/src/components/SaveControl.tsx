@@ -1,13 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Heart, Pin, ChevronDown } from 'lucide-react';
+import { Pin, Star } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
@@ -124,158 +118,93 @@ export function SaveControl({ tripId, variant = 'default', className = '' }: Sav
   });
 
   const handleSave = (saveType: 'pinned' | 'interested') => {
-    saveMutation.mutate(saveType);
-  };
-
-  const handleRemove = () => {
-    removeMutation.mutate();
+    if (currentStatus?.isSaved && currentStatus.saveType === saveType) {
+      // If already saved with same type, remove it
+      removeMutation.mutate();
+    } else {
+      // Save with new type
+      saveMutation.mutate(saveType);
+    }
   };
 
   const isPending = saveMutation.isPending || removeMutation.isPending;
+  const isCompact = variant === 'compact';
 
   if (isLoading) {
     return (
-      <Button 
-        variant="outline" 
-        size={variant === 'compact' ? 'sm' : 'default'} 
-        disabled 
-        className={className}
-        data-testid="save-control-loading"
-      >
-        <Heart className="w-4 h-4" />
-      </Button>
-    );
-  }
-
-  // If trip is already saved, show current state with option to remove or change
-  if (currentStatus?.isSaved) {
-    const icon = currentStatus.saveType === 'pinned' ? 
-      <Pin className="w-4 h-4 fill-current" /> : 
-      <Heart className="w-4 h-4 fill-current" />;
-
-    if (variant === 'compact') {
-      return (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRemove}
-          disabled={isPending}
-          className={`${className} text-primary border-primary bg-primary/5`}
-          data-testid={`save-control-${currentStatus.saveType}`}
+      <div className={`flex items-center gap-1 ${className}`}>
+        <Button 
+          variant="outline" 
+          size={isCompact ? 'sm' : 'default'} 
+          disabled 
+          className={isCompact ? 'text-xs px-2 py-1' : ''}
+          data-testid="pin-button-loading"
         >
-          {icon}
+          <Pin className="w-3 h-3" />
         </Button>
-      );
-    }
-
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            disabled={isPending}
-            className={`${className} text-primary border-primary bg-primary/5`}
-            data-testid={`save-control-${currentStatus.saveType}`}
-          >
-            {icon}
-            <span className="ml-1 capitalize">{currentStatus.saveType}</span>
-            <ChevronDown className="w-4 h-4 ml-1" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem 
-            onClick={() => handleSave('pinned')}
-            disabled={currentStatus.saveType === 'pinned'}
-            data-testid="save-option-pinned"
-          >
-            <Pin className="w-4 h-4 mr-2" />
-            Pin Trip
-          </DropdownMenuItem>
-          <DropdownMenuItem 
-            onClick={() => handleSave('interested')}
-            disabled={currentStatus.saveType === 'interested'}
-            data-testid="save-option-interested"
-          >
-            <Heart className="w-4 h-4 mr-2" />
-            Mark as Interested
-          </DropdownMenuItem>
-          <DropdownMenuItem 
-            onClick={handleRemove}
-            className="text-destructive"
-            data-testid="save-option-remove"
-          >
-            Remove from Saved
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        <Button 
+          variant="outline" 
+          size={isCompact ? 'sm' : 'default'} 
+          disabled 
+          className={isCompact ? 'text-xs px-2 py-1' : ''}
+          data-testid="interest-button-loading"
+        >
+          <Star className="w-3 h-3" />
+        </Button>
+      </div>
     );
   }
 
-  // If trip is not saved, show dropdown to choose save type
-  if (variant === 'compact') {
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={isPending}
-            className={className}
-            data-testid="save-control-unsaved"
-          >
-            <Heart className="w-4 h-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem 
-            onClick={() => handleSave('pinned')}
-            data-testid="save-option-pinned"
-          >
-            <Pin className="w-4 h-4 mr-2" />
-            Pin Trip
-          </DropdownMenuItem>
-          <DropdownMenuItem 
-            onClick={() => handleSave('interested')}
-            data-testid="save-option-interested"
-          >
-            <Heart className="w-4 h-4 mr-2" />
-            Mark as Interested
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  }
+  const isPinned = currentStatus?.isSaved && currentStatus.saveType === 'pinned';
+  const isInterested = currentStatus?.isSaved && currentStatus.saveType === 'interested';
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          disabled={isPending}
-          className={className}
-          data-testid="save-control-unsaved"
-        >
-          <Heart className="w-4 h-4 mr-2" />
-          Save Trip
-          <ChevronDown className="w-4 h-4 ml-1" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem 
-          onClick={() => handleSave('pinned')}
-          data-testid="save-option-pinned"
-        >
-          <Pin className="w-4 h-4 mr-2" />
-          Pin Trip
-        </DropdownMenuItem>
-        <DropdownMenuItem 
-          onClick={() => handleSave('interested')}
-          data-testid="save-option-interested"
-        >
-          <Heart className="w-4 h-4 mr-2" />
-          Mark as Interested
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className={`flex items-center gap-1 ${className}`}>
+      {/* Pin Button */}
+      <Button
+        variant={isPinned ? 'default' : 'outline'}
+        size={isCompact ? 'sm' : 'default'}
+        onClick={() => handleSave('pinned')}
+        disabled={isPending}
+        className={`${isCompact ? 'text-xs px-2 py-1' : ''} transition-all duration-200 ${
+          isPinned 
+            ? 'bg-orange-500 text-white hover:bg-orange-600 border-orange-500 shadow-md' 
+            : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+        }`}
+        data-testid={`pin-button-${tripId}`}
+        title={isPinned ? "Unpin trip" : "Pin trip"}
+      >
+        {isPending && currentStatus?.saveType === 'pinned' ? (
+          <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        ) : isPinned ? (
+          <span className="text-orange-200">📌</span>
+        ) : (
+          <Pin className="w-3 h-3" />
+        )}
+      </Button>
+
+      {/* Interest Button */}
+      <Button
+        variant={isInterested ? 'default' : 'outline'}
+        size={isCompact ? 'sm' : 'default'}
+        onClick={() => handleSave('interested')}
+        disabled={isPending}
+        className={`${isCompact ? 'text-xs px-2 py-1' : ''} transition-all duration-200 ${
+          isInterested 
+            ? 'bg-yellow-500 text-white hover:bg-yellow-600 border-yellow-500 shadow-md' 
+            : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+        }`}
+        data-testid={`interest-button-${tripId}`}
+        title={isInterested ? "Remove interest" : "Mark as interested"}
+      >
+        {isPending && currentStatus?.saveType === 'interested' ? (
+          <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        ) : isInterested ? (
+          <span className="text-yellow-200">⭐</span>
+        ) : (
+          <Star className="w-3 h-3" />
+        )}
+      </Button>
+    </div>
   );
 }
