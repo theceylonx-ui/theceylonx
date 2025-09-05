@@ -17,53 +17,46 @@ import {
   type InsertAuditLog,
   type InsertMediaAsset
 } from "@shared/schema";
+import { ROLE_DEFAULTS, PermKey, validatePermissions } from "../admin/permissions";
+import { validateRolePermissions, sanitizePermissions, newToLegacyPermissions } from "../admin/validation";
 
 export class AdminService {
-  // Default permission sets for different roles
-  private static readonly DEFAULT_PERMISSIONS: Record<string, AdminPermissions> = {
-    superadmin: {
-      canManageUsers: true,
-      canManageContent: true,
-      canViewLogs: true,
-      canManageRoles: true,
-    },
-    admin: {
-      canManageUsers: true,
-      canManageContent: true,
-      canViewLogs: true,
-      canManageRoles: false,
-    },
-    moderator: {
-      canManageUsers: false,
-      canManageContent: true,
-      canViewLogs: true,
-      canManageRoles: false,
-    },
-    user: {
-      canManageUsers: false,
-      canManageContent: false,
-      canViewLogs: false,
-      canManageRoles: false,
-    },
-  };
-
-  // Initialize admin system with default roles
+  // Initialize admin system with default roles and validation
   async initializeAdminSystem(): Promise<void> {
     try {
       // Check if roles exist, if not create them
       const existingRoles = await db.select().from(roles);
       
       if (existingRoles.length === 0) {
-        const rolesToCreate = Object.entries(this.DEFAULT_PERMISSIONS).map(([name, permissions]) => ({
+        console.log('🔧 Initializing admin system with new permission registry...');
+        
+        // Create roles with new permission format
+        const rolesToCreate = Object.entries(ROLE_DEFAULTS).map(([name, permissions]) => ({
           name,
-          permissions,
+          permissions: permissions, // Use new array-based format
         }));
 
         await db.insert(roles).values(rolesToCreate);
-        console.log('✅ Admin roles initialized');
+        console.log('✅ Admin roles initialized with new permission system');
+      } else {
+        // Validate existing roles
+        console.log('🔍 Validating existing role permissions...');
+        const isValid = await validateRolePermissions(existingRoles);
+        
+        if (!isValid) {
+          if (process.env.NODE_ENV === 'production') {
+            console.error('❌ CRITICAL: Invalid permissions found in production! System may not function correctly.');
+            throw new Error('Invalid role permissions detected in production');
+          } else {
+            console.warn('⚠️ Invalid permissions found in development. Consider running migration.');
+          }
+        } else {
+          console.log('✅ All role permissions are valid');
+        }
       }
     } catch (error) {
       console.error('❌ Failed to initialize admin system:', error);
+      throw error;
     }
   }
 

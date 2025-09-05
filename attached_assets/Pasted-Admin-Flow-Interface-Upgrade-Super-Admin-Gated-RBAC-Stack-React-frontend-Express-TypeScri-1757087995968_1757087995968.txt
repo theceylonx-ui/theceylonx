@@ -1,0 +1,134 @@
+Admin Flow & Interface Upgrade (Super Admin–Gated RBAC)
+Stack: React (frontend) · Express + TypeScript (API) · Neon Postgres + Drizzle (DB) · Clerk (auth)
+Current state (per your blueprint):
+Roles: superadmin, admin, moderator, user
+SUPERADMIN_EMAILS bootstrap ✅
+Middleware: requireAdmin, requirePermission ✅
+Audit logging ✅
+Admin dashboard basics ✅
+Roles stored with JSON permissions ✅
+Goal: Keep the working parts, tighten security, expand granular permissions, polish the Admin UI, and document everything—with tests.
+Phase 0 — Confirm & Snapshot (do this first)
+Inventory what exists
+Locate admin routes, middleware, UI screens, and DB tables already in use.
+Output a concise snapshot to docs/admin_audit.md with:
+Routes → required role/permission
+Current JSON permission keys in use
+Admin pages & what they render
+Any places bypassing middleware (flag!)
+Add a fail-fast banner (dev-only)
+When visiting /admin, log: actor_user_id, roles, resolved permissions, route, decision (allow/deny).
+Phase 1 — Permissions Model (stay JSON, add schema & registry)
+We’ll keep JSON permissions to avoid heavy refactors, but enforce a strict registry so no typos or drift.
+Permission registry (server): /server/admin/permissions.ts
+Export a read-only list of canonical keys, e.g.:
+export const PERMS = {
+  users: ['view','edit','ban'] as const,
+  roles: ['view','assign','create_custom'] as const,
+  trips: ['view','moderate','delete'] as const,
+  reports: ['view','resolve','escalate'] as const,
+  chat: ['view','moderate','purge'] as const,
+  logs: ['view','export'] as const,
+  settings: ['view','edit','secrets'] as const,
+  taxonomy: ['view','edit'] as const,
+} as const;
+export type PermDomain = keyof typeof PERMS;
+export type PermKey = `${PermDomain}.${typeof PERMS[PermDomain][number]}`;
+export const ALL_PERMS: PermKey[] = /* flatten above */;
+Schema (Zod) to validate role JSON: only ALL_PERMS allowed.
+On startup, validate every role’s JSON. If unknown keys → warn & strip in dev; block in prod.
+Role defaults (server):
+superadmin: ALL_PERMS
+admin: ALL minus settings.secrets, roles.create_custom
+moderator: users.view, trips.view,moderate, reports.view,resolve,escalate, chat.view,moderate, logs.view
+user: none (app-level privileges only)
+Bootstrap
+Keep SUPERADMIN_EMAILS flow. On login, if email matches and user has no admin role, assign superadmin.
+Phase 2 — Middleware & Step-Up Security
+requireRole(...roles) and requirePermission('domain.action') stay as-is, but:
+Enforce email verified + MFA/step-up for destructive actions:
+Add requireStepUp() that enforces a fresh Clerk session (e.g., re-auth in last 5–10 mins) when calling endpoints with delete/purge/secrets.
+Sensitive endpoints must chain: requirePermission + requireStepUp.
+Audit everything (already present): include actorRoles, route, diff, ip, ua.
+Phase 3 — Admin UI Upgrade (React, role-aware)
+Route: /admin (redirect to 403 if missing any admin role)
+Left sidebar (show/hide by permission, not role):
+Overview (KPIs)
+Users (users.view) → table: search, role badges, ban/unban (users.ban)
+Trips (trips.view) → status, moderate (trips.moderate), delete (trips.delete + step-up)
+Reports (reports.view) → queue, resolve, escalate
+Chat moderation (chat.view) → flagged threads, purge (chat.purge + step-up)
+Taxonomy (taxonomy.view) → manage interests/regions (taxonomy.edit)
+Notifications (settings.view) → edit templates (settings.edit)
+Audit Logs (logs.view) → filter & export (logs.export)
+Roles & Access (roles.view) → assign roles (roles.assign), create custom (roles.create_custom) superadmin only
+Settings (settings.view) → non-secret configs; Secrets section only if settings.secrets + step-up
+UI Rules
+Component-level guards:
+If user lacks a permission, hide the action entirely (don’t just disable).
+Destructive buttons open a confirm modal + step-up prompt.
+“Role badges” on User rows; inline Role assignment (superadmin/admin with roles.assign).
+Empty states with tips; server-side pagination on big tables.
+Phase 4 — Role Management (superadmin first)
+Roles & Access screen
+List roles; show included permissions (grouped by domain).
+Create Custom Role (superadmin only): multi-select from ALL_PERMS.
+Assign Roles to User: search by email/Clerk ID; add/remove roles.
+Server validates:
+Only superadmin can grant superadmin.
+admin may assign moderator but not admin/superadmin.
+API
+GET /admin/roles (roles + perms)
+POST /admin/roles (create custom) [superadmin + roles.create_custom]
+PUT /admin/users/:id/roles (assign/remove) [requires roles.assign]
+All write ops audited.
+Phase 5 — Reports & Moderation polish
+Reports queue merges trip & chat reports with filters: status, severity, reporter history.
+Actions:
+Resolve → note required
+Escalate → notify superadmin
+Ban user (users.ban) from here if needed
+Purge chat (chat.purge) with step-up
+Show minimal evidence: message snapshot or trip card snapshot.
+Phase 6 — Logs, Analytics, Settings
+Audit Logs table: server-side filter by actor, action, date range; CSV export if logs.export.
+Overview KPIs: daily signups, active trips, reports open, moderation SLA.
+Settings: flags (rate limits, media caps), message templates; Secrets tab hidden unless settings.secrets (+ step-up modal).
+Phase 7 — Tests
+Unit (server)
+Permission registry validation; role JSON validation rejects unknown keys.
+requirePermission and requireStepUp combinations.
+Role assignment constraints (only superadmin can grant superadmin).
+API (Jest + Supertest)
+/admin/** routes deny non-admins.
+Users list visible with users.view; ban requires users.ban.
+Trip delete requires trips.delete + step-up; audited.
+Custom role creation only by superadmin.
+Secrets endpoints require settings.secrets + step-up.
+E2E (Playwright/Cypress)
+SUPERADMIN: access everything; create a custom role; assign it.
+ADMIN: moderate trips; cannot open Secrets; cannot create custom role.
+MODERATOR: resolve reports; cannot assign roles.
+USER: cannot reach /admin.
+Deliverables
+docs/admin_audit.md: current vs upgraded map.
+server/admin/permissions.ts + Zod schema validator.
+UI: new /admin pages & guards; step-up modal flow.
+API: roles endpoints; tightened guards; full audit entries.
+Test suites (unit + API + E2E) passing.
+Short screen recording:
+superadmin assigns a role,
+admin moderates a trip,
+moderator resolves a report,
+secrets tab denied to admin but allowed to superadmin (with step-up).
+Acceptance Criteria (must all pass)
+Only superadmin can grant/revoke superadmin and create custom roles.
+All admin actions are permission-gated and audit-logged.
+Destructive ops require step-up.
+UI shows only what the signed-in admin is allowed to see.
+JSON permissions are validated against a registry; no stray keys in DB.
+Existing public features unaffected; no secret leaks; no console errors.
+Env
+SUPERADMIN_EMAILS="your@email.com,other@domain.com"
+Optional: ADMIN_IP_ALLOWLIST (deny admin access outside these IPs if set)
+Implement the above now. Start with Phase 0 snapshot, then apply Phases 1–7 exactly. If anything conflicts with current code, preserve backward compatibility and default to least privilege + step-up for destructive actions.

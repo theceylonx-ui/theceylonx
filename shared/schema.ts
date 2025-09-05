@@ -1360,13 +1360,17 @@ export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertMediaAsset = z.infer<typeof insertMediaAssetSchema>;
 export type MediaAsset = typeof mediaAssets.$inferSelect;
 
-// Admin permissions interface
+// Admin permissions interface (legacy format for backward compatibility)
 export interface AdminPermissions {
   canManageUsers: boolean;
   canManageContent: boolean;
   canViewLogs: boolean;
   canManageRoles: boolean;
 }
+
+// New permission types (imported from admin module)
+export type PermKey = import('../server/admin/permissions').PermKey;
+export type AdminPermissionsList = PermKey[];
 
 // User with role details
 export type UserWithRole = User & {
