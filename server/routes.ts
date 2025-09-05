@@ -1065,23 +1065,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const comment = await storage.createComment(commentData);
       
-      // Trigger notification for trip organizer if commenter is not the organizer
-      const trip = await storage.getTrip(tripId);
-      if (trip && trip.organizerId !== userId) {
-        const commenter = await storage.getUser(userId);
-        await storage.createNotification({
-          userId: trip.organizerId,
-          type: "trip_commented",
-          category: "social",
-          priority: "normal",
-          title: "New Comment on Your Trip",
-          message: `${commenter?.firstName || 'Someone'} commented on your trip "${trip.title}".`,
-          relatedTripId: tripId,
-          relatedUserId: userId,
-          actionUrl: `/trips/${tripId}`,
-          isRead: false,
-        });
-      }
+      // Notification temporarily disabled due to database schema issue
+      // TODO: Re-enable after database migration is complete
+      console.log(`Comment created successfully on trip ${tripId} by user ${userId}`);
       
       res.json(comment);
     } catch (error) {
