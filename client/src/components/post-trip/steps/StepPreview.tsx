@@ -220,6 +220,35 @@ export function StepPreview({ form }: StepPreviewProps) {
             </div>
           )}
 
+          {/* Sample Cost Breakdown - For Guidance Only */}
+          <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-blue-600 text-sm">💡</span>
+              <h5 className="text-sm font-medium text-blue-800">Cost Breakdown Example (For Your Guidance Only)</h5>
+            </div>
+            <p className="text-xs text-blue-700 mb-2 italic">
+              This breakdown will NOT be published - it's just to help you set fair pricing
+            </p>
+            <div className="text-xs text-blue-600 space-y-1">
+              <div className="flex justify-between">
+                <span>🚌 Transportation</span>
+                <span>LKR 800</span>
+              </div>
+              <div className="flex justify-between">
+                <span>🎫 Entry fees</span>
+                <span>LKR 300</span>
+              </div>
+              <div className="flex justify-between">
+                <span>🍽️ Meals (optional)</span>
+                <span>LKR 500</span>
+              </div>
+              <div className="flex justify-between border-t border-blue-300 pt-1 font-medium text-blue-800">
+                <span>Total per person</span>
+                <span>LKR 1,600</span>
+              </div>
+            </div>
+          </div>
+
           {/* Contact Information */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <h4 className="font-medium mb-2">Organizer Contact</h4>

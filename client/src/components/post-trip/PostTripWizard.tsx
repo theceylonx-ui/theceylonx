@@ -218,21 +218,48 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
       
       // Create the trip data for publishing
       const tripData = {
-        ...formData,
-        status: 'active',
-        organizerId: formData.organizerId || 'current-user-id' // This should come from auth
+        title: formData.title,
+        fromLocation: formData.fromLocation,
+        toLocation: formData.toLocation,
+        date: formData.date ? new Date(formData.date).toISOString() : new Date().toISOString(),
+        time: formData.time || '09:00',
+        duration: formData.duration || '1 day',
+        description: formData.description || '',
+        seatsAvailable: formData.seatsAvailable || 1,
+        price: formData.price || 0,
+        priceMin: formData.priceMin,
+        priceMax: formData.priceMax,
+        notes: formData.notes,
+        contactInfo: formData.contactInfo,
+        safetyFlags: formData.safetyFlags || [],
+        region: formData.region,
+        category: 'unknown', // Default category
+        difficulty: 'easy', // Default difficulty
+        status: 'active'
       };
       
-      // Simulate API call for now - replace with actual API call
-      console.log('Publishing trip:', tripData);
+      // Create the trip via API
+      const response = await fetch('/api/trips', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(tripData),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
       
       toast({
         title: "Trip published successfully!",
         description: "Your trip is now live and visible to other travelers.",
       });
       
-      // Navigate back to dashboard or trips list
-      setLocation('/dashboard');
+      // Navigate to the specific trip that was just created
+      setLocation(`/trips/${result.id}`);
     } catch (error) {
       console.error('Publishing error:', error);
       toast({

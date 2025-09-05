@@ -36,7 +36,16 @@ export function StepSafetyTerms({ form }: StepSafetyTermsProps) {
             <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-2">
               <p className="text-sm text-green-800 font-medium">💡 WhatsApp Tip</p>
               <p className="text-sm text-green-700 mt-1">
-                Enter your WhatsApp number (e.g., +94771234567) for easy communication. When participants contact you, they can click to message you directly on WhatsApp for quick trip coordination.
+                Enter your WhatsApp number with country code for easy communication. Examples:
+              </p>
+              <ul className="text-sm text-green-700 mt-1 ml-4 list-disc">
+                <li>Sri Lanka: +94771234567</li>
+                <li>India: +919876543210</li>
+                <li>UK: +447123456789</li>
+                <li>US: +15551234567</li>
+              </ul>
+              <p className="text-sm text-green-700 mt-1">
+                International numbers work perfectly! Participants can click to message you directly on WhatsApp from anywhere in the world.
               </p>
             </div>
           </FormItem>

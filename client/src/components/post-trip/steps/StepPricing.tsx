@@ -82,13 +82,13 @@ export function StepPricing({ form }: StepPricingProps) {
                 </FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">LKR</span>
                     <Input
                       type="number"
                       placeholder="0"
                       min="0"
                       step="50"
-                      className="pl-9"
+                      className="pl-12"
                       {...field}
                       value={field.value || ''}
                       onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
@@ -113,13 +113,13 @@ export function StepPricing({ form }: StepPricingProps) {
                   <FormLabel>Minimum Price (LKR)</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">LKR</span>
                       <Input
                         type="number"
                         placeholder="0"
                         min="0"
                         step="50"
-                        className="pl-9"
+                        className="pl-12"
                         {...field}
                         value={field.value || ''}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
@@ -140,13 +140,13 @@ export function StepPricing({ form }: StepPricingProps) {
                   <FormLabel>Maximum Price (LKR)</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">LKR</span>
                       <Input
                         type="number"
                         placeholder="0"
                         min={watchedPriceMin || 0}
                         step="50"
-                        className="pl-9"
+                        className="pl-12"
                         {...field}
                         value={field.value || ''}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
