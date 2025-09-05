@@ -23,6 +23,9 @@ import {
   tripInterestRequests,
   calendarEvents,
   savedTrips,
+  chatThreads,
+  chatMessages,
+  chatParticipantState,
   type User,
   type UpsertUser,
   type InsertTrip,
@@ -1620,18 +1623,18 @@ export class DatabaseStorage implements IStorage {
     return thread;
   }
 
-  async getUserChatThreads(userId: string): Promise<(ChatThread & { lastMessage?: Message, unreadCount: number, otherUser?: User, trip?: Trip })[]> {
+  async getUserChatThreads(userId: string): Promise<(ChatThread & { lastMessage?: ChatMessage, unreadCount: number, otherUser?: User, trip?: Trip })[]> {
     // Get all threads user is in
     const threadUserResult = await db
       .select()
-      .from(threadUsers)
-      .leftJoin(chatThreads, eq(threadUsers.threadId, chatThreads.id))
-      .where(eq(threadUsers.userId, userId))
+      .from(chatParticipantState)
+      .leftJoin(chatThreads, eq(chatParticipantState.threadId, chatThreads.id))
+      .where(eq(chatParticipantState.userId, userId))
       .orderBy(desc(chatThreads.updatedAt));
 
-    const threads: (ChatThread & { lastMessage?: Message, unreadCount: number, otherUser?: User, trip?: Trip })[] = [];
+    const threads: (ChatThread & { lastMessage?: ChatMessage, unreadCount: number, otherUser?: User, trip?: Trip })[] = [];
     
-    for (const { thread_users: tu, chat_threads: thread } of threadUserResult) {
+    for (const { chat_participant_state: participantState, chat_threads: thread } of threadUserResult) {
       if (!thread) continue;
       
       // Get trip information if thread is associated with a trip
@@ -1647,36 +1650,30 @@ export class DatabaseStorage implements IStorage {
       // Get last message
       const [lastMessage] = await db
         .select()
-        .from(messages)
-        .where(eq(messages.threadId, thread.id))
-        .orderBy(desc(messages.createdAt))
+        .from(chatMessages)
+        .where(eq(chatMessages.threadId, thread.id))
+        .orderBy(desc(chatMessages.createdAt))
         .limit(1);
 
       // Get other user in thread
       const otherUsers = await db
         .select()
-        .from(threadUsers)
-        .leftJoin(users, eq(threadUsers.userId, users.id))
+        .from(chatParticipantState)
+        .leftJoin(users, eq(chatParticipantState.userId, users.id))
         .where(and(
-          eq(threadUsers.threadId, thread.id),
-          sql`${threadUsers.userId} != ${userId}`
+          eq(chatParticipantState.threadId, thread.id),
+          sql`${chatParticipantState.userId} != ${userId}`
         ));
       
       const otherUser = otherUsers[0]?.users || undefined;
 
-      // Simple unread count (in real app, you'd track read status per user)
-      const [unreadResult] = await db
-        .select({ count: count() })
-        .from(messages)
-        .where(and(
-          eq(messages.threadId, thread.id),
-          sql`${messages.authorId} != ${userId}`
-        ));
+      // Get unread count from participant state
+      const unreadCount = participantState?.unreadCount || 0;
 
       threads.push({
         ...thread,
         lastMessage,
-        unreadCount: unreadResult?.count || 0,
+        unreadCount,
         otherUser,
         trip
       });
