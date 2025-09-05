@@ -42,6 +42,27 @@ export default function CommunityPage() {
   const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
+
+  // Check URL for edit parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit');
+    if (editId && !editingQuestionId) {
+      // Find the question to populate the form
+      const questionToEdit = questions?.find(q => q.id === editId);
+      if (questionToEdit) {
+        form.setValue('title', questionToEdit.title);
+        form.setValue('body', questionToEdit.body);
+        form.setValue('topicId', questionToEdit.topic?.id || '');
+        form.setValue('isAnonymous', questionToEdit.isAnonymous || false);
+        setEditingQuestionId(editId);
+        setIsCreateDialogOpen(true);
+        // Clear the URL parameter
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, [questions, editingQuestionId, form]);
+
   const questionsPerPage = 10;
   
   const queryClient = useQueryClient();

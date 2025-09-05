@@ -66,7 +66,7 @@ export default function UserDashboard() {
   });
 
   const { data: myQuestions } = useQuery<QuestionWithDetails[]>({
-    queryKey: ["/api/users/questions"],
+    queryKey: ["/api/me/activity/questions"],
     enabled: !!user,
   });
 
@@ -226,6 +226,37 @@ export default function UserDashboard() {
     },
   });
 
+  const editQuestionMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      return await apiRequest("PATCH", `/api/questions/${id}`, data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Question updated successfully!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/me/activity/questions"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/auth/signin";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update question. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const deleteQuestionMutation = useMutation({
     mutationFn: async (questionId: string) => {
       return await apiRequest("DELETE", `/api/questions/${questionId}`);
@@ -235,7 +266,7 @@ export default function UserDashboard() {
         title: "Success",
         description: "Question deleted successfully!",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/users/questions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/me/activity/questions"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -412,6 +443,11 @@ export default function UserDashboard() {
     }
   };
 
+  const handleEditQuestion = (questionId: string) => {
+    // Redirect to community page where the edit dialog can be opened
+    window.location.href = `/community?edit=${questionId}`;
+  };
+
   const handleDeleteQuestion = (questionId: string) => {
     if (confirm("Are you sure you want to delete this question?")) {
       deleteQuestionMutation.mutate(questionId);
@@ -497,6 +533,7 @@ export default function UserDashboard() {
                               <Button
                                 variant="outline"
                                 size="sm"
+                                onClick={() => handleEditQuestion(question.id)}
                                 data-testid={`button-edit-question-${question.id}`}
                               >
                                 <Edit className="w-4 h-4 mr-1" />
