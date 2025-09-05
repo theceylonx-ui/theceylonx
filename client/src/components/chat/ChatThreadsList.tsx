@@ -34,8 +34,8 @@ interface ChatThread {
 }
 
 export function ChatThreadsList() {
-  const { data: threads, isLoading, error } = useQuery<{ threads: ChatThread[] }>({
-    queryKey: ["/api/chat/threads"],
+  const { data: threads, isLoading, error } = useQuery<ChatThread[]>({
+    queryKey: ["/api/threads"],
   });
 
   if (isLoading) {
@@ -65,7 +65,7 @@ export function ChatThreadsList() {
     );
   }
 
-  if (!threads?.threads || threads.threads.length === 0) {
+  if (!threads || threads.length === 0) {
     return (
       <EmptyState 
         type="chat"
@@ -82,12 +82,12 @@ export function ChatThreadsList() {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Your Chats</h2>
         <Badge variant="secondary">
-          {threads.threads.length} conversation{threads.threads.length !== 1 ? 's' : ''}
+          {threads.length} conversation{threads.length !== 1 ? 's' : ''}
         </Badge>
       </div>
       
       <div className="space-y-3">
-        {threads.threads.map((thread) => (
+        {threads.map((thread) => (
           <Link key={thread.id} href={`/chat/${thread.id}`}>
             <Card 
               className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
