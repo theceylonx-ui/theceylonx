@@ -190,9 +190,18 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
     navigateBack();
   };
   
-  const handlePreview = () => {
-    saveDraft();
-    setLocation(`/trips/preview?draftId=${draftId}`);
+  const handlePreview = async () => {
+    try {
+      await saveDraft();
+      // For now, just show the preview step instead of navigating away
+      setCurrentStep(7);
+    } catch (error) {
+      toast({
+        title: "Error saving draft",
+        description: "Please try again before previewing.",
+        variant: "destructive",
+      });
+    }
   };
   
   const handlePublish = async () => {

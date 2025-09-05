@@ -6,13 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ExternalLink, Shield, AlertTriangle, Info } from "lucide-react";
 
-interface SafetyChecklistProps {
-  value: string[];
-  onChange: (flags: string[]) => void;
-  error?: string;
-  className?: string;
-}
-
 const SAFETY_ITEMS = [
   {
     id: "weather_dependent",
@@ -72,14 +65,23 @@ const REQUIRED_CONFIRMATIONS = [
     required: true,
   },
   {
-    id: "cancellation_policy",
-    label: "Cancellation policy understood",
-    description: "I understand the platform's cancellation and refund policies",
+    id: "platform_terms",
+    label: "Platform terms accepted",
+    description: "I agree to use this free platform responsibly and ethically",
     required: true,
   },
 ];
 
-export function SafetyChecklist({ value, onChange, error, className }: SafetyChecklistProps) {
+interface SafetyChecklistProps {
+  value: string[];
+  onChange: (flags: string[]) => void;
+  onTermsChange?: (accepted: boolean) => void;
+  termsAccepted?: boolean;
+  error?: string;
+  className?: string;
+}
+
+export function SafetyChecklist({ value, onChange, onTermsChange, termsAccepted, error, className }: SafetyChecklistProps) {
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set(value));
   
   const handleItemChange = (itemId: string, checked: boolean) => {
@@ -95,8 +97,14 @@ export function SafetyChecklist({ value, onChange, error, className }: SafetyChe
     onChange(Array.from(newCheckedItems));
   };
   
-  const requiredItems = REQUIRED_CONFIRMATIONS.map(item => item.id);
-  const allRequiredChecked = requiredItems.every(id => checkedItems.has(id));
+  const handleTermsChange = (itemId: string, checked: boolean) => {
+    if (itemId === 'platform_terms' && onTermsChange) {
+      onTermsChange(checked);
+    }
+  };
+  
+  const requiredItems = REQUIRED_CONFIRMATIONS.filter(item => item.id !== 'platform_terms').map(item => item.id);
+  const allRequiredChecked = requiredItems.every(id => checkedItems.has(id)) && (termsAccepted || false);
   
   return (
     <div className={className}>
@@ -151,8 +159,14 @@ export function SafetyChecklist({ value, onChange, error, className }: SafetyChe
               <div key={item.id} className="flex items-start space-x-3">
                 <Checkbox
                   id={`required-${item.id}`}
-                  checked={checkedItems.has(item.id)}
-                  onCheckedChange={(checked) => handleItemChange(item.id, !!checked)}
+                  checked={item.id === 'platform_terms' ? (termsAccepted || false) : checkedItems.has(item.id)}
+                  onCheckedChange={(checked) => {
+                    if (item.id === 'platform_terms') {
+                      handleTermsChange(item.id, !!checked);
+                    } else {
+                      handleItemChange(item.id, !!checked);
+                    }
+                  }}
                   required
                   data-testid={`required-checkbox-${item.id}`}
                 />

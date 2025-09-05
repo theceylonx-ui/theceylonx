@@ -18,18 +18,21 @@ export function StepSafetyTerms({ form }: StepSafetyTermsProps) {
         name="contactInfo"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Contact Information</FormLabel>
+            <FormLabel>Your Contact Information</FormLabel>
             <FormControl>
               <Input
-                placeholder="WhatsApp number, email, or other contact method"
+                placeholder="Your WhatsApp number or phone number"
                 {...field}
                 data-testid="contact-info-input"
               />
             </FormControl>
             <FormMessage />
-            <p className="text-sm text-gray-600">
-              This will be shared with participants for trip coordination
-            </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2">
+              <p className="text-sm text-blue-800 font-medium">🔒 Privacy Protected</p>
+              <p className="text-sm text-blue-700 mt-1">
+                Your contact details are kept private. They will only be shared with participants through our secure chat system when you approve their trip requests. You have full control over who gets your contact information.
+              </p>
+            </div>
           </FormItem>
         )}
       />
@@ -66,6 +69,8 @@ export function StepSafetyTerms({ form }: StepSafetyTermsProps) {
             <SafetyChecklist
               value={field.value || []}
               onChange={field.onChange}
+              termsAccepted={form.watch("termsAccepted")}
+              onTermsChange={(accepted) => form.setValue("termsAccepted", accepted)}
               error={form.formState.errors.safetyFlags?.message}
             />
             <FormMessage />
