@@ -144,14 +144,11 @@ export function PreferencesForm() {
   // Save preferences mutation with optimistic updates
   const savePreferencesMutation = useMutation({
     mutationFn: async (data: PreferencesFormData) => {
-      const response = await apiRequest("/api/preferences", {
-        method: "PUT",
-        body: {
-          ...data,
-          version: preferences?.version || 1
-        }
+      const response = await apiRequest("PUT", "/api/preferences", {
+        ...data,
+        version: preferences?.version || 1
       });
-      return response;
+      return await response.json();
     },
     onMutate: async (variables) => {
       // Cancel ongoing queries
@@ -200,8 +197,8 @@ export function PreferencesForm() {
   // Reset preferences mutation
   const resetPreferencesMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("/api/preferences", { method: "DELETE" });
-      return response;
+      const response = await apiRequest("DELETE", "/api/preferences");
+      return await response.json();
     },
     onSuccess: (data: any) => {
       queryClient.setQueryData(["/api/preferences"], data.preferences);
