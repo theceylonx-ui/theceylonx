@@ -22,8 +22,7 @@ import {
   phoneOtps,
   tripInterestRequests,
   calendarEvents,
-  pinnedTrips,
-  userTripFlags,
+  savedTrips,
   type User,
   type UpsertUser,
   type InsertTrip,
@@ -73,10 +72,10 @@ import {
   type InsertMessage,
   type CalendarEvent,
   type InsertCalendarEvent,
-  type PinnedTrip,
-  type InsertPinnedTrip,
-  type UserTripFlags,
-  type InsertUserTripFlags,
+  type SavedTrip,
+  type InsertSavedTrip,
+  type SavedTripWithTrip,
+  type SaveNotification,
   adminChatThreads,
   adminChatMessages,
   contactShares,
@@ -287,17 +286,16 @@ export interface IStorage {
   updateCalendarEvent(id: string, event: Partial<InsertCalendarEvent>): Promise<CalendarEvent>;
   deleteCalendarEvent(id: string): Promise<void>;
   
-  // Pinned trips operations  
-  pinTrip(userId: string, tripId: string): Promise<PinnedTrip>;
-  unpinTrip(userId: string, tripId: string): Promise<void>;
-  getUserPinnedTrips(userId: string): Promise<TripWithOrganizer[]>;
-  getTripPinStatus(userId: string, tripId: string): Promise<boolean>;
+  // Saved trips operations (Pin and Interest system)
+  upsertSavedTrip(userId: string, tripId: string, saveType: 'pinned' | 'interested'): Promise<SavedTrip>;
+  removeSavedTrip(userId: string, tripId: string): Promise<void>;
+  getSavedTrip(userId: string, tripId: string): Promise<SavedTrip | undefined>;
+  getUserSavedTrips(userId: string, saveType?: 'pinned' | 'interested'): Promise<SavedTripWithTrip[]>;
   
-  // User trip flags operations (unified pinned/interested state)
-  upsertUserTripFlags(userId: string, tripId: string, flags: Partial<Pick<UserTripFlags, 'pinned' | 'interested'>>): Promise<UserTripFlags>;
-  getUserTripFlags(userId: string, tripId: string): Promise<UserTripFlags | undefined>;
-  getUserInterestedTrips(userId: string): Promise<TripWithOrganizer[]>;
-  getUserPinnedTripsOnly(userId: string): Promise<TripWithOrganizer[]>;
+  // Notification operations for saved trips
+  createSaveNotification(userId: string, tripId: string, type: 'trip_updated' | 'trip_removed' | 'save_removed', payload?: Record<string, any>): Promise<SaveNotification>;
+  getUserNotifications(userId: string, limit?: number, offset?: number): Promise<SaveNotification[]>;
+  markNotificationAsRead(notificationId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1995,121 +1993,156 @@ export class DatabaseStorage implements IStorage {
     await db.delete(calendarEvents).where(eq(calendarEvents.id, id));
   }
 
-  // Pinned trips operations
-  async pinTrip(userId: string, tripId: string): Promise<PinnedTrip> {
-    const [pinnedTrip] = await db.insert(pinnedTrips)
-      .values({ userId, tripId })
-      .returning();
-    return pinnedTrip;
-  }
-
-  async unpinTrip(userId: string, tripId: string): Promise<void> {
-    await db.delete(pinnedTrips)
-      .where(and(eq(pinnedTrips.userId, userId), eq(pinnedTrips.tripId, tripId)));
-  }
-
-  async getUserPinnedTrips(userId: string): Promise<TripWithOrganizer[]> {
-    const pinnedTripsWithDetails = await db
-      .select({
-        trip: trips,
-        organizer: users,
-      })
-      .from(pinnedTrips)
-      .innerJoin(trips, eq(pinnedTrips.tripId, trips.id))
-      .innerJoin(users, eq(trips.organizerId, users.id))
-      .where(eq(pinnedTrips.userId, userId))
-      .orderBy(desc(pinnedTrips.createdAt));
-
-    return pinnedTripsWithDetails.map(({ trip, organizer }) => ({
-      ...trip,
-      organizer,
-    }));
-  }
-
-  async getTripPinStatus(userId: string, tripId: string): Promise<boolean> {
-    const [pinnedTrip] = await db
-      .select()
-      .from(pinnedTrips)
-      .where(and(eq(pinnedTrips.userId, userId), eq(pinnedTrips.tripId, tripId)))
-      .limit(1);
-    return !!pinnedTrip;
-  }
-  
-  // User trip flags operations (unified pinned/interested state)
-  async upsertUserTripFlags(userId: string, tripId: string, flags: Partial<Pick<UserTripFlags, 'pinned' | 'interested'>>): Promise<UserTripFlags> {
-    // Handle precedence rule: if interested is true, force pinned to false
-    const updatedFlags = { ...flags };
-    if (updatedFlags.interested === true) {
-      updatedFlags.pinned = false;
-    }
-    
-    const [tripFlags] = await db
-      .insert(userTripFlags)
+  // Saved trips operations (Pin and Interest system)
+  async upsertSavedTrip(userId: string, tripId: string, saveType: 'pinned' | 'interested'): Promise<SavedTrip> {
+    const [savedTrip] = await db
+      .insert(savedTrips)
       .values({
         userId,
         tripId,
-        pinned: updatedFlags.pinned ?? false,
-        interested: updatedFlags.interested ?? false,
+        saveType,
         updatedAt: new Date()
       })
       .onConflictDoUpdate({
-        target: [userTripFlags.userId, userTripFlags.tripId],
+        target: [savedTrips.userId, savedTrips.tripId],
         set: {
-          ...updatedFlags,
+          saveType,
           updatedAt: new Date()
         }
       })
       .returning();
     
-    return tripFlags;
+    return savedTrip;
   }
 
-  async getUserTripFlags(userId: string, tripId: string): Promise<UserTripFlags | undefined> {
-    const [tripFlags] = await db
+  async removeSavedTrip(userId: string, tripId: string): Promise<void> {
+    await db.delete(savedTrips)
+      .where(and(eq(savedTrips.userId, userId), eq(savedTrips.tripId, tripId)));
+  }
+
+  async getSavedTrip(userId: string, tripId: string): Promise<SavedTrip | undefined> {
+    const [savedTrip] = await db
       .select()
-      .from(userTripFlags)
-      .where(and(eq(userTripFlags.userId, userId), eq(userTripFlags.tripId, tripId)));
-    return tripFlags;
+      .from(savedTrips)
+      .where(and(eq(savedTrips.userId, userId), eq(savedTrips.tripId, tripId)));
+    return savedTrip;
   }
 
-  async getUserInterestedTrips(userId: string): Promise<TripWithOrganizer[]> {
-    const interestedTripsWithDetails = await db
+  async getUserSavedTrips(userId: string, saveType?: 'pinned' | 'interested'): Promise<SavedTripWithTrip[]> {
+    const baseQuery = db
       .select({
+        savedTrip: savedTrips,
         trip: trips,
         organizer: users,
       })
-      .from(userTripFlags)
-      .innerJoin(trips, eq(userTripFlags.tripId, trips.id))
-      .innerJoin(users, eq(trips.organizerId, users.id))
-      .where(and(eq(userTripFlags.userId, userId), eq(userTripFlags.interested, true)))
-      .orderBy(desc(userTripFlags.updatedAt));
+      .from(savedTrips)
+      .innerJoin(trips, eq(savedTrips.tripId, trips.id))
+      .innerJoin(users, eq(trips.organizerId, users.id));
 
-    return interestedTripsWithDetails.map(({ trip, organizer }) => ({
-      ...trip,
-      organizer,
+    // Build conditions
+    const conditions = [eq(savedTrips.userId, userId)];
+    if (saveType) {
+      conditions.push(eq(savedTrips.saveType, saveType));
+    }
+
+    const results = await baseQuery
+      .where(and(...conditions))
+      .orderBy(desc(savedTrips.updatedAt));
+
+    return results.map(({ savedTrip, trip, organizer }) => ({
+      ...savedTrip,
+      trip: {
+        ...trip,
+        organizer,
+      },
     }));
   }
 
-  async getUserPinnedTripsOnly(userId: string): Promise<TripWithOrganizer[]> {
-    const pinnedOnlyTripsWithDetails = await db
-      .select({
-        trip: trips,
-        organizer: users,
+  // Notification operations for saved trips
+  async createSaveNotification(
+    userId: string, 
+    tripId: string, 
+    type: 'trip_updated' | 'trip_removed' | 'save_removed', 
+    payload: Record<string, any> = {}
+  ): Promise<SaveNotification> {
+    const [notification] = await db
+      .insert(notifications)
+      .values({
+        userId,
+        tripId,
+        type,
+        category: 'trips',
+        priority: 'normal',
+        title: this.getNotificationTitle(type),
+        message: this.getNotificationMessage(type, payload),
+        payload,
+        isRead: false,
       })
-      .from(userTripFlags)
-      .innerJoin(trips, eq(userTripFlags.tripId, trips.id))
-      .innerJoin(users, eq(trips.organizerId, users.id))
-      .where(and(
-        eq(userTripFlags.userId, userId), 
-        eq(userTripFlags.pinned, true), 
-        eq(userTripFlags.interested, false) // Only pinned, not interested
-      ))
-      .orderBy(desc(userTripFlags.updatedAt));
+      .returning();
 
-    return pinnedOnlyTripsWithDetails.map(({ trip, organizer }) => ({
-      ...trip,
-      organizer,
+    return {
+      id: notification.id,
+      userId: notification.userId,
+      tripId: notification.tripId || null,
+      type: notification.type as 'trip_updated' | 'trip_removed' | 'save_removed',
+      payload: notification.payload as Record<string, any>,
+      isRead: notification.isRead || false,
+      createdAt: notification.createdAt || new Date(),
+    };
+  }
+
+  async getUserNotifications(userId: string, limit: number = 20, offset: number = 0): Promise<SaveNotification[]> {
+    const results = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    return results.map(notification => ({
+      id: notification.id,
+      userId: notification.userId,
+      tripId: notification.tripId || null,
+      type: notification.type as 'trip_updated' | 'trip_removed' | 'save_removed',
+      payload: notification.payload as Record<string, any>,
+      isRead: notification.isRead || false,
+      createdAt: notification.createdAt || new Date(),
     }));
+  }
+
+  async markNotificationAsRead(notificationId: string): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ isRead: true, updatedAt: new Date() })
+      .where(eq(notifications.id, notificationId));
+  }
+
+  private getNotificationTitle(type: 'trip_updated' | 'trip_removed' | 'save_removed'): string {
+    switch (type) {
+      case 'trip_updated':
+        return 'Saved Trip Updated';
+      case 'trip_removed':
+        return 'Saved Trip Removed';
+      case 'save_removed':
+        return 'Trip Save Removed';
+      default:
+        return 'Trip Notification';
+    }
+  }
+
+  private getNotificationMessage(type: 'trip_updated' | 'trip_removed' | 'save_removed', payload: Record<string, any>): string {
+    switch (type) {
+      case 'trip_updated':
+        const changedFields = Object.keys(payload);
+        return `A trip you saved has been updated. Changes: ${changedFields.join(', ')}`;
+      case 'trip_removed':
+        return 'A trip you saved has been removed by the organizer.';
+      case 'save_removed':
+        return 'Your saved trip has been removed from your list.';
+      default:
+        return 'You have a new notification about a saved trip.';
+    }
   }
 
   // Additional chat-related methods for Chat Buddy functionality

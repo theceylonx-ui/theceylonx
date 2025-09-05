@@ -1,0 +1,137 @@
+Objectives
+User can mark a trip as Pinned or Interested (mutually exclusive).
+Saved items appear in Profile → Activity → Saved with filters: All / Pinned / Interested.
+When organizer edits a trip → notify all savers (trip_updated with a diff).
+When organizer deletes or sets trip inactive/completed → auto-remove from saves and notify (trip_removed or save_removed).
+Strong auth (Clerk), optimistic UI, idempotent APIs, and tests.
+Data Model (Drizzle)
+Create/verify:
+Enum
+save_type: 'pinned' | 'interested'
+trip_status: 'active' | 'inactive' | 'completed' | 'deleted'
+Tables
+saved_trips
+id pk, user_id uuid, trip_id uuid, save_type enum, created_at, updated_at
+UNIQUE(user_id, trip_id) to enforce one state per user/trip
+Indexes: idx_saved_trips_user, idx_saved_trips_trip
+notifications
+id pk, user_id uuid, trip_id uuid, type enum: trip_updated | trip_removed | save_removed
+payload JSONB (store changed fields), is_read boolean default false, timestamps
+Index: idx_notifications_user_unread(user_id, is_read)
+Trips
+Ensure status uses trip_status enum; add index on (status).
+Agent: write Drizzle migrations for above, including enum creation and indexes.
+Backend (Express + TS)
+Auth
+Use @clerk/express middlewares withAuth, requireAuth.
+Reject writes if user email not verified.
+Routes
+GET /api/saved?type=all|pinned|interested
+Return current user’s saved trips (join minimal trip card fields).
+PUT /api/saved (idempotent upsert)
+Body: { tripId: string, saveType: 'pinned' | 'interested' }
+Upsert on (user_id, trip_id). Returns saved row.
+Accept optional Idempotency-Key header and de-dupe within 1 minute.
+DELETE /api/saved/:tripId
+Remove current user’s save for that trip.
+Trip mutations (hook notifications/cleanup in service layer):
+PATCH /api/trips/:id (edit) → compute diff on important fields (title, dates, start/end, price, capacity, meeting point, images, description).
+If diff not empty → insert notifications for all savers { type:'trip_updated', trip_id, payload:{diff} }.
+PATCH /api/trips/:id/status → on inactive|completed|deleted:
+Delete rows in saved_trips for trip_id
+Insert notifications for affected users:
+deleted → trip_removed
+inactive|completed → save_removed
+DELETE /api/trips/:id (hard) → same as status='deleted' flow.
+Agent:
+Implement a small TripEvents service to encapsulate: notifySaversOnEdit(diff), removeSavesAndNotifyOnStatus(status).
+Add transaction boundaries to avoid race conditions (status change + cleanup).
+Nightly safety job
+Cron (or simple scheduled runner) to remove any lingering saves for trips not active and backfill save_removed notifications if needed. Keep idempotent.
+Frontend (React)
+SaveControl component (on trip card + detail)
+Two radio-style buttons: Pinned / Interested and a Remove link.
+On click:
+If switching states → PUT /api/saved with optimistic UI; disable while pending.
+If removing → DELETE /api/saved/:tripId; optimistic remove.
+If user not signed in or not email-verified, block action and show:
+Sign-in prompt / Verify-email banner (use our useEmailVerified()).
+UX details
+Prevent rapid double-click: debounce or disable while request in flight.
+Toast success/error and rollback optimistic state on failure.
+Profile → Activity → Saved
+Tabs: All / Pinned / Interested; query GET /api/saved?type=...
+Cards show current trip status badge. Items for non-active trips won’t appear (server already cleaned).
+Empty states for each tab.
+Notifications (bell already exists)
+Add renderers for:
+trip_updated → “A saved trip was updated” + highlight fields changed (use payload.diff).
+trip_removed → “A saved trip was removed by the organizer.”
+save_removed → “A saved trip became inactive/completed and was removed from your list.”
+Clicking a notification opens the trip (if still exists) or shows a contextual message if removed.
+Mark-as-read endpoint (batch) and client update.
+API/DB Snippets (sketch)
+Mutually exclusive save (upsert)
+// inside transaction
+await db.insert(savedTrips).values({ userId, tripId, saveType })
+  .onConflictDoUpdate({
+    target: [savedTrips.userId, savedTrips.tripId],
+    set: { saveType, updatedAt: sql`now()` }
+  });
+Trip status change cleanup
+const savers = await db.select({ userId: savedTrips.userId })
+  .from(savedTrips)
+  .where(eq(savedTrips.tripId, tripId));
+await db.delete(savedTrips).where(eq(savedTrips.tripId, tripId));
+
+const type = status === 'deleted' ? 'trip_removed' : 'save_removed';
+if (savers.length) {
+  await db.insert(notifications).values(
+    savers.map(s => ({ userId: s.userId, tripId, type, payload: {}, isRead: false }))
+  );
+}
+Edit diff (minimal)
+const fields = ['title','startDate','endDate','price','capacity','meetPoint','status'];
+const diff: Record<string,{from:any,to:any}> = {};
+fields.forEach(f => {
+  if (prev[f] !== next[f]) diff[f] = { from: prev[f], to: next[f] };
+});
+if (Object.keys(diff).length) {
+  const savers = await db.select({ userId: savedTrips.userId }).from(savedTrips).where(eq(savedTrips.tripId, tripId));
+  await db.insert(notifications).values(savers.map(s => ({ userId: s.userId, tripId, type:'trip_updated', payload:{ diff }, isRead:false })));
+}
+Guards & Policies
+All write routes require: signed-in and email-verified (Clerk check on server + UI check on client).
+Organizer-only actions (edit, status, delete) validate ownership.
+Rate-limit save toggles per user (e.g., 10/min) to stop spam.
+Tests
+API (Jest + Supertest)
+Upsert pinned → switches to interested → delete works.
+Unique constraint enforced (no duplicate rows).
+Edit trip inserts trip_updated notifications for all savers with correct diff keys.
+Status → inactive/completed removes saves + creates save_removed.
+Delete → removes saves + trip_removed.
+Auth: unverified users get 403 on write routes.
+E2E (Playwright/Cypress)
+Sign in (verified) → mark Pinned → refresh shows Pinned.
+Switch to Interested → state changes; no duplicates.
+Remove → disappears from Saved tab.
+Organizer edits title/date → notification appears with changed fields; click navigates.
+Organizer sets to inactive → Saved item auto disappears; bell shows save_removed.
+Organizer deletes → trip_removed notification appears; trip page not found.
+Performance & DX
+Add indexes noted above.
+Use SWR/React Query for cache & optimistic updates.
+Server responses normalized; include trip_card payload for Saved list.
+Deliverables
+Drizzle migrations for enums/tables/indexes.
+Express routes + service layer with transactions.
+React components: SaveControl, Saved tab screens, notification renderers.
+Tests (API + E2E) and a short README update describing flows and notification types.
+Acceptance Criteria
+Exactly one state per (user, trip).
+Switching states is smooth, optimistic, and persisted.
+Saved items vanish when trips become inactive/completed/deleted; users get correct notifications.
+Profile → Activity → Saved shows All / Pinned / Interested accurately.
+All write actions blocked for unverified emails.
+No console errors; basic Lighthouse pass.

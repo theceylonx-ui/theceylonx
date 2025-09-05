@@ -18,7 +18,9 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // PostgreSQL Enums for data integrity
-export const tripStatusEnum = pgEnum('trip_status', ['active', 'full', 'completed', 'cancelled']);
+export const tripStatusEnum = pgEnum('trip_status', ['active', 'full', 'completed', 'cancelled', 'inactive', 'deleted']);
+export const saveTypeEnum = pgEnum('save_type', ['pinned', 'interested']);
+export const notificationTypeEnum = pgEnum('notification_type', ['trip_updated', 'trip_removed', 'save_removed']);
 export const difficultyEnum = pgEnum('difficulty', ['easy', 'moderate', 'challenging']);
 export const userRoleEnum = pgEnum('user_role', ['user', 'moderator', 'admin', 'superadmin']);
 export const reportStatusEnum = pgEnum('report_status', ['open', 'investigating', 'resolved', 'dismissed']);
@@ -121,7 +123,7 @@ export const trips = pgTable("trips", {
   contactInfo: varchar("contact_info").notNull(),
   notes: text("notes"),
   organizerId: varchar("organizer_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  status: varchar("status").default("active"),
+  status: tripStatusEnum("status").default("active"),
   
   // Optional enhanced fields for better recommendations
   tags: jsonb("tags"), // JSONB for GIN index support
@@ -165,6 +167,23 @@ export const trips = pgTable("trips", {
   index("trips_category_idx").on(table.category),
 ]);
 
+// Saved trips table for Pin and Interest functionality
+export const savedTrips = pgTable("saved_trips", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tripId: varchar("trip_id").notNull().references(() => trips.id, { onDelete: 'cascade' }),
+  saveType: saveTypeEnum("save_type").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  // Unique constraint to enforce one state per user/trip
+  unique("unique_user_trip_save").on(table.userId, table.tripId),
+  // Performance indexes
+  index("idx_saved_trips_user").on(table.userId),
+  index("idx_saved_trips_trip").on(table.tripId),
+  index("idx_saved_trips_type").on(table.saveType),
+]);
+
 // Calendar events for aggregated view
 export const calendarEvents = pgTable("calendar_events", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -190,11 +209,13 @@ export const calendarEvents = pgTable("calendar_events", {
 export const notifications = pgTable("notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(), // who receives the notification
-  type: varchar("type").notNull(), // expanded notification types below
+  tripId: varchar("trip_id").references(() => trips.id, { onDelete: 'cascade' }), // related trip for save notifications
+  type: notificationTypeEnum("type"), // trip_updated, trip_removed, save_removed
   category: varchar("category").notNull(), // "trips", "social", "safety", "system"
   priority: varchar("priority").notNull(), // "critical", "normal", "info"
   title: varchar("title").notNull(),
   message: text("message").notNull(),
+  payload: jsonb("payload").default(sql`'{}'::jsonb`), // store changed fields for trip_updated
   isRead: boolean("is_read").default(false),
   relatedTripId: varchar("related_trip_id"), // optional: related trip
   relatedUserId: varchar("related_user_id"), // optional: who triggered the notification
@@ -204,7 +225,12 @@ export const notifications = pgTable("notifications", {
   commentId: varchar("comment_id"), // For comment-related notifications
   threadId: varchar("thread_id"), // For chat message notifications
   createdAt: timestamp("created_at").defaultNow(),
-});
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  // Performance index for unread notifications
+  index("idx_notifications_user_unread").on(table.userId, table.isRead),
+  index("idx_notifications_trip").on(table.tripId),
+]);
 
 // Comments table with foreign key constraints
 export const comments = pgTable("comments", {
@@ -1140,6 +1166,36 @@ export type UserTripFlags = typeof userTripFlags.$inferSelect;
 export type InsertTrip = z.infer<typeof insertTripSchema>;
 export type Trip = typeof trips.$inferSelect;
 export type TripWithOrganizer = Trip & { organizer: User };
+
+// Saved trips schemas and types
+export const insertSavedTripSchema = createInsertSchema(savedTrips).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const upsertSavedTripSchema = z.object({
+  tripId: z.string().min(1, "Trip ID is required"),
+  saveType: z.enum(['pinned', 'interested'], {
+    required_error: "Save type must be either 'pinned' or 'interested'"
+  }),
+});
+
+export type InsertSavedTrip = z.infer<typeof insertSavedTripSchema>;
+export type UpsertSavedTrip = z.infer<typeof upsertSavedTripSchema>;
+export type SavedTrip = typeof savedTrips.$inferSelect;
+export type SavedTripWithTrip = SavedTrip & { trip: Trip };
+
+// Notification types for the new save system
+export type SaveNotification = {
+  id: string;
+  userId: string;
+  tripId: string | null;
+  type: 'trip_updated' | 'trip_removed' | 'save_removed';
+  payload: Record<string, any>;
+  isRead: boolean;
+  createdAt: Date;
+};
 
 // Normalized version for UI with properly handled user data
 export type TripWithNormalizedOrganizer = Omit<TripWithOrganizer, 'organizer'> & {

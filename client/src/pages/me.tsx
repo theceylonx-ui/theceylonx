@@ -822,66 +822,115 @@ function TravelPreferences({ preferences, onUpdate }: any) {
 // Saved Trips Component
 function SavedTrips() {
   const { user } = useAuth();
-  const [activeSubTab, setActiveSubTab] = useState("pinned");
+  const [activeSubTab, setActiveSubTab] = useState("all");
   
-  const { data: pinnedTrips, isLoading: pinnedLoading } = useQuery({
-    queryKey: ['/api/me/pinned-trips'],
+  // Get all saved trips
+  const { data: allSavedTrips, isLoading: allLoading } = useQuery({
+    queryKey: ['/api/user/saved-trips'],
     enabled: !!user,
   });
 
-  const { data: interestedTrips, isLoading: interestedLoading } = useQuery({
-    queryKey: ['/api/me/interested-trips'],
+  // Get pinned trips only
+  const { data: pinnedTrips, isLoading: pinnedLoading } = useQuery({
+    queryKey: ['/api/user/saved-trips', { saveType: 'pinned' }],
+    queryFn: () => fetch('/api/user/saved-trips?saveType=pinned').then(res => res.json()),
     enabled: !!user,
   });
+
+  // Get interested trips only
+  const { data: interestedTrips, isLoading: interestedLoading } = useQuery({
+    queryKey: ['/api/user/saved-trips', { saveType: 'interested' }],
+    queryFn: () => fetch('/api/user/saved-trips?saveType=interested').then(res => res.json()),
+    enabled: !!user,
+  });
+
+  const renderTripCard = (item: any) => (
+    <div key={item.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow" data-testid={`saved-trip-${item.id}`}>
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <h3 className="font-semibold text-lg">{item.title}</h3>
+          <p className="text-sm text-gray-600 mt-1">
+            {item.fromLocation} → {item.toLocation}
+          </p>
+          <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+            <span>💰 ${item.price}</span>
+            <span>👥 {item.seatsAvailable} seats</span>
+            <span>📅 {new Date(item.date).toLocaleDateString()}</span>
+            <Badge variant={item.saveType === 'pinned' ? 'default' : 'secondary'}>
+              {item.saveType === 'pinned' ? '📌 Pinned' : '💫 Interested'} {new Date(item.savedAt).toLocaleDateString()}
+            </Badge>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => window.location.href = `/trips/${item.id}`}
+            data-testid={`view-trip-${item.id}`}
+          >
+            View Trip
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Saved Trips</CardTitle>
+        <p className="text-sm text-gray-600">
+          Manage your pinned and interested trips
+        </p>
       </CardHeader>
       <CardContent>
         <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="pinned">📌 Pinned</TabsTrigger>
-            <TabsTrigger value="interested">💫 Interested</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="all" data-testid="tab-all-saved">All Saved</TabsTrigger>
+            <TabsTrigger value="pinned" data-testid="tab-pinned">📌 Pinned</TabsTrigger>
+            <TabsTrigger value="interested" data-testid="tab-interested">💫 Interested</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="all" className="mt-6">
+            {allLoading ? (
+              <div className="text-center py-8" data-testid="loading-all-saved">Loading saved trips...</div>
+            ) : allSavedTrips?.items?.length > 0 ? (
+              <div className="space-y-4">
+                {allSavedTrips.items.map(renderTripCard)}
+                {allSavedTrips.totalPages > 1 && (
+                  <div className="flex justify-center mt-6">
+                    <p className="text-sm text-gray-500">
+                      Showing {allSavedTrips.items.length} of {allSavedTrips.total} saved trips
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8" data-testid="empty-all-saved">
+                <p className="text-gray-500">No saved trips yet.</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Pin trips you want to join or mark them as interested to keep track.
+                </p>
+                <Button className="mt-4" onClick={() => window.location.href = '/browse-trips'}>
+                  Browse Trips
+                </Button>
+              </div>
+            )}
+          </TabsContent>
 
           <TabsContent value="pinned" className="mt-6">
             {pinnedLoading ? (
-              <div>Loading pinned trips...</div>
-            ) : pinnedTrips?.length > 0 ? (
+              <div className="text-center py-8" data-testid="loading-pinned">Loading pinned trips...</div>
+            ) : pinnedTrips?.items?.length > 0 ? (
               <div className="space-y-4">
-                {pinnedTrips.map((item: any) => (
-                  <div key={item.trip.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{item.trip.title}</h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {item.trip.fromLocation} → {item.trip.toLocation}
-                        </p>
-                        <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                          <span>💰 ${item.trip.price}</span>
-                          <span>👥 {item.trip.seatsAvailable} seats</span>
-                          <span>📅 {new Date(item.trip.date).toLocaleDateString()}</span>
-                          <Badge variant="secondary">
-                            Pinned {new Date(item.createdAt).toLocaleDateString()}
-                          </Badge>
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => window.location.href = `/trips/${item.trip.id}`}
-                      >
-                        View Trip
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                {pinnedTrips.items.map(renderTripCard)}
               </div>
             ) : (
-              <div className="text-center py-8">
+              <div className="text-center py-8" data-testid="empty-pinned">
                 <p className="text-gray-500">No pinned trips yet.</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Pin trips you're committed to joining.
+                </p>
                 <Button className="mt-4" onClick={() => window.location.href = '/browse-trips'}>
                   Browse Trips to Pin
                 </Button>
@@ -891,47 +940,19 @@ function SavedTrips() {
 
           <TabsContent value="interested" className="mt-6">
             {interestedLoading ? (
-              <div>Loading interested trips...</div>
-            ) : interestedTrips?.length > 0 ? (
+              <div className="text-center py-8" data-testid="loading-interested">Loading interested trips...</div>
+            ) : interestedTrips?.items?.length > 0 ? (
               <div className="space-y-4">
-                {interestedTrips.map((item: any) => (
-                  <div key={item.trip.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{item.trip.title}</h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {item.trip.fromLocation} → {item.trip.toLocation}
-                        </p>
-                        <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                          <span>💰 ${item.trip.price}</span>
-                          <span>👥 {item.trip.seatsAvailable} seats</span>
-                          <span>📅 {new Date(item.trip.date).toLocaleDateString()}</span>
-                          <Badge variant={item.status === 'pending' ? 'secondary' : 'default'}>
-                            Interest {item.status}
-                          </Badge>
-                        </div>
-                        {item.message && (
-                          <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
-                            <strong>Your message:</strong> {item.message}
-                          </div>
-                        )}
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => window.location.href = `/trips/${item.trip.id}`}
-                      >
-                        View Trip
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                {interestedTrips.items.map(renderTripCard)}
               </div>
             ) : (
-              <div className="text-center py-8">
+              <div className="text-center py-8" data-testid="empty-interested">
                 <p className="text-gray-500">No interested trips yet.</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Mark trips as interested to track ones you might want to join.
+                </p>
                 <Button className="mt-4" onClick={() => window.location.href = '/browse-trips'}>
-                  Browse Trips to Join
+                  Browse Trips to Save
                 </Button>
               </div>
             )}

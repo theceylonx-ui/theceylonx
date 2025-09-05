@@ -612,79 +612,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Pin/Unpin trip endpoints (idempotent)
-  app.post('/api/trips/:tripId/pin', unifiedAuthGuard, async (req, res) => {
+  // Saved trips management endpoints
+  // Upsert saved trip (pin or mark as interested)
+  app.post('/api/trips/:tripId/save', unifiedAuthGuard, async (req, res) => {
     try {
-      const { userActionsService } = await import('./services/userActionsService');
       const userId = req.user!.id;
       const tripId = req.params.tripId;
-      
-      await userActionsService.pinTrip(userId, tripId);
-      res.status(204).send(); // No content - idempotent success
-    } catch (error) {
-      console.error("Error pinning trip:", error);
-      if (error instanceof Error && error.message === 'Trip not found') {
+      const { saveType } = req.body;
+
+      if (!['pinned', 'interested'].includes(saveType)) {
+        return res.status(400).json({ message: "Save type must be 'pinned' or 'interested'" });
+      }
+
+      // Check if trip exists
+      const trip = await storage.getTrip(tripId);
+      if (!trip) {
         return res.status(404).json({ message: "Trip not found" });
       }
-      res.status(500).json({ message: "Failed to pin trip" });
+
+      const savedTrip = await storage.upsertSavedTrip(userId, tripId, saveType);
+      res.json({ 
+        message: `Trip ${saveType} successfully`,
+        savedTrip: {
+          id: savedTrip.id,
+          saveType: savedTrip.saveType,
+          savedAt: savedTrip.updatedAt
+        }
+      });
+    } catch (error) {
+      console.error("Error saving trip:", error);
+      res.status(500).json({ message: "Failed to save trip" });
     }
   });
 
-  app.delete('/api/trips/:tripId/pin', unifiedAuthGuard, async (req, res) => {
+  // Remove saved trip
+  app.delete('/api/trips/:tripId/save', unifiedAuthGuard, async (req, res) => {
     try {
-      const { userActionsService } = await import('./services/userActionsService');
       const userId = req.user!.id;
       const tripId = req.params.tripId;
       
-      await userActionsService.unpinTrip(userId, tripId);
+      await storage.removeSavedTrip(userId, tripId);
+      
+      // Create notification about save removal
+      await storage.createSaveNotification(userId, tripId, 'save_removed');
+      
       res.status(204).send(); // No content - idempotent success
     } catch (error) {
-      console.error("Error unpinning trip:", error);
-      res.status(500).json({ message: "Failed to unpin trip" });
+      console.error("Error removing saved trip:", error);
+      res.status(500).json({ message: "Failed to remove saved trip" });
     }
   });
 
-  // Get user's pinned trips with pagination  
-  app.get('/api/user/pins', unifiedAuthGuard, async (req, res) => {
+  // Get save status for a specific trip
+  app.get('/api/trips/:tripId/save-status', unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const tripId = req.params.tripId;
+      
+      const savedTrip = await storage.getSavedTrip(userId, tripId);
+      
+      res.json({
+        isSaved: !!savedTrip,
+        saveType: savedTrip?.saveType || null,
+        savedAt: savedTrip?.updatedAt || null
+      });
+    } catch (error) {
+      console.error("Error getting save status:", error);
+      res.status(500).json({ message: "Failed to get save status" });
+    }
+  });
+
+  // Get user's saved trips with pagination and filtering
+  app.get('/api/user/saved-trips', unifiedAuthGuard, async (req, res) => {
     try {
       const userId = req.user!.id;
       const page = parseInt(req.query.page as string) || 1;
       const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
       const offset = (page - 1) * limit;
+      const saveType = req.query.saveType as 'pinned' | 'interested' | undefined;
 
-      // Get pinned trips with pagination using pure SQL for efficiency
-      const { db } = await import('./db');
-      const { pinnedTrips, trips, users } = await import('../shared/schema');
-      const { eq, desc } = await import('drizzle-orm');
+      // Get all saved trips first
+      const allSavedTrips = await storage.getUserSavedTrips(userId, saveType);
       
-      const pinnedTripsData = await db
-        .select({
-          trip: trips,
-          user: users,
-          pinnedAt: pinnedTrips.createdAt
-        })
-        .from(pinnedTrips)
-        .innerJoin(trips, eq(pinnedTrips.tripId, trips.id))
-        .innerJoin(users, eq(trips.organizerId, users.id))
-        .where(eq(pinnedTrips.userId, userId))
-        .orderBy(desc(pinnedTrips.createdAt))
-        .limit(limit)
-        .offset(offset);
-
-      // Get total count
-      const { sql } = await import('drizzle-orm');
-      const [totalResult] = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(pinnedTrips)
-        .where(eq(pinnedTrips.userId, userId));
-
-      const total = totalResult.count;
-
-      // Format response with normalized user data
-      const items = pinnedTripsData.map(item => ({
-        ...item.trip,
-        organizer: normalizeUserForUI(item.user),
-        pinnedAt: item.pinnedAt
+      // Apply pagination
+      const total = allSavedTrips.length;
+      const items = allSavedTrips.slice(offset, offset + limit).map(savedTrip => ({
+        ...savedTrip.trip,
+        organizer: normalizeUserForUI(savedTrip.trip.organizer),
+        saveType: savedTrip.saveType,
+        savedAt: savedTrip.updatedAt
       }));
 
       res.json({
@@ -692,11 +708,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit)
+        totalPages: Math.ceil(total / limit),
+        saveType: saveType || 'all'
       });
     } catch (error) {
-      console.error("Error fetching pinned trips:", error);
-      res.status(500).json({ message: "Failed to fetch pinned trips" });
+      console.error("Error fetching saved trips:", error);
+      res.status(500).json({ message: "Failed to fetch saved trips" });
     }
   });
 
