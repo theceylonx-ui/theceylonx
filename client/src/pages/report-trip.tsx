@@ -184,7 +184,7 @@ export default function ReportTripPage() {
                 Thank you for helping keep our community safe. Our moderation team will review this report and take appropriate action if necessary.
               </p>
               <div className="space-y-3">
-                <Link href={`/trip/${id}`}>
+                <Link href={`/trips/${id}`}>
                   <Button variant="outline" className="mr-3">
                     Back to Trip
                   </Button>
@@ -209,7 +209,7 @@ export default function ReportTripPage() {
       
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}
-        <Link href={`/trip/${id}`}>
+        <Link href={`/trips/${id}`}>
           <Button variant="outline" className="mb-6" data-testid="button-back">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Trip
