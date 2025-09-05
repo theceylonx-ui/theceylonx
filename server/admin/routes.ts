@@ -286,4 +286,69 @@ router.patch('/reports/:id/status', async (req: any, res) => {
   }
 });
 
+// ===== SUPERADMIN INITIALIZATION ROUTES =====
+
+// Get superadmin setup status
+router.get('/setup/status', async (req: any, res) => {
+  try {
+    const { superadminManager } = await import('../admin/superadmin');
+    const status = await superadminManager.getSetupStatus();
+    res.json(status);
+  } catch (error) {
+    console.error('Error getting setup status:', error);
+    res.status(500).json({ message: 'Failed to get setup status' });
+  }
+});
+
+// Initialize superadmin
+router.post('/setup/superadmin', async (req: any, res) => {
+  try {
+    const { email, initToken } = req.body;
+    
+    if (!email || !initToken) {
+      return res.status(400).json({ 
+        message: 'Email and initialization token are required' 
+      });
+    }
+
+    const { superadminManager } = await import('../admin/superadmin');
+    const result = await superadminManager.initializeSuperadmin({ email, initToken });
+    
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(400).json(result);
+    }
+  } catch (error) {
+    console.error('Error initializing superadmin:', error);
+    res.status(500).json({ message: 'Failed to initialize superadmin' });
+  }
+});
+
+// Create additional superadmin (requires existing superadmin)
+router.post('/superadmin/create', async (req: any, res) => {
+  try {
+    const { email, reason } = req.body;
+    const createdBy = req.user.id;
+    
+    if (!email || !reason) {
+      return res.status(400).json({ 
+        message: 'Email and reason are required' 
+      });
+    }
+
+    const { superadminManager } = await import('../admin/superadmin');
+    const result = await superadminManager.createAdditionalSuperadmin(email, createdBy, reason);
+    
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(403).json(result);
+    }
+  } catch (error) {
+    console.error('Error creating additional superadmin:', error);
+    res.status(500).json({ message: 'Failed to create additional superadmin' });
+  }
+});
+
 export default router;

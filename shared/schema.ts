@@ -615,27 +615,61 @@ export const userPrivacy = pgTable("user_privacy", {
 
 // Admin system tables for role-based access control
 
-// Roles table for admin system
+// Enhanced Roles table for granular permission management
 export const roles = pgTable("roles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name").notNull().unique(), // 'superadmin', 'admin', 'moderator', 'user'
-  permissions: jsonb("permissions").notNull().default('{}'), // Permissions JSONB
+  displayName: varchar("display_name").notNull(), // Human-readable role name
+  description: text("description"), // Role description
+  permissions: jsonb("permissions").notNull().default('[]'), // Array of permission strings
+  isSystem: boolean("is_system").default(false), // System roles can't be deleted
+  isActive: boolean("is_active").default(true), // Enable/disable roles
+  hierarchy: integer("hierarchy").notNull().default(0), // Role hierarchy level (higher = more power)
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+  createdBy: varchar("created_by").references(() => users.id), // Who created this role
+}, (table) => [
+  index("IDX_roles_hierarchy").on(table.hierarchy),
+  index("IDX_roles_active").on(table.isActive),
+]);
 
-// Audit logs table for tracking admin actions
+// Role assignments table for tracking role changes
+export const roleAssignments = pgTable("role_assignments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  roleId: varchar("role_id").notNull().references(() => roles.id, { onDelete: 'cascade' }),
+  assignedBy: varchar("assigned_by").notNull().references(() => users.id), // Who assigned this role
+  assignedAt: timestamp("assigned_at").defaultNow(),
+  reason: text("reason"), // Reason for role assignment
+  isActive: boolean("is_active").default(true),
+  revokedAt: timestamp("revoked_at"),
+  revokedBy: varchar("revoked_by").references(() => users.id),
+  revokeReason: text("revoke_reason"),
+}, (table) => [
+  index("IDX_role_assignments_user").on(table.userId),
+  index("IDX_role_assignments_role").on(table.roleId),
+  index("IDX_role_assignments_active").on(table.isActive),
+  unique("unique_active_user_role").on(table.userId, table.roleId, table.isActive),
+]);
+
+// Enhanced audit logs table for tracking admin actions
 export const auditLogs = pgTable("audit_logs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   actorUserId: varchar("actor_user_id").notNull(), // Who performed the action
   action: varchar("action").notNull(), // 'role_change', 'upload', 'slide_edit', 'role_create'
   targetType: varchar("target_type").notNull(), // 'user', 'media', 'role', 'slide'
   targetId: varchar("target_id"), // ID of the affected entity
+  targetUserId: varchar("target_user_id"), // User affected by the action
+  ipAddress: varchar("ip_address"), // IP address of the actor
+  userAgent: text("user_agent"), // User agent of the actor
   meta: jsonb("meta").default('{}'), // Additional context data
+  severity: varchar("severity", { enum: ['low', 'medium', 'high', 'critical'] }).default('medium'),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("audit_logs_actor_idx").on(table.actorUserId),
   index("audit_logs_action_idx").on(table.action),
+  index("audit_logs_target_user_idx").on(table.targetUserId),
+  index("audit_logs_severity_idx").on(table.severity),
   index("audit_logs_created_at_idx").on(table.createdAt),
 ]);
 
