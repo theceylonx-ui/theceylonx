@@ -208,31 +208,6 @@ export function StepPricing({ form }: StepPricingProps) {
         </ul>
       </div>
 
-      {/* Cost Breakdown Example */}
-      {(watchedPrice || watchedPriceMin || watchedPriceMax) && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <h4 className="font-medium text-gray-900 mb-2">💡 Example Cost Breakdown</h4>
-          <div className="text-sm text-gray-700 space-y-1">
-            <div className="flex justify-between">
-              <span>Transportation:</span>
-              <span>LKR {Math.round(((watchedPrice || watchedPriceMax || 0) * 0.4))}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Activities/Entrance:</span>
-              <span>LKR {Math.round(((watchedPrice || watchedPriceMax || 0) * 0.3))}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Organization fee:</span>
-              <span>LKR {Math.round(((watchedPrice || watchedPriceMax || 0) * 0.3))}</span>
-            </div>
-            <hr className="my-2" />
-            <div className="flex justify-between font-medium">
-              <span>Total per person:</span>
-              <span>LKR {watchedPrice || watchedPriceMax || 0}</span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
