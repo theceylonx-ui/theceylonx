@@ -33,7 +33,15 @@ export default function ProfilePage() {
   const { user, isLoading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("overview");
+  
+  // Check URL parameters for tab selection
+  const getInitialTab = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    return tabParam === 'preferences' ? 'preferences' : 'overview';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getInitialTab);
 
   // Redirect if not authenticated
   useEffect(() => {

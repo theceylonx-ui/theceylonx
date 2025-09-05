@@ -348,12 +348,6 @@ export function PreferencesForm() {
           )}
         </CardDescription>
         
-        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <span className="font-medium">💡 Travel Tip:</span> These preferences are based on your personal choices. 
-            Always check with locals for more accurate and up-to-date information about destinations, weather, and activities.
-          </p>
-        </div>
       </CardHeader>
       
       <CardContent className="space-y-6">

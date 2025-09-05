@@ -376,14 +376,7 @@ export function EnhancedRecommendedTrips() {
             variant="outline"
             size="sm"
             onClick={() => {
-              setLocation('/me');
-              // Programmatically switch to preferences tab immediately
-              setTimeout(() => {
-                const preferencesTab = document.querySelector('[value="preferences"]');
-                if (preferencesTab) {
-                  (preferencesTab as HTMLElement).click();
-                }
-              }, 200);
+              setLocation('/me?tab=preferences');
             }}
             className="text-gray-600 hover:text-gray-800 border-gray-200 hover:border-gray-300"
             data-testid="button-travel-style-settings"
