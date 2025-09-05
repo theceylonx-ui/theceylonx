@@ -365,7 +365,16 @@ export default function EnhancedRecommendedTrips() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setLocation('/travel-style-settings')}
+            onClick={() => {
+              setLocation('/me');
+              // Programmatically switch to preferences tab
+              setTimeout(() => {
+                const preferencesTab = document.querySelector('[value="preferences"]');
+                if (preferencesTab) {
+                  (preferencesTab as HTMLElement).click();
+                }
+              }, 100);
+            }}
             className="text-gray-600 hover:text-gray-800 border-gray-200 hover:border-gray-300"
             data-testid="button-travel-style-settings"
           >

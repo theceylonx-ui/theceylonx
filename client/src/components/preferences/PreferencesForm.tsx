@@ -541,6 +541,47 @@ export function PreferencesForm() {
               />
             </div>
 
+            {/* How to Use Tips */}
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4">
+              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-purple-600" />
+                How to Use Travel Preferences
+              </h3>
+              <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-700">
+                <div className="space-y-2">
+                  <div className="flex items-start gap-2">
+                    <div className="bg-purple-100 text-purple-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-semibold mt-0.5">1</div>
+                    <p><strong>Select Your Vibes:</strong> Choose up to 3 travel moods that match your style</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="bg-purple-100 text-purple-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-semibold mt-0.5">2</div>
+                    <p><strong>Pick Companions:</strong> Who do you usually travel with?</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="bg-purple-100 text-purple-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-semibold mt-0.5">3</div>
+                    <p><strong>Choose Interests:</strong> Select activities you enjoy most</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-start gap-2">
+                    <div className="bg-purple-100 text-purple-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-semibold mt-0.5">4</div>
+                    <p><strong>Select Months:</strong> When do you prefer to travel?</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="bg-purple-100 text-purple-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-semibold mt-0.5">5</div>
+                    <p><strong>Choose Regions:</strong> Which parts of Sri Lanka interest you?</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="bg-purple-100 text-purple-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-semibold mt-0.5">6</div>
+                    <p><strong>Set Budget:</strong> Optional spending range for better trip matching</p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 p-2 bg-blue-100 rounded text-xs text-blue-800">
+                <strong>💡 Tip:</strong> Your preferences help us show you more relevant trips. You can update them anytime, and recommendations will improve as you interact with trips.
+              </div>
+            </div>
+
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <Button
