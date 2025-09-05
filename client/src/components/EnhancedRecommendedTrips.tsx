@@ -1,32 +1,22 @@
 import { useState, useEffect } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
-import { 
-  useEnhancedRecommendations, 
-  usePersonalizationSettings,
-  useTogglePersonalization,
-  useResetRecommendations,
-  useTrackEnhancedInteraction,
-  useTrackKpiEvent,
-  generateSessionId,
-  getABTestGroup 
-} from "@/hooks/useEnhancedRecommendations";
-import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
-import { 
-  MapPin, 
-  Calendar, 
-  Users, 
-  DollarSign, 
-  Clock, 
+import { apiRequest } from "@/lib/queryClient";
+import {
+  MapPin,
+  Info,
   Bookmark,
-  BookmarkCheck,
   Share2,
+  X,
+  Users,
+  Calendar,
+  DollarSign,
+  Clock,
   Eye,
-  ThumbsDown,
   RefreshCw,
   Settings,
   Activity,
@@ -44,53 +34,97 @@ import {
   Coffee,
   Camera,
   Heart,
-  MessageCircle,
-  Info,
-  Edit
+  Zap,
+  Target,
+  TreePine,
+  Compass,
+  Plane,
+  Car
 } from "lucide-react";
-import { format } from "date-fns";
+
+// Generate a unique session ID for this page load
+const generateSessionId = () => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
 interface EnhancedRecommendation {
-  trip: any;
+  trip: {
+    id: string;
+    title: string;
+    description: string;
+    fromLocation: string;
+    toLocation: string;
+    price: number;
+    availableSpots: number;
+    maxParticipants: number;
+    departureDate: string;
+    endDate?: string;
+    userId: string;
+    status: string;
+    imageUrl?: string;
+    category?: string;
+    tags?: string[];
+  };
   score: number;
-  reasons: string[];
-  features: any;
-  seasonalityScore: number;
-  safetyScore: number;
   noveltyScore: number;
-  diversityScore: number;
+  seasonalityScore: number;
+  reasons: string[];
+  features: string[];
 }
 
-export default function EnhancedRecommendedTrips() {
-  const { user } = useAuth();
+export function EnhancedRecommendedTrips() {
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [location, setLocation] = useLocation();
-  const [sessionId] = useState(() => generateSessionId());
-  const [abTestGroup] = useState(() => getABTestGroup(user?.id));
-  const [viewedTrips, setViewedTrips] = useState<Set<string>>(new Set());
-  const [showAnalytics, setShowAnalytics] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState('Trending');
+  const queryClient = useQueryClient();
+  const [sessionId] = useState(generateSessionId);
+  const [abTestGroup] = useState(Math.random() < 0.5 ? 'A' : 'B');
+  const [viewedTrips, setViewedTrips] = useState(new Set<string>());
 
-  const { 
-    data: recommendations = [], 
-    isLoading, 
-    error,
-    refetch 
-  } = useEnhancedRecommendations({ 
-    limit: 12,
-    abTestGroup 
+  // Fetch enhanced recommendations
+  const { data: recommendations = [], isLoading, error, refetch } = useQuery({
+    queryKey: ['/api/recommendations/enhanced'],
+    staleTime: 5 * 60 * 1000,
   });
 
-  const { 
-    data: personalizationSettings 
-  } = usePersonalizationSettings();
+  // Fetch personalization settings
+  const { data: personalizationSettings } = useQuery({
+    queryKey: ['/api/user/personalization'],
+  });
 
-  const togglePersonalizationMutation = useTogglePersonalization();
-  const resetRecommendationsMutation = useResetRecommendations();
-  const trackInteractionMutation = useTrackEnhancedInteraction();
-  const trackKpiMutation = useTrackKpiEvent();
+  // Interaction tracking mutation
+  const trackInteractionMutation = useMutation({
+    mutationFn: async (data: { tripId: string; interactionType: string; sessionId: string; abTestGroup: string }) => {
+      return apiRequest('POST', '/api/user/interactions/enhanced', data);
+    },
+  });
 
-  // Track when user views top 5 recommendations for CTR measurement
+  // KPI tracking mutation
+  const trackKpiMutation = useMutation({
+    mutationFn: async (data: { eventType: string; tripId?: string; abTestGroup: string; sessionId: string; eventData?: any }) => {
+      return apiRequest('POST', '/api/kpi/events', data);
+    },
+  });
+
+  // Personalization toggle mutation
+  const togglePersonalizationMutation = useMutation({
+    mutationFn: async (isPaused: boolean) => {
+      return apiRequest('PUT', '/api/user/personalization', { isPaused });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user/personalization'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/recommendations/enhanced'] });
+    },
+  });
+
+  // Reset recommendations mutation
+  const resetRecommendationsMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest('POST', '/api/recommendations/reset');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/recommendations/enhanced'] });
+    },
+  });
+
+  // Track top 5 view event when recommendations load
   useEffect(() => {
     if (recommendations.length >= 5 && !isLoading) {
       const topFiveIds = recommendations.slice(0, 5).map(r => r.trip.id);
@@ -194,33 +228,17 @@ export default function EnhancedRecommendedTrips() {
     if (score > 0.8) {
       badges.push({
         icon: <Star className="h-3 w-3" />,
-        text: `Popular with ${Math.floor(Math.random() * 50 + 10)} travelers`,
+        text: `⭐ Popular`,
         variant: "default"
       });
     }
     
-    // Seasonal badges based on location and time
+    // Seasonal badge for appropriate timing
     if (seasonalityScore > 0.8) {
-      const location = trip.toLocation?.toLowerCase() || '';
-      if (location.includes('beach') || location.includes('galle') || location.includes('mirissa')) {
-        badges.push({
-          icon: <Waves className="h-3 w-3" />,
-          text: "🌊 Surf season",
-          variant: "secondary"
-        });
-      } else if (location.includes('kandy') || location.includes('ella') || location.includes('nuwara')) {
-        badges.push({
-          icon: <Coffee className="h-3 w-3" />,
-          text: "🚂 Tea & Train views",
-          variant: "secondary"
-        });
-      } else if (location.includes('yala') || location.includes('safari')) {
-        badges.push({
-          icon: <Camera className="h-3 w-3" />,
-          text: "🐆 Safari season",
-          variant: "secondary"
-        });
-      } else {
+      const currentMonth = new Date().getMonth();
+      const isGoodSeason = currentMonth >= 10 || currentMonth <= 3; // Nov-Mar is peak season
+      
+      if (isGoodSeason) {
         badges.push({
           icon: <Sun className="h-3 w-3" />,
           text: `🌞 Best season in ${trip.toLocation?.split(',')[0] || 'Sri Lanka'}`,
@@ -342,21 +360,13 @@ export default function EnhancedRecommendedTrips() {
 
   return (
     <div className="space-y-6">
-      {/* Travel Tip Message */}
-      <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-sm text-blue-800">
-          <span className="font-medium">💡 Travel Tip:</span> These preferences are based on your personal choices. 
-          Always check with locals for more accurate and up-to-date information about destinations, weather, and activities.
-        </p>
-      </div>
-
       {/* Simple Header */}
       <div className="mb-6">
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
               <TrendingUp className="h-6 w-6 text-purple-600" />
-              Trending Trips & For You
+              Discover What's Trending / Explore Your Picks
             </h2>
             <p className="text-muted-foreground">
               Discover trips popular with other travelers and tailored to your travel style
@@ -383,9 +393,6 @@ export default function EnhancedRecommendedTrips() {
           </Button>
         </div>
       </div>
-
-
-
 
       {/* Enhanced Recommendations Grid - Show exactly 3 cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -430,46 +437,57 @@ export default function EnhancedRecommendedTrips() {
                   </div>
                 </div>
               </CardHeader>
-
-              <CardContent className="pt-0 pb-4">
-                {/* Trip Details - Compact Layout */}
-                <div className="grid grid-cols-2 gap-2 mb-4 text-sm">
-                  <div className="flex items-center gap-1 text-gray-600">
-                    <Calendar className="h-3 w-3" />
-                    {format(new Date(trip.date), 'MMM dd, yyyy')}
-                  </div>
-                  <div className="flex items-center gap-1 text-gray-600 justify-end">
-                    <Clock className="h-3 w-3" />
-                    {trip.time}
+              
+              <CardContent className="pt-0">
+                {/* Description - keep it concise for better visual balance */}
+                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                  {trip.description}
+                </p>
+                
+                {/* Trip Details Grid */}
+                <div className="space-y-3 mb-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-1 text-muted-foreground">
+                      <DollarSign className="h-3 w-3" />
+                      Price
+                    </span>
+                    <span className="font-medium">{formatPrice(trip.price)}</span>
                   </div>
                   
-                  <div className="flex items-center gap-1 text-gray-600">
-                    <Users className="h-3 w-3" />
-                    {trip.seatsAvailable} seats available
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-1 text-muted-foreground">
+                      <Users className="h-3 w-3" />
+                      Available
+                    </span>
+                    <span className="font-medium">{trip.availableSpots}/{trip.maxParticipants} spots</span>
                   </div>
-                  <div className="flex items-center gap-1 font-semibold justify-end">
-                    {trip.price === 0 || !trip.price ? (
-                      <span className="text-green-600">💚 Free</span>
-                    ) : (
-                      <span className="text-green-600">
-                        $ LKR {formatPrice(trip.price)}
-                      </span>
-                    )}
+                  
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-1 text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      Date
+                    </span>
+                    <span className="font-medium">
+                      {new Date(trip.departureDate).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })}
+                    </span>
                   </div>
                 </div>
-
-                {/* Popularity Reasons - Like your second image */}
-                <div className="mb-4 space-y-1">
+                
+                {/* Popularity Indicators */}
+                <div className="space-y-2 mb-4">
                   {getPopularityReasons(recommendation, index).map((reason, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-sm text-gray-600">
+                    <div key={idx} className="flex items-center gap-2 text-xs text-muted-foreground">
                       <span>{reason.icon}</span>
                       <span>{reason.text}</span>
                     </div>
                   ))}
                 </div>
-
-                {/* View Trip Button */}
-                <div className="pt-3">
+                
+                {/* Action Button */}
+                <div className="pt-2">
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -505,6 +523,14 @@ export default function EnhancedRecommendedTrips() {
           </div>
         </Card>
       )}
+
+      {/* Travel Tip Message - Below recommendations */}
+      <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-sm text-blue-800">
+          <span className="font-medium">💡 Travel Tip:</span> These preferences are based on your personal choices. 
+          Always check with locals for more accurate and up-to-date information about destinations, weather, and activities.
+        </p>
+      </div>
     </div>
   );
 }

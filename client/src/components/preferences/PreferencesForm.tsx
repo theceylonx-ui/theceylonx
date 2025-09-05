@@ -577,9 +577,6 @@ export function PreferencesForm() {
                   </div>
                 </div>
               </div>
-              <div className="mt-3 p-2 bg-blue-100 rounded text-xs text-blue-800">
-                <strong>💡 Tip:</strong> Your preferences help us show you more relevant trips. You can update them anytime, and recommendations will improve as you interact with trips.
-              </div>
             </div>
 
             {/* Action Buttons */}
