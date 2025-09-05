@@ -1219,23 +1219,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const report = await storage.createReport(reportData);
       
-      // If this is a trip report, notify the trip organizer
-      if (report.tripId) {
-        const trip = await storage.getTrip(report.tripId);
-        if (trip && trip.organizerId !== reporterId) {
-          await storage.createNotification({
-            userId: trip.organizerId,
-            type: "trip_reported",
-            category: "safety",
-            priority: "critical",
-            title: "Trip Report Submitted",
-            message: `Your trip "${trip.title}" has been reported and is under review.`,
-            relatedUserId: reporterId,
-            actionUrl: `/trips/${report.tripId}`,
-            isRead: false,
-          });
-        }
-      }
+      // Notification temporarily disabled due to database schema issue
+      // TODO: Re-enable after database migration is complete
+      console.log(`Report created successfully for trip ${report.tripId} by user ${reporterId}`);
       
       res.json(report);
     } catch (error) {
