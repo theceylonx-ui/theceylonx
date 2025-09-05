@@ -182,6 +182,39 @@ export function NotificationDropdown() {
                     <p className="text-xs text-muted-foreground mt-2">
                       {formatDistanceToNow(new Date(notification.createdAt || new Date()), { addSuffix: true })}
                     </p>
+                    
+                    {/* Dual Action Links */}
+                    {(notification.primaryActionLabel || notification.secondaryActionLabel) && (
+                      <div className="flex items-center gap-2 mt-3 pt-2 border-t border-gray-100">
+                        {notification.primaryActionLabel && notification.primaryActionUrl && (
+                          <Button
+                            size="sm"
+                            className="bg-ceylon-green hover:bg-ceylon-green/90 text-white text-xs px-3 py-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.location.href = notification.primaryActionUrl;
+                            }}
+                            data-testid={`button-primary-action-${notification.id}`}
+                          >
+                            {notification.primaryActionLabel}
+                          </Button>
+                        )}
+                        {notification.secondaryActionLabel && notification.secondaryActionUrl && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-ceylon-blue border-ceylon-blue hover:bg-ceylon-blue hover:text-white text-xs px-3 py-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.location.href = notification.secondaryActionUrl;
+                            }}
+                            data-testid={`button-secondary-action-${notification.id}`}
+                          >
+                            {notification.secondaryActionLabel}
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <DropdownMenu>

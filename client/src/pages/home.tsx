@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { TripWithOrganizer } from "@shared/schema";
 import backgroundImage from "@assets/11_1756417976014.png";
 import { RecommendedTrips } from "@/components/RecommendedTrips";
+import { PreferencesCompletionBanner } from "@/components/PreferencesCompletionBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 
@@ -81,6 +82,15 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Preferences Completion Banner - Only for authenticated users */}
+      {user && (
+        <section className="pt-8 pb-4 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <PreferencesCompletionBanner />
+          </div>
+        </section>
+      )}
 
       {/* Enhanced AI Recommendations Section - Only for authenticated users */}
       {user && (

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageCircle, Clock, MapPin } from "lucide-react";
 import { format } from "date-fns";
+import { EmptyState } from "@/components/EmptyState";
 
 interface ChatThread {
   id: string;
@@ -66,13 +67,13 @@ export function ChatThreadsList() {
 
   if (!threads?.threads || threads.threads.length === 0) {
     return (
-      <Card className="p-6 text-center">
-        <MessageCircle className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-        <p className="text-gray-600 dark:text-gray-400">No chat conversations yet</p>
-        <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-          Chat requests will appear here when organizers approve them
-        </p>
-      </Card>
+      <EmptyState 
+        type="chat"
+        primaryAction={{
+          label: "Browse Trips",
+          onClick: () => window.location.href = '/browse-trips'
+        }}
+      />
     );
   }
 

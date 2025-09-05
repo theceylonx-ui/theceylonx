@@ -1,0 +1,43 @@
+You are the engineer on Ceylon Expand v3.0. Implement and verify complete linking for the Browse Trips flow.
+
+Scope:
+1) Preserve query state across list/detail:
+   - On /trips, when user opens a TripCard, include the current location.search in the detail URL.
+   - On /trips/:id, add a “Back to results” Link that returns to `/trips` + the original search.
+   - Utility: a small helper to read/forward search (utils/searchParams.ts).
+2) Add connections to improve UX:
+   - TripCard: host avatar/name → /profile/:organizerId
+   - TripDetail: “Ask the community” → /community?topic=<destinationSlug>
+   - TripDetail: kebab → “Report this trip” → /report?type=trip&id=:id
+   - TripDetail: CTA “Express Interest”:
+       If authed → normal flow; If not authed → redirect to /login?redirect=<currentPath+search>
+   - Add Map/List toggle on /trips using `view=list|map` in search params (preserve all other filters).
+   - Add “Save” on TripCard → updates wishlist; provide link in header menu to /me/saved.
+   - If user preferences incomplete, show banner on /trips → link to /me/preferences and after save return to /trips with toast.
+   - Breadcrumbs on Trip Detail: Home / Trips / {Region} / {Destination} / {Title}; ensure “Trips” preserves the original search.
+3) Notifications plumbing:
+   - When interest accepted (mock API ok), push notification payload with both:
+       hrefPrimary = /chat/threads/:id
+       hrefSecondary = /trips/:tripId
+   - In notifications UI, primary opens chat; secondary opens trip.
+4) Empty states:
+   - No /trips results: friendly copy, “Clear filters”, and “Post a Trip” → /post-trip.
+   - No chat yet: show guidance text and canned starters.
+5) Tests:
+   - Add unit tests (Jest + RTL):
+       a) TripCard link keeps location.search
+       b) TripDetail backlink returns to /trips + original search
+       c) login redirect returns user to original page
+   - Add Cypress e2e:
+       a) Apply filters -> open a trip -> back -> filters/page preserved
+       b) Express Interest -> success -> open chat -> back to trip
+       c) Map/List toggle preserves filters
+       d) Community round-trip: trip -> community(topic) -> question -> related trip
+6) Code quality:
+   - TypeScript strict, ESLint/Prettier pass, add minimal docs in component headers.
+   - Keep changes behind feature flag BROWSE_TRIPS_LINKING_V3 (env or config) default ON.
+
+Deliverables:
+- Modified components: TripCard, TripDetail, Breadcrumbs, NotificationsList, TripsPage (list & map views), UserPreferencesBanner.
+- New helpers: utils/searchParams.ts
+- Tests passing in CI. Provide a brief summary of files changed and how to validate manually.

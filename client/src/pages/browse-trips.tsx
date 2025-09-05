@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { Grid3X3, List, MapPin } from "lucide-react";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import TripCard from "@/components/trip-card";
@@ -8,9 +10,13 @@ import { TipsBox } from "@/components/TipsBox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { updateSearchParam } from "@/utils/searchParams";
+import { EmptyState } from "@/components/EmptyState";
 import type { TripWithOrganizer } from "@shared/schema";
 
 export default function BrowseTrips() {
+  const [, setLocation] = useLocation();
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
     from: "",
@@ -21,6 +27,18 @@ export default function BrowseTrips() {
     maxPrice: "",
     search: "",
   });
+
+  // Get view mode from URL parameters (default to 'list')
+  const urlParams = new URLSearchParams(window.location.search);
+  const [viewMode, setViewMode] = useState<'list' | 'map'>(
+    (urlParams.get('view') as 'list' | 'map') || 'list'
+  );
+
+  // Update view mode and preserve other filters in URL
+  const handleViewModeChange = (newView: 'list' | 'map') => {
+    setViewMode(newView);
+    updateSearchParam('view', newView, setLocation);
+  };
 
   const { data, isLoading } = useQuery<{
     trips: (TripWithOrganizer & { isPinned?: boolean })[];
@@ -160,8 +178,8 @@ export default function BrowseTrips() {
         {/* Filters */}
         <TripFilters filters={filters} onFiltersChange={handleFiltersChange} />
 
-        {/* Results */}
-        <div className="mb-6">
+        {/* Results Header with View Toggle */}
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <p className="text-gray-600" data-testid="results-count">
             {isLoading ? "Loading..." : `${pagination?.total || 0} trips found`}
             {pagination && pagination.totalPages > 1 && (
@@ -170,42 +188,105 @@ export default function BrowseTrips() {
               </span>
             )}
           </p>
+          
+          {/* View Mode Toggle */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-600 mr-2">View:</span>
+            <div className="flex items-center border border-gray-200 rounded-lg p-1" data-testid="view-toggle">
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => handleViewModeChange('list')}
+                className={`${
+                  viewMode === 'list' 
+                    ? 'bg-ceylon-green hover:bg-ceylon-green/90 text-white' 
+                    : 'hover:bg-gray-100'
+                }`}
+                data-testid="view-list"
+              >
+                <List className="h-4 w-4 mr-1" />
+                List
+              </Button>
+              <Button
+                variant={viewMode === 'map' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => handleViewModeChange('map')}
+                className={`${
+                  viewMode === 'map' 
+                    ? 'bg-ceylon-green hover:bg-ceylon-green/90 text-white' 
+                    : 'hover:bg-gray-100'
+                }`}
+                data-testid="view-map"
+              >
+                <MapPin className="h-4 w-4 mr-1" />
+                Map
+              </Button>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {isLoading ? (
-            // Loading skeletons
-            Array.from({ length: 9 }).map((_, i) => (
-              <Card key={i} className="overflow-hidden" data-testid={`skeleton-trip-${i}`}>
-                <Skeleton className="w-full h-48" />
-                <CardContent className="p-6">
-                  <Skeleton className="h-6 w-3/4 mb-4" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-2/3" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : trips.length > 0 ? (
-            trips.map((trip) => (
-              <TripCard key={trip.id} trip={trip} data-testid={`trip-card-${trip.id}`} />
-            ))
-          ) : (
-            <div className="col-span-full text-center py-12" data-testid="empty-trips">
-              <div className="text-gray-400 mb-4">
-                <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+        {/* Conditional Content Based on View Mode */}
+        {viewMode === 'list' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {isLoading ? (
+              // Loading skeletons
+              Array.from({ length: 9 }).map((_, i) => (
+                <Card key={i} className="overflow-hidden" data-testid={`skeleton-trip-${i}`}>
+                  <Skeleton className="w-full h-48" />
+                  <CardContent className="p-6">
+                    <Skeleton className="h-6 w-3/4 mb-4" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : trips.length > 0 ? (
+              trips.map((trip) => (
+                <TripCard key={trip.id} trip={trip} data-testid={`trip-card-${trip.id}`} />
+              ))
+            ) : (
+              <div className="col-span-full">
+                <EmptyState 
+                  type="trips"
+                  primaryAction={{
+                    label: "Post a Trip",
+                    onClick: () => window.location.href = '/post-trip'
+                  }}
+                  secondaryAction={{
+                    label: "Clear filters",
+                    onClick: () => setFilters({
+                      from: "", to: "", date: "", region: "", minPrice: "", maxPrice: "", search: ""
+                    }),
+                    variant: "outline"
+                  }}
+                  showCard={false}
+                />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No trips found</h3>
-              <p className="text-gray-600 mb-4">
-                Try adjusting your filters or check back later for new trips.
-              </p>
+            )}
+          </div>
+        ) : (
+          // Map View
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[600px] flex items-center justify-center" data-testid="map-view">
+            <div className="text-center text-gray-500">
+              <MapPin className="mx-auto h-16 w-16 mb-4 text-gray-300" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Map View</h3>
+              <p className="text-gray-600 mb-4">Interactive map view coming soon!</p>
+              <p className="text-sm text-gray-500">This will show trip locations on a Sri Lankan map</p>
+              <Button 
+                onClick={() => handleViewModeChange('list')}
+                variant="outline"
+                className="mt-4"
+                data-testid="button-back-to-list"
+              >
+                <List className="h-4 w-4 mr-2" />
+                Back to List View
+              </Button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
         
         {/* Pagination */}
         <PaginationComponent />

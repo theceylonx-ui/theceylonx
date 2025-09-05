@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
-import { MapPin, Calendar, Users, DollarSign, Phone, Star, Flag, ArrowLeft, Lock, Trash2, Heart, Edit } from "lucide-react";
+import { MapPin, Calendar, Users, DollarSign, Phone, Star, Flag, ArrowLeft, Lock, Trash2, Heart, Edit, MessageCircle, MoreHorizontal, ChevronRight } from "lucide-react";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -12,15 +12,18 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useTrackInteraction } from "@/hooks/useRecommendations";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
+import { createBackToTripsLink, createLoginRedirectUrl } from "@/utils/searchParams";
 import type { TripWithNormalizedOrganizer, CommentWithUser, TripInterestRequest } from "@shared/schema";
 import { EditContentDialog } from "@/components/EditContentDialog";
 import { TripEditDialog } from "@/components/TripEditDialog";
 import { ActionsMenu } from "@/components/ActionsMenu";
+import { TripBreadcrumbs } from "@/components/TripBreadcrumbs";
 
 interface TripDetailsProps {
   params: { id: string };
@@ -379,7 +382,9 @@ export default function TripDetails({ params }: TripDetailsProps) {
 
   const handleSendInterest = () => {
     if (!isAuthenticated) {
-      window.location.href = "/api/login";
+      // Redirect to login with current path for return
+      const currentPath = `${window.location.pathname}${window.location.search}`;
+      window.location.href = createLoginRedirectUrl(currentPath);
       return;
     }
     if (existingInterestRequest) {
@@ -423,11 +428,14 @@ export default function TripDetails({ params }: TripDetailsProps) {
       
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Back Button */}
-        <Link href="/browse-trips">
+        {/* Breadcrumbs */}
+        <TripBreadcrumbs trip={trip} className="mb-4" />
+        
+        {/* Back Button with preserved search state */}
+        <Link href={createBackToTripsLink('/trips')}>
           <Button variant="outline" className="mb-6" data-testid="button-back">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Browse
+            Back to results
           </Button>
         </Link>
 
@@ -482,16 +490,28 @@ export default function TripDetails({ params }: TripDetailsProps) {
                   </>
                 )}
                 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleReport}
-                  disabled={reportTripMutation.isPending}
-                  data-testid="button-report"
-                >
-                  <Flag className="h-4 w-4 mr-1" />
-                  Report
-                </Button>
+                {/* Additional Action Links */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" data-testid="button-more-actions">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href={`/community?topic=${trip.toLocation.toLowerCase().replace(/\s+/g, '-')}`}>
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        Ask the community
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/report?type=trip&id=${trip.id}`}>
+                        <Flag className="h-4 w-4 mr-2" />
+                        Report this trip
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
@@ -646,7 +666,10 @@ export default function TripDetails({ params }: TripDetailsProps) {
                     ) : null
                   ) : (
                     <Button 
-                      onClick={() => window.location.href = '/auth/signin'}
+                      onClick={() => {
+                        const currentPath = `${window.location.pathname}${window.location.search}`;
+                        window.location.href = createLoginRedirectUrl(currentPath);
+                      }}
                       className="w-full bg-ceylon-green hover:bg-ceylon-green/90 text-white"
                       data-testid="button-signin-interest"
                     >

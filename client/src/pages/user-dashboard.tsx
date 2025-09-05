@@ -23,6 +23,7 @@ import { AvatarSelector } from "@/components/avatar-selector";
 import type { User, TripWithOrganizer, QuestionWithDetails } from "@shared/schema";
 import { AdminReportsTable } from "@/components/AdminReportsTable";
 import { UserHistoryTab } from "@/components/UserHistoryTab";
+import { PreferencesCompletionBanner } from "@/components/PreferencesCompletionBanner";
 
 const profileSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username must be less than 20 characters").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores").optional().or(z.literal('')),
@@ -451,6 +452,9 @@ export default function UserDashboard() {
             Manage your trips and profile
           </p>
         </div>
+
+        {/* Preferences Completion Banner */}
+        <PreferencesCompletionBanner className="mb-6" />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'} bg-gray-100`}>

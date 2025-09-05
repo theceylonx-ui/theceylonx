@@ -226,6 +226,10 @@ export const notifications = pgTable("notifications", {
   relatedTripId: varchar("related_trip_id"), // optional: related trip
   relatedUserId: varchar("related_user_id"), // optional: who triggered the notification
   actionUrl: varchar("action_url"), // optional: where to navigate when clicked
+  primaryActionLabel: varchar("primary_action_label"), // e.g., "View Trip"
+  primaryActionUrl: varchar("primary_action_url"), // primary action link
+  secondaryActionLabel: varchar("secondary_action_label"), // e.g., "Ask Question"
+  secondaryActionUrl: varchar("secondary_action_url"), // secondary action link
   metadata: jsonb("metadata").default({}), // additional data for weather alerts, view counts, etc.
   // Deep-link context for notifications
   commentId: varchar("comment_id"), // For comment-related notifications

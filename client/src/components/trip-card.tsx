@@ -13,6 +13,7 @@ import { ActionsMenu } from "@/components/ActionsMenu";
 import { EditContentDialog } from "@/components/EditContentDialog";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { SaveControl } from "@/components/SaveControl";
+import { createTripDetailLink } from "@/utils/searchParams";
 import { useState } from "react";
 
 interface TripCardProps {
@@ -361,8 +362,11 @@ export default function TripCard({ trip, badges }: TripCardProps) {
     return sriLankanImages[trip.region.toLowerCase()] || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
   };
 
+  // Create the trip detail link with preserved search state
+  const tripDetailLink = createTripDetailLink(trip.id, true);
+
   return (
-    <Link href={`/trips/${trip.id}`}>
+    <Link href={tripDetailLink}>
       <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group border-0 shadow-sm" data-testid={`trip-card-${trip.id}`}>
         <div className="relative">
           <img 
@@ -451,12 +455,14 @@ export default function TripCard({ trip, badges }: TripCardProps) {
           
           <div className="flex items-center justify-between pt-3 border-t border-gray-100">
             <div data-testid={`trip-organizer-${trip.id}`}>
-              <UserDisplay 
-                user={trip.organizer}
-                avatarSize="md"
-                className="gap-2"
-                nameClassName="text-xs sm:text-sm text-gray-600 truncate max-w-[100px] sm:max-w-[120px]"
-              />
+              <Link href={`/profile/${trip.organizerId}`} className="hover:opacity-80 transition-opacity">
+                <UserDisplay 
+                  user={trip.organizer}
+                  avatarSize="md"
+                  className="gap-2"
+                  nameClassName="text-xs sm:text-sm text-gray-600 truncate max-w-[100px] sm:max-w-[120px]"
+                />
+              </Link>
             </div>
             
             <div className="flex items-center space-x-1 sm:space-x-2">
