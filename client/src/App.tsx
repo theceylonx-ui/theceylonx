@@ -26,6 +26,7 @@ import AuthMagicPage from "@/pages/auth-magic";
 import AuthCallbackPage from "@/pages/auth-callback";
 import DestinationPage from "@/pages/destination";
 import AdminDashboardPage from "@/pages/admin-dashboard";
+import AdminOverviewPage from "@/pages/admin/index";
 import ReportTripPage from "@/pages/report-trip";
 import ChatPage from "@/pages/chat";
 import ChatDemoPage from "@/pages/chat-demo";
@@ -111,8 +112,12 @@ function Router() {
             <Route path="/chat-demo" component={ChatDemoPage} />
             <Route path="/chat-buddy" component={ChatBuddy} />
             <Route path="/user/delete" component={UserDeletion} />
-            <Route path="/admin" component={AdminDashboardPage} />
-            <Route path="/admin/dashboard" component={AdminDashboardPage} />
+            {/* Enhanced Admin Routes */}
+            <Route path="/admin" component={AdminOverviewPage} />
+            <Route path="/admin/dashboard" component={AdminOverviewPage} />
+            
+            {/* Legacy Admin Routes */}
+            <Route path="/admin-dashboard" component={AdminDashboardPage} />
             <Route path="/admin/reports" component={AdminReportsPage} />
             <Route path="/report-trip/:id" component={ReportTripPage} />
           </>

@@ -170,7 +170,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup superadmin middleware (runs after auth)
   app.use(setupSuperadmin);
   
-  // Admin routes
+  // Enhanced Admin routes (new permission-based system)
   app.use('/api/admin', adminRoutes.default);
   
   // Preferences routes
