@@ -1,0 +1,49 @@
+You are the lead engineer of Ceylon Expand. Generate the complete **System Architecture Blueprint v4.0**.
+
+Guiding Metaphor:
+- Backend = “Einstein’s Brain”: powerful, precise, AI-driven, with deep intelligence for recommendations, moderation, analytics, and automation.
+- Frontend = “A 5-year-old’s Playground”: simple, colorful, intuitive, and joyful, so users of any age or skill can navigate easily.
+
+Deliverables:
+1. Executive Summary
+   - Contrast between Einstein-level backend intelligence and playful, child-simple frontend.
+   - Explain how the combination makes the platform both smart and effortless to use.
+
+2. Technology Stack
+   - Backend upgrades: advanced AI/ML, modular microservices, event-driven architecture.
+   - Frontend upgrades: ultra-intuitive UI, gamified micro-interactions, accessibility by default.
+
+3. Core Platform Features
+   - Retain v3.0 features (Trips, Community, Chat, Admin) but describe how each is now more intelligent and more user-friendly.
+   - Include **AI copilots** for users (e.g., “Suggest Trips for Me”, “Help Me Post a Trip”).
+   - Include **gamification hooks** (badges, playful animations, rewards).
+
+4. Admin System
+   - Backend: Einstein-level analytics, anomaly detection, predictive moderation.
+   - Frontend: Admin mobile-first console simplified to 3 taps for any critical action.
+
+5. Data Flow & APIs
+   - Document how requests move through Einstein’s Brain backend and return to the Playground frontend in child-simple responses.
+   - Show any new GraphQL/event-driven APIs.
+
+6. Security & Compliance
+   - State-of-the-art backend protection (AI intrusion detection, predictive abuse monitoring).
+   - Child-friendly privacy design on the frontend (clear toggles, one-tap consent).
+
+7. UX & UI Architecture
+   - Map playful navigation flows, big buttons, progressive disclosure (don’t overwhelm).
+   - Gamified elements: stars, stickers, badges for user milestones.
+   - Accessibility: WCAG 2.2, text-to-speech, language toggle (Sinhala/Tamil/English).
+
+8. Performance & Scalability
+   - Backend: auto-scaling microservices, Redis/Kafka event streaming, AI-powered query optimization.
+   - Frontend: instant load, offline-ready PWA, caching with service workers.
+
+9. Future-Ready
+   - AI agents for user assistance.
+   - Modular backend ready to plug in third-party booking/payment.
+   - Frontend theming engine for personalization.
+
+Format:
+- Write the blueprint in the same structured style as v3.0 (sections with headings, code/interface snippets where useful).
+- Make sure to emphasize the metaphor throughout: Einstein’s Brain (backend power) + 5-year-old’s Playground (frontend simplicity).
