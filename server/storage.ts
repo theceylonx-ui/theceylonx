@@ -307,6 +307,9 @@ export interface IStorage {
   markChatMessagesAsRead(threadId: string, userId: string): Promise<void>;
   getChatMessage(messageId: string): Promise<any | undefined>;
   muteChatThread(threadId: string, userId: string): Promise<void>;
+
+  // Raw query execution for admin/moderation operations
+  executeRawQuery(query: string, params?: any[]): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2631,6 +2634,34 @@ export class DatabaseStorage implements IStorage {
           eq(chatParticipantState.userId, userId)
         )
       );
+  }
+
+  // Raw query execution for admin/moderation operations
+  async executeRawQuery(query: string, params: any[] = []): Promise<any[]> {
+    try {
+      // For parameterized queries, we need to construct the SQL properly
+      let processedQuery = query;
+      
+      // Replace $1, $2, etc. with actual values for now (simple implementation)
+      if (params && params.length > 0) {
+        params.forEach((param, index) => {
+          const placeholder = `$${index + 1}`;
+          const value = typeof param === 'string' ? `'${param.replace(/'/g, "''")}'` : 
+                       param === null ? 'NULL' : 
+                       param === undefined ? 'NULL' : 
+                       String(param);
+          processedQuery = processedQuery.replace(placeholder, value);
+        });
+      }
+      
+      const result = await db.execute(sql.raw(processedQuery));
+      return Array.isArray(result) ? result : result.rows || [];
+    } catch (error) {
+      console.error('Raw query execution error:', error);
+      console.error('Query:', query);
+      console.error('Params:', params);
+      throw error;
+    }
   }
 }
 
