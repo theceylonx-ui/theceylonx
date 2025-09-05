@@ -79,13 +79,13 @@ export function EnhancedRecommendedTrips() {
   const [viewedTrips, setViewedTrips] = useState(new Set<string>());
 
   // Fetch enhanced recommendations
-  const { data: recommendations = [], isLoading, error, refetch } = useQuery({
+  const { data: recommendations = [], isLoading, error, refetch } = useQuery<EnhancedRecommendation[]>({
     queryKey: ['/api/recommendations/enhanced'],
     staleTime: 5 * 60 * 1000,
   });
 
   // Fetch personalization settings
-  const { data: personalizationSettings } = useQuery({
+  const { data: personalizationSettings } = useQuery<{ isPaused?: boolean }>({
     queryKey: ['/api/user/personalization'],
   });
 
@@ -127,7 +127,7 @@ export function EnhancedRecommendedTrips() {
   // Track top 5 view event when recommendations load
   useEffect(() => {
     if (recommendations.length >= 5 && !isLoading) {
-      const topFiveIds = recommendations.slice(0, 5).map(r => r.trip.id);
+      const topFiveIds = recommendations.slice(0, 5).map((r: EnhancedRecommendation) => r.trip.id);
       trackKpiMutation.mutate({
         eventType: 'ctr_top5',
         abTestGroup,
@@ -396,7 +396,7 @@ export function EnhancedRecommendedTrips() {
 
       {/* Enhanced Recommendations Grid - Show exactly 3 cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {recommendations.slice(0, 3).map((recommendation: EnhancedRecommendation, index) => {
+        {recommendations.slice(0, 3).map((recommendation: EnhancedRecommendation, index: number) => {
           const { trip } = recommendation;
           const isViewed = viewedTrips.has(trip.id);
           
