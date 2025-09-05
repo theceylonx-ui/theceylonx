@@ -292,10 +292,10 @@ export default function AdminDashboard() {
       {/* Detailed Analytics */}
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="events">Event Details</TabsTrigger>
-          <TabsTrigger value="abtest">A/B Testing</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="overview" className="data-[state=active]:bg-ceylon-green data-[state=active]:text-white transition-all duration-200">Overview</TabsTrigger>
+          <TabsTrigger value="events" className="data-[state=active]:bg-ceylon-green data-[state=active]:text-white transition-all duration-200">Event Details</TabsTrigger>
+          <TabsTrigger value="abtest" className="data-[state=active]:bg-ceylon-green data-[state=active]:text-white transition-all duration-200">A/B Testing</TabsTrigger>
+          <TabsTrigger value="reports" className="data-[state=active]:bg-ceylon-green data-[state=active]:text-white transition-all duration-200">Reports</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">

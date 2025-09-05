@@ -176,7 +176,11 @@ export function ChatTips({ userRole = "both", className = "" }: ChatTipsProps) {
                     variant={activeCategory === key ? "default" : "outline"}
                     size="sm"
                     onClick={() => setActiveCategory(key)}
-                    className="flex items-center gap-2"
+                    className={`flex items-center gap-2 transition-all duration-200 ${
+                      activeCategory === key 
+                        ? "bg-ceylon-green text-white shadow-md ring-2 ring-ceylon-green/20" 
+                        : "hover:bg-ceylon-green/10 hover:text-ceylon-green hover:border-ceylon-green/30"
+                    }`}
                   >
                     <IconComponent className="w-4 h-4" />
                     {category.title}

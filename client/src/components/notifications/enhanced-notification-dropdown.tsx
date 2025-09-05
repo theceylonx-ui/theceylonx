@@ -221,22 +221,22 @@ export function EnhancedNotificationDropdown() {
         
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as NotificationCategory | "all")} className="w-full">
           <TabsList className="grid w-full grid-cols-5 h-8 p-1 mx-2 mb-2">
-            <TabsTrigger value="all" className="text-xs py-1">
+            <TabsTrigger value="all" className="text-xs py-1 data-[state=active]:bg-ceylon-green data-[state=active]:text-white transition-all duration-200">
               All {unreadCount > 0 && <Badge className="ml-1 h-4 w-4 p-0 text-xs">{unreadCount}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="trips" className="text-xs py-1">
+            <TabsTrigger value="trips" className="text-xs py-1 data-[state=active]:bg-ceylon-green data-[state=active]:text-white transition-all duration-200">
               {getCategoryIcon("trips")}
               {getCategoryCount("trips") > 0 && <Badge className="ml-1 h-4 w-4 p-0 text-xs">{getCategoryCount("trips")}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="social" className="text-xs py-1">
+            <TabsTrigger value="social" className="text-xs py-1 data-[state=active]:bg-ceylon-green data-[state=active]:text-white transition-all duration-200">
               {getCategoryIcon("social")}
               {getCategoryCount("social") > 0 && <Badge className="ml-1 h-4 w-4 p-0 text-xs">{getCategoryCount("social")}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="safety" className="text-xs py-1">
+            <TabsTrigger value="safety" className="text-xs py-1 data-[state=active]:bg-ceylon-green data-[state=active]:text-white transition-all duration-200">
               {getCategoryIcon("safety")}
               {getCategoryCount("safety") > 0 && <Badge className="ml-1 h-4 w-4 p-0 text-xs">{getCategoryCount("safety")}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="system" className="text-xs py-1">
+            <TabsTrigger value="system" className="text-xs py-1 data-[state=active]:bg-ceylon-green data-[state=active]:text-white transition-all duration-200">
               {getCategoryIcon("system")}
               {getCategoryCount("system") > 0 && <Badge className="ml-1 h-4 w-4 p-0 text-xs">{getCategoryCount("system")}</Badge>}
             </TabsTrigger>

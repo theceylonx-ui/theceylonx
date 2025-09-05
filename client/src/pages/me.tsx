@@ -148,27 +148,45 @@ export default function ProfilePage() {
         {/* Navigation Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-6 bg-white rounded-lg shadow-sm p-1">
-            <TabsTrigger value="overview" className="flex items-center space-x-2">
+            <TabsTrigger 
+              value="overview" 
+              className="flex items-center space-x-2 data-[state=active]:bg-ceylon-green data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
+            >
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="profile" className="flex items-center space-x-2">
+            <TabsTrigger 
+              value="profile" 
+              className="flex items-center space-x-2 data-[state=active]:bg-ceylon-green data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
+            >
               <Settings className="h-4 w-4" />
               <span className="hidden sm:inline">Profile</span>
             </TabsTrigger>
-            <TabsTrigger value="preferences" className="flex items-center space-x-2">
+            <TabsTrigger 
+              value="preferences" 
+              className="flex items-center space-x-2 data-[state=active]:bg-ceylon-green data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
+            >
               <Settings className="h-4 w-4" />
               <span className="hidden sm:inline">Preferences</span>
             </TabsTrigger>
-            <TabsTrigger value="activity" className="flex items-center space-x-2">
+            <TabsTrigger 
+              value="activity" 
+              className="flex items-center space-x-2 data-[state=active]:bg-ceylon-green data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
+            >
               <Activity className="h-4 w-4" />
               <span className="hidden sm:inline">Activity</span>
             </TabsTrigger>
-            <TabsTrigger value="security" className="flex items-center space-x-2">
+            <TabsTrigger 
+              value="security" 
+              className="flex items-center space-x-2 data-[state=active]:bg-ceylon-green data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
+            >
               <Shield className="h-4 w-4" />
               <span className="hidden sm:inline">Security</span>
             </TabsTrigger>
-            <TabsTrigger value="privacy" className="flex items-center space-x-2">
+            <TabsTrigger 
+              value="privacy" 
+              className="flex items-center space-x-2 data-[state=active]:bg-ceylon-green data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
+            >
               <Lock className="h-4 w-4" />
               <span className="hidden sm:inline">Privacy</span>
             </TabsTrigger>
