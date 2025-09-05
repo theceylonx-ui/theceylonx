@@ -18,7 +18,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // PostgreSQL Enums for data integrity
-export const tripStatusEnum = pgEnum('trip_status', ['active', 'full', 'completed', 'cancelled', 'inactive', 'deleted']);
+export const tripStatusEnum = pgEnum('trip_status', ['active', 'full', 'completed', 'cancelled', 'inactive', 'deleted', 'under_review']);
 export const saveTypeEnum = pgEnum('save_type', ['pinned', 'interested']);
 export const notificationTypeEnum = pgEnum('notification_type', ['trip_updated', 'trip_removed', 'save_removed']);
 export const difficultyEnum = pgEnum('difficulty', ['easy', 'moderate', 'challenging']);
@@ -33,6 +33,7 @@ export const tripCategoryEnum = pgEnum('trip_category', [
   'roadtrip', 'hiking', 'beach', 'culture', 'wellness', 'festival', 
   'workshop', 'wildlife', 'food', 'adventure_sport', 'unknown'
 ]);
+export const draftStatusEnum = pgEnum('draft_status', ['draft', 'published']);
 
 // Preferences enums
 export const preferenceEventEnum = pgEnum('preference_event', ['created', 'updated', 'reset']);
@@ -171,6 +172,64 @@ export const trips = pgTable("trips", {
   index("trips_status_seats_idx").on(table.status, table.seatsAvailable),
   // Category-based image system indexes
   index("trips_category_idx").on(table.category),
+]);
+
+// Trip drafts table for Post Trip V3 flow
+export const tripDrafts = pgTable("trip_drafts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  
+  // Step 1: Basics
+  title: varchar("title"),
+  description: text("description"),
+  category: tripCategoryEnum("category"),
+  
+  // Step 2: Schedule
+  fromLocation: varchar("from_location"),
+  toLocation: varchar("to_location"),
+  region: varchar("region"),
+  date: timestamp("date"),
+  time: varchar("time"),
+  duration: varchar("duration"),
+  
+  // Step 3: Pricing
+  price: decimal("price", { precision: 10, scale: 2 }),
+  priceMin: decimal("price_min", { precision: 10, scale: 2 }),
+  priceMax: decimal("price_max", { precision: 10, scale: 2 }),
+  
+  // Step 4: Capacity
+  seatsAvailable: integer("seats_available"),
+  buddyFriendly: boolean("buddy_friendly").default(false),
+  
+  // Step 5: Media
+  mediaUrls: text("media_urls").array(),
+  coverImageIndex: integer("cover_image_index").default(0),
+  mediaMetadata: jsonb("media_metadata"), // Alt text, captions
+  
+  // Step 6: Safety & Terms
+  safetyFlags: text("safety_flags").array(),
+  termsAccepted: boolean("terms_accepted").default(false),
+  contactInfo: varchar("contact_info"),
+  notes: text("notes"),
+  
+  // Additional fields
+  tags: jsonb("tags"),
+  difficulty: varchar("difficulty"),
+  seasonality: text("seasonality").array(),
+  
+  // Draft metadata
+  status: draftStatusEnum("status").default("draft"),
+  currentStep: integer("current_step").default(1),
+  completedSteps: text("completed_steps").array().default(sql`'{}'::text[]`),
+  lastSavedAt: timestamp("last_saved_at").defaultNow(),
+  publishedTripId: varchar("published_trip_id"), // Links to published trip
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("trip_drafts_user_idx").on(table.userId),
+  index("trip_drafts_status_idx").on(table.status),
+  index("trip_drafts_updated_idx").on(table.updatedAt),
 ]);
 
 // Saved trips table for Pin and Interest functionality
@@ -1507,3 +1566,125 @@ export type InsertUserPrivacy = typeof userPrivacy.$inferInsert;
 export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
 export type InsertPreferenceEvent = z.infer<typeof insertPreferenceEventSchema>;
 export type PreferenceEvent = typeof preferenceEvents.$inferSelect;
+
+// Trip draft types
+export type TripDraft = typeof tripDrafts.$inferSelect;
+export type InsertTripDraft = typeof tripDrafts.$inferInsert;
+
+// Post Trip V3 schema for form validation
+const TripMediaSchema = z.object({
+  url: z.string().url(),
+  alt: z.string().optional(),
+  caption: z.string().optional(),
+});
+
+export const TripSchema = z.object({
+  // Step 1: Basics
+  title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters").max(1000, "Description must be less than 1000 characters"),
+  category: z.enum(['roadtrip', 'hiking', 'beach', 'culture', 'wellness', 'festival', 'workshop', 'wildlife', 'food', 'adventure_sport', 'unknown']),
+  
+  // Step 2: Schedule
+  fromLocation: z.string().min(1, "Departure location is required"),
+  toLocation: z.string().min(1, "Destination is required"),
+  region: z.string().min(1, "Region is required"),
+  date: z.string().or(z.date()).refine((val) => {
+    const date = typeof val === 'string' ? new Date(val) : val;
+    return date > new Date();
+  }, "Date must be in the future"),
+  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
+  duration: z.string().min(1, "Duration is required"),
+  
+  // Step 3: Pricing
+  price: z.number().min(0, "Price must be positive").optional(),
+  priceMin: z.number().min(0, "Minimum price must be positive").optional(),
+  priceMax: z.number().min(0, "Maximum price must be positive").optional(),
+  
+  // Step 4: Capacity
+  seatsAvailable: z.number().min(1, "At least 1 seat must be available").max(50, "Maximum 50 seats allowed"),
+  buddyFriendly: z.boolean().default(false),
+  
+  // Step 5: Media
+  mediaUrls: z.array(z.string().url()).max(12, "Maximum 12 images allowed").optional(),
+  coverImageIndex: z.number().min(0).default(0),
+  mediaMetadata: z.array(TripMediaSchema).optional(),
+  
+  // Step 6: Safety & Terms
+  safetyFlags: z.array(z.string()).optional(),
+  termsAccepted: z.boolean().refine((val) => val === true, "You must accept the terms and conditions"),
+  contactInfo: z.string().min(1, "Contact information is required"),
+  notes: z.string().max(500, "Notes must be less than 500 characters").optional(),
+  
+  // Additional fields
+  tags: z.array(z.string()).optional(),
+  difficulty: z.enum(['easy', 'moderate', 'challenging']).optional(),
+  seasonality: z.array(z.string()).optional(),
+}).refine((data) => {
+  // Custom validation: if price range is provided, min should be less than max
+  if (data.priceMin !== undefined && data.priceMax !== undefined) {
+    return data.priceMin <= data.priceMax;
+  }
+  return true;
+}, {
+  message: "Minimum price must be less than or equal to maximum price",
+  path: ["priceMax"]
+});
+
+// Step-by-step validation schemas (base schemas without refinements)
+const BaseTripSchema = z.object({
+  // Step 1: Basics
+  title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters").max(1000, "Description must be less than 1000 characters"),
+  category: z.enum(['roadtrip', 'hiking', 'beach', 'culture', 'wellness', 'festival', 'workshop', 'wildlife', 'food', 'adventure_sport', 'unknown']),
+  
+  // Step 2: Schedule
+  fromLocation: z.string().min(1, "Departure location is required"),
+  toLocation: z.string().min(1, "Destination is required"),
+  region: z.string().min(1, "Region is required"),
+  date: z.string().or(z.date()).refine((val) => {
+    const date = typeof val === 'string' ? new Date(val) : val;
+    return date > new Date();
+  }, "Date must be in the future"),
+  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
+  duration: z.string().min(1, "Duration is required"),
+  
+  // Step 3: Pricing
+  price: z.number().min(0, "Price must be positive").optional(),
+  priceMin: z.number().min(0, "Minimum price must be positive").optional(),
+  priceMax: z.number().min(0, "Maximum price must be positive").optional(),
+  
+  // Step 4: Capacity
+  seatsAvailable: z.number().min(1, "At least 1 seat must be available").max(50, "Maximum 50 seats allowed"),
+  buddyFriendly: z.boolean().default(false),
+  
+  // Step 5: Media
+  mediaUrls: z.array(z.string().url()).max(12, "Maximum 12 images allowed").optional(),
+  coverImageIndex: z.number().min(0).default(0),
+  mediaMetadata: z.array(TripMediaSchema).optional(),
+  
+  // Step 6: Safety & Terms
+  safetyFlags: z.array(z.string()).optional(),
+  termsAccepted: z.boolean().refine((val) => val === true, "You must accept the terms and conditions"),
+  contactInfo: z.string().min(1, "Contact information is required"),
+  notes: z.string().max(500, "Notes must be less than 500 characters").optional(),
+  
+  // Additional fields
+  tags: z.array(z.string()).optional(),
+  difficulty: z.enum(['easy', 'moderate', 'challenging']).optional(),
+  seasonality: z.array(z.string()).optional(),
+});
+
+export const Step1Schema = BaseTripSchema.pick({ title: true, description: true, category: true });
+export const Step2Schema = BaseTripSchema.pick({ fromLocation: true, toLocation: true, region: true, date: true, time: true, duration: true });
+export const Step3Schema = BaseTripSchema.pick({ price: true, priceMin: true, priceMax: true });
+export const Step4Schema = BaseTripSchema.pick({ seatsAvailable: true, buddyFriendly: true });
+export const Step5Schema = BaseTripSchema.pick({ mediaUrls: true, coverImageIndex: true, mediaMetadata: true });
+export const Step6Schema = BaseTripSchema.pick({ safetyFlags: true, termsAccepted: true, contactInfo: true, notes: true });
+
+export type TripFormData = z.infer<typeof TripSchema>;
+export type Step1Data = z.infer<typeof Step1Schema>;
+export type Step2Data = z.infer<typeof Step2Schema>;
+export type Step3Data = z.infer<typeof Step3Schema>;
+export type Step4Data = z.infer<typeof Step4Schema>;
+export type Step5Data = z.infer<typeof Step5Schema>;
+export type Step6Data = z.infer<typeof Step6Schema>;

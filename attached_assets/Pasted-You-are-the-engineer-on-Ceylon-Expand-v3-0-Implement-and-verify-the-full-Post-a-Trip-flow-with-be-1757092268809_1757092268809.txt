@@ -1,0 +1,56 @@
+You are the engineer on Ceylon Expand v3.0. Implement and verify the full “Post a Trip” flow with best-practice UX, robust backlinks, and tests.
+
+Scope:
+1) Routing & backlinks:
+   - Ensure /post-trip supports optional ?return=<encodedPath>. Cancel navigates to this return or /trips.
+   - Add /trips/:id/preview page for pre-publish preview, with “Edit” backlink to /post-trip?tripId=:id (restore step/values).
+   - After publish, redirect to /trips/:id and show success toast; include buttons to “Share” and “Back to Browse” (respecting return when available).
+   - Add drafts dashboard at /me/trips?tab=drafts.
+
+2) Form architecture:
+   - Build multi-step wizard: Basics → Schedule → Pricing → Capacity → Media → Safety & Terms → Preview.
+   - Use Zod schema (TripSchema) with strict validation (title, description, region, destination, dates, capacity, media, terms).
+   - Implement autosave drafts every 5s and on blur (POST /api/trips/draft). Show “Saved just now” indicator.
+   - Implement unsaved changes guard on route change and window close.
+   - Destination selector with place search + region tags.
+   - Media uploader: drag-drop, reorder, set cover, alt text; max 12.
+   - Safety checklist + link to /help/trips#posting.
+   - Pre-publish checklist: block publish until all required fields pass validation.
+
+3) Auth guard:
+   - If not logged in, redirect to /login?redirect=<currentPath+search>; on return, reload draft if tripId present.
+
+4) Integrations:
+   - On publish, create the trip via POST /api/trips then PATCH draft → published; return ID.
+   - If AI moderation is enabled, set trip to 'under_review' and display “Under review” state with info and link to /me/trips?tab=pending.
+   - Send notification to creator “Trip submitted/published” with hrefPrimary=/trips/:id and hrefSecondary=/me/trips.
+
+5) UI polish:
+   - Stepper progress at top; disabled “Next” until step valid; “Back” always enabled.
+   - Help tooltips on fields (title, pricing, safety).
+   - Error/empty states with friendly copy.
+   - Keep code behind feature flag POST_TRIP_V3 (default ON).
+
+6) Tests:
+   - Unit (Jest + RTL)
+     a) Cancel returns to specified return path
+     b) Unsaved changes guard blocks accidental navigation
+     c) Draft autosave is invoked on blur/interval
+     d) Validation shows for required fields
+     e) Auth redirect preserves path & params
+   - Cypress e2e
+     a) From /trips?region=South&page=2 → /post-trip?return=<encoded> → Cancel returns to same filters
+     b) Partial fill → navigate → guard prompt → stay retains inputs
+     c) Save draft → visible at /me/trips?tab=drafts
+     d) Preview → Edit returns to form with values
+     e) Publish → success → /trips/:id navigates with toast
+     f) Not authed → login redirect → return to form, draft intact
+
+7) Deliverables:
+   - Components: PostTripWizard, TripPreviewPage, DraftBadge, MediaUploader, DestinationSelect, SafetyChecklist, Stepper.
+   - Hooks: useReturn, useAutosaveDraft.
+   - Schema: TripSchema.ts.
+   - Pages updated: /post-trip, /trips/:id/preview, /me/trips.
+   - All tests passing in CI; provide a short summary of changes and manual validation steps.
+
+Ensure TypeScript strict mode, ESLint/Prettier pass, and minimal docs at top of components. 
