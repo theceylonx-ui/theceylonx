@@ -25,7 +25,6 @@ import AuthSignInPage from "@/pages/auth-signin";
 import AuthMagicPage from "@/pages/auth-magic";
 import AuthCallbackPage from "@/pages/auth-callback";
 import DestinationPage from "@/pages/destination";
-import PreferencesPage from "@/pages/preferences";
 import AdminDashboardPage from "@/pages/admin-dashboard";
 import ReportTripPage from "@/pages/report-trip";
 import ChatPage from "@/pages/chat";
@@ -78,7 +77,7 @@ function Router() {
             <Route path="/auth-test" component={ClerkSmoke} />
             {/* Clerk routes temporarily disabled */}
             <Route path="/destination/:city" component={DestinationPage} />
-            <Route path="/preferences" component={PreferencesPage} />
+
             <Route path="/chat" component={ChatPage} />
             <Route path="/chat/:threadId" component={ChatPage} />
             <Route path="/chat-demo" component={ChatDemoPage} />
@@ -104,7 +103,7 @@ function Router() {
             <Route path="/auth/signin" component={AuthSignInPage} />
             {/* Clerk routes temporarily disabled */}
             <Route path="/destination/:city" component={DestinationPage} />
-            <Route path="/preferences" component={PreferencesPage} />
+
             <Route path="/travel-style-settings" component={TravelStyleSettings} />
             <Route path="/me" component={ProfilePage} />
             <Route path="/chat" component={ChatPage} />
