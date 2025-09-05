@@ -504,11 +504,13 @@ export default function TripDetails({ params }: TripDetailsProps) {
                         Ask the community
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/report?type=trip&id=${trip.id}`}>
-                        <Flag className="h-4 w-4 mr-2" />
-                        Report this trip
-                      </Link>
+                    <DropdownMenuItem 
+                      onClick={handleReport}
+                      className="cursor-pointer"
+                      data-testid="button-report-trip"
+                    >
+                      <Flag className="h-4 w-4 mr-2" />
+                      Report this trip
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

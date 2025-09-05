@@ -138,7 +138,7 @@ export default function ProfileMenu({ className }: ProfileMenuProps) {
             onClick={() => handleMenuItemClick('Chatbuddy')}
           >
             <MessageSquare className="mr-2 h-4 w-4" />
-            Chatbuddy
+            Chat Buddy
           </DropdownMenuItem>
         </Link>
 
