@@ -144,11 +144,13 @@ export function PreferencesForm() {
   // Save preferences mutation with optimistic updates
   const savePreferencesMutation = useMutation({
     mutationFn: async (data: PreferencesFormData) => {
+      // Get the latest preferences to ensure we have the most current version
+      const currentPreferences = queryClient.getQueryData<UserPreferences>(["/api/preferences"]);
       const response = await apiRequest("PUT", "/api/preferences", {
         ...data,
-        version: preferences?.version || 1
+        version: currentPreferences?.version || 1
       });
-      return await response.json();
+      return response;
     },
     onMutate: async (variables) => {
       // Cancel ongoing queries
@@ -157,15 +159,7 @@ export function PreferencesForm() {
       // Get current data
       const previousPreferences = queryClient.getQueryData<UserPreferences>(["/api/preferences"]);
       
-      // Optimistically update
-      const optimisticPreferences: UserPreferences = {
-        userId: previousPreferences?.userId || "temp",
-        version: (previousPreferences?.version || 0) + 1,
-        updatedAt: new Date().toISOString(),
-        ...variables
-      };
-      
-      queryClient.setQueryData(["/api/preferences"], optimisticPreferences);
+      // Don't do optimistic updates for preferences to avoid version conflicts
       setIsOptimistic(true);
       
       return { previousPreferences };
