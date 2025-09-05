@@ -64,12 +64,15 @@ import {
   chatThreads,
   type ChatThread,
   type InsertChatThread,
-  threadUsers,
-  type ThreadUser,
-  type InsertThreadUser,
-  messages,
-  type Message,
-  type InsertMessage,
+  chatMessages,
+  type ChatMessage,
+  type InsertChatMessage,
+  chatAttachments,
+  type ChatAttachment,
+  type InsertChatAttachment,
+  chatParticipantState,
+  type ChatParticipantState,
+  type InsertChatParticipantState,
   type CalendarEvent,
   type InsertCalendarEvent,
   type SavedTrip,
@@ -78,7 +81,6 @@ import {
   type SaveNotification,
   adminChatThreads,
   adminChatMessages,
-  contactShares,
   auditLogs,
   type AdminChatThread,
   type InsertAdminChatThread,
@@ -86,8 +88,6 @@ import {
   type AdminChatMessage,
   type InsertAdminChatMessage,
   type AdminChatMessageWithSender,
-  type ContactShare,
-  type InsertContactShare,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, ilike, desc, asc, gte, lte, count, sql, isNull, ne } from "drizzle-orm";
@@ -296,6 +296,17 @@ export interface IStorage {
   createSaveNotification(userId: string, tripId: string, type: 'trip_updated' | 'trip_removed' | 'save_removed', payload?: Record<string, any>): Promise<SaveNotification>;
   getUserNotifications(userId: string, limit?: number, offset?: number): Promise<SaveNotification[]>;
   markNotificationAsRead(notificationId: string): Promise<void>;
+
+  // Enhanced Chat System (new comprehensive chat implementation)
+  getChatThreadByTripAndUsers(tripId: string, organizerId: string, userId: string): Promise<any | undefined>;
+  createChatParticipantState(state: { threadId: string; userId: string; unreadCount: number }): Promise<any>;
+  getChatThreadsForUser(userId: string): Promise<any[]>;
+  closeChatThread(threadId: string): Promise<void>;
+  createChatMessage(message: { threadId: string; senderId: string; kind: string; text?: string | null; meta?: any }): Promise<any>;
+  getChatMessages(threadId: string, options: { cursor?: string; limit: number }): Promise<any[]>;
+  markChatMessagesAsRead(threadId: string, userId: string): Promise<void>;
+  getChatMessage(messageId: string): Promise<any | undefined>;
+  muteChatThread(threadId: string, userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2420,6 +2431,206 @@ export class DatabaseStorage implements IStorage {
       ...trip,
       organizer,
     }));
+  }
+
+  // ===== ENHANCED CHAT SYSTEM IMPLEMENTATION =====
+  // New comprehensive chat system with organizer approval workflow
+
+  async getChatThreadByTripAndUsers(tripId: string, organizerId: string, userId: string): Promise<any | undefined> {
+    const [thread] = await db
+      .select()
+      .from(chatThreads)
+      .where(
+        and(
+          eq(chatThreads.tripId, tripId),
+          eq(chatThreads.organizerId, organizerId),
+          eq(chatThreads.userId, userId)
+        )
+      );
+    return thread;
+  }
+
+  async createChatParticipantState(state: { threadId: string; userId: string; unreadCount: number }): Promise<any> {
+    const [participantState] = await db
+      .insert(chatParticipantState)
+      .values({
+        threadId: state.threadId,
+        userId: state.userId,
+        unreadCount: state.unreadCount,
+        lastReadAt: null,
+        muted: false,
+        joinedAt: new Date()
+      })
+      .returning();
+    return participantState;
+  }
+
+  async getChatThreadsForUser(userId: string): Promise<any[]> {
+    // Get threads where user is either organizer or participant
+    const threadsAsOrganizer = await db
+      .select({
+        thread: chatThreads,
+        trip: trips,
+        otherUser: users
+      })
+      .from(chatThreads)
+      .leftJoin(trips, eq(chatThreads.tripId, trips.id))
+      .leftJoin(users, eq(chatThreads.userId, users.id))
+      .where(eq(chatThreads.organizerId, userId));
+
+    const threadsAsParticipant = await db
+      .select({
+        thread: chatThreads,
+        trip: trips,
+        otherUser: users
+      })
+      .from(chatThreads)
+      .leftJoin(trips, eq(chatThreads.tripId, trips.id))
+      .leftJoin(users, eq(chatThreads.organizerId, users.id))
+      .where(eq(chatThreads.userId, userId));
+
+    // Get participant state for unread counts
+    const allThreads = [...threadsAsOrganizer, ...threadsAsParticipant];
+    const threadsWithState = await Promise.all(
+      allThreads.map(async ({ thread, trip, otherUser }) => {
+        const [state] = await db
+          .select()
+          .from(chatParticipantState)
+          .where(
+            and(
+              eq(chatParticipantState.threadId, thread.id),
+              eq(chatParticipantState.userId, userId)
+            )
+          );
+
+        return {
+          ...thread,
+          trip,
+          otherUser,
+          unreadCount: state?.unreadCount || 0
+        };
+      })
+    );
+
+    return threadsWithState;
+  }
+
+  async closeChatThread(threadId: string): Promise<void> {
+    // Update thread status to closed
+    await db
+      .update(chatThreads)
+      .set({ 
+        status: 'closed',
+        updatedAt: new Date()
+      })
+      .where(eq(chatThreads.id, threadId));
+
+    // Delete all messages and attachments (purge content as per spec)
+    await db
+      .delete(chatMessages)
+      .where(eq(chatMessages.threadId, threadId));
+
+    // Keep participant state for audit purposes but reset unread counts
+    await db
+      .update(chatParticipantState)
+      .set({ unreadCount: 0 })
+      .where(eq(chatParticipantState.threadId, threadId));
+  }
+
+  async createChatMessage(message: { 
+    threadId: string; 
+    senderId: string; 
+    kind: string; 
+    text?: string | null; 
+    meta?: any 
+  }): Promise<any> {
+    const [chatMessage] = await db
+      .insert(chatMessages)
+      .values({
+        id: sql`gen_random_uuid()`,
+        threadId: message.threadId,
+        senderId: message.senderId,
+        kind: message.kind as any,
+        text: message.text,
+        meta: message.meta,
+        createdAt: new Date()
+      })
+      .returning();
+    return chatMessage;
+  }
+
+  async getChatMessages(
+    threadId: string, 
+    options: { cursor?: string; limit: number }
+  ): Promise<any[]> {
+    let query = db
+      .select({
+        message: chatMessages,
+        sender: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          username: users.username,
+          profileImageUrl: users.profileImageUrl
+        }
+      })
+      .from(chatMessages)
+      .leftJoin(users, eq(chatMessages.senderId, users.id))
+      .where(eq(chatMessages.threadId, threadId))
+      .orderBy(desc(chatMessages.createdAt))
+      .limit(options.limit);
+
+    if (options.cursor) {
+      query = query.where(
+        and(
+          eq(chatMessages.threadId, threadId),
+          sql`${chatMessages.createdAt} < ${new Date(options.cursor)}`
+        )
+      );
+    }
+
+    const results = await query;
+    
+    return results.map(({ message, sender }) => ({
+      ...message,
+      sender
+    }));
+  }
+
+  async markChatMessagesAsRead(threadId: string, userId: string): Promise<void> {
+    // Reset unread count for the user in this thread
+    await db
+      .update(chatParticipantState)
+      .set({ 
+        unreadCount: 0,
+        lastReadAt: new Date()
+      })
+      .where(
+        and(
+          eq(chatParticipantState.threadId, threadId),
+          eq(chatParticipantState.userId, userId)
+        )
+      );
+  }
+
+  async getChatMessage(messageId: string): Promise<any | undefined> {
+    const [message] = await db
+      .select()
+      .from(chatMessages)
+      .where(eq(chatMessages.id, messageId));
+    return message;
+  }
+
+  async muteChatThread(threadId: string, userId: string): Promise<void> {
+    await db
+      .update(chatParticipantState)
+      .set({ muted: true })
+      .where(
+        and(
+          eq(chatParticipantState.threadId, threadId),
+          eq(chatParticipantState.userId, userId)
+        )
+      );
   }
 }
 

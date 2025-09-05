@@ -3741,6 +3741,328 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== ENHANCED CHAT SYSTEM API =====
+  // Based on the comprehensive chat specification
+
+  // Chat Threads Management
+  app.post('/api/chat/threads/open', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const organizerId = req.user.id;
+      const { tripId, userId } = req.body;
+
+      if (!tripId || !userId) {
+        return res.status(400).json({ message: 'Trip ID and User ID are required' });
+      }
+
+      // Verify the requester is the trip organizer
+      const trip = await storage.getTrip(tripId);
+      if (!trip || trip.organizerId !== organizerId) {
+        return res.status(403).json({ message: 'Only trip organizers can open chat threads' });
+      }
+
+      // Check if there's already an existing thread
+      const existingThread = await storage.getChatThreadByTripAndUsers(tripId, organizerId, userId);
+      if (existingThread) {
+        return res.json({ thread: existingThread, existed: true });
+      }
+
+      // Create new chat thread
+      const thread = await storage.createChatThread({
+        tripId,
+        organizerId,
+        userId,
+        status: 'open'
+      });
+
+      // Create participant state for both users
+      await storage.createChatParticipantState({
+        threadId: thread.id,
+        userId: organizerId,
+        unreadCount: 0
+      });
+
+      await storage.createChatParticipantState({
+        threadId: thread.id,
+        userId: userId,
+        unreadCount: 0
+      });
+
+      // Create notification for the interested user
+      await storage.createNotification({
+        userId: userId,
+        type: 'chat_opened',
+        category: 'social',
+        priority: 'normal',
+        title: 'Chat Opened',
+        message: `Your chat for "${trip.title}" is now open`,
+        threadId: thread.id,
+        actionUrl: `/chat/${thread.id}`,
+        isRead: false
+      });
+
+      res.json({ thread, existed: false });
+    } catch (error) {
+      console.error('Error opening chat thread:', error);
+      res.status(500).json({ message: 'Failed to open chat thread' });
+    }
+  });
+
+  app.get('/api/chat/threads', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Get all threads for the user with basic info
+      const threads = await storage.getChatThreadsForUser(userId);
+      
+      res.json({ threads });
+    } catch (error) {
+      console.error('Error fetching chat threads:', error);
+      res.status(500).json({ message: 'Failed to fetch chat threads' });
+    }
+  });
+
+  app.get('/api/chat/threads/:id', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const threadId = req.params.id;
+
+      // Get thread details
+      const thread = await storage.getChatThread(threadId);
+      if (!thread) {
+        return res.status(404).json({ message: 'Chat thread not found' });
+      }
+
+      // Verify user is a participant
+      if (thread.organizerId !== userId && thread.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Get trip info for context
+      const trip = await storage.getTrip(thread.tripId);
+      
+      res.json({ 
+        thread, 
+        trip: trip ? {
+          id: trip.id,
+          title: trip.title,
+          fromLocation: trip.fromLocation,
+          toLocation: trip.toLocation,
+          date: trip.date,
+          status: trip.status
+        } : null
+      });
+    } catch (error) {
+      console.error('Error fetching chat thread:', error);
+      res.status(500).json({ message: 'Failed to fetch chat thread' });
+    }
+  });
+
+  app.post('/api/chat/threads/:id/close', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const threadId = req.params.id;
+
+      // Get thread and verify organizer permission
+      const thread = await storage.getChatThread(threadId);
+      if (!thread || thread.organizerId !== userId) {
+        return res.status(403).json({ message: 'Only organizers can close chat threads' });
+      }
+
+      // Close thread and purge content
+      await storage.closeChatThread(threadId);
+
+      // Create notification for other participant
+      const otherUserId = thread.userId;
+      await storage.createNotification({
+        userId: otherUserId,
+        type: 'chat_closed',
+        category: 'social',
+        priority: 'normal',
+        title: 'Chat Closed',
+        message: 'A chat thread has been closed',
+        isRead: false
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error closing chat thread:', error);
+      res.status(500).json({ message: 'Failed to close chat thread' });
+    }
+  });
+
+  // Chat Messages Management
+  app.post('/api/chat/threads/:id/messages', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const threadId = req.params.id;
+      const { text, attachmentId, ephemeral } = req.body;
+
+      // Get thread and verify access
+      const thread = await storage.getChatThread(threadId);
+      if (!thread) {
+        return res.status(404).json({ message: 'Chat thread not found' });
+      }
+
+      if (thread.organizerId !== userId && thread.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      if (thread.status !== 'open') {
+        return res.status(423).json({ message: 'Chat is locked or closed' });
+      }
+
+      if (!text && !attachmentId) {
+        return res.status(400).json({ message: 'Message text or attachment is required' });
+      }
+
+      // Create message
+      const message = await storage.createChatMessage({
+        threadId,
+        senderId: userId,
+        kind: attachmentId ? 'media' : 'text',
+        text: text || null,
+        meta: attachmentId ? { attachmentId, ephemeral } : null
+      });
+
+      // Update unread counts for other participant
+      const otherUserId = thread.organizerId === userId ? thread.userId : thread.organizerId;
+      await storage.incrementUnreadCount(threadId, otherUserId);
+
+      res.json({ message });
+    } catch (error) {
+      console.error('Error creating chat message:', error);
+      res.status(500).json({ message: 'Failed to send message' });
+    }
+  });
+
+  app.get('/api/chat/threads/:id/messages', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const threadId = req.params.id;
+      const { cursor, limit = 50 } = req.query;
+
+      // Get thread and verify access
+      const thread = await storage.getChatThread(threadId);
+      if (!thread) {
+        return res.status(404).json({ message: 'Chat thread not found' });
+      }
+
+      if (thread.organizerId !== userId && thread.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      if (thread.status === 'closed') {
+        return res.status(410).json({ message: 'Chat history has been purged' });
+      }
+
+      // Get messages
+      const messages = await storage.getChatMessages(threadId, {
+        cursor: cursor as string,
+        limit: Number(limit)
+      });
+
+      // Mark messages as read
+      await storage.markChatMessagesAsRead(threadId, userId);
+
+      res.json({ messages });
+    } catch (error) {
+      console.error('Error fetching chat messages:', error);
+      res.status(500).json({ message: 'Failed to fetch messages' });
+    }
+  });
+
+  // Contact Sharing (Organizer Only)
+  app.post('/api/chat/threads/:id/share-contact', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const threadId = req.params.id;
+      const { fields } = req.body; // Array of field names to share
+
+      // Get thread and verify organizer permission
+      const thread = await storage.getChatThread(threadId);
+      if (!thread || thread.organizerId !== userId) {
+        return res.status(403).json({ message: 'Only organizers can share contact details' });
+      }
+
+      // Get trip contact info
+      const trip = await storage.getTrip(thread.tripId);
+      if (!trip) {
+        return res.status(404).json({ message: 'Trip not found' });
+      }
+
+      // Create contact share message
+      const contactData = {};
+      if (fields.includes('phone') && trip.contactInfo) {
+        contactData.phone = trip.contactInfo;
+      }
+      if (fields.includes('email') && trip.organizerId) {
+        const organizer = await storage.getUser(trip.organizerId);
+        if (organizer?.email) {
+          contactData.email = organizer.email;
+        }
+      }
+
+      const message = await storage.createChatMessage({
+        threadId,
+        senderId: userId,
+        kind: 'contact_share',
+        text: 'Shared contact details',
+        meta: { contactData, fields }
+      });
+
+      // Update unread count
+      await storage.incrementUnreadCount(threadId, thread.userId);
+
+      res.json({ message });
+    } catch (error) {
+      console.error('Error sharing contact:', error);
+      res.status(500).json({ message: 'Failed to share contact' });
+    }
+  });
+
+  // Chat Message Reporting
+  app.post('/api/chat/messages/:id/report', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const messageId = req.params.id;
+      const { reason, notes } = req.body;
+
+      if (!reason) {
+        return res.status(400).json({ message: 'Report reason is required' });
+      }
+
+      // Get message and verify access
+      const message = await storage.getChatMessage(messageId);
+      if (!message) {
+        return res.status(404).json({ message: 'Message not found' });
+      }
+
+      const thread = await storage.getChatThread(message.threadId);
+      if (!thread || (thread.organizerId !== userId && thread.userId !== userId)) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Create report
+      const report = await storage.createReport({
+        context: 'chat_message',
+        threadId: message.threadId,
+        messageId: messageId,
+        reporterId: userId,
+        reason,
+        description: notes || null,
+        status: 'open'
+      });
+
+      // Mute thread for reporter (optional)
+      await storage.muteChatThread(message.threadId, userId);
+
+      res.json({ report });
+    } catch (error) {
+      console.error('Error reporting chat message:', error);
+      res.status(500).json({ message: 'Failed to report message' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -24,8 +24,11 @@ export const notificationTypeEnum = pgEnum('notification_type', ['trip_updated',
 export const difficultyEnum = pgEnum('difficulty', ['easy', 'moderate', 'challenging']);
 export const userRoleEnum = pgEnum('user_role', ['user', 'moderator', 'admin', 'superadmin']);
 export const reportStatusEnum = pgEnum('report_status', ['open', 'investigating', 'resolved', 'dismissed']);
+export const reportContextEnum = pgEnum('report_context', ['trip', 'user', 'chat_message']);
 export const notificationPriorityEnum = pgEnum('notification_priority', ['critical', 'high', 'normal', 'low']);
 export const messageTypeEnum = pgEnum('message_type', ['text', 'contact_card']);
+export const chatThreadStatusEnum = pgEnum('chat_thread_status', ['open', 'locked', 'closed']);
+export const chatMessageKindEnum = pgEnum('chat_message_kind', ['text', 'media', 'system', 'contact_share']);
 export const tripCategoryEnum = pgEnum('trip_category', [
   'roadtrip', 'hiking', 'beach', 'culture', 'wellness', 'festival', 
   'workshop', 'wildlife', 'food', 'adventure_sport', 'unknown'
@@ -258,50 +261,71 @@ export const tripViews = pgTable("trip_views", {
 });
 
 
-// Chat Threads table for private messaging
+// Enhanced Chat System - Extended from existing schema
+
+// Chat Threads table - enhanced for organizer-gated access
 export const chatThreads = pgTable("chat_threads", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  tripId: varchar("trip_id"), // Optional - link to trip that created this chat
+  tripId: varchar("trip_id").references(() => trips.id, { onDelete: 'cascade' }),
+  organizerId: varchar("organizer_id").references(() => users.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'cascade' }),
+  status: chatThreadStatusEnum("status").default("open"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  // Unique constraint: one thread per trip-organizer-user combination
+  uniqueTripOrganizerUser: unique().on(table.tripId, table.organizerId, table.userId),
+  tripIdIdx: index("chat_threads_trip_id_idx").on(table.tripId),
+  organizerIdIdx: index("chat_threads_organizer_id_idx").on(table.organizerId),
+  userIdIdx: index("chat_threads_user_id_idx").on(table.userId),
+  statusIdx: index("chat_threads_status_idx").on(table.status),
+}));
 
-// Thread Users junction table (many-to-many between users and threads)
-export const threadUsers = pgTable("thread_users", {
+// Chat Messages table - supports text, media, system messages, and contact sharing
+export const chatMessages = pgTable("chat_messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  threadId: varchar("thread_id").notNull(),
-  userId: varchar("user_id").notNull(),
+  threadId: varchar("thread_id").notNull().references(() => chatThreads.id, { onDelete: 'cascade' }),
+  senderId: varchar("sender_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  kind: chatMessageKindEnum("kind").default("text"),
+  text: text("text"), // Nullable for non-text messages
+  meta: jsonb("meta"), // System payload, contact data, media info
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  threadIdCreatedAtIdx: index("chat_messages_thread_id_created_at_idx").on(table.threadId, table.createdAt),
+  senderIdIdx: index("chat_messages_sender_id_idx").on(table.senderId),
+}));
+
+// Chat Attachments table - supports ephemeral media with one-time viewing
+export const chatAttachments = pgTable("chat_attachments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  messageId: varchar("message_id").notNull().references(() => chatMessages.id, { onDelete: 'cascade' }),
+  threadId: varchar("thread_id").notNull().references(() => chatThreads.id, { onDelete: 'cascade' }),
+  storageKey: varchar("storage_key").notNull(),
+  mimeType: varchar("mime_type").notNull(), // image/* only
+  sizeBytes: integer("size_bytes").notNull(),
+  isEphemeral: boolean("is_ephemeral").default(false),
+  maxViews: integer("max_views").default(1),
+  viewCount: integer("view_count").default(0),
+  expiresAt: timestamp("expires_at"),
+  consumedAt: timestamp("consumed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  threadIdEphemeralIdx: index("chat_attachments_thread_id_ephemeral_idx").on(table.threadId, table.isEphemeral),
+  messageIdIdx: index("chat_attachments_message_id_idx").on(table.messageId),
+}));
+
+// Chat Participant State table - tracks unread counts and read status per user
+export const chatParticipantState = pgTable("chat_participant_state", {
+  threadId: varchar("thread_id").notNull().references(() => chatThreads.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   unreadCount: integer("unread_count").default(0),
   lastReadAt: timestamp("last_read_at"),
+  muted: boolean("muted").default(false),
   joinedAt: timestamp("joined_at").defaultNow(),
 }, (table) => ({
-  // Unique constraint to prevent duplicate memberships
-  uniqueThreadUser: unique().on(table.threadId, table.userId),
-}));
-
-// Messages table for chat conversations
-export const messages = pgTable("messages", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  threadId: varchar("thread_id").notNull(),
-  authorId: varchar("author_id").notNull(),
-  body: text("body").notNull(),
-  type: messageTypeEnum("type").default("text"),
-  payload: jsonb("payload"), // For structured contact data
-  createdAt: timestamp("created_at").defaultNow(),
-  isDeleted: boolean("is_deleted").default(false),
-}, (table) => ({
-  threadIdCreatedAtIdx: index("messages_thread_id_created_at_idx").on(table.threadId, table.createdAt),
-}));
-
-// Contact shares audit table
-export const contactShares = pgTable("contact_shares", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  threadId: varchar("thread_id").notNull(),
-  organizerId: varchar("organizer_id").notNull(),
-  payload: jsonb("payload").notNull(),
-  sharedAt: timestamp("shared_at").defaultNow(),
-}, (table) => ({
-  threadIdIdx: index("contact_shares_thread_id_idx").on(table.threadId),
+  primaryKey: [table.threadId, table.userId],
+  threadIdIdx: index("chat_participant_state_thread_id_idx").on(table.threadId),
+  userIdIdx: index("chat_participant_state_user_id_idx").on(table.userId),
 }));
 
 // Trip Interest Requests table for "I'm Interested" functionality
@@ -355,17 +379,25 @@ export const ratings = pgTable("ratings", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Reports table
+// Reports table - enhanced to support chat message reporting
 export const reports = pgTable("reports", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  context: reportContextEnum("context").default("trip"),
   tripId: varchar("trip_id"),
   userId: varchar("user_id"),
+  threadId: varchar("thread_id"), // For chat message reports
+  messageId: varchar("message_id"), // For chat message reports
   reporterId: varchar("reporter_id").notNull(),
   reason: varchar("reason").notNull(),
   description: text("description"),
-  status: varchar("status").default("pending"), // pending, resolved, dismissed
+  status: reportStatusEnum("status").default("open"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  contextIdx: index("reports_context_idx").on(table.context),
+  reporterIdIdx: index("reports_reporter_id_idx").on(table.reporterId),
+  statusIdx: index("reports_status_idx").on(table.status),
+  threadIdIdx: index("reports_thread_id_idx").on(table.threadId),
+}));
 
 // Admin chat threads for report investigations
 export const adminChatThreads = pgTable("admin_chat_threads", {
@@ -1139,6 +1171,7 @@ export type PhoneStart = z.infer<typeof phoneStartSchema>;
 export type PhoneVerify = z.infer<typeof phoneVerifySchema>;
 
 
+// Enhanced Chat System Types
 export const insertChatThreadSchema = createInsertSchema(chatThreads).omit({
   id: true,
   createdAt: true,
@@ -1147,19 +1180,26 @@ export const insertChatThreadSchema = createInsertSchema(chatThreads).omit({
 export type InsertChatThread = z.infer<typeof insertChatThreadSchema>;
 export type ChatThread = typeof chatThreads.$inferSelect;
 
-export const insertThreadUserSchema = createInsertSchema(threadUsers).omit({
-  id: true,
-  joinedAt: true,
-});
-export type InsertThreadUser = z.infer<typeof insertThreadUserSchema>;
-export type ThreadUser = typeof threadUsers.$inferSelect;
-
-export const insertMessageSchema = createInsertSchema(messages).omit({
+export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
   id: true,
   createdAt: true,
 });
-export type InsertMessage = z.infer<typeof insertMessageSchema>;
-export type Message = typeof messages.$inferSelect;
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+export type ChatMessage = typeof chatMessages.$inferSelect;
+
+export const insertChatAttachmentSchema = createInsertSchema(chatAttachments).omit({
+  id: true,
+  createdAt: true,
+  consumedAt: true,
+});
+export type InsertChatAttachment = z.infer<typeof insertChatAttachmentSchema>;
+export type ChatAttachment = typeof chatAttachments.$inferSelect;
+
+export const insertChatParticipantStateSchema = createInsertSchema(chatParticipantState).omit({
+  joinedAt: true,
+});
+export type InsertChatParticipantState = z.infer<typeof insertChatParticipantStateSchema>;
+export type ChatParticipantState = typeof chatParticipantState.$inferSelect;
 
 export const insertTripInterestRequestSchema = createInsertSchema(tripInterestRequests).omit({
   id: true,

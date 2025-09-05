@@ -1,0 +1,177 @@
+Principles:
+Chat opens only after organizer accepts an interest.
+Only organizer can approve access and optionally share contact details.
+Optional one-time-view media for photos.
+Trip lifecycle controls chat availability and data deletion.
+Clear reporting built in.
+Minimal, friendly UX with privacy by default.
+Objectives
+Gate chat creation on organizer acceptance (mutual interest unlock).
+Notify participants when chat opens; clicking notification deep-links to the thread.
+Organizer-only “Share contact” push (from trip’s saved contact).
+Media uploads with optional One-Time View (single open → auto-delete).
+If trip becomes inactive/completed or is deleted, chat is deactivated, and history is purged.
+Both sides can report messages/participants (same pipeline as trip card reports).
+UX: sidebar thread list, main chat pane; empty state; typing indicator; unread counts; quick canned messages.
+Privacy: scoped access, signed URLs, EXIF strip, file-type limits, rate limits, audit for reports only.
+Data Model (Drizzle)
+tables: chat_threads
+id (pk, uuid)
+trip_id (fk → trips)
+organizer_id (uuid), user_id (uuid)
+status enum: open | locked | closed
+open: active trip + accepted interest
+locked: trip inactive/completed (read-only banner)
+closed: trip deleted or explicitly closed → content purged
+created_at, updated_at
+Unique: UNIQUE(trip_id, organizer_id, user_id)
+tables: chat_messages
+id (pk), thread_id (fk)
+sender_id (uuid)
+kind enum: text | media | system | contact_share
+text (nullable), meta JSONB (system payload, e.g., diff, tips)
+created_at, index (thread_id, created_at)
+tables: chat_attachments
+id (pk), message_id (fk), thread_id (fk)
+storage_key (string), mime (image/* only), size_bytes int
+is_ephemeral boolean default false
+max_views int default 1, view_count int default 0
+expires_at timestamptz (nullable)
+consumed_at timestamptz (nullable)
+Index (thread_id, is_ephemeral)
+tables: chat_participant_state
+thread_id, user_id, unread_count int, last_read_at timestamptz
+muted boolean default false, PK (thread_id, user_id)
+tables: reports (reuse existing)
+Add context enum includes chat_message, and fields thread_id, message_id (nullable)
+Authorization Rules
+All chat APIs require Clerk auth and email verified.
+Organizer is the gatekeeper: chat thread created only via organizer acceptance of an interest.
+Access check on every thread route: requester must be organizer_id or user_id for that thread_id.
+Contact sharing allowed only if requester is organizer_id.
+Lifecycle Hooks (trip-linked)
+On interest.accepted → create (or reuse) chat_threads.status = 'open'; emit notification(chat_opened).
+On trip.status → inactive/completed → set status='locked'; disallow new messages; show read-only banner.
+On trip.deleted (or organizer “close chat”) → status='closed' and purge:
+Delete chat_messages, chat_attachments blobs (hard delete).
+Keep a minimal tombstone row for 7 days only if the thread has an unresolved report; else delete thread row as well.
+Insert notification(chat_closed) to both parties.
+API (Express + TS)
+Threads
+POST /api/chat/threads/open
+Body: { tripId, userId } (called by organizer acceptance flow)
+Upsert thread; return thread summary
+Emit notification to userId: chat_opened
+GET /api/chat/threads → list threads for current user with last message preview, unread counts.
+GET /api/chat/threads/:id → thread details; deny if not a participant; include minimal trip card info & status.
+POST /api/chat/threads/:id/close (organizer only) → sets closed and purges content.
+Messages
+POST /api/chat/threads/:id/messages
+Body: { text?, attachmentId?, ephemeral? }
+Validate thread status='open'.
+If attachmentId present, ensure it belongs to this thread_id.
+Insert message; broadcast via Socket.io; update unread counts.
+GET /api/chat/threads/:id/messages?cursor=... → paginated history (deny when closed).
+Typing indicator (realtime only, no persistence): socket.emit('typing', { threadId }).
+Attachments
+POST /api/chat/threads/:id/attachments/init
+Returns pre-signed upload URL + attachmentId.
+Enforce file rules: image only (jpg/png/webp), max 8MB, EXIF strip on finalize.
+POST /api/chat/attachments/:attachmentId/finalize
+Body: { isEphemeral: boolean } → sets flags (max_views=1, expires_at=now()+24h) if ephemeral.
+GET /api/chat/attachments/:attachmentId/view
+Auth + membership required.
+If is_ephemeral and view_count >= max_views or now > expires_at → 410 Gone.
+Else increment view_count, set consumed_at on first view, return short-lived signed URL.
+Auto-delete ephemeral and underlying blob when view_count==max_views or expired.
+Contact sharing (organizer only)
+POST /api/chat/threads/:id/share-contact
+Pull contact fields from trip (phone/WhatsApp/Email set at trip create).
+Create chat_messages.kind='contact_share' with masked preview (tap-to-reveal).
+Log audit: { shared_by: organizer_id, fields: [..] }.
+Reporting
+POST /api/chat/messages/:id/report
+Body: { reason, notes }
+Create reports row with context='chat_message', link thread_id & message_id.
+Auto-mute thread for reporter; optional auto-lock thread on severe reasons (e.g., sexual content, scams).
+Admin queue receives report. Reuse trip-card moderation pipeline.
+Realtime (Socket.io)
+Namespaces: /chat
+Rooms: thread:<id>
+Events:
+message:new (broadcast)
+typing (ephemeral 5s)
+thread:status (open|locked|closed)
+participant:read (update unread counts)
+Server ensures auth on connect; join only rooms the user belongs to.
+Frontend (React)
+Layout
+Left pane: threads list
+Avatar (organizer/user), trip title, last message, unread badge.
+Empty state: “No chats yet. When an organizer accepts your interest, your chat will appear here.” (tips: be respectful, avoid sharing sensitive info early).
+Right pane: active thread
+Header: trip mini-card + status chip (Open/Locked/Closed) + “Back to trips”
+Messages with timestamps, sender bubbles, system events (“Organizer shared contact”, “Chat locked”, etc.)
+Composer: text input, Attach (with “One-Time View” checkbox), Quick Messages dropdown:
+“Hi! Thanks for accepting. Where shall we meet?”
+“Can we confirm dates and budget?”
+“Sharing a photo—one-time view.”
+Typing… indicator
+Report menu per message (⋯)
+States & Rules
+status='open' → send enabled.
+status='locked' → composer disabled; banner: “This trip is not active. Chat is read-only.”
+status='closed' → redirect to thread list with toast “Chat closed—history removed.”
+Contact Sharing UI (organizer)
+Button: Share Contact (shows modal to pick which fields: phone, WhatsApp, email).
+Sends contact_share message; receiver sees masked fields with a Reveal button (prevent auto-scrape).
+Attachment UX
+Accept image drag-drop / click.
+Toggle One-Time View before sending.
+Ephemeral messages show “One-time view · 24h” badge; after opened, show “Opened • Expired”.
+Accessibility & Mobile
+Keyboard shortcuts (Enter to send, Shift+Enter newline).
+Long-press on mobile for message options.
+Ensure sticky composer and virtualized list for performance.
+Privacy & Safety
+Only two participants per thread (organizer & interested user).
+No 3rd-party forward/share; disable right-click download on ephemeral previews (best-effort, can’t prevent screenshots—show disclaimer).
+Strip EXIF on images; virus scan (ClamAV) on finalize.
+Signed URLs (short TTL) for all attachments.
+Rate limits: e.g., 20 messages/min per user, 10 uploads/10min.
+Auto-purge: ephemeral media on first view or expiry; full chat purge on closed.
+Audit: retain only minimal tombstone when there’s an active report; otherwise delete all content.
+Tests
+API (Jest + Supertest)
+Organizer acceptance → creates/returns open thread; non-organizer call forbidden.
+Send/receive text message; unread counts increment/reset on read.
+Attachment flow: init → finalize(ephemeral) → view once → 410 on second view → blob deleted.
+Contact share allowed only by organizer; renders as contact_share message.
+Trip status → inactive locks thread; posting returns 423 Locked.
+Trip deleted → thread closed & messages/attachments purged.
+Report endpoint writes correct rows; severe reason auto-locks thread.
+Realtime (Socket.io)
+Auth’d connect; join room; message:new broadcasts; typing debounces; thread:status updates.
+Unread counts: open thread marks read and resets badge.
+E2E (Playwright/Cypress)
+User sends interest → Organizer accepts → notification → clicking opens chat.
+Send quick canned message; organizer replies; typing indicator visible.
+Upload one-time photo → receiver opens → expires.
+Organizer shares contact → masked reveal works.
+Organizer sets trip inactive → banner + read-only; delete trip → thread disappears with toast.
+Report abusive message → reporter muted; admin queue receives.
+Acceptance Criteria
+No chat until organizer accepts; acceptance instantly opens thread + notification.
+Only the two participants can access the thread; organizer alone can share contact.
+One-time-view images work reliably (single open → delete).
+Trip status transitions lock/close chats and purge as specified.
+Reports from chat flow into the same moderation pipeline as trip reports.
+Friendly UI: unread badges, typing, quick messages, empty state tips, accessible on mobile.
+Strong privacy defaults: EXIF stripped, signed URLs, rate limiting, minimal retention.
+All tests green; no console errors in browser; server logs clean.
+Deliverables
+Drizzle migrations (tables above)
+Express routes + Socket.io handlers + attachment pipeline (signed URLs, EXIF strip, ClamAV)
+React UI (threads list, chat view, composer, contact share modal, report UI)
+Integration with notifications bell (chat_opened, chat_closed)
+Test suite & a short screen recording of core flows
