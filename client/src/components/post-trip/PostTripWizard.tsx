@@ -246,7 +246,21 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
   };
   
   const isLastStep = currentStep === STEPS.length;
-  const canProceed = completedSteps.includes(currentStep) || currentStep === 1;
+  
+  // Check if current step can proceed (has valid data)
+  const checkCanProceed = () => {
+    const stepSchema = STEPS.find(s => s.id === currentStep)?.schema;
+    if (!stepSchema) return false;
+    
+    try {
+      stepSchema.parse(formData);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  
+  const canProceed = checkCanProceed();
   
   if (authLoading) {
     return (

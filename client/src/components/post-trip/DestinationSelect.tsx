@@ -53,12 +53,13 @@ export function DestinationSelect({
   onChange, 
   onRegionChange,
   label, 
-  placeholder = "Search destinations...",
+  placeholder = "Search or type location...",
   error,
   className 
 }: DestinationSelectProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [inputMode, setInputMode] = useState(false);
   
   // Filter destinations based on search query
   const filteredDestinations = POPULAR_DESTINATIONS.filter(dest =>
@@ -74,6 +75,7 @@ export function DestinationSelect({
       if (destination) {
         onRegionChange(destination.region);
       }
+      // Note: For custom locations, we don't auto-set region - user can select manually
     }
   }, [value, onRegionChange]);
   
@@ -95,22 +97,24 @@ export function DestinationSelect({
         {label}
       </Label>
       
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="w-full justify-between h-10"
-            data-testid="destination-select-trigger"
-          >
-            <div className="flex items-center">
-              <MapPin className="h-4 w-4 mr-2 text-gray-500" />
-              {value || placeholder}
-            </div>
-            <Search className="h-4 w-4 text-gray-500" />
-          </Button>
-        </PopoverTrigger>
+      {/* Toggle between input and dropdown modes */}
+      <div className="space-y-2">
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="w-full justify-between h-10"
+              data-testid="destination-select-trigger"
+            >
+              <div className="flex items-center">
+                <MapPin className="h-4 w-4 mr-2 text-gray-500" />
+                {value || placeholder}
+              </div>
+              <Search className="h-4 w-4 text-gray-500" />
+            </Button>
+          </PopoverTrigger>
         
         <PopoverContent className="w-full p-0" align="start">
           <Command>
@@ -155,14 +159,33 @@ export function DestinationSelect({
                   className="flex items-center"
                   data-testid="destination-custom-option"
                 >
-                  <MapPin className="h-4 w-4 mr-2 text-gray-500" />
-                  <span>Add "{searchQuery}"</span>
+                  <MapPin className="h-4 w-4 mr-2 text-blue-500" />
+                  <span>Use "{searchQuery}" as custom location</span>
                 </CommandItem>
               </CommandGroup>
+            )}
+            
+            {searchQuery.length === 0 && (
+              <div className="p-3 text-sm text-gray-600 border-t">
+                💡 Type any location name to add a custom destination
+              </div>
             )}
           </Command>
         </PopoverContent>
       </Popover>
+      
+        {/* Alternative: Direct text input option */}
+        <div className="text-xs text-gray-500 text-center">
+          Or type directly: 
+          <Input
+            placeholder="Type custom location..."
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="mt-1 h-9"
+            data-testid="destination-direct-input"
+          />
+        </div>
+      </div>
       
       {/* Show selected region info */}
       {regionInfo && (
