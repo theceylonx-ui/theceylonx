@@ -29,6 +29,7 @@ import PreferencesPage from "@/pages/preferences";
 import AdminDashboardPage from "@/pages/admin-dashboard";
 import ReportTripPage from "@/pages/report-trip";
 import ChatPage from "@/pages/chat";
+import ChatDemoPage from "@/pages/chat-demo";
 import UserDeletion from "@/pages/user-deletion";
 import CalendarPage from "@/pages/calendar";
 import TravelStyleSettings from "@/pages/travel-style-settings";
@@ -80,6 +81,7 @@ function Router() {
             <Route path="/preferences" component={PreferencesPage} />
             <Route path="/chat" component={ChatPage} />
             <Route path="/chat/:threadId" component={ChatPage} />
+            <Route path="/chat-demo" component={ChatDemoPage} />
             <Route path="/user/delete" component={UserDeletion} />
             <Route path="/post" component={SignInRequired} />
             <Route path="/dashboard" component={SignInRequired} />
@@ -107,6 +109,7 @@ function Router() {
             <Route path="/me" component={ProfilePage} />
             <Route path="/chat" component={ChatPage} />
             <Route path="/chat/:threadId" component={ChatPage} />
+            <Route path="/chat-demo" component={ChatDemoPage} />
             <Route path="/chat-buddy" component={ChatBuddy} />
             <Route path="/user/delete" component={UserDeletion} />
             <Route path="/admin" component={AdminDashboardPage} />
