@@ -37,6 +37,10 @@ import ProfilePage from "@/pages/me";
 import ChatBuddy from "@/pages/chat-buddy";
 import AdminReportsPage from "@/pages/admin-reports";
 import ClerkSmoke from "@/auth/ClerkSmoke";
+import UserProfilePage from "@/pages/profile/[id]";
+import HelpFAQPage from "@/pages/help/faq";
+import AccountSettingsPage from "@/pages/settings/account";
+import MeRedirect from "@/pages/me-redirect";
 // Clerk components temporarily disabled
 // import ClerkSignInPage from "@/pages/clerk-sign-in";
 // import ClerkSignUpPage from "@/pages/clerk-sign-up";
@@ -106,11 +110,21 @@ function Router() {
             <Route path="/destination/:city" component={DestinationPage} />
 
             <Route path="/travel-style-settings" component={TravelStyleSettings} />
-            <Route path="/me" component={ProfilePage} />
+            
+            {/* Profile Routes */}
+            <Route path="/me" component={MeRedirect} />
+            <Route path="/profile/:id" component={UserProfilePage} />
+            
+            {/* Chat Routes */}
             <Route path="/chat" component={ChatPage} />
+            <Route path="/chat/threads" component={ChatPage} />
             <Route path="/chat/:threadId" component={ChatPage} />
             <Route path="/chat-demo" component={ChatDemoPage} />
             <Route path="/chat-buddy" component={ChatBuddy} />
+            
+            {/* Help & Settings */}
+            <Route path="/help/faq" component={HelpFAQPage} />
+            <Route path="/settings/account" component={AccountSettingsPage} />
             <Route path="/user/delete" component={UserDeletion} />
             {/* Enhanced Admin Routes */}
             <Route path="/admin" component={AdminOverviewPage} />

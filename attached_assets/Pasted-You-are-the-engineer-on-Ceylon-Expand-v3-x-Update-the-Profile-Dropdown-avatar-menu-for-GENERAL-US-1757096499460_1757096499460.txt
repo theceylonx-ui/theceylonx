@@ -1,0 +1,68 @@
+You are the engineer on Ceylon Expand v3.x. Update the Profile Dropdown (avatar menu) for GENERAL USERS to exactly this structure (replace “Dashboard” with “My Profile”) and remove everything else.
+
+Final Menu (order & routes)
+1) My Profile → /profile/:id  (if only /me exists, have /me 301/redirect to /profile/:id)
+2) Chatbuddy → /chat/threads
+3) Ceylon’s Tribes → /community
+4) Help – FAQ → /help/faq
+5) Account Settings → /settings/account
+   - Nested actions INSIDE Account Settings page (not in dropdown):
+     a) Download Data (GDPR export) → button triggers GET /api/me/export (download)
+     b) Delete Account → confirm modal → DELETE /api/me (step-up reauth if required); on success, POST /api/auth/logout and redirect to /
+
+Hard Requirements
+- Remove ALL other dropdown items (Saved/Wishlist, Notifications, Language, Theme, Admin, Preferences, etc.).
+- Do NOT render admin items for non-admins.
+- If user is not authenticated, hide the dropdown and show a “Sign in” CTA elsewhere (unchanged).
+
+Implementation
+- Component: components/navigation/ProfileMenu.tsx
+- Render only the 5 entries above, in the exact order. Use concise icons if available.
+- Accessibility:
+  - Avatar trigger has aria-expanded + aria-controls.
+  - Full keyboard support: Up/Down/Enter/Escape; focus trap; return focus to avatar on close.
+  - Click outside & Esc close the menu.
+- Mobile: sheet or comfortable list; Desktop: compact card aligned to avatar (right-aligned).
+- If both /me and /profile/:id exist, prefer deep-linking to /profile/:id and keep /me as an alias redirect.
+
+Account Settings Page (/settings/account)
+- “Download Your Data” card:
+  - Button calls GET /api/me/export; show spinner + success/failure toast.
+- “Delete Account” danger card:
+  - Button opens confirm modal (type-to-confirm: DELETE).
+  - On confirm, call DELETE /api/me; if API signals step-up, trigger reauth flow then retry.
+  - On success: POST /api/auth/logout → redirect to / with success toast.
+- Provide brief explanations and a link back to My Profile (/profile/:id).
+
+Analytics
+- Fire analytics events:
+  - profile_menu.open / profile_menu.close
+  - profile_menu.click { item: 'MyProfile'|'Chatbuddy'|'CeylonsTribes'|'HelpFAQ'|'AccountSettings' }
+  - account.export_data.clicked / .succeeded / .failed
+  - account.delete.clicked / .confirmed / .succeeded / .failed
+
+API Assumptions
+- GET /api/me/export → returns downloadable file (JSON/ZIP)
+- DELETE /api/me → deletes account (may require reauth)
+- POST /api/auth/logout → ends session
+
+Testing
+Unit (Jest + RTL)
+- Renders exactly 5 items in the specified order; no others present.
+- Keyboard navigation works; Esc closes and returns focus to avatar.
+- Links navigate to expected routes (/profile/:id, /chat/threads, /community, /help/faq, /settings/account).
+- Account Settings:
+  - Export calls GET /api/me/export and handles success/failure.
+  - Delete flow shows confirm modal, handles reauth-needed case, logs out, and redirects on success.
+
+E2E (Cypress)
+- Open by click and keyboard; Esc closes; focus returns to avatar.
+- Each menu item navigates correctly on desktop and mobile viewports.
+- Export starts download (stub network); Delete flow completes and redirects to / (stub network).
+- Mobile layout renders as sheet/list without overflow.
+
+Deliverables
+- components/navigation/ProfileMenu.tsx (updated)
+- pages/settings/AccountSettings.tsx (export + delete cards)
+- tests/ProfileMenu.spec.tsx, tests/accountSettings.spec.tsx, cypress/e2e/profileMenu.cy.ts
+- TS strict, ESLint/Prettier pass, brief README note in components/navigation/ on props/integration.

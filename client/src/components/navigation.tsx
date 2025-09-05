@@ -1,28 +1,16 @@
 import { Link, useLocation } from "wouter";
-import { User, LogOut, Menu, X, MessageSquare, Calendar } from "lucide-react";
+import { Menu, X, MessageSquare, Calendar } from "lucide-react";
 import { useState } from "react";
 import logoImage from "@assets/5_1756417819316.png";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
-import { generateRandomProfilePicture, getDisplayName, getInitials } from "@/lib/profileUtils";
 import { EnhancedNotificationDropdown } from "@/components/notifications/enhanced-notification-dropdown";
+import ProfileMenu from "@/components/navigation/ProfileMenu";
 
 export default function Navigation() {
-  const { user, logout, isLoggingOut } = useAuth();
+  const { user } = useAuth();
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const handleLogout = () => {
-    logout();
-  };
 
   const isActive = (path: string) => {
     return location === path;
@@ -129,61 +117,7 @@ export default function Navigation() {
             {user && (
               <>
                 <EnhancedNotificationDropdown />
-                <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full" data-testid="user-menu-trigger">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.profileImageUrl || generateRandomProfilePicture(user.id)} alt="Profile" />
-                      <AvatarFallback>
-                        {getInitials(user)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <div className="flex items-center justify-start gap-2 p-2">
-                    <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium" data-testid="user-menu-name">
-                        {getDisplayName(user)}
-                      </p>
-                      {user.username && (
-                        <p className="text-xs text-muted-foreground">@{user.username}</p>
-                      )}
-                      <p className="w-[200px] truncate text-sm text-muted-foreground" data-testid="user-menu-email">
-                        {user.email}
-                      </p>
-                    </div>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <Link href="/me">
-                    <DropdownMenuItem className="cursor-pointer" data-testid="user-menu-profile">
-                      <User className="mr-2 h-4 w-4" />
-                      My Profile
-                    </DropdownMenuItem>
-                  </Link>
-                  <Link href="/preferences">
-                    <DropdownMenuItem className="cursor-pointer" data-testid="user-menu-preferences">
-                      <User className="mr-2 h-4 w-4" />
-                      Travel Preferences
-                    </DropdownMenuItem>
-                  </Link>
-                  <Link href="/admin/dashboard">
-                    <DropdownMenuItem className="cursor-pointer" data-testid="user-menu-admin">
-                      <User className="mr-2 h-4 w-4" />
-                      Admin Dashboard
-                    </DropdownMenuItem>
-                  </Link>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50" 
-                    onClick={handleLogout}
-                    data-testid="user-menu-logout"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                <ProfileMenu />
               </>
             )}
 

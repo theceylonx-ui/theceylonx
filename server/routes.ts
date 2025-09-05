@@ -2277,6 +2277,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user activity (trips)
+  // Account management routes
+  app.get('/api/me/export', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Gather all user data for export
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Get user's trips, comments, ratings, and other data
+      const [trips, comments, ratings, preferences] = await Promise.all([
+        storage.getUserTrips(userId),
+        storage.getUserComments(userId),
+        storage.getUserRatings(userId),
+        storage.getUserPreferences(userId)
+      ]);
+      
+      // Prepare export data
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          username: user.username,
+          bio: user.bio,
+          phoneNumber: user.phoneNumber,
+          profileImageUrl: user.profileImageUrl,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt
+        },
+        trips: trips || [],
+        comments: comments || [],
+        ratings: ratings || [],
+        preferences: preferences || {},
+        note: "This export contains all your personal data from Ceylon Expand as of the export date."
+      };
+      
+      // Set headers for file download
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="ceylon-expand-data-${userId}-${new Date().toISOString().split('T')[0]}.json"`);
+      
+      res.json(exportData);
+    } catch (error) {
+      console.error("Error exporting user data:", error);
+      res.status(500).json({ message: "Failed to export user data" });
+    }
+  });
+
+  app.delete('/api/me', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Check if user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // TODO: In a production system, you might want to:
+      // 1. Mark account as "deleted" instead of hard delete
+      // 2. Anonymize data instead of deleting
+      // 3. Keep trip data but anonymize user info
+      // 4. Implement a grace period for account recovery
+      
+      // For now, we'll delete the user account
+      await storage.deleteUser(userId);
+      
+      res.json({ 
+        message: "Account deleted successfully",
+        deletedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error deleting user account:", error);
+      res.status(500).json({ message: "Failed to delete account" });
+    }
+  });
+
   app.get('/api/me/activity/trips', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
