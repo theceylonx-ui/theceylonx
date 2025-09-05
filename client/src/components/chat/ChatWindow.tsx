@@ -15,12 +15,16 @@ import {
   Calendar,
   Clock,
   MoreVertical,
-  AlertTriangle
+  AlertTriangle,
+  Image as ImageIcon,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { ImageUpload } from "./ImageUpload";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -301,12 +305,23 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
           <Separator />
           <form onSubmit={handleSendMessage} className="p-4">
             <div className="flex space-x-2">
+              <ImageUpload 
+                threadId={threadId}
+                disabled={sendMessageMutation.isPending}
+                onImageSent={() => {
+                  // Refresh messages after image is sent
+                  queryClient.invalidateQueries({
+                    queryKey: [`/api/chat/threads/${threadId}/messages`],
+                  });
+                }}
+              />
               <Input
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
                 placeholder="Type your message..."
                 disabled={sendMessageMutation.isPending}
                 data-testid="message-input"
+                className="flex-1"
               />
               <Button 
                 type="submit" 
@@ -336,7 +351,9 @@ interface MessageBubbleProps {
 
 function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
   const [showReportDialog, setShowReportDialog] = useState(false);
+  const [imageViewed, setImageViewed] = useState(false);
 
+  // Handle contact share messages
   if (message.kind === 'contact_share') {
     return (
       <div className="flex justify-center my-4">
@@ -362,6 +379,102 @@ function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
             </div>
           )}
         </Card>
+      </div>
+    );
+  }
+
+  // Handle image/media messages
+  if (message.kind === 'media') {
+    const isEphemeral = message.meta?.ephemeral;
+    const attachmentUrl = message.meta?.attachmentId;
+    const consumed = imageViewed && isEphemeral;
+
+    return (
+      <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+        <div className={`max-w-[70%] ${isOwn ? 'order-2' : 'order-1'}`}>
+          {!isOwn && (
+            <div className="flex items-center space-x-2 mb-1">
+              <Avatar className="w-6 h-6">
+                <AvatarImage src={message.sender.profileImageUrl} />
+                <AvatarFallback className="text-xs">
+                  {message.sender.firstName?.[0] || message.sender.username?.[0] || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-xs text-gray-500">
+                {message.sender.firstName} {message.sender.lastName}
+              </span>
+            </div>
+          )}
+          
+          <Card className={`p-3 ${
+            isOwn
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+          }`}>
+            {consumed ? (
+              <div className="text-center py-8 text-gray-500">
+                <EyeOff className="w-8 h-8 mx-auto mb-2" />
+                <p className="text-sm">Image consumed</p>
+                <p className="text-xs">No longer available</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {attachmentUrl && (
+                  <div className="relative">
+                    <img
+                      src={attachmentUrl}
+                      alt="Shared image"
+                      className="max-w-full h-auto rounded cursor-pointer"
+                      onClick={() => {
+                        if (isEphemeral) {
+                          setImageViewed(true);
+                        }
+                      }}
+                    />
+                    {isEphemeral && (
+                      <div className="absolute top-2 right-2">
+                        <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                          <Eye className="w-3 h-3" />
+                          View once
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {message.text && (
+                  <p className="text-sm">{message.text}</p>
+                )}
+              </div>
+            )}
+            
+            <div className="flex items-center justify-between mt-2">
+              <span className={`text-xs ${isOwn ? 'text-primary-foreground/70' : 'text-gray-500'}`}>
+                {format(new Date(message.createdAt), "HH:mm")}
+              </span>
+              {isEphemeral && !consumed && (
+                <div className="flex items-center gap-1 text-xs">
+                  <Clock className="w-3 h-3" />
+                  <span>24h</span>
+                </div>
+              )}
+              {!isOwn && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 ml-2">
+                      <MoreVertical className="w-3 h-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onReport('inappropriate')}>
+                      <AlertTriangle className="w-4 h-4 mr-2" />
+                      Report
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          </Card>
+        </div>
       </div>
     );
   }
