@@ -128,17 +128,6 @@ export function AskQuestionDialog({ topics, isAuthenticated, onSignInRequired, c
         </DialogHeader>
 
         <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="compose" className="flex items-center gap-2 data-[state=active]:bg-ceylon-green data-[state=active]:text-white transition-all duration-200">
-              <MessageSquare className="h-4 w-4" />
-              Compose
-            </TabsTrigger>
-            <TabsTrigger value="preview" className="flex items-center gap-2 data-[state=active]:bg-ceylon-green data-[state=active]:text-white transition-all duration-200">
-              <Eye className="h-4 w-4" />
-              Preview
-            </TabsTrigger>
-          </TabsList>
-
           <TabsContent value="compose" className="space-y-6">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
