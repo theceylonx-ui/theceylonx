@@ -31,6 +31,9 @@ export const tripCategoryEnum = pgEnum('trip_category', [
   'workshop', 'wildlife', 'food', 'adventure_sport', 'unknown'
 ]);
 
+// Preferences enums
+export const preferenceEventEnum = pgEnum('preference_event', ['created', 'updated', 'reset']);
+
 // Session storage table for Replit Auth
 export const sessions = pgTable(
   "sessions",
@@ -469,34 +472,38 @@ export const follows = pgTable("follows", {
   uniqueUserFollow: unique().on(table.userId, table.followType, table.followIdOrValue),
 }));
 
-// User preferences table for Travel Style Settings and ML recommendations
+// User preferences table - single source of truth for travel preferences
 export const userPreferences = pgTable("user_preferences", {
+  userId: varchar("user_id").primaryKey(), // Exactly one row per user
+  
+  // Taxonomy-validated arrays (deduped, sorted, controlled values)
+  vibe: text("vibe").array().default(sql`'{}'::text[]`), 
+  companions: text("companions").array().default(sql`'{}'::text[]`),
+  interests: text("interests").array().default(sql`'{}'::text[]`),
+  months: text("months").array().default(sql`'{}'::text[]`), // ['jan', 'feb', etc.]
+  regions: text("regions").array().default(sql`'{}'::text[]`), // Optional Sri Lankan regions
+  
+  // Budget constraints
+  budgetMin: integer("budget_min"),
+  budgetMax: integer("budget_max"),
+  
+  // Optimistic concurrency control
+  version: integer("version").default(1).notNull(),
+  
+  // Timestamps
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  // Ensure budget constraints are logical
+  budgetCheck: sql`CHECK (budget_min IS NULL OR budget_max IS NULL OR budget_min <= budget_max)`,
+}));
+
+// Preference events audit table for tracking changes and ML signals
+export const preferenceEvents = pgTable("preference_events", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().unique(),
-  
-  // New Travel Style Settings format
-  vibe: text("vibe").array(), // max 3: ["Beach", "Hills", "Wildlife"]
-  when: text("when").array(), // max 2: ["Weekends", "Festivals"]  
-  companions: text("companions").array(), // max 2: ["Solo", "Friends"]
-  interests: text("interests").array(), // unlimited: ["Surfing", "Tea estates"]
-  
-  // Legacy preferences (keep for backward compatibility)
-  preferredRegions: jsonb("preferred_regions").$type<string[]>().default([]),
-  budgetRange: jsonb("budget_range").$type<{min: number, max: number}>(),
-  preferredDays: jsonb("preferred_days").$type<string[]>().default([]), // ['weekday', 'weekend']
-  preferredTimes: jsonb("preferred_times").$type<string[]>().default([]), // ['morning', 'afternoon', 'evening']
-  tripTypes: jsonb("trip_types").$type<string[]>().default([]), // ['adventure', 'cultural', 'beach', 'nature']
-  groupSize: varchar("group_size"), // 'solo', 'couple', 'small_group', 'large_group'
-  
-  // Legacy single fields (keep for backward compatibility)
-  whenTravel: varchar("when_travel"), // old format
-  travelStyle: varchar("travel_style"), // old format
-  
-  // Engagement tracking for "For You" tab unlock
-  actionCount: integer("action_count").default(0), // Count of pins, interests, joins
-  
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  userId: varchar("user_id").notNull(),
+  event: preferenceEventEnum("event").notNull(), // 'created' | 'updated' | 'reset'
+  diff: jsonb("diff").$type<{old?: any, new?: any}>(), // Changes made
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // User interactions table for tracking behavior
@@ -1009,6 +1016,17 @@ export const insertAdminChatMessageSchema = createInsertSchema(adminChatMessages
   createdAt: true,
 });
 
+// Preferences schemas
+export const insertUserPreferencesSchema = createInsertSchema(userPreferences).omit({
+  version: true, // Server manages version
+  updatedAt: true, // Server manages timestamp
+});
+
+export const insertPreferenceEventSchema = createInsertSchema(preferenceEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Community Q&A insert schemas
 export const insertTopicSchema = createInsertSchema(topics).omit({
   id: true,
@@ -1059,13 +1077,7 @@ export const voteRequestSchema = z.object({
   value: z.number().min(-1).max(1), // -1, 0, or 1
 });
 
-// ML recommendation schemas
-export const insertUserPreferencesSchema = createInsertSchema(userPreferences).omit({
-  id: true,
-  userId: true,
-  createdAt: true,
-  updatedAt: true,
-});
+// ML recommendation schemas (userPreferences schema moved above)
 
 // Travel Style Settings Zod schemas with validation rules
 export const travelStyleSettingsSchema = z.object({
@@ -1353,3 +1365,8 @@ export type UserNotifications = typeof userNotifications.$inferSelect;
 export type InsertUserNotifications = typeof userNotifications.$inferInsert;
 export type UserPrivacy = typeof userPrivacy.$inferSelect;
 export type InsertUserPrivacy = typeof userPrivacy.$inferInsert;
+
+// Preferences types
+export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
+export type InsertPreferenceEvent = z.infer<typeof insertPreferenceEventSchema>;
+export type PreferenceEvent = typeof preferenceEvents.$inferSelect;

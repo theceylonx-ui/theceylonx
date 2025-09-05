@@ -1,6 +1,6 @@
 import { db } from "../db";
 import { 
-  userPreferences, 
+  userPreferences,
   userInteractions, 
   tripFeatures, 
   trips, 
@@ -13,7 +13,6 @@ import { eq, desc, and, or, sql, asc, inArray, ne, not, gte } from "drizzle-orm"
 import type { 
   Trip, 
   User, 
-  UserPreferences, 
   UserInteraction, 
   TripFeatures,
   UserPersonalization,
@@ -22,7 +21,7 @@ import type {
 
 interface UserProfile {
   userId: string;
-  preferences: UserPreferences | null;
+  preferences: any; // Use our new preferences schema
   interactions: UserInteraction[];
   ratings: number;
   averageRating: number;
@@ -477,25 +476,43 @@ export class EnhancedRecommendationService {
     return candidateTrips.filter(trip => !notInterestedIds.has(trip.id));
   }
 
-  // Calculate preferences score
-  private calculatePreferencesScore(trip: Trip, preferences: UserPreferences | null): number {
+  // Calculate preferences score using our new comprehensive preferences system
+  private calculatePreferencesScore(trip: Trip, preferences: any): number {
     if (!preferences) return 0.3; // Neutral score for no preferences
 
     let score = 0;
     let factors = 0;
 
-    // Region preferences
-    if (preferences.preferredRegions && preferences.preferredRegions.length > 0) {
-      score += preferences.preferredRegions.includes(trip.region) ? 1 : 0;
+    // Region preferences (using our new regions taxonomy)
+    if (preferences.regions && preferences.regions.length > 0) {
+      // Map trip.region to our taxonomy format
+      const regionMap: Record<string, string> = {
+        'Northern Province': 'north',
+        'Eastern Province': 'east',
+        'Southern Province': 'south', 
+        'Western Province': 'west',
+        'Central Province': 'hill_country',
+        'Uva Province': 'hill_country',
+        'North Central Province': 'cultural_triangle',
+        'North Western Province': 'cultural_triangle',
+        'Sabaragamuwa Province': 'hill_country',
+        'Colombo': 'colombo'
+      };
+      
+      const tripRegionKey = regionMap[trip.region] || 'colombo';
+      score += preferences.regions.includes(tripRegionKey) ? 1 : 0.2;
       factors++;
     }
 
     // Budget preferences  
-    if (preferences.budgetRange) {
+    if (preferences.budgetMin !== null || preferences.budgetMax !== null) {
       const tripPrice = parseFloat((trip.price || 0).toString());
-      if (tripPrice >= preferences.budgetRange.min && tripPrice <= preferences.budgetRange.max) {
+      const budgetMin = preferences.budgetMin || 0;
+      const budgetMax = preferences.budgetMax || 100000;
+      
+      if (tripPrice >= budgetMin && tripPrice <= budgetMax) {
         score += 1;
-      } else if (tripPrice < preferences.budgetRange.min) {
+      } else if (tripPrice < budgetMin) {
         score += 0.8; // Cheaper is still good
       } else {
         score += 0.2; // Too expensive
@@ -503,10 +520,107 @@ export class EnhancedRecommendationService {
       factors++;
     }
 
-    // Trip type preferences
-    if (preferences.tripTypes && preferences.tripTypes.length > 0 && trip.tags) {
-      const matchingTags = trip.tags.filter(tag => preferences.tripTypes!.includes(tag));
-      score += matchingTags.length > 0 ? 1 : 0.2;
+    // Vibe preferences (trip mood/atmosphere)
+    if (preferences.vibe && preferences.vibe.length > 0 && trip.tags) {
+      // Map vibe to common trip tags
+      const vibeTagMap: Record<string, string[]> = {
+        'relaxed': ['wellness', 'beach', 'spa', 'retreat'],
+        'adventure': ['hiking', 'climbing', 'extreme', 'safari', 'diving', 'surfing'],
+        'culture': ['cultural', 'temple', 'heritage', 'history', 'museum'],
+        'beach': ['beach', 'coastal', 'diving', 'surfing', 'island'],
+        'nature': ['wildlife', 'safari', 'hiking', 'nature', 'eco'],
+        'nightlife': ['nightlife', 'party', 'club', 'bar'],
+        'wellness': ['wellness', 'ayurveda', 'spa', 'yoga', 'meditation']
+      };
+      
+      let vibeMatch = false;
+      const tripTags = Array.isArray(trip.tags) ? trip.tags : [];
+      for (const vibeType of preferences.vibe) {
+        const relevantTags = vibeTagMap[vibeType] || [];
+        if (tripTags.some((tag: string) => relevantTags.includes(tag))) {
+          vibeMatch = true;
+          break;
+        }
+      }
+      score += vibeMatch ? 1 : 0.3;
+      factors++;
+    }
+
+    // Interest preferences
+    if (preferences.interests && preferences.interests.length > 0 && trip.tags) {
+      // Direct mapping between interests and trip tags
+      const interestTagMap: Record<string, string[]> = {
+        'hiking': ['hiking', 'trekking', 'walking'],
+        'wildlife': ['wildlife', 'safari', 'animal', 'bird'],
+        'history': ['history', 'heritage', 'archaeological', 'ancient'],
+        'photography': ['photography', 'scenic', 'landscape', 'nature'],
+        'food': ['food', 'culinary', 'cooking', 'restaurant'],
+        'diving': ['diving', 'snorkeling', 'underwater', 'marine'],
+        'surfing': ['surfing', 'surf', 'wave', 'board'],
+        'temples': ['temple', 'religious', 'buddhist', 'hindu'],
+        'festivals': ['festival', 'cultural', 'celebration', 'event'],
+        'wellness': ['wellness', 'spa', 'ayurveda', 'yoga'],
+        'ayurveda': ['ayurveda', 'traditional', 'herbal', 'healing'],
+        'train_journeys': ['train', 'railway', 'scenic', 'transport']
+      };
+      
+      let interestMatch = false;
+      const tripTags = Array.isArray(trip.tags) ? trip.tags : [];
+      for (const interest of preferences.interests) {
+        const relevantTags = interestTagMap[interest] || [interest];
+        if (tripTags.some((tag: string) => relevantTags.includes(tag))) {
+          interestMatch = true;
+          break;
+        }
+      }
+      score += interestMatch ? 1 : 0.2;
+      factors++;
+    }
+
+    // Month/seasonality preferences 
+    if (preferences.months && preferences.months.length > 0) {
+      const currentMonth = new Date().getMonth() + 1;
+      const monthMap = {
+        'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+        'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12
+      };
+      
+      const preferredMonthNums = preferences.months.map((m: string) => monthMap[m as keyof typeof monthMap]);
+      const seasonalMatch = preferredMonthNums.includes(currentMonth);
+      
+      // Also consider trip seasonality if available
+      let tripSeasonalMatch = false;
+      if (trip.seasonality && Array.isArray(trip.seasonality) && trip.seasonality.length > 0) {
+        const currentSeason = (currentMonth >= 12 || currentMonth <= 3) ? 'dry_season' : 'wet_season';
+        tripSeasonalMatch = trip.seasonality.includes(currentSeason) || trip.seasonality.includes('year_round');
+      }
+      
+      score += (seasonalMatch || tripSeasonalMatch) ? 1 : 0.6;
+      factors++;
+    }
+
+    // Companion preferences (affect trip type selection)
+    if (preferences.companions && preferences.companions.length > 0) {
+      // Map companions to trip characteristics
+      const companionTagMap: Record<string, string[]> = {
+        'solo': ['solo', 'independent', 'flexible'],
+        'couple': ['romantic', 'couple', 'honeymoon', 'intimate'],
+        'friends': ['group', 'social', 'party', 'adventure'],
+        'family': ['family', 'kid_friendly', 'safe', 'educational'],
+        'senior_friendly': ['senior', 'accessible', 'comfort', 'easy']
+      };
+      
+      let companionMatch = false;
+      const tripTags = Array.isArray(trip.tags) ? trip.tags : [];
+      for (const companion of preferences.companions) {
+        const relevantTags = companionTagMap[companion] || [];
+        if (tripTags.some((tag: string) => relevantTags.includes(tag))) {
+          companionMatch = true;
+          break;
+        }
+      }
+      // Less weight for companion matching as it's more contextual
+      score += companionMatch ? 0.8 : 0.5;
       factors++;
     }
 

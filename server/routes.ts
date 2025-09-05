@@ -173,6 +173,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin routes
   app.use('/api/admin', adminRoutes.default);
   
+  // Preferences routes
+  const { registerPreferencesRoutes } = await import('./modules/preferences/routes');
+  registerPreferencesRoutes(app);
+  
   // Serve admin uploads
   app.use('/uploads/admin', express.static('uploads/admin'));
   

@@ -27,6 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { ObjectUploader } from "@/components/ObjectUploader";
+import { PreferencesForm } from "@/components/preferences/PreferencesForm";
 
 export default function ProfilePage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -177,7 +178,9 @@ export default function ProfilePage() {
 
           {/* Preferences Tab */}
           <TabsContent value="preferences" className="space-y-6">
-            <TravelPreferences preferences={preferences} onUpdate={refetch} />
+            <div className="max-w-4xl mx-auto">
+              <PreferencesForm />
+            </div>
           </TabsContent>
 
           {/* Activity Tab */}
