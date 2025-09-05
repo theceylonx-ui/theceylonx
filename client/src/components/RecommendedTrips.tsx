@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Clock, Users, DollarSign, Star, Eye, TrendingUp, Sparkles } from "lucide-react";
 import { useRecommendations, useTrackInteraction } from "@/hooks/useRecommendations";
 import { useAuth } from "@/hooks/useAuth";
-import EnhancedRecommendedTrips from "./EnhancedRecommendedTrips";
+import { EnhancedRecommendedTrips } from "./EnhancedRecommendedTrips";
 import { Link } from "wouter";
 import { format } from "date-fns";
 
