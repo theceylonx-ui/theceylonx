@@ -342,6 +342,14 @@ export default function EnhancedRecommendedTrips() {
 
   return (
     <div className="space-y-6">
+      {/* Travel Tip Message */}
+      <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-sm text-blue-800">
+          <span className="font-medium">💡 Travel Tip:</span> These preferences are based on your personal choices. 
+          Always check with locals for more accurate and up-to-date information about destinations, weather, and activities.
+        </p>
+      </div>
+
       {/* Simple Header */}
       <div className="mb-6">
         <div className="flex items-start justify-between">
