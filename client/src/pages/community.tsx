@@ -86,25 +86,6 @@ export default function CommunityPage() {
     setCurrentPage(1);
   }, [searchQuery, selectedTopic, sortBy]);
 
-  // Check URL for edit parameter
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const editId = urlParams.get('edit');
-    if (editId && !editingQuestionId) {
-      // Find the question to populate the form
-      const questionToEdit = questions?.find(q => q.id === editId);
-      if (questionToEdit) {
-        form.setValue('title', questionToEdit.title);
-        form.setValue('body', questionToEdit.body);
-        form.setValue('topicId', questionToEdit.topic?.id || '');
-        form.setValue('isAnonymous', questionToEdit.isAnonymous || false);
-        setEditingQuestionId(editId);
-        setIsCreateDialogOpen(true);
-        // Clear the URL parameter
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-    }
-  }, [questions, editingQuestionId, form]);
 
   // Form
   const form = useForm<QuestionFormData>({
@@ -196,6 +177,26 @@ export default function CommunityPage() {
       createQuestionMutation.mutate(data);
     }
   };
+
+  // Check URL for edit parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit');
+    if (editId && !editingQuestionId && questions.length > 0) {
+      // Find the question to populate the form
+      const questionToEdit = questions.find(q => q.id === editId);
+      if (questionToEdit) {
+        form.setValue('title', questionToEdit.title);
+        form.setValue('body', questionToEdit.body);
+        form.setValue('topicId', questionToEdit.topic?.id || '');
+        form.setValue('isAnonymous', questionToEdit.isAnonymous || false);
+        setEditingQuestionId(editId);
+        setIsCreateDialogOpen(true);
+        // Clear the URL parameter
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, [questions, editingQuestionId, form]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
