@@ -7,12 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MessageSquare, ThumbsUp, ThumbsDown, Plus, Search, Calendar, User, CheckCircle, Edit } from "lucide-react";
+import { MessageSquare, ThumbsUp, ThumbsDown, Plus, Search, Calendar, User, CheckCircle, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
@@ -144,6 +145,17 @@ export default function CommunityPage() {
     },
     onError: (error: Error) => {
       toast({ title: "Failed to update question", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteQuestionMutation = useMutation({
+    mutationFn: (id: string) => apiRequest('DELETE', `/api/questions/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
+      toast({ title: "Question deleted successfully!" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Failed to delete question", description: error.message, variant: "destructive" });
     },
   });
 
@@ -599,22 +611,55 @@ export default function CommunityPage() {
                               {question.title}
                             </h3>
                             {user && question.user?.id === user.id && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  form.setValue('title', question.title);
-                                  form.setValue('body', question.body);
-                                  form.setValue('topicId', question.topic?.id || '');
-                                  form.setValue('isAnonymous', question.isAnonymous || false);
-                                  setEditingQuestionId(question.id);
-                                  setIsCreateDialogOpen(true);
-                                }}
-                                data-testid={`button-edit-question-${question.id}`}
-                              >
-                                <Edit className="w-4 h-4 mr-1" />
-                                Edit
-                              </Button>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    form.setValue('title', question.title);
+                                    form.setValue('body', question.body);
+                                    form.setValue('topicId', question.topic?.id || '');
+                                    form.setValue('isAnonymous', question.isAnonymous || false);
+                                    setEditingQuestionId(question.id);
+                                    setIsCreateDialogOpen(true);
+                                  }}
+                                  data-testid={`button-edit-question-${question.id}`}
+                                >
+                                  <Edit className="w-4 h-4 mr-1" />
+                                  Edit
+                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                      data-testid={`button-delete-question-${question.id}`}
+                                    >
+                                      <Trash2 className="w-4 h-4 mr-1" />
+                                      Delete
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete Question</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to delete this question? This action cannot be undone and will remove the question and all its answers.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => deleteQuestionMutation.mutate(question.id)}
+                                        disabled={deleteQuestionMutation.isPending}
+                                        className="bg-red-600 hover:bg-red-700"
+                                      >
+                                        {deleteQuestionMutation.isPending ? "Deleting..." : "Delete"}
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
                             )}
                           </div>
                           <p className="text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">

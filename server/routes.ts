@@ -1799,7 +1799,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/questions/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = (req.user as any)?.claims?.sub;
+      let userId: string | undefined;
+
+      // Check JWT authentication first
+      const jwtUser = req.jwtUser;
+      
+      if (jwtUser) {
+        userId = jwtUser.id;
+        console.log("✅ Question delete - JWT auth successful:", jwtUser.email);
+      } else {
+        // Fallback to Replit Auth
+        if (req.isAuthenticated && req.isAuthenticated()) {
+          const user = req.user as any;
+          if ((user as any)?.claims?.sub) {
+            userId = (user as any).claims.sub;
+            console.log("✅ Question delete - Replit Auth successful:", userId);
+          }
+        }
+      }
+      
+      if (!userId) {
+        console.log("❌ Question delete - No authentication found");
+        return res.status(401).json({ message: "Authentication required" });
+      }
       
       // First check if the question exists and belongs to the user
       const existingQuestion = await storage.getQuestion(req.params.id);
@@ -1810,10 +1832,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Not authorized to delete this question" });
       }
       
+      console.log("🗑️ Deleting question:", req.params.id);
       await storage.deleteQuestion(req.params.id);
+      console.log("✅ Question deleted successfully:", req.params.id);
       res.json({ message: "Question deleted successfully" });
     } catch (error) {
-      console.error("Error deleting question:", error);
+      console.error("❌ Error deleting question:", error);
       res.status(500).json({ message: "Failed to delete question" });
     }
   });
