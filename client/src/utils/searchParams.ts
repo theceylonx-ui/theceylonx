@@ -97,7 +97,7 @@ export function createTripDetailLink(tripId: string, preserveFilters = true): st
  * Creates a back link that returns to the trips listing with preserved filters
  * @param fallbackPath Fallback path if no returnTo parameter exists
  */
-export function createBackToTripsLink(fallbackPath = '/trips'): string {
+export function createBackToTripsLink(fallbackPath = '/browse-trips'): string {
   const helper = createSearchParamsHelper();
   const returnTo = helper.get('returnTo');
   
