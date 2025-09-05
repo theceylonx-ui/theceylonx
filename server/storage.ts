@@ -1995,24 +1995,29 @@ export class DatabaseStorage implements IStorage {
 
   // Saved trips operations (Pin and Interest system)
   async upsertSavedTrip(userId: string, tripId: string, saveType: 'pinned' | 'interested'): Promise<SavedTrip> {
-    const [savedTrip] = await db
-      .insert(savedTrips)
-      .values({
-        userId,
-        tripId,
-        saveType,
-        updatedAt: new Date()
-      })
-      .onConflictDoUpdate({
-        target: [savedTrips.userId, savedTrips.tripId],
-        set: {
+    try {
+      const [savedTrip] = await db
+        .insert(savedTrips)
+        .values({
+          userId,
+          tripId,
           saveType,
           updatedAt: new Date()
-        }
-      })
-      .returning();
-    
-    return savedTrip;
+        })
+        .onConflictDoUpdate({
+          target: [savedTrips.userId, savedTrips.tripId],
+          set: {
+            saveType,
+            updatedAt: new Date()
+          }
+        })
+        .returning();
+      
+      return savedTrip;
+    } catch (error) {
+      console.error('Error upserting saved trip (table may not exist):', error);
+      throw new Error('Database not ready - please try again in a moment');
+    }
   }
 
   async removeSavedTrip(userId: string, tripId: string): Promise<void> {
@@ -2021,11 +2026,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSavedTrip(userId: string, tripId: string): Promise<SavedTrip | undefined> {
-    const [savedTrip] = await db
-      .select()
-      .from(savedTrips)
-      .where(and(eq(savedTrips.userId, userId), eq(savedTrips.tripId, tripId)));
-    return savedTrip;
+    try {
+      const [savedTrip] = await db
+        .select()
+        .from(savedTrips)
+        .where(and(eq(savedTrips.userId, userId), eq(savedTrips.tripId, tripId)));
+      return savedTrip;
+    } catch (error) {
+      console.error('Error getting saved trip (table may not exist):', error);
+      return undefined;
+    }
   }
 
   async getUserSavedTrips(userId: string, saveType?: 'pinned' | 'interested'): Promise<SavedTripWithTrip[]> {
