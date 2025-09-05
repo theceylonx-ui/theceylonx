@@ -259,18 +259,9 @@ export default function UserDashboard() {
 
   const deleteQuestionMutation = useMutation({
     mutationFn: async (questionId: string) => {
-      console.log("🔍 Making DELETE request for question:", questionId);
-      try {
-        const result = await apiRequest("DELETE", `/api/questions/${questionId}`);
-        console.log("✅ DELETE request successful:", result);
-        return result;
-      } catch (error) {
-        console.error("❌ DELETE request failed:", error);
-        throw error;
-      }
+      return await apiRequest("DELETE", `/api/questions/${questionId}`);
     },
     onSuccess: () => {
-      console.log("✅ Delete mutation successful");
       toast({
         title: "Success",
         description: "Question deleted successfully!",
@@ -278,7 +269,6 @@ export default function UserDashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/me/activity/questions"] });
     },
     onError: (error) => {
-      console.error("❌ Delete mutation error:", error);
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -459,12 +449,8 @@ export default function UserDashboard() {
   };
 
   const handleDeleteQuestion = (questionId: string) => {
-    console.log("🔍 Delete button clicked for question:", questionId);
     if (confirm("Are you sure you want to delete this question?")) {
-      console.log("🔍 User confirmed deletion, calling mutation");
       deleteQuestionMutation.mutate(questionId);
-    } else {
-      console.log("🔍 User cancelled deletion");
     }
   };
 
