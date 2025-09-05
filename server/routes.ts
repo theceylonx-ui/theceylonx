@@ -1742,35 +1742,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/questions/:id', async (req: any, res) => {
+  app.patch('/api/questions/:id', unifiedAuthGuard, async (req: any, res) => {
     try {
       console.log("📝 PATCH /api/questions/:id - attempting to update question");
       
-      // Use the same authentication logic as /api/questions POST
-      let userId = null;
-      
-      // First try JWT authentication (for Google/Facebook OAuth users)
-      const { getCurrentUser } = await import('./auth/jwt');
-      const jwtUser = await getCurrentUser(req);
-      
-      if (jwtUser) {
-        userId = jwtUser.id;
-        console.log("✅ Question update - JWT auth successful:", jwtUser.email);
-      } else {
-        // Fallback to Replit Auth
-        if (req.isAuthenticated && req.isAuthenticated()) {
-          const user = req.user as any;
-          if ((user as any)?.claims?.sub) {
-            userId = (user as any).claims.sub;
-            console.log("✅ Question update - Replit Auth successful:", userId);
-          }
-        }
-      }
-      
-      if (!userId) {
-        console.log("❌ Question update - No authentication found");
-        return res.status(401).json({ message: "Authentication required" });
-      }
+      const userId = req.user?.id;
       
       // First check if the question exists and belongs to the user
       const existingQuestion = await storage.getQuestion(req.params.id);
@@ -1797,31 +1773,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/questions/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/questions/:id', unifiedAuthGuard, async (req: any, res) => {
     try {
-      let userId: string | undefined;
-
-      // Check JWT authentication first
-      const jwtUser = req.jwtUser;
-      
-      if (jwtUser) {
-        userId = jwtUser.id;
-        console.log("✅ Question delete - JWT auth successful:", jwtUser.email);
-      } else {
-        // Fallback to Replit Auth
-        if (req.isAuthenticated && req.isAuthenticated()) {
-          const user = req.user as any;
-          if ((user as any)?.claims?.sub) {
-            userId = (user as any).claims.sub;
-            console.log("✅ Question delete - Replit Auth successful:", userId);
-          }
-        }
-      }
-      
-      if (!userId) {
-        console.log("❌ Question delete - No authentication found");
-        return res.status(401).json({ message: "Authentication required" });
-      }
+      const userId = req.user?.id;
       
       // First check if the question exists and belongs to the user
       const existingQuestion = await storage.getQuestion(req.params.id);
