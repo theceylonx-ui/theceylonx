@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
-import { ChatInbox } from "@/components/chat-inbox";
-import { ChatThread } from "@/components/chat-thread";
+import { ChatThreadsList } from "@/components/chat/ChatThreadsList";
+import { ChatWindow } from "@/components/chat/ChatWindow";
+import { ChatTips } from "@/components/chat/ChatTips";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare } from "lucide-react";
 
@@ -78,21 +79,26 @@ export default function ChatPage({ params }: ChatPageProps) {
             </p>
           </div>
 
+          {/* Chat Tips */}
+          <div className="mb-6">
+            <ChatTips userRole="both" />
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Chat Inbox */}
+            {/* Chat Threads List */}
             <div className={selectedThreadId ? "hidden lg:block" : ""}>
-              <ChatInbox 
-                userId={user.id} 
+              <ChatThreadsList
+                currentUserId={user.id}
                 onThreadSelect={setSelectedThreadId}
               />
             </div>
 
-            {/* Chat Thread */}
+            {/* Chat Window */}
             <div className={!selectedThreadId ? "hidden lg:block" : ""}>
               {selectedThreadId ? (
-                <ChatThread
+                <ChatWindow
                   threadId={selectedThreadId}
-                  userId={user.id}
+                  currentUserId={user.id}
                   onBack={() => setSelectedThreadId(null)}
                 />
               ) : (
