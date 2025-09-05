@@ -35,6 +35,7 @@ import TravelStyleSettings from "@/pages/travel-style-settings";
 import ProfilePage from "@/pages/me";
 import ChatBuddy from "@/pages/chat-buddy";
 import AdminReportsPage from "@/pages/admin-reports";
+import ClerkSmoke from "@/auth/ClerkSmoke";
 // Clerk components temporarily disabled
 // import ClerkSignInPage from "@/pages/clerk-sign-in";
 // import ClerkSignUpPage from "@/pages/clerk-sign-up";
@@ -73,6 +74,7 @@ function Router() {
             <Route path="/auth/signin" component={AuthSignInPage} />
             <Route path="/auth/magic" component={AuthMagicPage} />
             <Route path="/auth/callback" component={AuthCallbackPage} />
+            <Route path="/auth-test" component={ClerkSmoke} />
             {/* Clerk routes temporarily disabled */}
             <Route path="/destination/:city" component={DestinationPage} />
             <Route path="/preferences" component={PreferencesPage} />

@@ -1,0 +1,176 @@
+Goal
+Clerk auth is currently disabled/miswired. Diagnose, fix, and prove it works via:
+env checks, 2) dashboard config validation, 3) frontend smoke page, 4) backend health routes, 5) protected route test, 6) logs & screenshots.
+Stack assumptions
+Frontend: React (Vite or CRA).
+Backend: Express + TypeScript.
+Auth: Clerk.
+DB: Neon + Drizzle (not used for this check).
+0) Install/ensure deps
+Frontend: @clerk/clerk-react
+Backend: @clerk/express and @clerk/clerk-sdk-node
+Types: @types/express
+Update to latest minor versions.
+npm i @clerk/clerk-react @clerk/express @clerk/clerk-sdk-node
+1) Environment & config validation
+Create a small runtime validator that runs at server start and prints a clear checklist.
+/server/utils/checkClerk.ts
+export function checkClerkEnv() {
+  const pub = process.env.CLERK_PUBLISHABLE_KEY || process.env.VITE_CLERK_PUBLISHABLE_KEY || process.env.REACT_APP_CLERK_PUBLISHABLE_KEY;
+  const sec = process.env.CLERK_SECRET_KEY;
+  const problems: string[] = [];
+
+  if (!pub) problems.push("Missing publishable key (use CLERK_PUBLISHABLE_KEY or VITE_CLERK_PUBLISHABLE_KEY or REACT_APP_CLERK_PUBLISHABLE_KEY).");
+  if (!sec) problems.push("Missing CLERK_SECRET_KEY (server-side).");
+
+  if (pub && !/^pk_(test|live)_/.test(pub)) problems.push("Publishable key format looks wrong (should start with pk_test_ or pk_live_).");
+  if (sec && !/^sk_(test|live)_/.test(sec)) problems.push("Secret key format looks wrong (should start with sk_test_ or sk_live_).");
+
+  // Helpful tip if keys are from different instances/environments.
+  if (pub?.includes("_test_") && sec?.includes("_live_")) problems.push("Mismatch: publishable is TEST but secret is LIVE.");
+  if (pub?.includes("_live_") && sec?.includes("_test_")) problems.push("Mismatch: publishable is LIVE but secret is TEST.");
+
+  return { ok: problems.length === 0, problems, pubMasked: pub ? pub.slice(0, 10) + "…" : "none", secMasked: sec ? sec.slice(0, 10) + "…" : "none" };
+}
+/server/index.ts (at startup)
+import { checkClerkEnv } from "./utils/checkClerk";
+const res = checkClerkEnv();
+console.log("[Clerk Env Check]", res);
+if (!res.ok) {
+  console.warn("⚠️ Clerk env invalid. Auth will be disabled until fixed.");
+}
+Agent:
+Read keys from Replit Secrets:
+CLERK_PUBLISHABLE_KEY (frontend) — if Vite, also expose VITE_CLERK_PUBLISHABLE_KEY at build; if CRA, REACT_APP_CLERK_PUBLISHABLE_KEY.
+CLERK_SECRET_KEY (backend).
+Ensure the chosen frontend variable is actually used by the build tool.
+Print the masked keys + checklist to server logs.
+2) Clerk Dashboard sanity (manual + notes)
+Agent, verify and document in README.md (auth section):
+Allowed origins / CORS include:
+Replit preview URL(s) (https://<project>.<username>.repl.co)
+Local dev URL (http://localhost:5173 or CRA port)
+Custom domain(s) if any
+Authorized redirect URLs include: /sign-in, /sign-up, any callback routes used.
+Environment (Test vs Live) matches our keys.
+Email verification: enabled if required by product.
+(Write the exact values you set/confirmed.)
+3) Frontend smoke page
+Create a one-stop page to prove Clerk loads in the browser and sessions work.
+/src/auth/ClerkSmoke.tsx
+import { ClerkProvider, SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/clerk-react";
+
+const pubKey = import.meta?.env?.VITE_CLERK_PUBLISHABLE_KEY || (window as any).REACT_APP_CLERK_PUBLISHABLE_KEY || (window as any).CLERK_PUBLISHABLE_KEY;
+
+function WhoAmI() {
+  const { user } = useUser();
+  return <pre style={{ padding: 12, background: "#111", color: "#eee", borderRadius: 8 }}>
+    {JSON.stringify({
+      signedIn: !!user,
+      email: user?.primaryEmailAddress?.emailAddress,
+      verified: user?.primaryEmailAddress?.verification?.status
+    }, null, 2)}
+  </pre>;
+}
+
+export default function ClerkSmoke() {
+  return (
+    <ClerkProvider publishableKey={pubKey}>
+      <div style={{ padding: 24 }}>
+        <h1>Clerk Smoke Test</h1>
+        <SignedOut>
+          <p>You are signed out.</p>
+          <SignInButton mode="modal">Sign in</SignInButton>
+        </SignedOut>
+        <SignedIn>
+          <p>You are signed in.</p>
+          <UserButton />
+          <WhoAmI />
+        </SignedIn>
+      </div>
+    </ClerkProvider>
+  );
+}
+Agent:
+Add a route /auth-test that renders ClerkSmoke.
+Ensure no duplicate ClerkProvider is mounted elsewhere (remove extra wrappers).
+4) Backend health & protected routes
+Wire Clerk on the server and add two routes: health and protected.
+/server/clerk.ts
+import { ClerkExpressWithAuth, ClerkExpressRequireAuth } from "@clerk/express";
+import { Clerk } from "@clerk/clerk-sdk-node";
+export const clerkClient = new Clerk({ secretKey: process.env.CLERK_SECRET_KEY! });
+export const withAuth = ClerkExpressWithAuth();
+export const requireAuth = ClerkExpressRequireAuth();
+/server/routes/clerkHealth.ts
+import { Router } from "express";
+import { clerkClient, withAuth, requireAuth } from "../clerk";
+
+export const clerkHealth = Router();
+
+// Simple ping: validates server-side key can hit Clerk API
+clerkHealth.get("/api/health/clerk", async (_req, res) => {
+  try {
+    const users = await clerkClient.users.getUserList({ limit: 1 });
+    res.json({ ok: true, apiReachable: true, sampleUserCount: users?.length ?? 0 });
+  } catch (e: any) {
+    res.status(500).json({ ok: false, error: e?.message || String(e) });
+  }
+});
+
+// Protected echo: only available when a valid session token is sent from frontend
+clerkHealth.get("/api/protected/echo", withAuth, requireAuth, (req: any, res) => {
+  res.json({
+    ok: true,
+    userId: req.auth.userId,
+    sessionId: req.auth.sessionId
+  });
+});
+/server/index.ts (add router)
+import express from "express";
+import { clerkHealth } from "./routes/clerkHealth";
+const app = express();
+app.use(clerkHealth);
+Agent:
+Ensure CORS permits the frontend origin.
+Confirm GET /api/health/clerk returns { ok: true }.
+From the browser (signed in), call GET /api/protected/echo – should return userId and sessionId.
+5) Email verification guard
+Add a minimal frontend guard to ensure we don’t allow protected actions when the email is unverified. Put this in a shared utility and log current state.
+/src/auth/useEmailVerified.ts
+import { useUser } from "@clerk/clerk-react";
+export function useEmailVerified() {
+  const { user, isLoaded } = useUser();
+  const verified = !!user?.primaryEmailAddress && user.primaryEmailAddress.verification?.status === "verified";
+  return { isLoaded, verified };
+}
+Agent:
+In any protected component (e.g., Save buttons), if !verified, show a banner “Verify your email” and render a Resend button:
+await user?.primaryEmailAddress?.prepareVerification({ strategy: "email_code" });
+Log the branch taken to console for this test.
+6) Common failure detection (log exact cause)
+Instrument logs to surface typical misconfigurations:
+Origin not allowed / CORS 403 → print request.headers.origin and show how to whitelist in Clerk.
+“No publishable key” → show which env var the app tried to read.
+Live/Test mismatch → print which key is test vs live.
+Duplicate providers → warn if <ClerkProvider> is mounted more than once.
+Session not found (401 on /api/protected/echo) → print “frontend not forwarding session token; check @clerk/clerk-react version and withAuth middleware.”
+7) Acceptance criteria (must all pass)
+/auth-test loads Clerk UI, allows sign-in, and displays email + verification status.
+/api/health/clerk returns { ok: true, apiReachable: true }.
+/api/protected/echo returns a valid { userId, sessionId } for a signed-in browser.
+If user’s email is unverified, protected UI shows a verify banner and disables actions until verified.
+No console errors or CORS errors. Only one ClerkProvider in the tree.
+README updated with Clerk Dashboard values (origins, redirects) and env variable names used by our toolchain (Vite vs CRA).
+8) Deliverables
+New files added: checkClerk.ts, ClerkSmoke.tsx, useEmailVerified.ts, clerk.ts, clerkHealth.ts.
+Logs/screenshots (or short GIF) showing:
+/auth-test signed-in view with verification status.
+GET /api/health/clerk success.
+GET /api/protected/echo payload.
+README section “Clerk Bring-Up & Troubleshooting” with the exact dashboard config + origin list.
+9) If errors persist, auto-suggest fix
+If CORS → add the running origin to Clerk Allowed Origins & restart.
+If ENV missing → create correct Secrets; for Vite also set VITE_CLERK_PUBLISHABLE_KEY.
+If mismatch TEST/LIVE → align both keys to the same environment/instance.
+If session 401 → verify @clerk/express withAuth and that frontend actually initializes Clerk with the same publishable key; update package versions.

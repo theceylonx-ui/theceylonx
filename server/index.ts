@@ -3,10 +3,19 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import { checkClerkEnv } from "./utils/checkClerk";
 
 // Log startup information
 console.log('Environment:', process.env.NODE_ENV || 'development');
 console.log('Starting Ceylon Expand server...');
+
+// Check Clerk environment configuration
+const clerkCheck = checkClerkEnv();
+console.log('[Clerk Env Check]', clerkCheck);
+if (!clerkCheck.ok) {
+  console.warn('⚠️ Clerk env invalid. Auth will be disabled until fixed.');
+  clerkCheck.problems.forEach(problem => console.warn(`  - ${problem}`));
+}
 
 const app = express();
 

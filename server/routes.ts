@@ -4,6 +4,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { authRouter, authGuard } from "./auth/routes";
 import { JWTUser } from "./auth/jwt";
+import { clerkHealth } from "./routes/clerkHealth";
 
 // Unified auth helper function
 async function getAuthenticatedUser(req: any): Promise<UnifiedUser | null> {
@@ -154,6 +155,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Re-enable Google OAuth routes for user sign-in
   app.use('/api/auth', authRouter);
+  
+  // Clerk health routes
+  app.use(clerkHealth);
 
   // Initialize admin system and setup admin routes
   const { adminService } = await import('./services/adminService');

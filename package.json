@@ -13,6 +13,7 @@
   "dependencies": {
     "@clerk/clerk-react": "^5.46.0",
     "@clerk/clerk-sdk-node": "^4.13.23",
+    "@clerk/express": "^1.7.29",
     "@clerk/nextjs": "^6.31.8",
     "@cloudinary/url-gen": "^1.22.0",
     "@google-cloud/storage": "^7.17.0",
