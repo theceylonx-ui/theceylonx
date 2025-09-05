@@ -116,6 +116,7 @@ function Router() {
             <Route path="/admin" component={AdminOverviewPage} />
             <Route path="/admin/dashboard" component={AdminOverviewPage} />
             <Route path="/admin/roles" component={() => import("@/pages/admin/roles").then(m => m.default)} />
+            <Route path="/admin/moderation" component={() => import("@/pages/admin/moderation").then(m => m.default)} />
             
             {/* Legacy Admin Routes */}
             <Route path="/admin-dashboard" component={AdminDashboardPage} />

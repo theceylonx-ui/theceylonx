@@ -181,6 +181,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 Content Moderation
               </div>
               <NavItem
+                href="/admin/moderation"
+                icon={Flag}
+                label="Moderation Queue"
+                permission="reports.view"
+                isActive={location.startsWith('/admin/moderation')}
+              />
+              <NavItem
                 href="/admin/trips"
                 icon={FileText}
                 label="Trips"
@@ -189,8 +196,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               />
               <NavItem
                 href="/admin/reports"
-                icon={Flag}
-                label="Reports"
+                icon={Shield}
+                label="Legacy Reports"
                 permission="reports.view"
                 isActive={location.startsWith('/admin/reports')}
               />

@@ -380,6 +380,7 @@ export const ratings = pgTable("ratings", {
 });
 
 // Reports table - enhanced to support chat message reporting
+// Enhanced Reports table for comprehensive moderation workflow
 export const reports = pgTable("reports", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   context: reportContextEnum("context").default("trip"),
@@ -391,12 +392,66 @@ export const reports = pgTable("reports", {
   reason: varchar("reason").notNull(),
   description: text("description"),
   status: reportStatusEnum("status").default("open"),
+  // Enhanced moderation fields (added via ALTER TABLE)
+  priority: varchar("priority", { enum: ['low', 'medium', 'high', 'critical'] }).default('medium'),
+  severity: varchar("severity", { enum: ['low', 'medium', 'high', 'critical'] }).default('low'),
+  assignedTo: varchar("assigned_to").references(() => users.id), // Assigned moderator
+  escalatedAt: timestamp("escalated_at"),
+  escalatedBy: varchar("escalated_by").references(() => users.id),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedBy: varchar("resolved_by").references(() => users.id),
+  resolutionNotes: text("resolution_notes"),
+  autoFlagged: boolean("auto_flagged").default(false), // Auto-detected content
+  flagScore: integer("flag_score").default(0), // Automated scoring
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   contextIdx: index("reports_context_idx").on(table.context),
   reporterIdIdx: index("reports_reporter_id_idx").on(table.reporterId),
   statusIdx: index("reports_status_idx").on(table.status),
   threadIdIdx: index("reports_thread_id_idx").on(table.threadId),
+  priorityIdx: index("reports_priority_idx").on(table.priority),
+  severityIdx: index("reports_severity_idx").on(table.severity),
+  assignedToIdx: index("reports_assigned_to_idx").on(table.assignedTo),
+}));
+
+// Moderation actions tracking table
+export const moderationActions = pgTable("moderation_actions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  reportId: varchar("report_id").references(() => reports.id, { onDelete: 'cascade' }),
+  moderatorId: varchar("moderator_id").notNull().references(() => users.id),
+  actionType: varchar("action_type").notNull(), // 'warn', 'suspend', 'ban', 'delete_content', 'edit_content', 'dismiss'
+  targetType: varchar("target_type").notNull(), // 'user', 'trip', 'message', 'comment'
+  targetId: varchar("target_id").notNull(),
+  reason: text("reason"),
+  durationHours: integer("duration_hours"), // For temporary actions like suspensions
+  metadata: jsonb("metadata").default('{}'),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  moderatorIdx: index("moderation_actions_moderator_idx").on(table.moderatorId),
+  actionTypeIdx: index("moderation_actions_action_type_idx").on(table.actionType),
+  targetIdx: index("moderation_actions_target_idx").on(table.targetType, table.targetId),
+}));
+
+// Content flags for automatic and manual content flagging
+export const contentFlags = pgTable("content_flags", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contentType: varchar("content_type").notNull(), // 'trip', 'comment', 'message', 'user_bio'
+  contentId: varchar("content_id").notNull(),
+  flagType: varchar("flag_type").notNull(), // 'spam', 'inappropriate', 'fake', 'scam', 'violence', 'harassment'
+  severity: integer("severity").default(1), // 1-5 severity scale
+  autoDetected: boolean("auto_detected").default(false),
+  detectionMethod: varchar("detection_method"), // 'keyword', 'ml_model', 'user_pattern', 'manual'
+  confidenceScore: decimal("confidence_score", { precision: 3, scale: 2 }), // 0.00-1.00
+  flaggedBy: varchar("flagged_by").references(() => users.id),
+  reviewedBy: varchar("reviewed_by").references(() => users.id),
+  status: varchar("status", { enum: ['pending', 'confirmed', 'false_positive', 'resolved'] }).default('pending'),
+  createdAt: timestamp("created_at").defaultNow(),
+  reviewedAt: timestamp("reviewed_at"),
+}, (table) => ({
+  contentIdx: index("content_flags_content_idx").on(table.contentType, table.contentId),
+  flagTypeIdx: index("content_flags_flag_type_idx").on(table.flagType),
+  statusIdx: index("content_flags_status_idx").on(table.status),
+  severityIdx: index("content_flags_severity_idx").on(table.severity),
 }));
 
 // Admin chat threads for report investigations

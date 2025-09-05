@@ -351,4 +351,95 @@ router.post('/superadmin/create', async (req: any, res) => {
   }
 });
 
+// ===== ENHANCED MODERATION ROUTES =====
+
+// Assign report to moderator
+router.patch('/reports/:id/assign', async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const { moderatorId } = req.body;
+    const assignedBy = req.user.id;
+
+    if (!moderatorId) {
+      return res.status(400).json({ message: 'Moderator ID is required' });
+    }
+
+    const actualModeratorId = moderatorId === 'current_user' ? assignedBy : moderatorId;
+    
+    // Update report assignment using raw SQL for now
+    await storage.executeRawQuery(
+      'UPDATE reports SET assigned_to = $1, status = $2 WHERE id = $3',
+      [actualModeratorId, 'investigating', id]
+    );
+
+    res.json({ success: true, message: 'Report assigned successfully' });
+  } catch (error) {
+    console.error('Error assigning report:', error);
+    res.status(500).json({ message: 'Failed to assign report' });
+  }
+});
+
+// Escalate report priority
+router.patch('/reports/:id/escalate', async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const escalatedBy = req.user.id;
+
+    // Get current priority and escalate
+    const currentReport = await storage.executeRawQuery(
+      'SELECT priority FROM reports WHERE id = $1',
+      [id]
+    );
+
+    if (!currentReport.length) {
+      return res.status(404).json({ message: 'Report not found' });
+    }
+
+    const currentPriority = currentReport[0].priority || 'medium';
+    let newPriority = currentPriority;
+
+    // Escalate priority
+    switch (currentPriority) {
+      case 'low': newPriority = 'medium'; break;
+      case 'medium': newPriority = 'high'; break;
+      case 'high': newPriority = 'critical'; break;
+      default: newPriority = 'critical';
+    }
+
+    await storage.executeRawQuery(
+      'UPDATE reports SET priority = $1, escalated_at = NOW(), escalated_by = $2 WHERE id = $3',
+      [newPriority, escalatedBy, id]
+    );
+
+    res.json({ success: true, message: 'Report escalated successfully' });
+  } catch (error) {
+    console.error('Error escalating report:', error);
+    res.status(500).json({ message: 'Failed to escalate report' });
+  }
+});
+
+// Resolve report
+router.patch('/reports/:id/resolve', async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const { resolution, notes } = req.body;
+    const resolvedBy = req.user.id;
+
+    await storage.executeRawQuery(
+      `UPDATE reports SET 
+        status = $1, 
+        resolved_at = NOW(), 
+        resolved_by = $2, 
+        resolution_notes = $3 
+       WHERE id = $4`,
+      [resolution || 'resolved', resolvedBy, notes, id]
+    );
+
+    res.json({ success: true, message: 'Report resolved successfully' });
+  } catch (error) {
+    console.error('Error resolving report:', error);
+    res.status(500).json({ message: 'Failed to resolve report' });
+  }
+});
+
 export default router;
