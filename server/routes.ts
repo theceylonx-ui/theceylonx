@@ -1230,7 +1230,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             priority: "critical",
             title: "Trip Report Submitted",
             message: `Your trip "${trip.title}" has been reported and is under review.`,
-            relatedTripId: report.tripId,
             relatedUserId: reporterId,
             actionUrl: `/trips/${report.tripId}`,
             isRead: false,
