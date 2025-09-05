@@ -369,26 +369,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       console.log("Creating trip with data:", { ...req.body, organizerId: userId });
       
-      // Strip any client-provided image fields for security
-      const { imageUrl, imageProvider, imageAttribution, imageFetchedAt, selectedCategoryImage, ...clientData } = req.body;
+      // Extract user-uploaded images and other image fields
+      const { imageUrl, imageProvider, imageAttribution, imageFetchedAt, selectedCategoryImage, images, ...clientData } = req.body;
       
       const tripData = insertTripSchema.parse({ ...clientData, organizerId: userId });
       console.log("Trip data validated successfully:", tripData);
       
-      // Auto-assign category-based image
-      const { pickDefaultFromChoices, getSafeCategory } = await import('./services/imageSelectorService');
-      const safeCategory = getSafeCategory(tripData.category);
-      const seed = `${tripData.title}-${userId}`;
-      const imageSelection = pickDefaultFromChoices(safeCategory, seed);
+      let finalImageData;
+      
+      // Priority 1: Use user-uploaded image if available
+      if (images && images.length > 0) {
+        finalImageData = {
+          imageUrl: images[0], // Use first uploaded image
+          imageProvider: 'user_upload',
+          imageAttribution: null,
+          imageFetchedAt: new Date()
+        };
+        console.log("Using user-uploaded image:", images[0]);
+      } else {
+        // Priority 2: Use Ceylon Expand logo as fallback
+        finalImageData = {
+          imageUrl: '/assets/5_1756417819316.png', // Ceylon Expand logo
+          imageProvider: 'ceylon_expand_logo',
+          imageAttribution: null,
+          imageFetchedAt: new Date()
+        };
+        console.log("Using Ceylon Expand logo as fallback image");
+      }
+      
+      const safeCategory = await import('./services/imageSelectorService').then(({ getSafeCategory }) => getSafeCategory(tripData.category));
       
       // Merge image data with trip data
       const tripWithImage = {
         ...tripData,
         category: safeCategory,
-        ...imageSelection
+        images: images || [], // Store uploaded images array
+        ...finalImageData
       };
       
-      console.log("Auto-assigned category image:", imageSelection.imageUrl);
+      console.log("Final image assigned:", finalImageData.imageUrl);
       
       const trip = await storage.createTrip(tripWithImage);
       res.json(trip);

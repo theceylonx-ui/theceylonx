@@ -235,7 +235,8 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
         region: formData.region,
         category: 'unknown', // Default category
         difficulty: 'easy', // Default difficulty
-        status: 'active'
+        status: 'active',
+        images: formData.mediaUrls || [] // Include uploaded images
       };
       
       // Create the trip via API
