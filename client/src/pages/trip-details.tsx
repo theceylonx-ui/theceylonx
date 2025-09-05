@@ -432,7 +432,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
         <TripBreadcrumbs trip={trip} className="mb-4" />
         
         {/* Back Button with preserved search state */}
-        <Link href={createBackToTripsLink('/trips')}>
+        <Link href={createBackToTripsLink('/browse-trips')}>
           <Button variant="outline" className="mb-6" data-testid="button-back">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to results
