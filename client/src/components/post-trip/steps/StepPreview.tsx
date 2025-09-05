@@ -223,8 +223,14 @@ export function StepPreview({ form }: StepPreviewProps) {
           {/* Contact Information */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <h4 className="font-medium mb-2">Organizer Contact</h4>
-            <p className="text-sm text-gray-600">
-              {formData.contactInfo || 'Contact information will be shown here'}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">🔒 Contact details are private</span>
+              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                Shared through secure chat
+              </span>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Participants will see your contact info only after you approve their trip requests
             </p>
           </div>
         </CardContent>

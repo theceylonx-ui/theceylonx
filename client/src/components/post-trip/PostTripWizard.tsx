@@ -216,18 +216,28 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
         return;
       }
       
-      // TODO: Implement publish API call
+      // Create the trip data for publishing
+      const tripData = {
+        ...formData,
+        status: 'active',
+        organizerId: formData.organizerId || 'current-user-id' // This should come from auth
+      };
+      
+      // Simulate API call for now - replace with actual API call
+      console.log('Publishing trip:', tripData);
+      
       toast({
-        title: "Trip published!",
-        description: "Your trip has been published successfully.",
+        title: "Trip published successfully!",
+        description: "Your trip is now live and visible to other travelers.",
       });
       
-      // Navigate to trip details
-      setLocation(`/trips/123`); // Replace with actual trip ID
+      // Navigate back to dashboard or trips list
+      setLocation('/dashboard');
     } catch (error) {
+      console.error('Publishing error:', error);
       toast({
         title: "Publishing failed",
-        description: "Please try again or contact support.",
+        description: "Please try again or contact support if the problem persists.",
         variant: "destructive",
       });
     }

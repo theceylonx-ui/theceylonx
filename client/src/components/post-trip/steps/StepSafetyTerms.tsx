@@ -33,6 +33,12 @@ export function StepSafetyTerms({ form }: StepSafetyTermsProps) {
                 Your contact details are kept private. They will only be shared with participants through our secure chat system when you approve their trip requests. You have full control over who gets your contact information.
               </p>
             </div>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-2">
+              <p className="text-sm text-green-800 font-medium">💡 WhatsApp Tip</p>
+              <p className="text-sm text-green-700 mt-1">
+                Enter your WhatsApp number (e.g., +94771234567) for easy communication. When participants contact you, they can click to message you directly on WhatsApp for quick trip coordination.
+              </p>
+            </div>
           </FormItem>
         )}
       />

@@ -191,13 +191,11 @@ export function SafetyChecklist({ value, onChange, onTermsChange, termsAccepted,
             <span>Need help understanding safety requirements?</span>
             <Button 
               variant="outline" 
-              size="sm" 
-              asChild
+              size="sm"
+              onClick={() => window.open('https://docs.google.com/document/d/1example/trip-safety-guide', '_blank')}
               data-testid="safety-help-link"
             >
-              <a href="/help/trips#posting" target="_blank" rel="noopener noreferrer">
-                View Guide <ExternalLink className="h-3 w-3 ml-1" />
-              </a>
+              View Guide <ExternalLink className="h-3 w-3 ml-1" />
             </Button>
           </AlertDescription>
         </Alert>
