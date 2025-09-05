@@ -98,10 +98,10 @@ export default function Navigation() {
                 data-testid="nav-community"
               >CeylonX Tribes</span>
             </Link>
-            <Link href="/faq">
+            <Link href="/help/faq">
               <span 
                 className={`transition-colors cursor-pointer ${
-                  isActive('/faq') 
+                  isActive('/help/faq') 
                     ? 'text-ceylon-green font-medium' 
                     : 'text-gray-600 hover:text-ceylon-green'
                 }`}
@@ -209,10 +209,10 @@ export default function Navigation() {
                   Community
                 </span>
               </Link>
-              <Link href="/faq">
+              <Link href="/help/faq">
                 <span 
                   className={`block px-3 py-2 text-base transition-colors cursor-pointer ${
-                    isActive('/faq') 
+                    isActive('/help/faq') 
                       ? 'text-ceylon-green font-medium' 
                       : 'text-gray-600 hover:text-ceylon-green'
                   }`}

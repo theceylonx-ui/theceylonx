@@ -75,7 +75,8 @@ function Router() {
             <Route path="/terms-of-service" component={TermsOfService} />
             <Route path="/privacy-policy" component={PrivacyPolicy} />
             <Route path="/contact-us" component={ContactUs} />
-            <Route path="/faq" component={FAQ} />
+            <Route path="/faq" component={HelpFAQPage} />
+            <Route path="/help/faq" component={HelpFAQPage} />
             <Route path="/auth/signin" component={AuthSignInPage} />
             <Route path="/auth/magic" component={AuthMagicPage} />
             <Route path="/auth/callback" component={AuthCallbackPage} />
@@ -104,7 +105,8 @@ function Router() {
             <Route path="/terms-of-service" component={TermsOfService} />
             <Route path="/privacy-policy" component={PrivacyPolicy} />
             <Route path="/contact-us" component={ContactUs} />
-            <Route path="/faq" component={FAQ} />
+            <Route path="/faq" component={HelpFAQPage} />
+            <Route path="/help/faq" component={HelpFAQPage} />
             <Route path="/auth/signin" component={AuthSignInPage} />
             {/* Clerk routes temporarily disabled */}
             <Route path="/destination/:city" component={DestinationPage} />
