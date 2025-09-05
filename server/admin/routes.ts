@@ -437,7 +437,7 @@ router.patch('/reports/:id/resolve', async (req: any, res) => {
 // ===== AI MODERATION ROUTES =====
 
 // AI Moderation stats
-router.get('/ai-moderation/stats', requirePermission('moderation.view'), async (req: any, res) => {
+router.get('/ai-moderation/stats', requirePermission('reports.view'), async (req: any, res) => {
   try {
     const stats = {
       totalAnalyzed: 1250,
@@ -463,7 +463,7 @@ router.get('/ai-moderation/stats', requirePermission('moderation.view'), async (
 });
 
 // Analyze content
-router.post('/ai-moderation/analyze', requirePermission('moderation.manage'), async (req: any, res) => {
+router.post('/ai-moderation/analyze', requirePermission('reports.moderate'), async (req: any, res) => {
   try {
     const { content, context = 'test' } = req.body;
     
@@ -486,7 +486,7 @@ router.post('/ai-moderation/analyze', requirePermission('moderation.manage'), as
 });
 
 // Batch process existing content
-router.post('/ai-moderation/batch-process', requirePermission('moderation.manage'), async (req: any, res) => {
+router.post('/ai-moderation/batch-process', requirePermission('reports.moderate'), async (req: any, res) => {
   try {
     const result = await aiModerationService.batchAnalyzeExistingContent();
     
@@ -506,7 +506,7 @@ router.post('/ai-moderation/batch-process', requirePermission('moderation.manage
 });
 
 // Get AI moderation settings
-router.get('/ai-moderation/settings', requirePermission('moderation.manage'), async (req: any, res) => {
+router.get('/ai-moderation/settings', requirePermission('reports.moderate'), async (req: any, res) => {
   try {
     const settings = {
       enabled: true,
@@ -525,7 +525,7 @@ router.get('/ai-moderation/settings', requirePermission('moderation.manage'), as
 });
 
 // Update AI moderation settings
-router.put('/ai-moderation/settings', requirePermission('moderation.manage'), async (req: any, res) => {
+router.put('/ai-moderation/settings', requirePermission('reports.moderate'), async (req: any, res) => {
   try {
     const updates = req.body;
     
@@ -547,7 +547,7 @@ router.put('/ai-moderation/settings', requirePermission('moderation.manage'), as
 // ===== AUDIT LOGGING ROUTES =====
 
 // Search audit logs
-router.get('/audit-logs', requirePermission('audit.view'), async (req: any, res) => {
+router.get('/audit-logs', requirePermission('logs.view'), async (req: any, res) => {
   try {
     const {
       userId,
@@ -578,7 +578,7 @@ router.get('/audit-logs', requirePermission('audit.view'), async (req: any, res)
 });
 
 // Get audit statistics
-router.get('/audit-logs/stats', requirePermission('audit.view'), async (req: any, res) => {
+router.get('/audit-logs/stats', requirePermission('logs.view'), async (req: any, res) => {
   try {
     const { days = 30 } = req.query;
     const stats = await auditService.getStatistics(parseInt(days));

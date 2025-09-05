@@ -92,12 +92,9 @@ export default function AIModerationPage() {
 
     setIsAnalyzing(true);
     try {
-      const result = await apiRequest('/api/admin/ai-moderation/analyze', {
-        method: 'POST',
-        body: JSON.stringify({
-          content: testContent,
-          context: 'test'
-        })
+      const result = await apiRequest('/api/admin/ai-moderation/analyze', 'POST', {
+        content: testContent,
+        context: 'test'
       });
       setAnalysisResult(result);
       toast({
@@ -118,9 +115,7 @@ export default function AIModerationPage() {
 
   // Batch processing mutation
   const batchProcessMutation = useMutation({
-    mutationFn: () => apiRequest('/api/admin/ai-moderation/batch-process', {
-      method: 'POST'
-    }),
+    mutationFn: () => apiRequest('/api/admin/ai-moderation/batch-process', 'POST'),
     onSuccess: (result) => {
       toast({
         title: "Batch Processing Complete",
@@ -140,10 +135,7 @@ export default function AIModerationPage() {
   // Update settings mutation
   const updateSettingsMutation = useMutation({
     mutationFn: (newSettings: Partial<AISettings>) => 
-      apiRequest('/api/admin/ai-moderation/settings', {
-        method: 'PUT',
-        body: JSON.stringify(newSettings)
-      }),
+      apiRequest('/api/admin/ai-moderation/settings', 'PUT', newSettings),
     onSuccess: () => {
       toast({
         title: "Settings Updated",

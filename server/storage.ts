@@ -310,6 +310,10 @@ export interface IStorage {
 
   // Raw query execution for admin/moderation operations
   executeRawQuery(query: string, params?: any[]): Promise<any[]>;
+
+  // Admin helper methods
+  getAllUsers(): Promise<User[]>;
+  getAllTrips(): Promise<Trip[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2662,6 +2666,15 @@ export class DatabaseStorage implements IStorage {
       console.error('Params:', params);
       throw error;
     }
+  }
+
+  // Admin helper methods
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  async getAllTrips(): Promise<Trip[]> {
+    return await db.select().from(trips);
   }
 }
 
