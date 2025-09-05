@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PostTripWizard } from "@/components/post-trip/PostTripWizard";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import Navigation from "@/components/navigation";
 import type { TripFormData } from "@shared/schema";
 
 export default function PostTripPage() {
@@ -70,6 +71,7 @@ export default function PostTripPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Navigation />
       <PostTripWizard
         draftId={draftId || undefined}
         initialData={initialData}
