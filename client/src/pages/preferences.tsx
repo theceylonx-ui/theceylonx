@@ -39,32 +39,6 @@ export default function PreferencesPage() {
           <PreferencesForm />
         </div>
 
-        {/* Info Section */}
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-blue-900 mb-2">
-              How This Helps You
-            </h3>
-            <ul className="text-blue-800 space-y-2">
-              <li className="flex items-start">
-                <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                <span>Get trip recommendations that match your travel style and interests</span>
-              </li>
-              <li className="flex items-start">
-                <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                <span>Discover trips within your preferred budget range</span>
-              </li>
-              <li className="flex items-start">
-                <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                <span>Find travel companions who share similar interests</span>
-              </li>
-              <li className="flex items-start">
-                <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                <span>See relevant trips for your preferred travel times and regions</span>
-              </li>
-            </ul>
-          </div>
-        </div>
       </div>
     </div>
   );
