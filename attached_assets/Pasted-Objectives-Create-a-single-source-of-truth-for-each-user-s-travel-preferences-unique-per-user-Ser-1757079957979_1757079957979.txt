@@ -1,0 +1,169 @@
+Objectives
+Create a single source of truth for each user’s travel preferences (unique per user).
+Server-side strict validation + canonicalization (no dupes, no unknown values).
+Frontend Profile → Preferences tab that displays, edits, and saves reliably.
+On save, trigger recompute/invalidate for personalized recommendations and refresh UI.
+Backfill/cleanup legacy data; fix previous “not updating” bug.
+Full test coverage: unit, API, and E2E. Clear logs for diagnostics.
+Data Model (Drizzle / Postgres)
+Enums / Taxonomy
+Create a small taxonomy module on the server so values are controlled (no free-text in DB).
+vibe: e.g., relaxed, adventure, culture, beach, nature, nightlife, wellness
+companions: solo, couple, friends, family, senior_friendly
+interests: hiking, wildlife, history, photography, food, diving, surfing, temples, festivals, wellness, ayurveda, train_journeys
+when: store months or seasons. Use months for precision: jan…dec (lowercase slugs).
+Keep taxonomy in code: /server/config/preferences_taxonomy.ts. Server rejects unknowns.
+Table: user_preferences
+user_id UUID PRIMARY KEY (exactly one row per user)
+vibe text[] (deduped, sorted)
+companions text[] (deduped, sorted)
+interests text[] (deduped, sorted)
+months text[] (subset of ['jan'..'dec'], deduped, sorted)
+regions text[] (optional; if used → controlled list: north, east, south, west, hill_country, cultural_triangle, colombo)
+budget_min int NULL
+budget_max int NULL
+version int DEFAULT 1 (for optimistic concurrency)
+updated_at timestamptz DEFAULT now()
+Indexes
+PK (user_id)
+GIN indexes on arrays if needed for analytics: (vibe), (interests)
+Constraint
+CHECK (budget_min IS NULL OR budget_max IS NULL OR budget_min <= budget_max)
+Table: preference_events (audit & ML signal)
+id pk
+user_id
+event enum: created | updated | reset
+diff JSONB (old→new)
+created_at timestamptz DEFAULT now()
+Agent: Write Drizzle migrations to create tables, enums if needed, indexes, and check constraint.
+Server (Express + TS)
+Validation & Canonicalization
+Create /server/modules/preferences/schema.ts with Zod:
+Accept arrays; lowercase + slugify inputs; deduplicate; sort canonically.
+Reject any value not in taxonomy; return 422 with details.
+// Pseudo: canonicalizeArray(input, allowedSet) => sorted unique array of allowed values
+Auth & Ownership
+All GET/PUT routes require Clerk auth.
+Write requires email verified (server-side check using Clerk SDK).
+Only the owner (req.auth.userId) can read/write their preferences unless role=admin.
+Routes
+GET /api/users/me/preferences
+If no row → return { empty: true, defaults: { … } } (client can display placeholders).
+PUT /api/users/me/preferences
+Body: validated payload; server canonicalizes.
+Optimistic concurrency: accept optional If-Match: <version> header. If provided and mismatches current version → 409 Conflict with { expectedVersion, actualVersion }.
+Upsert pattern: if row exists → update + version = version + 1.
+Write preference_events with diff (old vs new).
+Trigger ML refresh (see below).
+Respond with the canonical saved object + new version.
+POST /api/users/me/preferences/reset (optional)
+Clear to defaults; write event; trigger ML refresh.
+ML Refresh (critical)
+Add a small service /server/services/recs.ts:
+recs.invalidateUser(userId) → clear any cache keys (e.g., redis.del("recs:"+userId)).
+recs.enqueueRecompute(userId) → push a job to your existing ML queue (BullMQ/Worker). If no queue, call the ML service endpoint POST /ml/recomputeUser with { userId } (idempotent).
+In PUT/reset, call:
+await recs.invalidateUser(userId)
+await recs.enqueueRecompute(userId)
+Return immediately to UI; don’t block on full recompute. UI can refetch recs (see Frontend).
+Legacy Fix Task
+Create a one-off script /server/scripts/fix_legacy_preferences.ts:
+Load all user_preferences.
+Re-canonicalize arrays (lowercase, dedupe, sort).
+Enforce taxonomy (drop unknown values).
+Ensure single row per user (dedupe by max updated_at).
+Log changes and write preference_events(updated) where modified.
+Run once and commit logs to logs/fix_legacy_preferences.txt.
+Frontend (React)
+State & Data
+Use React Query (or SWR).
+Keys:
+["userPreferences"] → GET /api/users/me/preferences
+["personalizedTrips"] → GET /api/recommendations?top=20 (already exists in your ML service)
+UI: Profile → Preferences tab
+Display current canonical values as chips / multi-select lists:
+Sources for options come from taxonomy endpoint or hardcoded client config matching server taxonomy.
+Edit Form sections:
+Vibe (multi)
+Companions (multi)
+Interests (multi)
+Months (multi)
+Regions (multi, optional)
+Budget (min/max with guards)
+Save button:
+Sends PUT with current version in If-Match.
+Optimistic update of ["userPreferences"].
+On success: toast “Preferences saved”; invalidate ["personalizedTrips"] and refetch.
+On 409: show resolve dialog: “Your prefs changed elsewhere. Reload and reapply?” → reload from server, re-apply local edits, re-submit.
+Reset button (optional) → calls /reset with confirm modal.
+Verified check: If user email not verified, show banner and disable Save with inline CTA to resend verification (use your existing useEmailVerified() hook).
+Trips Listing (“For You”)
+Wherever “Trips for You” shows personalized results:
+After successful save, invalidate and refetch personalized endpoint.
+Show a small “Updated for your latest preferences” label with updated_at from prefs.
+Recommendation Integration
+Ensure /api/recommendations accepts a fresh profile from DB or from features store.
+Add a short-term fallback: if recompute job hasn’t finished yet, use on-the-fly scoring with the canonicalized preferences (your ML service already supports rule-based fallbacks per your earlier spec).
+Track a recs_version or prefs_version in recommendations response for debugging.
+Telemetry & Logging
+Server logs on every PUT:
+userId, old version → new version, fields changed (counts only).
+If taxonomy rejection occurs → log the invalid values & userId (no PII beyond Clerk id).
+Add a feature flag: PREFS_STRICT=true to enforce strict mode; log if disabled.
+Tests
+Unit (schema)
+Arrays canonicalize correctly: case-folding, de-dupe, sort.
+Reject unknown values (vibe/interests/months/companions/regions).
+Budget guard works.
+API (Jest + Supertest)
+GET /me/preferences returns empty/defaults for new users.
+PUT /me/preferences saves canonical values; returns new version.
+Version mismatch returns 409 with expected vs actual.
+Unverified user → 403 on write.
+ML integration is called (mock) exactly once; cache invalidation called.
+E2E (Playwright/Cypress)
+Sign in (verified) → open Profile → Preferences → select chips → Save → toast success → “Trips for You” refetches and visibly changes order/content (mock ML if needed).
+Try saving same value twice (idempotent) → no duplicate writes, version increments only when content changes.
+Simulate concurrent edit in another tab → 409 flow works and user resolves conflict.
+API Contracts (final)
+GET /api/users/me/preferences
+200:
+{
+  "userId":"usr_123",
+  "vibe":["adventure","nature"],
+  "companions":["friends"],
+  "interests":["hiking","wildlife"],
+  "months":["aug","sep"],
+  "regions":["hill_country"],
+  "budget_min":null,
+  "budget_max":150000,
+  "version":3,
+  "updated_at":"2025-09-05T13:30:00Z"
+}
+PUT /api/users/me/preferences (If-Match: <version> optional)
+Body: same shape as above (all fields optional; server canonicalizes and fills missing with previous).
+200: returns canonical record (new version).
+409: { "message":"version_conflict", "expectedVersion":5, "actualVersion":6 }
+POST /api/users/me/preferences/reset
+200: canonical defaults (version++).
+Migration & Cleanup Tasks
+Create tables & indexes; move any legacy columns into user_preferences.
+Backfill & canonicalize via fix_legacy_preferences.ts.
+Remove any client-side code that saved raw strings or bypassed server validation.
+Add a small taxonomy endpoint GET /api/preferences/taxonomy (optional) so the client always mirrors server options.
+Acceptance Criteria (must all pass)
+Exactly one authoritative preferences row per user (PK user_id).
+All arrays are lowercased, deduped, sorted, and only include allowed values.
+Profile → Preferences shows what the user picked; edits persist and survive reload.
+After saving, “Trips for You” updates immediately (cache invalidated + refetched; ML recompute enqueued).
+Server rejects unknown values with clear 422; client prevents bad submits.
+Writes require Clerk verified email; ownership enforced.
+Full test suite green (unit + API + E2E).
+Legacy data cleaned; no duplicates or stale values remain.
+Logs show versioning and diffs; no console errors in the browser.
+Deliverables
+Drizzle migration files (+ snapshot of schema).
+schema.ts, service functions, routes, and tests.
+React form components with optimistic UX & conflict resolution.
+Short README section: “Travel Preferences: Taxonomy, Validation, and ML Refresh Flow”.
+Brief screen recording: edit → save → “Trips for You” updates.
