@@ -19,7 +19,12 @@ import {
   Shield,
   LogOut,
   User,
-  Crown
+  Crown,
+  Brain,
+  Smartphone,
+  Book,
+  Activity,
+  AlertTriangle
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -208,6 +213,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 permission="chat.view"
                 isActive={location.startsWith('/admin/chat')}
               />
+              <NavItem
+                href="/admin/ai-moderation"
+                icon={Brain}
+                label="AI Moderation"
+                permission="moderation.manage"
+                isActive={location.startsWith('/admin/ai-moderation')}
+              />
             </div>
 
             {/* Platform Content */}
@@ -237,11 +249,25 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 System
               </div>
               <NavItem
-                href="/admin/logs"
-                icon={FileBarChart}
+                href="/admin/audit-logs"
+                icon={Activity}
                 label="Audit Logs"
-                permission="logs.view"
-                isActive={location.startsWith('/admin/logs')}
+                permission="audit.view"
+                isActive={location.startsWith('/admin/audit-logs')}
+              />
+              <NavItem
+                href="/admin/mobile-admin"
+                icon={Smartphone}
+                label="Mobile Admin"
+                permission="admin.view"
+                isActive={location.startsWith('/admin/mobile-admin')}
+              />
+              <NavItem
+                href="/admin/api-docs"
+                icon={Book}
+                label="API Documentation"
+                permission="admin.view"
+                isActive={location.startsWith('/admin/api-docs')}
               />
               <PermissionGuard permission="roles.view">
                 <NavItem

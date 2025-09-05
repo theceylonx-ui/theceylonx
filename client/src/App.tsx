@@ -117,6 +117,10 @@ function Router() {
             <Route path="/admin/dashboard" component={AdminOverviewPage} />
             <Route path="/admin/roles" component={() => import("@/pages/admin/roles").then(m => m.default)} />
             <Route path="/admin/moderation" component={() => import("@/pages/admin/moderation").then(m => m.default)} />
+            <Route path="/admin/ai-moderation" component={() => import("@/pages/admin/ai-moderation").then(m => m.default)} />
+            <Route path="/admin/mobile-admin" component={() => import("@/pages/admin/mobile-admin").then(m => m.default)} />
+            <Route path="/admin/audit-logs" component={() => import("@/pages/admin/audit-logs").then(m => m.default)} />
+            <Route path="/admin/api-docs" component={() => import("@/pages/admin/api-docs").then(m => m.default)} />
             
             {/* Legacy Admin Routes */}
             <Route path="/admin-dashboard" component={AdminDashboardPage} />

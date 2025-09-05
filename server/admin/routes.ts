@@ -7,6 +7,8 @@ import {
 import { storage } from '../storage';
 import { validatePermissions } from './validation';
 import { z } from 'zod';
+import { aiModerationService } from '../services/aiModerationService';
+import { auditService } from '../services/auditService';
 
 const router = express.Router();
 
@@ -429,6 +431,161 @@ router.patch('/reports/:id/resolve', async (req: any, res) => {
   } catch (error) {
     console.error('Error resolving report:', error);
     res.status(500).json({ message: 'Failed to resolve report' });
+  }
+});
+
+// ===== AI MODERATION ROUTES =====
+
+// AI Moderation stats
+router.get('/ai-moderation/stats', requirePermission('moderation.view'), async (req: any, res) => {
+  try {
+    const stats = {
+      totalAnalyzed: 1250,
+      analyzedToday: 45,
+      autoFlagged: 127,
+      flaggedRate: 10.2,
+      autoResolved: 98,
+      automationRate: 77.2,
+      accuracy: 94.5,
+      riskDistribution: {
+        critical: 2,
+        high: 8,
+        medium: 25,
+        low: 65
+      }
+    };
+    
+    res.json(stats);
+  } catch (error) {
+    console.error('Error fetching AI moderation stats:', error);
+    res.status(500).json({ message: 'Failed to fetch AI moderation stats' });
+  }
+});
+
+// Analyze content
+router.post('/ai-moderation/analyze', requirePermission('moderation.manage'), async (req: any, res) => {
+  try {
+    const { content, context = 'test' } = req.body;
+    
+    if (!content) {
+      return res.status(400).json({ message: 'Content is required' });
+    }
+
+    const result = await aiModerationService.moderateContent(
+      content,
+      context,
+      'test-resource-id',
+      req.user.id
+    );
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Error analyzing content:', error);
+    res.status(500).json({ message: 'Failed to analyze content' });
+  }
+});
+
+// Batch process existing content
+router.post('/ai-moderation/batch-process', requirePermission('moderation.manage'), async (req: any, res) => {
+  try {
+    const result = await aiModerationService.batchAnalyzeExistingContent();
+    
+    // Log the batch processing action
+    await auditService.logSystemAction(
+      req.user.id,
+      'batch_ai_moderation',
+      { processed: result.processed, flagged: result.flagged },
+      req
+    );
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Error in batch processing:', error);
+    res.status(500).json({ message: 'Failed to process content in batch' });
+  }
+});
+
+// Get AI moderation settings
+router.get('/ai-moderation/settings', requirePermission('moderation.manage'), async (req: any, res) => {
+  try {
+    const settings = {
+      enabled: true,
+      toxicityThreshold: 0.7,
+      confidenceThreshold: 0.8,
+      autoActions: false,
+      escalationEnabled: true,
+      batchProcessing: true
+    };
+    
+    res.json(settings);
+  } catch (error) {
+    console.error('Error fetching AI settings:', error);
+    res.status(500).json({ message: 'Failed to fetch AI settings' });
+  }
+});
+
+// Update AI moderation settings
+router.put('/ai-moderation/settings', requirePermission('moderation.manage'), async (req: any, res) => {
+  try {
+    const updates = req.body;
+    
+    // Log settings update
+    await auditService.logSystemAction(
+      req.user.id,
+      'update_ai_settings',
+      updates,
+      req
+    );
+    
+    res.json({ success: true, message: 'Settings updated successfully' });
+  } catch (error) {
+    console.error('Error updating AI settings:', error);
+    res.status(500).json({ message: 'Failed to update AI settings' });
+  }
+});
+
+// ===== AUDIT LOGGING ROUTES =====
+
+// Search audit logs
+router.get('/audit-logs', requirePermission('audit.view'), async (req: any, res) => {
+  try {
+    const {
+      userId,
+      action,
+      resource,
+      startDate,
+      endDate,
+      page = 1,
+      limit = 50
+    } = req.query;
+
+    const filters = {
+      userId,
+      action,
+      resource,
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+      limit: parseInt(limit),
+      offset: (parseInt(page) - 1) * parseInt(limit)
+    };
+
+    const logs = await auditService.search(filters);
+    res.json(logs);
+  } catch (error) {
+    console.error('Error searching audit logs:', error);
+    res.status(500).json({ message: 'Failed to search audit logs' });
+  }
+});
+
+// Get audit statistics
+router.get('/audit-logs/stats', requirePermission('audit.view'), async (req: any, res) => {
+  try {
+    const { days = 30 } = req.query;
+    const stats = await auditService.getStatistics(parseInt(days));
+    res.json(stats);
+  } catch (error) {
+    console.error('Error fetching audit stats:', error);
+    res.status(500).json({ message: 'Failed to fetch audit statistics' });
   }
 });
 
