@@ -1026,6 +1026,7 @@ export class DatabaseStorage implements IStorage {
         votesCount: questions.votesCount,
         answersCount: questions.answersCount,
         acceptedAnswerId: questions.acceptedAnswerId,
+        visibility: questions.visibility,
         createdAt: questions.createdAt,
         updatedAt: questions.updatedAt,
         user: {
