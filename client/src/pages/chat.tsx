@@ -72,11 +72,21 @@ export default function ChatPage({ params }: ChatPageProps) {
       <Navigation />
       <div className="pt-20 pb-10">
         <div className="max-w-6xl mx-auto p-6">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold mb-2">Chat Buddy</h1>
-            <p className="text-muted-foreground">
-              Connect with fellow travelers and trip organizers
-            </p>
+          {/* Header Section */}
+          <div className="mb-8">
+            <div className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 rounded-2xl p-8 text-white shadow-xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center space-x-3 mb-4">
+                    <MessageSquare className="w-8 h-8" />
+                    <h1 className="text-3xl md:text-4xl font-bold">Chat Buddy</h1>
+                  </div>
+                  <p className="text-lg opacity-90">
+                    Connect with fellow travelers and trip organizers
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Chat Tips */}

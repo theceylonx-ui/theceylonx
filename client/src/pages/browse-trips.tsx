@@ -169,25 +169,34 @@ export default function BrowseTrips() {
       
       <div className="page-container section-spacing">
         {/* Header Section */}
-        <div className="mb-8 md:mb-12 flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-          <div className="space-y-2">
-            <h1 className="h1" data-testid="page-title">
-              Browse Trips
-            </h1>
-            <p className="lead" data-testid="page-subtitle">
-              Discover amazing travel opportunities across Sri Lanka.
-            </p>
+        <div className="mb-8">
+          <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 rounded-2xl p-8 text-white shadow-xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center space-x-3 mb-4">
+                  <MapPin className="w-8 h-8" />
+                  <h1 className="text-3xl md:text-4xl font-bold" data-testid="page-title">
+                    Browse Trips
+                  </h1>
+                </div>
+                <p className="text-lg opacity-90" data-testid="page-subtitle">
+                  Discover amazing travel opportunities across Sri Lanka.
+                </p>
+              </div>
+              <div className="hidden md:block">
+                <Button
+                  onClick={handlePostTrip}
+                  variant="secondary"
+                  size="lg"
+                  className="text-blue-600"
+                  data-testid="button-post-trip"
+                >
+                  <Plus className="mr-2 h-5 w-5" />
+                  Post a Trip
+                </Button>
+              </div>
+            </div>
           </div>
-          
-          <Button
-            onClick={handlePostTrip}
-            size="lg"
-            className="shrink-0"
-            data-testid="button-post-trip"
-          >
-            <Plus className="mr-2 h-5 w-5" />
-            Post a Trip
-          </Button>
         </div>
 
         {/* Filters */}

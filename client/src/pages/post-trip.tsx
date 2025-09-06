@@ -98,8 +98,32 @@ export default function PostTripPage() {
       <Navigation />
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {/* Header with Back Link */}
-        <div className="mb-6">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-600 rounded-2xl p-8 text-white shadow-xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center space-x-3 mb-4">
+                  <Plus className="w-8 h-8" />
+                  <h1 className="text-3xl md:text-4xl font-bold">Post a Trip</h1>
+                </div>
+                <p className="text-lg opacity-90">
+                  Share your journey and connect with fellow travelers
+                </p>
+              </div>
+              <div className="hidden md:block">
+                <BackLink 
+                  to={returnTo ? decodeURIComponent(returnTo) : createBackToTripsLink()}
+                  label="← Back to Browse"
+                  className="bg-white/20 text-white hover:bg-white/30 border-white/30"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Mobile Back Link */}
+        <div className="mb-6 md:hidden">
           <BackLink 
             to={returnTo ? decodeURIComponent(returnTo) : createBackToTripsLink()}
             label="← Back to Browse"
