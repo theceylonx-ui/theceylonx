@@ -57,6 +57,8 @@
   --ceylon-green-hover: hsl(158 64% 42%);
   --ceylon-blue: hsl(199 89% 48%);
   --ceylon-blue-hover: hsl(199 89% 38%);
+  --ceylon-orange: hsl(14 100% 46%);
+  --ceylon-orange-hover: hsl(14 100% 36%);
   --ceylon-beige: hsl(60 56% 91%);
   --ceylon-sand: hsl(37 44% 67%);
   --ceylon-accent: hsl(202 100% 50%);
@@ -129,12 +131,20 @@
     color: var(--ceylon-blue);
   }
   
+  .text-ceylon-orange {
+    color: var(--ceylon-orange);
+  }
+  
   .bg-ceylon-green {
     background-color: var(--ceylon-green);
   }
   
   .bg-ceylon-blue {
     background-color: var(--ceylon-blue);
+  }
+  
+  .bg-ceylon-orange {
+    background-color: var(--ceylon-orange);
   }
   
   .bg-ceylon-beige {
@@ -159,6 +169,10 @@
   
   .hover\:bg-ceylon-blue\/90:hover {
     background-color: var(--ceylon-blue-hover);
+  }
+  
+  .hover\:bg-ceylon-orange\/90:hover {
+    background-color: var(--ceylon-orange-hover);
   }
   
   .text-ceylon-accent {

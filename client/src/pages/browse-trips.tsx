@@ -5,42 +5,26 @@ import { Grid3X3, List, MapPin, Plus } from "lucide-react";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import TripCard from "@/components/trip-card";
-import TripFilters from "@/components/trip-filters";
+import BrowseTripsFilters from "@/components/trips/BrowseTripsFilters";
+import { useTripsFiltersStore } from "@/store/tripsFiltersStore";
 import { TipsBox } from "@/components/TipsBox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { updateSearchParam, decodeFiltersFromUrl, encodeFiltersToUrl, createPostTripLink } from "@/utils/searchParams";
+import { createPostTripLink } from "@/utils/searchParams";
 import { EmptyState } from "@/components/EmptyState";
-import { useTripsStore } from "@/store/tripsStore";
 import type { TripWithOrganizer } from "@shared/schema";
 
 export default function BrowseTrips() {
   const [, setLocation] = useLocation();
-  const { filters, setFilters } = useTripsStore();
+  const { filters, setResultsCount } = useTripsFiltersStore();
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
-  // Initialize filters from URL on mount
-  useEffect(() => {
-    const urlFilters = decodeFiltersFromUrl();
-    setFilters(urlFilters);
-    setCurrentPage(urlFilters.page || 1);
-  }, [setFilters]);
-
-  // Sync filters to URL whenever they change
-  useEffect(() => {
-    const newSearch = encodeFiltersToUrl({ ...filters, page: currentPage });
-    const newPath = newSearch ? `/trips?${newSearch}` : '/trips';
-    window.history.replaceState({}, '', newPath);
-  }, [filters, currentPage]);
-
-  const [viewMode, setViewMode] = useState<'list' | 'map'>(filters.view || 'list');
-
-  // Update view mode and preserve other filters in URL
+  // Update view mode
   const handleViewModeChange = (newView: 'list' | 'map') => {
     setViewMode(newView);
-    setFilters({ view: newView });
   };
 
   const { data, isLoading } = useQuery<{
@@ -55,9 +39,17 @@ export default function BrowseTrips() {
     queryKey: ["/api/trips", filters, currentPage],
     queryFn: async () => {
       const params = new URLSearchParams();
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value) params.set(key, value);
-      });
+      
+      // Convert our new filter format to API params
+      if (filters.q) params.set('search', filters.q);
+      if (filters.from) params.set('from', filters.from);
+      if (filters.to) params.set('to', filters.to);
+      if (filters.region) params.set('region', filters.region);
+      if (filters.startDate) params.set('startDate', filters.startDate);
+      if (filters.endDate) params.set('endDate', filters.endDate);
+      if (filters.priceMin) params.set('minPrice', filters.priceMin.toString());
+      if (filters.priceMax) params.set('maxPrice', filters.priceMax.toString());
+      
       params.set('page', currentPage.toString());
       params.set('limit', '8');
       
@@ -70,11 +62,17 @@ export default function BrowseTrips() {
   const trips = data?.trips || [];
   const pagination = data?.pagination;
 
+  // Update results count in store when data changes
+  useEffect(() => {
+    if (pagination?.total !== undefined) {
+      setResultsCount(pagination.total);
+    }
+  }, [pagination?.total, setResultsCount]);
+
   // Reset to page 1 when filters change
-  const handleFiltersChange = (newFilters: any) => {
-    setFilters({ ...newFilters, page: 1 });
+  useEffect(() => {
     setCurrentPage(1);
-  };
+  }, [filters]);
 
   // Handle Post Trip navigation with current context
   const handlePostTrip = () => {
@@ -198,7 +196,7 @@ export default function BrowseTrips() {
         </div>
 
         {/* Filters */}
-        <TripFilters filters={filters} onFiltersChange={handleFiltersChange} />
+        <BrowseTripsFilters />
 
         {/* Results Header with View Toggle */}
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -279,9 +277,10 @@ export default function BrowseTrips() {
                   }}
                   secondaryAction={{
                     label: "Clear filters",
-                    onClick: () => setFilters({
-                      from: "", to: "", date: "", region: "", minPrice: "", maxPrice: "", search: ""
-                    }),
+                    onClick: () => {
+                      const { clearAll } = useTripsFiltersStore.getState();
+                      clearAll();
+                    },
                     variant: "outline"
                   }}
                   showCard={false}
