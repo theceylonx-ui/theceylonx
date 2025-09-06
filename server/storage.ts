@@ -26,6 +26,7 @@ import {
   chatThreads,
   chatMessages,
   chatParticipantState,
+  userTripFlags,
   type User,
   type UpsertUser,
   type InsertTrip,
@@ -2434,6 +2435,24 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(userTripFlags.updatedAt));
 
     return pinnedTripsWithDetails.map(({ trip, organizer }) => ({
+      ...trip,
+      organizer,
+    }));
+  }
+
+  async getUserInterestedTrips(userId: string): Promise<TripWithOrganizer[]> {
+    const interestedTripsWithDetails = await db
+      .select({
+        trip: trips,
+        organizer: users,
+      })
+      .from(userTripFlags)
+      .innerJoin(trips, eq(userTripFlags.tripId, trips.id))
+      .innerJoin(users, eq(trips.organizerId, users.id))
+      .where(and(eq(userTripFlags.userId, userId), eq(userTripFlags.interested, true)))
+      .orderBy(desc(userTripFlags.updatedAt));
+
+    return interestedTripsWithDetails.map(({ trip, organizer }) => ({
       ...trip,
       organizer,
     }));
