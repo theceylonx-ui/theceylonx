@@ -271,6 +271,39 @@ export default function QuestionDetailPage() {
                 </div>
               </div>
               <div className="flex items-center space-x-2">
+                {/* Edit and Delete buttons for question author */}
+                {user && user.id === question.userId && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setLocation(`/community?edit=${question.id}`)}
+                      data-testid="button-edit-question"
+                    >
+                      <Edit className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm('Are you sure you want to delete this question? This action cannot be undone.')) {
+                          // TODO: Implement delete question functionality
+                          toast({ 
+                            title: "Delete functionality", 
+                            description: "Question deletion will be implemented soon.",
+                            variant: "destructive"
+                          });
+                        }
+                      }}
+                      data-testid="button-delete-question"
+                      className="text-red-600 hover:text-red-700 border-red-300 hover:border-red-400"
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Delete
+                    </Button>
+                  </>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
