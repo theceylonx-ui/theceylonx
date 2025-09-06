@@ -950,7 +950,7 @@ export class DatabaseStorage implements IStorage {
         topicId: questions.topicId,
         isAnonymous: questions.isAnonymous,
         views: sql`0`, // Default to 0 since column doesn't exist
-        score: questions.score || sql`0`, // Use the new score field
+        score: questions.votesCount || sql`0`, // Use votesCount as score for now
         votesCount: questions.votesCount,
         answersCount: questions.answersCount,
         acceptedAnswerId: questions.acceptedAnswerId,
@@ -1220,7 +1220,7 @@ export class DatabaseStorage implements IStorage {
         questionId: answers.questionId,
         userId: answers.userId,
         votesCount: answers.votesCount,
-        score: answers.score || sql`0`, // Include score for answers
+        score: answers.votesCount || sql`0`, // Use votesCount as score for now
         isAccepted: answers.isAccepted,
         isAnonymous: sql`false`.as('isAnonymous'), // Answers don't have anonymity yet, but prepare for future
         createdAt: answers.createdAt,
@@ -1349,15 +1349,13 @@ export class DatabaseStorage implements IStorage {
     if (votableType === 'question') {
       await db.update(questions)
         .set({ 
-          votesCount: score,
-          score: score  // Update both the old and new score fields
+          votesCount: score  // Just update votesCount for now
         })
         .where(eq(questions.id, votableId));
     } else {
       await db.update(answers)
         .set({ 
-          votesCount: score,
-          score: score  // Update both the old and new score fields
+          votesCount: score  // Just update votesCount for now
         })
         .where(eq(answers.id, votableId));
     }
