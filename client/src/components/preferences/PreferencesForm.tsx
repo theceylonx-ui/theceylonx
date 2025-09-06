@@ -174,12 +174,50 @@ export function PreferencesForm() {
         description: "Your travel preferences have been updated successfully.",
       });
     },
-    onError: (error, variables, context) => {
+    onError: async (error, variables, context) => {
       // Rollback optimistic update
       queryClient.setQueryData(["/api/preferences"], context?.previousPreferences);
       setIsOptimistic(false);
       
       console.error("Failed to save preferences:", error);
+      
+      // Check if it's a version conflict error (409)
+      if (error instanceof Error && error.message.includes("409")) {
+        // Version conflict - refetch latest and retry automatically
+        try {
+          // Refetch the latest preferences
+          await queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
+          await queryClient.refetchQueries({ queryKey: ["/api/preferences"] });
+          
+          // Retry the save with latest version
+          const latestPreferences = queryClient.getQueryData<UserPreferences>(["/api/preferences"]);
+          const response = await apiRequest("PUT", "/api/preferences", {
+            ...variables,
+            version: latestPreferences?.version || 1
+          });
+          
+          // If retry succeeds, update the data
+          const data = await response.json();
+          queryClient.setQueryData(["/api/preferences"], data.preferences);
+          
+          toast({
+            title: "Preferences saved",
+            description: "Your travel preferences have been updated successfully.",
+          });
+          
+          return; // Exit early on successful retry
+        } catch (retryError) {
+          console.error("Retry failed:", retryError);
+          toast({
+            title: "Failed to save preferences",
+            description: "Version conflict occurred. Please refresh the page and try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      
+      // Handle other errors normally
       toast({
         title: "Failed to save preferences",
         description: error instanceof Error ? error.message : "Please try again later.",
