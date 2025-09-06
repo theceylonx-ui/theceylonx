@@ -154,17 +154,17 @@ export function SaveControl({ tripId, variant = 'default', className = '' }: Sav
   const isInterested = currentStatus?.isSaved && currentStatus.saveType === 'interested';
 
   return (
-    <div className={`flex items-center gap-1 ${className}`}>
+    <div className={`flex items-center gap-2 ${className}`}>
       {/* Pin Button */}
       <Button
         variant={isPinned ? 'default' : 'outline'}
         size={isCompact ? 'sm' : 'default'}
         onClick={() => handleSave('pinned')}
         disabled={isPending}
-        className={`${isCompact ? 'text-xs px-2 py-1' : ''} transition-all duration-200 ${
+        className={`${isCompact ? 'h-9 w-9 p-0' : 'h-10 w-10 p-0'} transition-all duration-200 ${
           isPinned 
             ? 'bg-orange-500 text-white hover:bg-orange-600 border-orange-500 shadow-md' 
-            : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+            : 'border-ui-line text-text-muted hover:bg-ui-surface hover:border-orange-400'
         }`}
         data-testid={`pin-button-${tripId}`}
         title={isPinned ? "Unpin trip" : "Pin trip"}
@@ -184,10 +184,10 @@ export function SaveControl({ tripId, variant = 'default', className = '' }: Sav
         size={isCompact ? 'sm' : 'default'}
         onClick={() => handleSave('interested')}
         disabled={isPending}
-        className={`${isCompact ? 'text-xs px-2 py-1' : ''} transition-all duration-200 ${
+        className={`${isCompact ? 'h-9 w-9 p-0' : 'h-10 w-10 p-0'} transition-all duration-200 ${
           isInterested 
             ? 'bg-yellow-500 text-white hover:bg-yellow-600 border-yellow-500 shadow-md' 
-            : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+            : 'border-ui-line text-text-muted hover:bg-ui-surface hover:border-yellow-400'
         }`}
         data-testid={`interest-button-${tripId}`}
         title={isInterested ? "Remove interest" : "Mark as interested"}

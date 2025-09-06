@@ -436,7 +436,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
             </div>
           </div>
           
-          <div className="flex items-center justify-between pt-4 border-t border-ui-line mt-4">
+          <div className="flex items-center justify-between pt-4 border-t border-ui-line mt-4 min-h-[60px]">
             <div data-testid={`trip-organizer-${trip.id}`}>
               <Link href={`/profile/${trip.organizerId}`} className="hover:opacity-80 transition-opacity">
                 <UserDisplay 
@@ -448,7 +448,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
               </Link>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 min-w-0 flex-1 mr-4">
               {user && (
                 <>
                   {!isOwner && (
@@ -476,7 +476,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
               
               <Button 
                 size="sm"
-                className="text-xs px-3 py-1.5 bg-brand text-white hover:bg-brand-hover font-medium"
+                className="text-sm px-4 py-2 bg-brand text-white hover:bg-brand-hover font-medium min-w-[80px] h-9"
                 data-testid={`button-view-${trip.id}`}
                 title="View trip details"
                 asChild
