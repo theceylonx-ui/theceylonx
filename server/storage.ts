@@ -1053,8 +1053,6 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(users, eq(questions.userId, users.id))
       .leftJoin(topics, eq(questions.topicId, topics.id))
       .where(and(eq(questions.id, id), eq(questions.isDeleted, false)));
-
-    console.log("🔍 Question query result count:", questionData.length);
     
     const question = questionData[0];
     if (!question) return undefined;

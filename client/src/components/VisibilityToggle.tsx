@@ -88,6 +88,10 @@ export function VisibilityToggle({ type, id, currentValue, currentVisibility, di
       queryClient.invalidateQueries({ queryKey: ['/api/me/activity/questions'] });
       queryClient.invalidateQueries({ queryKey: [`/api/questions/${id}`] });
       setQuestionUpdating(id, false);
+      toast({
+        title: "Question Updated",
+        description: "Question visibility has been successfully updated.",
+      });
     },
     onError: (error) => {
       console.error('Failed to update question visibility:', error);
