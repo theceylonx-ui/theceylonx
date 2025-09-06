@@ -1,0 +1,207 @@
+Objectives
+Remove the previous Q&A voting implementation completely.
+Create a fresh, minimal Upvote-only system (no downvotes).
+Realtime score updates across clients (list + detail pages) without refresh.
+One vote per user per item (toggle: upvoted ↔ not upvoted).
+0) Teardown (remove old code safely)
+Search & remove old voting code paths (keep commits clean):
+Client (likely):
+client/src/components/community/*Vote*
+client/src/app/community/* (vote handlers/buttons)
+client/src/store/*vote*
+Server:
+server/src/modules/community/*vote*
+server/src/modules/community/resolvers (old vote resolvers)
+server/src/db/migrations/*vote*
+Any events named question_vote_*, answer_vote_*
+Filesystem writes for votes/logs (if any): delete and replace with DB only.
+Grep:
+rg -n "(vote|upvote|downvote|score)" client server
+Keep a list in PR of removed files for audit.
+1) Data Model (Drizzle/SQL)
+Tables
+-- Questions (add cached score column)
+ALTER TABLE questions
+  ADD COLUMN IF NOT EXISTS score INT NOT NULL DEFAULT 0;
+
+-- Answers (add cached score column)
+ALTER TABLE answers
+  ADD COLUMN IF NOT EXISTS score INT NOT NULL DEFAULT 0;
+
+-- Upvotes: presence = upvoted, absence = not upvoted
+CREATE TABLE IF NOT EXISTS question_upvotes (
+  id SERIAL PRIMARY KEY,
+  question_id UUID NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (question_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_question_upvotes_q ON question_upvotes(question_id);
+
+CREATE TABLE IF NOT EXISTS answer_upvotes (
+  id SERIAL PRIMARY KEY,
+  answer_id UUID NOT NULL REFERENCES answers(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (answer_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_answer_upvotes_a ON answer_upvotes(answer_id);
+Why presence-only? Simple toggle, fast count (COUNT(*)). We also maintain a cached score on parent rows for list performance.
+2) API Contracts (GraphQL preferred)
+type Question {
+  id: ID!
+  score: Int!        # cached
+  viewerUpvoted: Boolean!   # computed for current user
+}
+
+type Answer {
+  id: ID!
+  score: Int!
+  viewerUpvoted: Boolean!
+}
+
+type Mutation {
+  toggleQuestionUpvote(questionId: ID!): Question!  # flips state; returns updated score + viewerUpvoted
+  toggleAnswerUpvote(answerId: ID!): Answer!
+}
+
+type Subscription {
+  questionScoreUpdated(id: ID!): Question!  # emits { id, score }
+  answerScoreUpdated(id: ID!): Answer!
+}
+REST fallback (if needed)
+POST /api/questions/:id/upvote/toggle
+POST /api/answers/:id/upvote/toggle
+SSE channels: /api/stream/questions/:id/score, /api/stream/answers/:id/score
+3) Server Logic (Resolvers/Services)
+Toggle (transactional):
+Require auth. Get userId from session/JWT; ignore client-sent user.
+Start TX:
+If upvote exists → DELETE from *_upvotes; delta = -1
+Else → INSERT; delta = +1
+Update cached score = score + delta on questions or answers.
+Publish realtime event with the updated score.
+Return { id, score, viewerUpvoted }.
+Queries:
+viewerUpvoted = EXISTS(SELECT 1 FROM *_upvotes WHERE item_id = ? AND user_id = currentUser)
+Rate limits:
+Basic throttling (e.g., 10 toggles/10s per user per item).
+Pub/Sub:
+Use existing WS/GraphQL-Subscriptions (or SSE). Topic keys:
+question_score_updated:${id}
+answer_score_updated:${id}
+4) Client (Next.js + Zustand)
+UI rules:
+One button per item: ⬆️ Upvote (toggle).
+States:
+Active (filled icon, bold label) → user has upvoted.
+Inactive (outline icon) → user hasn’t.
+Optimistic update:
+If inactive → set viewerUpvoted=true, score+1.
+If active → set viewerUpvoted=false, score-1.
+On error → revert + toast.
+Components to (re)create
+client/src/components/community/UpvoteButton.tsx
+Integrate into:
+QuestionCard.tsx, QuestionDetail.tsx
+AnswerItem.tsx
+Subscription hook:
+useSubscribeQuestionScore(id)
+useSubscribeAnswerScore(id)
+On message → update item score in local store / component state.
+Example button (shadcn/ui + framer-motion)
+"use client";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import { useState } from "react";
+
+type Props = {
+  itemId: string;
+  kind: "question" | "answer";
+  initialScore: number;
+  initialViewerUpvoted: boolean;
+  onToggle: (kind: "question"|"answer", id: string) => Promise<{score:number; viewerUpvoted:boolean}>;
+  subscribe: (kind: "question"|"answer", id: string, cb: (score:number)=>void) => void;
+};
+
+export default function UpvoteButton({ itemId, kind, initialScore, initialViewerUpvoted, onToggle, subscribe }: Props) {
+  const [score, setScore] = useState(initialScore);
+  const [upvoted, setUpvoted] = useState(initialViewerUpvoted);
+  const [saving, setSaving] = useState(false);
+
+  // subscribe once
+  useState(() => {
+    subscribe(kind, itemId, (s) => setScore(s));
+  });
+
+  const handleClick = async () => {
+    if (saving) return;
+    setSaving(true);
+    const prev = { upvoted, score };
+    // optimistic
+    const nextUp = !upvoted;
+    setUpvoted(nextUp);
+    setScore(score + (nextUp ? 1 : -1));
+    try {
+      const res = await onToggle(kind, itemId);
+      setUpvoted(res.viewerUpvoted);
+      setScore(res.score);
+    } catch {
+      setUpvoted(prev.upvoted);
+      setScore(prev.score);
+      // toast error
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <motion.div whileTap={{ scale: 0.95 }}>
+      <Button variant={upvoted ? "default" : "outline"} size="sm" onClick={handleClick} disabled={saving} aria-pressed={upvoted} aria-label="Upvote">
+        ⬆️ {upvoted ? "Upvoted" : "Upvote"} • {score}
+      </Button>
+    </motion.div>
+  );
+}
+5) Integration Points
+List pages must re-render score changes via subscription:
+Sub to all visible IDs (batch subscribe or multiplexed channel).
+Sorting “Top” uses score DESC (cached column) to avoid N+1 counts.
+Anonymous questions: No effect; upvotes are on the item, not identity.
+6) Security & Abuse
+Auth required to toggle.
+Unique constraint (item_id, user_id) prevents duplicates.
+Optional: shadow-ban logic or anomaly detection later (not in scope now).
+7) Tests / QA
+Server unit
+Toggle inserts/removes correctly; cached score adjusts atomically.
+Unique constraint respected.
+viewerUpvoted reflects truth after toggle.
+Client unit
+Optimistic toggle increments/decrements; reverts on error.
+E2E
+Open Q detail in two browsers:
+User A toggles upvote → User B sees score update in realtime.
+List view:
+Scores update without reload; “Top” sort reorders appropriately.
+A11y
+Button is focusable, has aria-pressed, readable label, and 44px target.
+8) Acceptance Criteria
+Old voting code fully removed (no dead imports, no console errors).
+Upvote toggle works for Questions and Answers.
+Realtime score updates broadcast to all connected clients on list and detail.
+One upvote per user; toggling removes/adds vote accordingly.
+Sorting by “Top” uses updated scores instantly.
+No filesystem writes for votes—DB only.
+9) Deliverables
+Migration scripts (Drizzle/SQL) applied.
+New GraphQL resolvers + subscription handlers (or REST+SSE).
+New UpvoteButton and wiring in Q&A UIs.
+Short demo video (two windows) showing realtime updates on list & detail.
+PR notes: files removed, new schema, endpoints, and how to configure subscriptions.
+Notes
+Keep it lean: no downvote, no reputation math in this PR.
+Re-use existing WS infra if present; otherwise implement SSE for score-only updates.
+Follow CeyEx v4.0 Playground visuals (micro-bounce on tap, subtle feedback).
