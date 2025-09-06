@@ -72,14 +72,14 @@ export default function ProfilePage() {
   const { profile, preferences, privacy, notifications, stats } = profileData;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Navigation Header */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="pt-6 pb-4 flex items-center justify-between">
           <Button
             variant="outline"
             onClick={() => setLocation('/')}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-white/80 backdrop-blur-sm border-white/20 hover:bg-white hover:shadow-md transition-all duration-200"
             data-testid="button-home"
           >
             <Home className="h-4 w-4" />
@@ -87,59 +87,78 @@ export default function ProfilePage() {
           </Button>
         </div>
 
-        {/* Profile Header */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <div className="flex items-center space-x-6">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src={profile.profileImageUrl} alt="Profile" />
-              <AvatarFallback className="text-xl">
-                {getInitials(profile)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900">
-                {getDisplayName(profile)}
-              </h1>
-              {profile.username && (
-                <p className="text-lg text-gray-600">@{profile.username}</p>
-              )}
-              {profile.bio && (
-                <p className="text-gray-700 mt-2">{profile.bio}</p>
-              )}
-              <div className="flex items-center space-x-4 mt-3 text-sm text-gray-500">
-                {profile.location && (
-                  <div className="flex items-center">
-                    <MapPin className="h-4 w-4 mr-1" />
-                    {profile.location}
+        {/* Stunning Profile Header with Gradient */}
+        <div className="relative mb-8 overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 shadow-2xl">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 bg-black/10">
+            <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent"></div>
+          </div>
+          
+          <div className="relative p-8 lg:p-12">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-6 lg:space-y-0 lg:space-x-8">
+              {/* Avatar and Info */}
+              <div className="flex items-center space-x-6">
+                <div className="relative">
+                  <Avatar className="h-28 w-28 lg:h-32 lg:w-32 ring-4 ring-white/30 shadow-xl">
+                    <AvatarImage src={profile.profileImageUrl} alt="Profile" />
+                    <AvatarFallback className="text-2xl bg-white/20 text-white backdrop-blur-sm">
+                      {getInitials(profile)}
+                    </AvatarFallback>
+                  </Avatar>
+                  {/* Online indicator */}
+                  <div className="absolute -bottom-1 -right-1 h-6 w-6 bg-green-400 rounded-full ring-4 ring-white/30"></div>
+                </div>
+                
+                <div className="flex-1 text-white">
+                  <h1 className="text-3xl lg:text-4xl font-bold mb-2">
+                    {getDisplayName(profile)}
+                  </h1>
+                  {profile.username && (
+                    <p className="text-lg lg:text-xl text-white/90 mb-2">@{profile.username}</p>
+                  )}
+                  {profile.bio && (
+                    <p className="text-white/80 max-w-md leading-relaxed">{profile.bio}</p>
+                  )}
+                  <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-white/80">
+                    {profile.location && (
+                      <div className="flex items-center bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">
+                        <MapPin className="h-4 w-4 mr-2" />
+                        {profile.location}
+                      </div>
+                    )}
+                    {profile.email && (
+                      <div className="flex items-center bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">
+                        <Mail className="h-4 w-4 mr-2" />
+                        {profile.email}
+                      </div>
+                    )}
+                    <div className="flex items-center bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Member since {new Date(profile.createdAt).toLocaleDateString()}
+                    </div>
                   </div>
-                )}
-                {profile.email && (
-                  <div className="flex items-center">
-                    <Mail className="h-4 w-4 mr-1" />
-                    {profile.email}
-                  </div>
-                )}
+                </div>
               </div>
-            </div>
-            <div className="text-right">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-ceylon-green">
-                    {stats.questions_count}
+
+              {/* Enhanced Stats Cards */}
+              <div className="grid grid-cols-3 gap-4 lg:gap-6 w-full lg:w-auto">
+                <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 lg:p-6 text-center border border-white/20 hover:bg-white/20 transition-all duration-200">
+                  <div className="text-3xl lg:text-4xl font-bold text-white mb-1">
+                    {stats.questions_count || 0}
                   </div>
-                  <div className="text-sm text-gray-500">Questions</div>
+                  <div className="text-sm text-white/80 font-medium">Questions</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-ceylon-green">
-                    {stats.trips_count}
+                <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 lg:p-6 text-center border border-white/20 hover:bg-white/20 transition-all duration-200">
+                  <div className="text-3xl lg:text-4xl font-bold text-white mb-1">
+                    {stats.trips_count || 0}
                   </div>
-                  <div className="text-sm text-gray-500">Trips</div>
+                  <div className="text-sm text-white/80 font-medium">Trips</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-ceylon-green">
+                <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 lg:p-6 text-center border border-white/20 hover:bg-white/20 transition-all duration-200">
+                  <div className="text-3xl lg:text-4xl font-bold text-white mb-1">
                     {profile.profileCompletePct || 0}%
                   </div>
-                  <div className="text-sm text-gray-500">Complete</div>
+                  <div className="text-sm text-white/80 font-medium">Complete</div>
                 </div>
               </div>
             </div>
