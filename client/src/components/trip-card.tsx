@@ -436,19 +436,19 @@ export default function TripCard({ trip, badges }: TripCardProps) {
             </div>
           </div>
           
-          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+          <div className="flex items-center justify-between pt-4 border-t border-ui-line mt-4">
             <div data-testid={`trip-organizer-${trip.id}`}>
               <Link href={`/profile/${trip.organizerId}`} className="hover:opacity-80 transition-opacity">
                 <UserDisplay 
                   user={trip.organizer}
-                  avatarSize="md"
-                  className="gap-2"
-                  nameClassName="text-xs sm:text-sm text-gray-600 truncate max-w-[100px] sm:max-w-[120px]"
+                  avatarSize="lg"
+                  className="gap-3"
+                  nameClassName="text-sm font-medium text-text-primary truncate max-w-[120px] sm:max-w-[140px]"
                 />
               </Link>
             </div>
             
-            <div className="flex items-center space-x-1 sm:space-x-2">
+            <div className="flex items-center gap-2">
               {user && (
                 <>
                   {!isOwner && (

@@ -27,7 +27,7 @@ export default function PriceRangeSlider() {
 
   return (
     <div className="space-y-2" data-testid="price-range-slider">
-      <div className="text-sm text-muted-foreground" data-testid="price-range-display">
+      <div className="text-sm font-medium text-text-primary mb-1" data-testid="price-range-display">
         {displayText}
       </div>
       <Slider
@@ -40,7 +40,7 @@ export default function PriceRangeSlider() {
         aria-label="Maximum price filter in LKR"
         data-testid="price-slider"
       />
-      <div className="flex justify-between text-xs text-muted-foreground">
+      <div className="flex justify-between text-xs text-text-muted mt-1">
         <span>All prices</span>
         <span>{formatLKR(MAX_LKR)}</span>
       </div>

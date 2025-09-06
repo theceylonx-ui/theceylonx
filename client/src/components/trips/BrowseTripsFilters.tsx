@@ -91,7 +91,7 @@ export default function BrowseTripsFilters({
               onClick={clearAll} 
               aria-label="Clear all filters"
               data-testid="btn-clear-all"
-              className="text-sm text-text-muted hover:text-danger hover:border-danger"
+              className="text-sm text-text-muted hover:text-danger hover:border-danger hover:bg-danger/5 font-medium"
             >
               <X className="h-4 w-4 mr-1" />
               Clear All
