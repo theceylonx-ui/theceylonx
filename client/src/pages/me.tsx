@@ -48,6 +48,24 @@ export default function ProfilePage() {
   
   const [activeTab, setActiveTab] = useState(getInitialTab);
 
+  // Listen for URL changes to update active tab
+  useEffect(() => {
+    const handleUrlChange = () => {
+      const newTab = getInitialTab();
+      setActiveTab(newTab);
+    };
+
+    // Initial check
+    handleUrlChange();
+
+    // Listen for browser navigation events
+    window.addEventListener('popstate', handleUrlChange);
+    
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+    };
+  }, []);
+
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
