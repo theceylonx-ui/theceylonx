@@ -21,14 +21,18 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="bg-ui-bg border-b border-ui-line/50 sticky top-0 z-50 backdrop-blur-sm bg-ui-bg/95">
+    <nav className={`${
+      user 
+        ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 border-b border-emerald-500/30 shadow-lg shadow-emerald-500/20' 
+        : 'bg-ui-bg border-b border-ui-line/50'
+    } sticky top-0 z-50 backdrop-blur-sm transition-all duration-300`}>
       <div className="page-container">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/">
             <div className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-all duration-200" data-testid="nav-logo">
               <img src={logoImage} alt="Ceylon Expand Logo" className="h-8 w-8" />
-              <span className="text-xl font-semibold text-text-primary">Ceylon Expand</span>
+              <span className={`text-xl font-semibold ${user ? 'text-white' : 'text-text-primary'} transition-colors duration-300`}>Ceylon Expand</span>
             </div>
           </Link>
 
@@ -38,9 +42,9 @@ export default function Navigation() {
               <span 
                 className={`transition-all duration-200 cursor-pointer relative py-2 ${
                   isActive('/browse-trips') 
-                    ? 'text-brand font-semibold' 
-                    : 'text-text-secondary hover:text-brand'
-                } ${isActive('/browse-trips') ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand after:rounded-full' : ''}`}
+                    ? (user ? 'text-white font-semibold' : 'text-brand font-semibold')
+                    : (user ? 'text-emerald-100 hover:text-white' : 'text-text-secondary hover:text-brand')
+                } ${isActive('/browse-trips') ? (user ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-white after:rounded-full' : 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand after:rounded-full') : ''}`}
                 data-testid="nav-browse"
               >
                 Browse Trips
@@ -50,9 +54,9 @@ export default function Navigation() {
               <span 
                 className={`transition-all duration-200 cursor-pointer relative py-2 ${
                   isActive('/post') 
-                    ? 'text-brand font-semibold' 
-                    : 'text-text-secondary hover:text-brand'
-                } ${isActive('/post') ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand after:rounded-full' : ''}`}
+                    ? (user ? 'text-white font-semibold' : 'text-brand font-semibold')
+                    : (user ? 'text-emerald-100 hover:text-white' : 'text-text-secondary hover:text-brand')
+                } ${isActive('/post') ? (user ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-white after:rounded-full' : 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand after:rounded-full') : ''}`}
                 data-testid="nav-post"
               >
                 Post a Trip
@@ -63,9 +67,9 @@ export default function Navigation() {
                 <span 
                   className={`transition-all duration-200 cursor-pointer flex items-center gap-2 relative py-2 ${
                     isActive('/calendar') 
-                      ? 'text-brand font-semibold' 
-                      : 'text-text-secondary hover:text-brand'
-                  } ${isActive('/calendar') ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand after:rounded-full' : ''}`}
+                      ? 'text-white font-semibold' 
+                      : 'text-emerald-100 hover:text-white'
+                  } ${isActive('/calendar') ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-white after:rounded-full' : ''}`}
                   data-testid="nav-calendar"
                 >
                   <Calendar className="w-4 h-4" />
@@ -78,9 +82,9 @@ export default function Navigation() {
                 <span 
                   className={`transition-all duration-200 cursor-pointer flex items-center gap-2 relative py-2 ${
                     isActive('/chat') || location.startsWith('/chat/') 
-                      ? 'text-brand font-semibold' 
-                      : 'text-text-secondary hover:text-brand'
-                  } ${(isActive('/chat') || location.startsWith('/chat/')) ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand after:rounded-full' : ''}`}
+                      ? 'text-white font-semibold' 
+                      : 'text-emerald-100 hover:text-white'
+                  } ${(isActive('/chat') || location.startsWith('/chat/')) ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-white after:rounded-full' : ''}`}
                   data-testid="nav-chat"
                 >
                   <MessageSquare className="w-4 h-4" />
@@ -92,9 +96,9 @@ export default function Navigation() {
               <span 
                 className={`transition-all duration-200 cursor-pointer relative py-2 ${
                   isActive('/community') 
-                    ? 'text-brand font-semibold' 
-                    : 'text-text-secondary hover:text-brand'
-                } ${isActive('/community') ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand after:rounded-full' : ''}`}
+                    ? (user ? 'text-white font-semibold' : 'text-brand font-semibold')
+                    : (user ? 'text-emerald-100 hover:text-white' : 'text-text-secondary hover:text-brand')
+                } ${isActive('/community') ? (user ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-white after:rounded-full' : 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand after:rounded-full') : ''}`}
                 data-testid="nav-community"
               >
                 Community
@@ -116,7 +120,7 @@ export default function Navigation() {
               variant="ghost"
               size="sm"
               onClick={toggleMobileMenu}
-              className="md:hidden p-2 text-text-secondary hover:text-brand hover:bg-ui-surface"
+              className={`md:hidden p-2 ${user ? 'text-emerald-100 hover:text-white hover:bg-emerald-500/20' : 'text-text-secondary hover:text-brand hover:bg-ui-surface'} transition-colors duration-200`}
               data-testid="mobile-menu-button"
             >
               {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -126,14 +130,14 @@ export default function Navigation() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden py-6 border-t border-ui-line/50 animate-fade-in">
+          <div className={`md:hidden py-6 border-t ${user ? 'border-emerald-500/30 bg-gradient-to-b from-emerald-600/95 to-emerald-700/95' : 'border-ui-line/50'} animate-fade-in backdrop-blur-sm`}>
             <div className="space-y-4">
               <Link href="/browse-trips">
                 <div 
                   className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
                     isActive('/browse-trips') 
-                      ? 'bg-brand-subtle text-brand font-semibold' 
-                      : 'text-text-secondary hover:bg-ui-surface hover:text-brand'
+                      ? (user ? 'bg-white/20 text-white font-semibold' : 'bg-brand-subtle text-brand font-semibold')
+                      : (user ? 'text-emerald-100 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                   data-testid="mobile-nav-browse"
@@ -145,8 +149,8 @@ export default function Navigation() {
                 <div 
                   className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
                     isActive('/post') 
-                      ? 'bg-brand-subtle text-brand font-semibold' 
-                      : 'text-text-secondary hover:bg-ui-surface hover:text-brand'
+                      ? (user ? 'bg-white/20 text-white font-semibold' : 'bg-brand-subtle text-brand font-semibold')
+                      : (user ? 'text-emerald-100 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                   data-testid="mobile-nav-post"
@@ -159,8 +163,8 @@ export default function Navigation() {
                   <div 
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                       isActive('/calendar') 
-                        ? 'bg-brand-subtle text-brand font-semibold' 
-                        : 'text-text-secondary hover:bg-ui-surface hover:text-brand'
+                        ? 'bg-white/20 text-white font-semibold' 
+                        : 'text-emerald-100 hover:bg-white/10 hover:text-white'
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                     data-testid="mobile-nav-calendar"
@@ -175,8 +179,8 @@ export default function Navigation() {
                   <div 
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                       isActive('/chat') || location.startsWith('/chat/') 
-                        ? 'bg-brand-subtle text-brand font-semibold' 
-                        : 'text-text-secondary hover:bg-ui-surface hover:text-brand'
+                        ? 'bg-white/20 text-white font-semibold' 
+                        : 'text-emerald-100 hover:bg-white/10 hover:text-white'
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                     data-testid="mobile-nav-chat"
@@ -190,8 +194,8 @@ export default function Navigation() {
                 <div 
                   className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
                     isActive('/community') 
-                      ? 'bg-brand-subtle text-brand font-semibold' 
-                      : 'text-text-secondary hover:bg-ui-surface hover:text-brand'
+                      ? (user ? 'bg-white/20 text-white font-semibold' : 'bg-brand-subtle text-brand font-semibold')
+                      : (user ? 'text-emerald-100 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                   data-testid="mobile-nav-community"
