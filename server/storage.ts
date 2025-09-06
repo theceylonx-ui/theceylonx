@@ -950,7 +950,7 @@ export class DatabaseStorage implements IStorage {
         topicId: questions.topicId,
         isAnonymous: questions.isAnonymous,
         views: sql`0`, // Default to 0 since column doesn't exist
-        score: sql`0`, // Default to 0 since column doesn't exist
+        score: questions.score || sql`0`, // Use the new score field
         votesCount: questions.votesCount,
         answersCount: questions.answersCount,
         acceptedAnswerId: questions.acceptedAnswerId,
@@ -997,12 +997,16 @@ export class DatabaseStorage implements IStorage {
     
     const questionsData = await query;
     
-    // Fetch answers for each question
+    // Fetch answers for each question and apply anonymity logic
     const questionsWithAnswers = await Promise.all(
       questionsData.map(async (question) => {
         const answers = await this.getQuestionAnswers(question.id);
+        
+        // Apply anonymity logic: mask PII if isAnonymous is true
+        const maskedQuestion = this.applyAnonymityToQuestion(question);
+        
         return {
-          ...question,
+          ...maskedQuestion,
           answers,
         };
       })
@@ -1011,6 +1015,54 @@ export class DatabaseStorage implements IStorage {
     return {
       questions: questionsWithAnswers as QuestionWithDetails[],
       total: totalCount
+    };
+  }
+
+  // Helper method to apply anonymity logic to questions
+  private applyAnonymityToQuestion(question: any): any {
+    if (!question.isAnonymous) {
+      return question; // Return as-is for non-anonymous questions
+    }
+
+    // Mask PII for anonymous questions
+    return {
+      ...question,
+      user: {
+        ...question.user,
+        id: null, // Hide user ID for anonymous posts
+        email: null,
+        firstName: null,
+        lastName: null,
+        username: null,
+        profileImageUrl: null, // Use generic avatar on frontend
+        phoneNumber: null,
+        bio: null,
+        // Display name should be "Anonymous"
+        displayName: "Anonymous"
+      }
+    };
+  }
+
+  // Helper method to apply anonymity logic to answers
+  private applyAnonymityToAnswer(answer: any): any {
+    if (!answer.isAnonymous) {
+      return answer;
+    }
+
+    return {
+      ...answer,
+      user: {
+        ...answer.user,
+        id: null,
+        email: null,
+        firstName: null,
+        lastName: null,
+        username: null,
+        profileImageUrl: null,
+        phoneNumber: null,
+        bio: null,
+        displayName: "Anonymous"
+      }
     };
   }
 
@@ -1061,8 +1113,11 @@ export class DatabaseStorage implements IStorage {
     // Fetch answers for this question
     const answers = await this.getQuestionAnswers(question.id);
     
+    // Apply anonymity logic to the question
+    const maskedQuestion = this.applyAnonymityToQuestion(question);
+    
     return {
-      ...question,
+      ...maskedQuestion,
       answers,
     } as QuestionWithDetails;
   }
@@ -1165,7 +1220,9 @@ export class DatabaseStorage implements IStorage {
         questionId: answers.questionId,
         userId: answers.userId,
         votesCount: answers.votesCount,
+        score: answers.score || sql`0`, // Include score for answers
         isAccepted: answers.isAccepted,
+        isAnonymous: sql`false`.as('isAnonymous'), // Answers don't have anonymity yet, but prepare for future
         createdAt: answers.createdAt,
         updatedAt: answers.updatedAt,
         user: {
@@ -1186,7 +1243,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(answers.questionId, questionId))
       .orderBy(desc(answers.votesCount));
     
-    return answersData as AnswerWithUser[];
+    // For now, answers are not anonymous, but apply the logic for future extensibility
+    const maskedAnswers = answersData.map(answer => this.applyAnonymityToAnswer(answer));
+    
+    return maskedAnswers as AnswerWithUser[];
   }
 
   async getAnswer(id: string): Promise<Answer | undefined> {
@@ -1232,7 +1292,6 @@ export class DatabaseStorage implements IStorage {
     // First, try to find existing vote
     const existingVote = await this.getUserVote(userId, votableType, votableId);
     const isQuestion = votableType === 'question';
-    const voteType = value > 0 ? 'up' : 'down';
     
     if (value === 0) {
       // Clear vote (delete if exists)
@@ -1243,15 +1302,18 @@ export class DatabaseStorage implements IStorage {
         ));
       }
     } else {
-      // Create or update vote
+      // Create or update vote using integer value system
       if (existingVote) {
         await db.update(votes)
-          .set({ voteType })
+          .set({ 
+            value,
+            updatedAt: new Date()
+          })
           .where(eq(votes.id, existingVote.id));
       } else {
         const voteData = {
           userId,
-          voteType,
+          value,
           ...(isQuestion ? { questionId: votableId } : { answerId: votableId })
         };
         await db.insert(votes).values(voteData);
@@ -1271,28 +1333,32 @@ export class DatabaseStorage implements IStorage {
   private async calculateScore(votableType: 'question' | 'answer', votableId: string): Promise<number> {
     const isQuestion = votableType === 'question';
     
-    // Count up votes only (since we removed downvotes)
-    const upVotesResult = await db
-      .select({ count: sql<number>`COUNT(*)` })
+    // Calculate score as SUM(votes.value) which supports -1 (downvote), 0, 1 (upvote)
+    const scoreResult = await db
+      .select({ score: sql<number>`COALESCE(SUM(${votes.value}), 0)` })
       .from(votes)
       .where(and(
-        eq(votes.voteType, 'up'),
         isQuestion ? eq(votes.questionId, votableId) : eq(votes.answerId, votableId)
       ));
     
-    const upVotes = Number(upVotesResult[0]?.count || 0);
-    // Vote calculation complete
-    return upVotes;
+    const score = Number(scoreResult[0]?.score || 0);
+    return score;
   }
 
   private async updateScore(votableType: 'question' | 'answer', votableId: string, score: number): Promise<void> {
     if (votableType === 'question') {
       await db.update(questions)
-        .set({ votesCount: score })
+        .set({ 
+          votesCount: score,
+          score: score  // Update both the old and new score fields
+        })
         .where(eq(questions.id, votableId));
     } else {
       await db.update(answers)
-        .set({ votesCount: score })
+        .set({ 
+          votesCount: score,
+          score: score  // Update both the old and new score fields
+        })
         .where(eq(answers.id, votableId));
     }
   }
