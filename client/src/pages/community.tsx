@@ -334,61 +334,48 @@ export default function CommunityPage() {
       <Navigation />
       <div className="py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
+          {/* Header Section */}
           <div className="mb-8">
-            <div className="relative bg-gradient-to-r from-ceylon-green to-ceylon-blue rounded-2xl p-6 sm:p-8 text-white shadow-xl overflow-hidden">
-              {/* Background Image */}
-              <div 
-                className="absolute inset-0 rounded-2xl" 
-                style={{
-                  backgroundImage: `url(${communityBgImage})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                }}
-              ></div>
-              {/* Dark overlay for text readability */}
-              <div className="absolute inset-0 bg-black opacity-50 rounded-2xl"></div>
-              
-              {/* Content */}
-              <div className="relative z-10 flex flex-col space-y-6">
+            <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 rounded-2xl p-8 text-white shadow-xl">
+              <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }}>
-                    Ceylon Expand Community
-                  </h1>
-                  <p className="text-lg max-w-2xl drop-shadow-lg" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8), 0px 0px 2px rgba(0,0,0,0.6)' }}>
+                  <div className="flex items-center space-x-3 mb-4">
+                    <MessageSquare className="w-8 h-8" />
+                    <h1 className="text-3xl md:text-4xl font-bold">CeylonX Tribes</h1>
+                  </div>
+                  <p className="text-lg opacity-90">
                     Ask questions, share knowledge, and connect with fellow travelers exploring Sri Lanka
                   </p>
                 </div>
-              
-              <div className="flex flex-col items-start">
-                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                  <DialogTrigger asChild>
-                    {user ? (
-                      <Button 
-                        size="lg"
-                        className="bg-ceylon-green text-white hover:bg-ceylon-green/90 font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300"
-                        data-testid="button-ask-question"
-                      >
-                        <Plus className="w-6 h-6 mr-3" />
-                        Ask a Question
-                      </Button>
-                    ) : (
-                      <div className="space-y-3">
-                        <Link href="/auth/signin">
-                          <Button 
-                            size="lg"
-                            className="bg-ceylon-green text-white hover:bg-ceylon-green/90 font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300"
-                            data-testid="button-ask-question-signin"
-                          >
-                            <Plus className="w-6 h-6 mr-3" />
-                            Ask a Question
-                          </Button>
-                        </Link>
-                        <p className="text-sm opacity-80" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
-                          Sign in to ask questions and participate
-                        </p>
-                      </div>
-                    )}
+              </div>
+            </div>
+          </div>
+
+          {/* Action Button */}
+          <div className="mb-8 flex justify-center">
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogTrigger asChild>
+                {user ? (
+                  <Button 
+                    size="lg"
+                    className="bg-brand text-white hover:bg-brand-hover font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300"
+                    data-testid="button-ask-question"
+                  >
+                    <Plus className="w-6 h-6 mr-3" />
+                    Ask Question
+                  </Button>
+                ) : (
+                  <Link href="/auth/signin">
+                    <Button 
+                      size="lg"
+                      className="bg-brand text-white hover:bg-brand-hover font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300"
+                      data-testid="button-ask-question-signin"
+                    >
+                      <Plus className="w-6 h-6 mr-3" />
+                      Ask Question
+                    </Button>
+                  </Link>
+                )}
                   </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
