@@ -436,30 +436,28 @@ export default function TripCard({ trip, badges }: TripCardProps) {
             </div>
           </div>
           
-          <div className="flex items-center justify-between pt-4 border-t border-ui-line mt-4 min-h-[60px]">
-            <div data-testid={`trip-organizer-${trip.id}`}>
-              <Link href={`/profile/${trip.organizerId}`} className="hover:opacity-80 transition-opacity">
-                <UserDisplay 
-                  user={trip.organizer}
-                  avatarSize="lg"
-                  className="gap-3"
-                  nameClassName="text-sm font-medium text-text-primary truncate max-w-[120px] sm:max-w-[140px]"
+          {/* Organizer Info - Separate Row */}
+          <div className="flex items-center pt-4 border-t border-ui-line mt-4" data-testid={`trip-organizer-${trip.id}`}>
+            <Link href={`/profile/${trip.organizerId}`} className="hover:opacity-80 transition-opacity">
+              <UserDisplay 
+                user={trip.organizer}
+                avatarSize="lg"
+                className="gap-3"
+                nameClassName="text-sm font-medium text-text-primary truncate max-w-[120px] sm:max-w-[140px]"
+              />
+            </Link>
+          </div>
+          
+          {/* Actions Row - Clean Layout */}
+          <div className="flex items-center justify-between pt-3">
+            <div className="flex items-center gap-2">
+              {user && !isOwner && (
+                <SaveControl 
+                  tripId={trip.id} 
+                  variant="compact" 
+                  className=""
+                  data-testid={`save-control-${trip.id}`}
                 />
-              </Link>
-            </div>
-            
-            <div className="flex items-center gap-3 min-w-0 flex-1 mr-4">
-              {user && (
-                <>
-                  {!isOwner && (
-                    <SaveControl 
-                      tripId={trip.id} 
-                      variant="compact" 
-                      className="text-xs"
-                      data-testid={`save-control-${trip.id}`}
-                    />
-                  )}
-                </>
               )}
               
               {/* Owner-only actions */}
@@ -473,22 +471,22 @@ export default function TripCard({ trip, badges }: TripCardProps) {
                   size="sm"
                 />
               )}
-              
-              <Button 
-                size="sm"
-                className="text-sm px-4 py-2 bg-brand text-white hover:bg-brand-hover font-medium min-w-[80px] h-9"
-                data-testid={`button-view-${trip.id}`}
-                title="View trip details"
-                asChild
-              >
-                <Link href={createTripDetailLink(trip.id, {
-                  from: trip.fromLocation,
-                  to: trip.toLocation
-                })}>
-                  View
-                </Link>
-              </Button>
             </div>
+            
+            <Button 
+              size="sm"
+              className="text-sm px-6 py-2 bg-brand text-white hover:bg-brand-hover font-medium h-9 ml-auto"
+              data-testid={`button-view-${trip.id}`}
+              title="View trip details"
+              asChild
+            >
+              <Link href={createTripDetailLink(trip.id, {
+                from: trip.fromLocation,
+                to: trip.toLocation
+              })}>
+                View Details
+              </Link>
+            </Button>
           </div>
         </CardContent>
       </Card>
