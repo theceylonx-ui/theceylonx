@@ -383,7 +383,7 @@ export function EnhancedRecommendedTrips() {
             data-testid="button-travel-style-settings"
           >
             <Settings className="h-4 w-4 mr-2" />
-            Settings
+            Travel Settings
           </Button>
         </div>
       </div>
