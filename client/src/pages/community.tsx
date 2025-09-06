@@ -343,88 +343,9 @@ export default function CommunityPage() {
                     <MessageSquare className="w-8 h-8" />
                     <h1 className="text-3xl md:text-4xl font-bold">CeylonX Tribes</h1>
                   </div>
-                  <p className="text-lg opacity-90 mb-6">
+                  <p className="text-lg opacity-90">
                     Ask questions, share knowledge, and connect with fellow travelers exploring Sri Lanka
                   </p>
-                  
-                  {/* Community Stats in Header */}
-                  <div className="flex items-center gap-6 text-white/90 mb-6">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="h-5 w-5" />
-                      <span className="font-semibold">{questionsResponse?.total || 30}</span>
-                      <span className="hidden sm:inline">Questions</span>
-                    </div>
-                    
-                    <div className="h-5 w-px bg-white/30" />
-                    
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-5 w-5" />
-                      <span className="font-semibold">24</span>
-                      <span className="hidden sm:inline">Answers</span>
-                    </div>
-                    
-                    <div className="h-5 w-px bg-white/30" />
-                    
-                    <div className="flex items-center gap-2">
-                      <User className="h-5 w-5" />
-                      <span className="font-semibold">{topics.length || 12}</span>
-                      <span className="hidden sm:inline">Topics</span>
-                    </div>
-                  </div>
-                  
-                  {/* Search Bar in Header */}
-                  <div className="relative mb-6">
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60" />
-                    <Input
-                      placeholder="Search questions about Sri Lanka travel..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-12 pr-4 h-12 text-white placeholder:text-white/60 bg-white/10 border-white/20 focus:border-white/40 focus:ring-white/20 backdrop-blur-sm"
-                    />
-                  </div>
-                  
-                  {/* Filter Tabs in Header */}
-                  <div className="flex flex-wrap items-center gap-3 mb-0">
-                    {/* Sort Toggle Buttons */}
-                    <div className="flex bg-white/10 backdrop-blur-sm rounded-lg p-1">
-                      {(["top", "new", "unanswered"] as const).map((sort) => (
-                        <Button
-                          key={sort}
-                          variant={sortBy === sort ? "default" : "ghost"}
-                          size="sm"
-                          onClick={() => setSortBy(sort)}
-                          className={`px-4 py-2 h-auto text-sm transition-all duration-200 ${
-                            sortBy === sort 
-                              ? "bg-white/20 text-white shadow-sm border-white/30" 
-                              : "text-white/80 hover:bg-white/10 hover:text-white"
-                          }`}
-                          data-testid={`sort-${sort}`}
-                        >
-                          <span className="flex items-center gap-2">
-                            {sort === 'top' && <TrendingUp className="h-4 w-4" />}
-                            {sort === 'new' && <Clock className="h-4 w-4" />}
-                            {sort === 'unanswered' && <HelpCircle className="h-4 w-4" />}
-                            <span className="hidden sm:inline">{sort === 'top' ? 'Top' : sort === 'new' ? 'New' : 'Unanswered'}</span>
-                          </span>
-                        </Button>
-                      ))}
-                    </div>
-
-                    {/* Topic Filter */}
-                    <Select value={selectedTopic} onValueChange={setSelectedTopic}>
-                      <SelectTrigger className="w-40 h-9 bg-white/10 border-white/20 text-white backdrop-blur-sm focus:border-white/40 focus:ring-white/20">
-                        <SelectValue placeholder="All Topics" className="text-white" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Topics</SelectItem>
-                        {topics.map((topic) => (
-                          <SelectItem key={topic.id} value={topic.id}>
-                            {topic.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
                 
                 {/* Ask Question Button in Header */}
