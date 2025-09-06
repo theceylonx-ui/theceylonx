@@ -569,7 +569,7 @@ export class DatabaseStorage implements IStorage {
         acceptedAnswerId: null, // Default value
         isDeleted: false, // Default value
         deletedAt: null, // Default value
-        user: { id: userId, name: 'Test User', email: null, phone: null, image: null, provider: null, firstName: 'Test', lastName: 'User', username: null, profileImageUrl: null, phoneNumber: null, bio: null, googleId: null, facebookId: null, microsoftId: null, appleId: null, emailVerified: false, createdAt: new Date(), updatedAt: new Date() },
+        user: { id: userId, firstName: 'Test', lastName: 'User', displayName: null, profileImageUrl: null },
         topic: { id: question.topicId || '', name: 'General', slug: 'general', description: null, createdAt: new Date() },
         answers: [],
       }));
@@ -959,15 +959,10 @@ export class DatabaseStorage implements IStorage {
         updatedAt: questions.updatedAt,
         user: {
           id: users.id,
-          email: users.email,
           firstName: users.firstName,
           lastName: users.lastName,
-          username: users.username,
+          displayName: users.displayName,
           profileImageUrl: users.profileImageUrl,
-          phoneNumber: users.phoneNumber,
-          bio: users.bio,
-          createdAt: users.createdAt,
-          updatedAt: users.updatedAt,
         },
         topic: {
           id: topics.id,
@@ -1083,15 +1078,10 @@ export class DatabaseStorage implements IStorage {
         updatedAt: questions.updatedAt,
         user: {
           id: users.id,
-          email: users.email,
           firstName: users.firstName,
           lastName: users.lastName,
-          username: users.username,
+          displayName: users.displayName,
           profileImageUrl: users.profileImageUrl,
-          phoneNumber: users.phoneNumber,
-          bio: users.bio,
-          createdAt: users.createdAt,
-          updatedAt: users.updatedAt,
         },
         topic: {
           id: topics.id,
@@ -1226,15 +1216,10 @@ export class DatabaseStorage implements IStorage {
         updatedAt: answers.updatedAt,
         user: {
           id: users.id,
-          email: users.email,
           firstName: users.firstName,
           lastName: users.lastName,
-          username: users.username,
+          displayName: users.displayName,
           profileImageUrl: users.profileImageUrl,
-          phoneNumber: users.phoneNumber,
-          bio: users.bio,
-          createdAt: users.createdAt,
-          updatedAt: users.updatedAt,
         },
       })
       .from(answers)
@@ -1306,8 +1291,7 @@ export class DatabaseStorage implements IStorage {
       if (existingVote) {
         await db.update(votes)
           .set({ 
-            voteType,
-            updatedAt: new Date()
+            voteType
           })
           .where(eq(votes.id, existingVote.id));
       } else {

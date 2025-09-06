@@ -604,7 +604,6 @@ export const votes = pgTable("votes", {
   answerId: varchar("answer_id"),
   voteType: varchar("vote_type").notNull(), // 'up' or 'down' - temporary rollback to existing schema
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
   // Unique constraint to ensure 1 vote per user per question/answer
   uniqueUserQuestion: unique().on(table.userId, table.questionId),
