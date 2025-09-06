@@ -1275,44 +1275,6 @@ export class DatabaseStorage implements IStorage {
   // Enhanced Votes API
   // New upvote system methods
   async toggleUpvote(userId: string, itemType: 'question' | 'answer', itemId: string): Promise<{ hasUpvoted: boolean; newScore: number; item: any }> {
-    // First, try to find existing vote
-    const existingVote = await this.getUserVote(userId, votableType, votableId);
-    const isQuestion = votableType === 'question';
-    
-    if (value === 0) {
-      // Clear vote (delete if exists)
-      if (existingVote) {
-        await db.delete(votes).where(and(
-          eq(votes.userId, userId),
-          isQuestion ? eq(votes.questionId, votableId) : eq(votes.answerId, votableId)
-        ));
-      }
-    } else {
-      // Create or update vote using string voteType system (rollback to existing schema)
-      const voteType = value > 0 ? 'up' : 'down';
-      if (existingVote) {
-        await db.update(votes)
-          .set({ 
-            voteType
-          })
-          .where(eq(votes.id, existingVote.id));
-      } else {
-        const voteData: any = {
-          userId,
-          voteType,
-          ...(isQuestion ? { questionId: votableId } : { answerId: votableId })
-        };
-        await db.insert(votes).values(voteData);
-      }
-    }
-    
-    // Calculate new score and update denormalized counter
-    const newScore = await this.calculateScore(votableType, votableId);
-    await this.updateScore(votableType, votableId, newScore);
-    
-    // Get current vote after upsert
-    const currentVote = value === 0 ? null : await this.getUserVote(userId, votableType, votableId);
-    
     // Check if user already upvoted this item
     const existingUpvote = await this.getUserUpvote(userId, itemType, itemId);
     
