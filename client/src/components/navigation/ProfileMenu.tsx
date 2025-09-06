@@ -166,15 +166,15 @@ export default function ProfileMenu({ className }: ProfileMenuProps) {
           </DropdownMenuItem>
         </Link>
 
-        {/* 5. Account Settings */}
-        <Link href="/settings/account">
+        {/* 5. Settings - Travel Preferences */}
+        <Link href="/me?tab=preferences">
           <DropdownMenuItem 
             className="cursor-pointer" 
-            data-testid="profile-menu-account-settings"
-            onClick={() => handleMenuItemClick('AccountSettings')}
+            data-testid="profile-menu-settings"
+            onClick={() => handleMenuItemClick('Settings')}
           >
             <Settings className="mr-2 h-4 w-4" />
-            Account Settings
+            Settings
           </DropdownMenuItem>
         </Link>
 
