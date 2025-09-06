@@ -343,23 +343,77 @@ export default function CommunityPage() {
                     <MessageSquare className="w-8 h-8" />
                     <h1 className="text-3xl md:text-4xl font-bold">CeylonX Tribes</h1>
                   </div>
-                  <p className="text-lg opacity-90">
+                  <p className="text-lg opacity-90 mb-6">
                     Ask questions, share knowledge, and connect with fellow travelers exploring Sri Lanka
                   </p>
+                  
+                  {/* Community Stats in Header */}
+                  <div className="flex items-center gap-6 text-white/90 mb-6">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="h-5 w-5" />
+                      <span className="font-semibold">{questionsResponse?.total || 30}</span>
+                      <span className="hidden sm:inline">Questions</span>
+                    </div>
+                    
+                    <div className="h-5 w-px bg-white/30" />
+                    
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5" />
+                      <span className="font-semibold">24</span>
+                      <span className="hidden sm:inline">Answers</span>
+                    </div>
+                    
+                    <div className="h-5 w-px bg-white/30" />
+                    
+                    <div className="flex items-center gap-2">
+                      <User className="h-5 w-5" />
+                      <span className="font-semibold">{topics.length || 12}</span>
+                      <span className="hidden sm:inline">Topics</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Ask Question Button in Header */}
+                <div className="hidden md:block">
+                  <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                    <DialogTrigger asChild>
+                      {user ? (
+                        <Button 
+                          size="lg"
+                          className="bg-white/20 text-white hover:bg-white/30 border-white/30 font-semibold px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200"
+                          data-testid="button-ask-question"
+                        >
+                          <Plus className="w-5 h-5 mr-2" />
+                          Ask Question
+                        </Button>
+                      ) : (
+                        <Link href="/auth/signin">
+                          <Button 
+                            size="lg"
+                            className="bg-white/20 text-white hover:bg-white/30 border-white/30 font-semibold px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200"
+                            data-testid="button-ask-question-signin"
+                          >
+                            <Plus className="w-5 h-5 mr-2" />
+                            Ask Question
+                          </Button>
+                        </Link>
+                      )}
+                    </DialogTrigger>
+                  </Dialog>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Action Button */}
-          <div className="mb-8 flex justify-center">
+          {/* Mobile Ask Question Button */}
+          <div className="mb-8 flex justify-center md:hidden">
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
                 {user ? (
                   <Button 
                     size="lg"
                     className="bg-brand text-white hover:bg-brand-hover font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300"
-                    data-testid="button-ask-question"
+                    data-testid="button-ask-question-mobile"
                   >
                     <Plus className="w-6 h-6 mr-3" />
                     Ask Question
@@ -369,14 +423,15 @@ export default function CommunityPage() {
                     <Button 
                       size="lg"
                       className="bg-brand text-white hover:bg-brand-hover font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300"
-                      data-testid="button-ask-question-signin"
+                      data-testid="button-ask-question-signin-mobile"
                     >
                       <Plus className="w-6 h-6 mr-3" />
                       Ask Question
                     </Button>
                   </Link>
                 )}
-                  </DialogTrigger>
+              </DialogTrigger>
+              
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>{editingQuestionId ? "Edit Question" : "Ask a Question"}</DialogTitle>
