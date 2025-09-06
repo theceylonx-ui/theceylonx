@@ -101,7 +101,7 @@ export default function Navigation() {
                 }`}
                 data-testid="nav-community"
               >
-                Community
+                CeylonX Tribes
               </span>
             </Link>
           </div>
@@ -200,7 +200,7 @@ export default function Navigation() {
                   onClick={() => setIsMobileMenuOpen(false)}
                   data-testid="mobile-nav-community"
                 >
-                  Community
+                  CeylonX Tribes
                 </div>
               </Link>
             </div>
