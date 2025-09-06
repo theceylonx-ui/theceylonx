@@ -20,6 +20,7 @@ import {
   ArrowLeft
 } from "lucide-react";
 import { getDisplayName, getInitials, getAvatarOptions, AVATAR_STYLES } from "@/lib/profileUtils";
+import { VisibilityToggle } from "@/components/VisibilityToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1076,6 +1077,17 @@ function UserActivity() {
                         </Button>
                       </div>
                     </div>
+                    
+                    {/* Question Visibility Controls */}
+                    <div className="border-t border-gray-200 pt-4 mt-4 bg-green-50 p-3 rounded">
+                      <div className="text-sm font-semibold text-gray-700 mb-2">👁️ Question Visibility Controls</div>
+                      <div className="text-xs text-gray-500 mb-2">Toggle to show/hide this question from the community</div>
+                      <VisibilityToggle
+                        type="question"
+                        id={question.id}
+                        currentVisibility={question.visibility || "public"}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1121,6 +1133,17 @@ function UserActivity() {
                           👁️ View Details
                         </Button>
                       </div>
+                    </div>
+                    
+                    {/* Trip Visibility Controls */}
+                    <div className="border-t border-gray-200 pt-4 mt-4 bg-blue-50 p-3 rounded">
+                      <div className="text-sm font-semibold text-gray-700 mb-2">🔄 Trip Status Controls</div>
+                      <div className="text-xs text-gray-500 mb-2">Toggle to show/hide this trip from others</div>
+                      <VisibilityToggle
+                        type="trip"
+                        id={trip.id}
+                        currentVisibility={trip.status || "active"}
+                      />
                     </div>
                     {trip.notes && (
                       <div className="mt-3 p-2 bg-gray-50 rounded text-sm">

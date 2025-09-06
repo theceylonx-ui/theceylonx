@@ -10,11 +10,12 @@ import { apiRequest } from '@/lib/queryClient';
 interface VisibilityToggleProps {
   type: 'trip' | 'question';
   id: string;
-  currentValue: boolean | string;
+  currentValue?: boolean | string;
+  currentVisibility?: string;
   disabled?: boolean;
 }
 
-export function VisibilityToggle({ type, id, currentValue, disabled = false }: VisibilityToggleProps) {
+export function VisibilityToggle({ type, id, currentValue, currentVisibility, disabled = false }: VisibilityToggleProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -39,7 +40,7 @@ export function VisibilityToggle({ type, id, currentValue, disabled = false }: V
     
   const actualValue = optimisticValue !== undefined 
     ? optimisticValue 
-    : currentValue;
+    : (currentVisibility || currentValue);
 
   // Convert to boolean for switch
   const isChecked = typeof actualValue === 'boolean' 
@@ -51,12 +52,12 @@ export function VisibilityToggle({ type, id, currentValue, disabled = false }: V
   // Trip status mutation
   const tripMutation = useMutation({
     mutationFn: async (newStatus: TripStatus) => {
-      return apiRequest(`/api/trips/${id}/status`, 'PATCH', { status: newStatus });
+      return apiRequest('PATCH', `/api/trips/${id}/status`, { status: newStatus });
     },
     onSuccess: () => {
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['/api/trips'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/my-trips'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/me/activity/trips'] });
       queryClient.invalidateQueries({ queryKey: [`/api/trips/${id}`] });
       setTripUpdating(id, false);
     },
@@ -75,12 +76,12 @@ export function VisibilityToggle({ type, id, currentValue, disabled = false }: V
   // Question visibility mutation
   const questionMutation = useMutation({
     mutationFn: async (newVisibility: QuestionVisibility) => {
-      return apiRequest(`/api/questions/${id}/visibility`, 'PATCH', { visibility: newVisibility });
+      return apiRequest('PATCH', `/api/questions/${id}/visibility`, { visibility: newVisibility });
     },
     onSuccess: () => {
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/my-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/me/activity/questions'] });
       queryClient.invalidateQueries({ queryKey: [`/api/questions/${id}`] });
       setQuestionUpdating(id, false);
     },
