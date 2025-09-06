@@ -115,7 +115,7 @@ export default function PostTripPage() {
               <div className="hidden md:block">
                 <BackLink 
                   to={returnTo ? decodeURIComponent(returnTo) : createBackToTripsLink()}
-                  label="← Back to Browse"
+                  label="Back to Browse"
                   className="bg-white/20 text-white hover:bg-white/30 border-white/30"
                 />
               </div>
@@ -127,7 +127,7 @@ export default function PostTripPage() {
         <div className="mb-6 md:hidden">
           <BackLink 
             to={returnTo ? decodeURIComponent(returnTo) : createBackToTripsLink()}
-            label="← Back to Browse"
+            label="Back to Browse"
             className="mb-4"
           />
           
