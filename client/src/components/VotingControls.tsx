@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ThumbsUp, ThumbsDown } from "lucide-react";
+import { ThumbsUp } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -92,7 +92,7 @@ export default function VotingControls({
   };
 
   return (
-    <div className={`flex items-center gap-1 ${className}`} data-testid="voting-controls">
+    <div className={`flex items-center gap-2 ${className}`} data-testid="voting-controls">
       <Button
         variant={currentVoteValue === 1 ? "default" : "outline"}
         size="sm"
@@ -108,25 +108,12 @@ export default function VotingControls({
         className={`font-semibold text-sm min-w-[20px] text-center ${
           optimisticScore > 0 
             ? 'text-green-600 dark:text-green-400' 
-            : optimisticScore < 0
-            ? 'text-red-600 dark:text-red-400'
             : 'text-gray-600 dark:text-gray-400'
         }`}
         data-testid="vote-score"
       >
         {optimisticScore}
       </span>
-
-      <Button
-        variant={currentVoteValue === -1 ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleVote(-1)}
-        disabled={voteMutation.isPending}
-        className="p-1.5 h-7 w-7"
-        data-testid="downvote-button"
-      >
-        <ThumbsDown className="h-3.5 w-3.5" />
-      </Button>
     </div>
   );
 }
