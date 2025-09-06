@@ -380,7 +380,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
         
         <CardContent className="p-4 sm:p-6 bg-white">
           <div className="mb-4">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2 line-clamp-2" data-testid={`trip-title-${trip.id}`}>
+            <h3 className="text-base sm:text-lg font-semibold text-text-primary mb-2 line-clamp-2 hover:text-brand transition-colors" data-testid={`trip-title-${trip.id}`}>
               {trip.title}
             </h3>
             
@@ -391,13 +391,13 @@ export default function TripCard({ trip, badges }: TripCardProps) {
                   <Badge 
                     key={index} 
                     variant="secondary" 
-                    className="text-xs bg-green-100 text-green-700 hover:bg-green-200"
+                    className="text-xs bg-brand-subtle text-brand border-brand/20"
                   >
                     {badge}
                   </Badge>
                 ))}
                 {badges.length > 2 && (
-                  <Badge variant="outline" className="text-xs text-gray-500">
+                  <Badge variant="outline" className="text-xs text-text-muted border-ui-line">
                     +{badges.length - 2} more
                   </Badge>
                 )}
@@ -407,30 +407,30 @@ export default function TripCard({ trip, badges }: TripCardProps) {
           
           <div className="space-y-2 sm:space-y-3 mb-4 text-gray-600 text-xs sm:text-sm">
             <div className="flex items-center" data-testid={`trip-route-${trip.id}`}>
-              <MapPin className="h-4 w-4 mr-2 text-ceylon-blue flex-shrink-0" />
-              <span className="truncate">{trip.fromLocation} → {trip.toLocation}</span>
+              <MapPin className="h-4 w-4 mr-2 text-brand flex-shrink-0" />
+              <span className="truncate text-text-primary">{trip.fromLocation} → {trip.toLocation}</span>
             </div>
             
             <div className="flex items-center" data-testid={`trip-datetime-${trip.id}`}>
-              <Calendar className="h-4 w-4 mr-2 text-ceylon-blue flex-shrink-0" />
-              <span>{new Date(trip.date).toLocaleDateString()} • {trip.time}</span>
+              <Calendar className="h-4 w-4 mr-2 text-brand flex-shrink-0" />
+              <span className="text-text-secondary">{new Date(trip.date).toLocaleDateString()} • {trip.time}</span>
             </div>
             
             <div className="flex items-center" data-testid={`trip-seats-${trip.id}`}>
-              <Users className="h-4 w-4 mr-2 text-ceylon-blue flex-shrink-0" />
-              <span>{trip.seatsAvailable} seats available</span>
+              <Users className="h-4 w-4 mr-2 text-brand flex-shrink-0" />
+              <span className="text-text-secondary">{trip.seatsAvailable} seats available</span>
             </div>
             
             <div className="flex items-center" data-testid={`trip-price-${trip.id}`}>
               {!trip.price || Number(trip.price) === 0 ? (
                 <>
                   <span className="text-lg mr-2">💚</span>
-                  <span className="font-semibold text-ceylon-green">Free Trip</span>
+                  <span className="font-semibold text-brand">Free Trip</span>
                 </>
               ) : (
                 <>
-                  <DollarSign className="h-4 w-4 mr-2 text-ceylon-blue flex-shrink-0" />
-                  <span className="font-semibold text-ceylon-green">LKR {trip.price}/person</span>
+                  <DollarSign className="h-4 w-4 mr-2 text-brand flex-shrink-0" />
+                  <span className="font-semibold text-brand">LKR {trip.price}/person</span>
                 </>
               )}
             </div>
@@ -476,12 +476,17 @@ export default function TripCard({ trip, badges }: TripCardProps) {
               
               <Button 
                 size="sm"
-                className="text-xs px-2 py-1 transition-all duration-200 bg-ceylon-blue text-white hover:bg-ceylon-blue/90 shadow-sm hover:shadow-md"
+                className="text-xs px-3 py-1.5 bg-brand text-white hover:bg-brand-hover font-medium"
                 data-testid={`button-view-${trip.id}`}
                 title="View trip details"
                 asChild
               >
-                <span>View</span>
+                <Link href={createTripDetailLink(trip.id, {
+                  from: trip.fromLocation,
+                  to: trip.toLocation
+                })}>
+                  View
+                </Link>
               </Button>
             </div>
           </div>
