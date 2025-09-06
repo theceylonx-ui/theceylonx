@@ -126,19 +126,41 @@ export default function CommunityPage() {
       
       <div className="page-container section-spacing">
         {/* Header Section */}
-        <div className="mb-8 md:mb-12 flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-          <div className="space-y-2">
-            <h1 className="h1" data-testid="page-title">
-              Community
-            </h1>
-            <p className="lead" data-testid="page-subtitle">
-              Ask questions, share knowledge, and connect with fellow travelers exploring Sri Lanka.
-            </p>
+        <div className="mb-8">
+          <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 rounded-2xl p-8 text-white shadow-xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center space-x-3 mb-2">
+                  <MessageSquare className="w-6 h-6" />
+                  <h1 className="text-2xl md:text-3xl font-bold" data-testid="page-title">CeylonX Tribes</h1>
+                </div>
+                <p className="text-base opacity-90" data-testid="page-subtitle">
+                  Ask questions, share knowledge, and connect with fellow travelers exploring Sri Lanka
+                </p>
+              </div>
+              
+              {/* Ask Question Button in Header */}
+              <div className="hidden md:block">
+                <AskQuestionDialog>
+                  <Button 
+                    size="lg" 
+                    className="bg-white/20 text-white hover:bg-white/30 border-white/30 font-semibold px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200" 
+                    data-testid="button-ask-question"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Ask Question
+                  </Button>
+                </AskQuestionDialog>
+              </div>
+            </div>
           </div>
-          
+        </div>
+
+        {/* Mobile Ask Question Button */}
+        <div className="mb-8 flex justify-center md:hidden">
           <AskQuestionDialog>
-            <Button size="lg" className="shrink-0" data-testid="button-ask-question">
-              <Plus className="mr-2 h-5 w-5" />
+            <Button size="lg" className="bg-brand text-white hover:bg-brand-hover font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" data-testid="button-ask-question-mobile">
+              <Plus className="w-6 h-6 mr-3" />
               Ask Question
             </Button>
           </AskQuestionDialog>
