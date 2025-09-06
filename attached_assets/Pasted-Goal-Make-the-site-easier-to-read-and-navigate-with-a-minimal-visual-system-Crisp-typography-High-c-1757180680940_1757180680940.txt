@@ -1,0 +1,156 @@
+Goal
+Make the site easier to read and navigate with a minimal visual system:
+Crisp typography
+High-contrast, elegant color palette
+Generous spacing and simple hierarchy
+Clear, human copy
+Applies to all pages (Browse Trips, Post a Trip, Calendar, Community, Questions/Answers, Profile, Admin Lite).
+1) Design Tokens (Tailwind / CSS Variables)
+Colors (light mode first; auto-generate dark)
+// tailwind.config.ts (extend)
+colors: {
+  brand: {
+    DEFAULT: '#0F8B6E',   // primary (emerald/teal; accessible on white)
+    hover:   '#0C6F59',
+    subtle:  '#E7F6F2'
+  },
+  text: {
+    primary:   '#0B0B0B',  // near-black
+    secondary: '#4A4A4A',
+    muted:     '#6F6F6F'
+  },
+  ui: {
+    bg:        '#FFFFFF',
+    surface:   '#F7F7F7',
+    line:      '#E6E6E6'
+  },
+  danger: '#D92D20',
+  success: '#099250',
+  info:    '#1E88E5',
+}
+Dark mode (class .dark):
+:root.dark {
+  --bg: #0B0B0B;
+  --surface: #141414;
+  --text-primary: #F5F5F5;
+  --text-secondary: #CFCFCF;
+  --line: #2A2A2A;
+  --brand: #12A082;
+  --brand-hover: #0E8169;
+}
+Type Scale (system fonts, Apple-like)
+/* Use system stack for crisp rendering */
+:root { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; }
+
+/* Tailwind text sizes mapping */
+.h1 { @apply text-4xl md:text-5xl font-semibold tracking-tight; }
+.h2 { @apply text-2xl md:text-3xl font-semibold; }
+.h3 { @apply text-xl font-semibold; }
+.lead { @apply text-base md:text-lg text-text-secondary; }
+.body { @apply text-base text-text-primary leading-7; }
+.caption { @apply text-sm text-text-muted; }
+Spacing & Radii
+Spacing: use 8-pt scale (8, 16, 24, 32, 40)
+Cards & inputs radius: rounded-2xl
+Buttons: rounded-xl
+Touch targets: min 44px
+2) Global Layout & Components
+Page shell
+Max width max-w-7xl with px-4 md:px-6 lg:px-8
+Sections separated with real whitespace; avoid heavy borders
+Use hairline dividers only when needed: border-t ui-line/50
+Buttons (shadcn/ui)
+Primary: brand bg + white text, bold label
+Secondary: white bg, 1px line, brand text on hover
+Focus ring: ring-2 ring-brand/50 (keyboard visible)
+Inputs
+Large, breathable fields: h-12 md:h-12.5 rounded-xl
+Placeholder muted; label always visible
+Clear error/help text area under inputs
+Cards
+bg-ui-surface border border-ui-line rounded-2xl shadow-[0_1px_2px_rgba(0,0,0,0.04)]
+Inside padding p-5 md:p-6
+Navigation
+Top bar: left logo, mid primary tabs, right Post a Trip (primary)
+Current page gets subtle underline + bold label
+Mobile: condensed tab bar; sticky action for primary CTA
+Motion (subtle)
+Fade/slide in content duration-200, ease-out
+Button press micro-scale whileTap={{ scale: .97 }}
+3) Copy Guidelines (Apple-style)
+Principles
+Say less, mean more. Short, concrete sentences.
+Benefits first; labels > sentences.
+Avoid jargon. Use everyday words.
+Do
+“Post a Trip”
+“Filter Trips”
+“Pick your dates”
+“Price Range”
+“Create”
+“Save”
+“Publish”
+Don’t
+“Commence creation process”
+“Utilize”
+“Set configurations”
+Microcopy examples
+Empty state (Browse): “No trips match your filters.” → Button: “Clear Filters”
+Success: “Your trip is published.”
+Error: “Couldn’t save. Try again.”
+4) Page-Specific Cleanups
+Browse Trips
+Title: Browse Trips
+Subtext: “Discover amazing travel opportunities across Sri Lanka.”
+Filters: simplified labels + range date + price slider (already provided)
+Cards: large title, short subtitle, key facts row (📅 dates • 📍 locations • 💸 price)
+Primary CTA on page: Post a Trip
+Post a Trip
+Stepper top: Basics → Dates → Review
+One job per screen, never >3 choices at once
+Clear primary buttons: Continue, Publish
+After publish: success card + “View Trip” and “Back to Browse”
+Calendar
+Big, airy date range
+Summary chip under picker: “Sep 10–12 · 2 nights”
+Clear errors inline (no modals)
+Community / Q&A
+Questions list: large title, tiny meta row (score • answers • updated)
+Ask dialog: very few fields; Anonymous checkbox; primary Post Question
+Upvote only button: “⬆️ Upvote • 12” (active state filled)
+5) Accessibility & Contrast
+Maintain WCAG 2.2 AA:
+Body text contrast ≥ 4.5:1
+Primary button text on brand ≥ 4.5:1
+Links have visible focus style
+Keyboard: all interactive elements tabbable in logical order
+aria-live="polite" for toasts/result counts
+6) Implementation Checklist
+ Add color/type tokens to Tailwind; wire dark mode class
+ Replace heavy borders with whitespace; keep hairline dividers
+ Standardize buttons/inputs/cards as above
+ Apply to Browse / Post / Calendar / Community / Q&A / Profile
+ Replace verbose strings with concise copy (EN first; wire i18n keys)
+ Verify contrast in both light and dark
+ Add focus rings and keyboard tests
+ Add subtle motion (Framer) and remove busy animations
+7) Example Snippets
+Primary Button
+<Button className="h-11 rounded-xl px-5 font-semibold bg-brand hover:bg-brand-hover text-white focus-visible:ring-2 focus-visible:ring-brand/50">
+  Post a Trip
+</Button>
+Card Title Block
+<h1 className="h1">Browse Trips</h1>
+<p className="lead mt-2">Discover amazing travel opportunities across Sri Lanka.</p>
+Input Group
+<label className="text-sm font-medium text-text-secondary">To Location</label>
+<Input className="h-12 rounded-xl" placeholder="Anywhere" />
+<p className="caption mt-1">Tip: Try “Ella” or “Jaffna”.</p>
+8) QA / Acceptance Criteria
+Typography is larger, cleaner; headings 32–48px, body 16px with 28–30px line-height
+Colors feel calm, high-contrast; brand accent used sparingly
+Primary actions instantly obvious; secondary actions subdued
+Navigation is predictable; pages have one obvious next step
+All pages pass Axe/Lighthouse A11y checks (no critical issues)
+Dark mode looks equally clean and readable
+Deliverable: PR applying the visual system across key pages + a 30–60s screen capture (light & dark) showing improved readability and navigation.
