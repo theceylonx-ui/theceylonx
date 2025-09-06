@@ -54,23 +54,26 @@ export function UpvoteButton({
       return response.json();
     },
     onSuccess: (data) => {
-      // Update local state with server response
+      // Update local state with server response - this is the authoritative data
       setHasUpvoted(data.hasUpvoted);
       setScore(data.score);
 
-      // Invalidate relevant queries to refetch data
+      // Invalidate ALL relevant queries to force refetch with latest data
       queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
       queryClient.invalidateQueries({ queryKey: [`/api/upvotes/${itemType}/${itemId}`] });
+      
+      // Force refresh the specific question data
       if (itemType === 'question') {
         queryClient.invalidateQueries({ queryKey: ['/api/questions', itemId] });
-      } else {
-        queryClient.invalidateQueries({ queryKey: ['/api/questions'] }); // Answers are part of question data
       }
+      
+      // Invalidate all upvote status queries to sync across components
+      queryClient.invalidateQueries({ queryKey: ['/api/upvotes'] });
     },
     onError: (error) => {
-      // Revert optimistic update
-      setHasUpvoted(!hasUpvoted);
-      setScore(hasUpvoted ? score - 1 : score + 1);
+      // Revert optimistic update to previous state
+      setHasUpvoted(initialHasUpvoted);
+      setScore(initialScore);
 
       if (isUnauthorizedError(error)) {
         toast({
@@ -92,13 +95,8 @@ export function UpvoteButton({
   });
 
   const handleToggleUpvote = () => {
-    // Optimistic update
-    const newHasUpvoted = !hasUpvoted;
-    const newScore = newHasUpvoted ? score + 1 : score - 1;
-    
-    setHasUpvoted(newHasUpvoted);
-    setScore(newScore);
-    
+    // Disable optimistic updates to avoid race conditions
+    // Let the server response be the source of truth
     toggleUpvoteMutation.mutate();
   };
 

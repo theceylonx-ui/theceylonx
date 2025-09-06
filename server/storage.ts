@@ -2749,13 +2749,17 @@ export class DatabaseStorage implements IStorage {
         .select({ count: sql<number>`count(*)::int` })
         .from(questionUpvotes)
         .where(eq(questionUpvotes.questionId, itemId));
-      return result[0]?.count || 0;
+      const count = result[0]?.count || 0;
+      console.log(`📊 Question ${itemId} upvote count: ${count}`);
+      return count;
     } else {
       const result = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(answerUpvotes)
         .where(eq(answerUpvotes.answerId, itemId));
-      return result[0]?.count || 0;
+      const count = result[0]?.count || 0;
+      console.log(`📊 Answer ${itemId} upvote count: ${count}`);
+      return count;
     }
   }
 
