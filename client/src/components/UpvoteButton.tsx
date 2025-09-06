@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ThumbsUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
@@ -28,11 +28,25 @@ export function UpvoteButton({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Reset state when props change
+  // Fetch current upvote status when component loads
+  const { data: upvoteStatus } = useQuery({
+    queryKey: [`/api/upvotes/${itemType}/${itemId}`],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/upvotes/${itemType}/${itemId}`);
+      return response.json();
+    },
+    enabled: !!itemId,
+  });
+
+  // Update state when upvote status is fetched or props change
   useEffect(() => {
-    setHasUpvoted(initialHasUpvoted);
+    if (upvoteStatus) {
+      setHasUpvoted(upvoteStatus.hasUpvoted);
+    } else {
+      setHasUpvoted(initialHasUpvoted);
+    }
     setScore(initialScore);
-  }, [initialHasUpvoted, initialScore, itemId]);
+  }, [upvoteStatus, initialHasUpvoted, initialScore, itemId]);
 
   const toggleUpvoteMutation = useMutation({
     mutationFn: async () => {
@@ -46,6 +60,7 @@ export function UpvoteButton({
 
       // Invalidate relevant queries to refetch data
       queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/upvotes/${itemType}/${itemId}`] });
       if (itemType === 'question') {
         queryClient.invalidateQueries({ queryKey: ['/api/questions', itemId] });
       } else {
