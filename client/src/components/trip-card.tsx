@@ -482,10 +482,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
                 title="View trip details"
                 asChild
               >
-                <Link href={createTripDetailLink(trip.id, {
-                  from: trip.fromLocation,
-                  to: trip.toLocation
-                })}>
+                <Link href={createTripDetailLink(trip.id)}>
                   View Details
                 </Link>
               </Button>

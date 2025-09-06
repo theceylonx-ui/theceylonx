@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { createPostTripLink } from "@/utils/searchParams";
 import { EmptyState } from "@/components/EmptyState";
-import type { TripWithOrganizer } from "@shared/schema";
+import type { TripWithNormalizedOrganizer } from "@shared/schema";
 
 export default function BrowseTrips() {
   const [, setLocation] = useLocation();
@@ -28,7 +28,7 @@ export default function BrowseTrips() {
   };
 
   const { data, isLoading } = useQuery<{
-    trips: (TripWithOrganizer & { isPinned?: boolean })[];
+    trips: (TripWithNormalizedOrganizer & { isPinned?: boolean })[];
     pagination: {
       page: number;
       limit: number;
@@ -264,14 +264,14 @@ export default function BrowseTrips() {
         ) : trips.length === 0 ? (
           <div className="flex justify-center">
             <EmptyState
-              icon={MapPin}
+              icon="search"
               title="No trips match your filters"
               description="Try adjusting your search criteria or clear all filters to see more results."
               actionLabel="Clear Filters"
               onAction={() => {
                 // Reset all filters
-                const { reset } = useTripsFiltersStore.getState();
-                reset();
+                const { clearAllFilters } = useTripsFiltersStore.getState();
+                clearAllFilters();
               }}
             />
           </div>

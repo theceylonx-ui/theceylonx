@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import { PostTripWizard } from "@/components/post-trip/PostTripWizard";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";

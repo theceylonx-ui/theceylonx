@@ -97,10 +97,7 @@ export default function ChatPage({ params }: ChatPageProps) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Chat Threads List */}
             <div className={selectedThreadId ? "hidden lg:block" : ""}>
-              <ChatThreadsList
-                currentUserId={user.id}
-                onThreadSelect={setSelectedThreadId}
-              />
+              <ChatThreadsList />
             </div>
 
             {/* Chat Window */}
