@@ -40,11 +40,11 @@ export default function Navigation() {
           <div className="hidden md:flex items-center gap-8">
             <Link href="/browse-trips">
               <span 
-                className={`transition-all duration-200 cursor-pointer relative py-2 ${
+                className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${
                   isActive('/browse-trips') 
-                    ? (user ? 'text-white font-semibold' : 'text-brand font-semibold')
-                    : (user ? 'text-emerald-100 hover:text-white' : 'text-text-secondary hover:text-brand')
-                } ${isActive('/browse-trips') ? (user ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-white after:rounded-full' : 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand after:rounded-full') : ''}`}
+                    ? (user ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' : 'bg-brand-subtle text-brand font-semibold')
+                    : (user ? 'text-emerald-100 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
+                }`}
                 data-testid="nav-browse"
               >
                 Browse Trips
@@ -52,11 +52,11 @@ export default function Navigation() {
             </Link>
             <Link href="/post">
               <span 
-                className={`transition-all duration-200 cursor-pointer relative py-2 ${
+                className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${
                   isActive('/post') 
-                    ? (user ? 'text-white font-semibold' : 'text-brand font-semibold')
-                    : (user ? 'text-emerald-100 hover:text-white' : 'text-text-secondary hover:text-brand')
-                } ${isActive('/post') ? (user ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-white after:rounded-full' : 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand after:rounded-full') : ''}`}
+                    ? (user ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' : 'bg-brand-subtle text-brand font-semibold')
+                    : (user ? 'text-emerald-100 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
+                }`}
                 data-testid="nav-post"
               >
                 Post a Trip
@@ -65,11 +65,11 @@ export default function Navigation() {
             {user && (
               <Link href="/calendar">
                 <span 
-                  className={`transition-all duration-200 cursor-pointer flex items-center gap-2 relative py-2 ${
+                  className={`transition-all duration-200 cursor-pointer flex items-center gap-2 relative px-4 py-2 rounded-lg ${
                     isActive('/calendar') 
-                      ? 'text-white font-semibold' 
-                      : 'text-emerald-100 hover:text-white'
-                  } ${isActive('/calendar') ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-white after:rounded-full' : ''}`}
+                      ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' 
+                      : 'text-emerald-100 hover:text-white hover:bg-white/10'
+                  }`}
                   data-testid="nav-calendar"
                 >
                   <Calendar className="w-4 h-4" />
@@ -80,11 +80,11 @@ export default function Navigation() {
             {user && (
               <Link href="/chat">
                 <span 
-                  className={`transition-all duration-200 cursor-pointer flex items-center gap-2 relative py-2 ${
+                  className={`transition-all duration-200 cursor-pointer flex items-center gap-2 relative px-4 py-2 rounded-lg ${
                     isActive('/chat') || location.startsWith('/chat/') 
-                      ? 'text-white font-semibold' 
-                      : 'text-emerald-100 hover:text-white'
-                  } ${(isActive('/chat') || location.startsWith('/chat/')) ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-white after:rounded-full' : ''}`}
+                      ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' 
+                      : 'text-emerald-100 hover:text-white hover:bg-white/10'
+                  }`}
                   data-testid="nav-chat"
                 >
                   <MessageSquare className="w-4 h-4" />
@@ -94,11 +94,11 @@ export default function Navigation() {
             )}
             <Link href="/community">
               <span 
-                className={`transition-all duration-200 cursor-pointer relative py-2 ${
+                className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${
                   isActive('/community') 
-                    ? (user ? 'text-white font-semibold' : 'text-brand font-semibold')
-                    : (user ? 'text-emerald-100 hover:text-white' : 'text-text-secondary hover:text-brand')
-                } ${isActive('/community') ? (user ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-white after:rounded-full' : 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand after:rounded-full') : ''}`}
+                    ? (user ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' : 'bg-brand-subtle text-brand font-semibold')
+                    : (user ? 'text-emerald-100 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
+                }`}
                 data-testid="nav-community"
               >
                 Community
