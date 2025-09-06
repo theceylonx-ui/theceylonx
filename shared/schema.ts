@@ -574,7 +574,7 @@ export const questions = pgTable("questions", {
   isAnonymous: boolean("is_anonymous").default(false),
   visibility: questionVisibilityEnum("visibility").default("public"),
   votesCount: integer("votes_count").default(0),
-  // score: integer("score").default(0), // Computed field: SUM(votes.value) for this question - temporarily disabled
+  score: integer("score").notNull().default(0), // Cached upvote count
   answersCount: integer("answers_count").default(0),
   acceptedAnswerId: varchar("accepted_answer_id"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -590,28 +590,37 @@ export const answers = pgTable("answers", {
   questionId: varchar("question_id").notNull(),
   userId: varchar("user_id").notNull(),
   votesCount: integer("votes_count").default(0),
-  // score: integer("score").default(0), // Computed field: SUM(votes.value) for this answer - temporarily disabled
+  score: integer("score").notNull().default(0), // Cached upvote count
   isAccepted: boolean("is_accepted").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Votes table for questions and answers
-export const votes = pgTable("votes", {
+// New upvote-only tables (replacing old votes table)
+export const questionUpvotes = pgTable("question_upvotes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  questionId: varchar("question_id").notNull(),
   userId: varchar("user_id").notNull(),
-  questionId: varchar("question_id"),
-  answerId: varchar("answer_id"),
-  voteType: varchar("vote_type").notNull(), // 'up' or 'down' - temporary rollback to existing schema
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => ({
-  // Unique constraint to ensure 1 vote per user per question/answer
-  uniqueUserQuestion: unique().on(table.userId, table.questionId),
-  uniqueUserAnswer: unique().on(table.userId, table.answerId),
+  // Unique constraint: one upvote per user per question
+  uniqueUserQuestion: unique().on(table.questionId, table.userId),
   // Performance indexes
-  questionIdIdx: index("votes_question_id_idx").on(table.questionId),
-  answerIdIdx: index("votes_answer_id_idx").on(table.answerId),
-  userIdIdx: index("votes_user_id_idx").on(table.userId),
+  questionIdIdx: index("idx_question_upvotes_q").on(table.questionId),
+  userIdIdx: index("idx_question_upvotes_u").on(table.userId),
+}));
+
+export const answerUpvotes = pgTable("answer_upvotes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  answerId: varchar("answer_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  // Unique constraint: one upvote per user per answer
+  uniqueUserAnswer: unique().on(table.answerId, table.userId),
+  // Performance indexes
+  answerIdIdx: index("idx_answer_upvotes_a").on(table.answerId),
+  userIdIdx: index("idx_answer_upvotes_u").on(table.userId),
 }));
 
 // Question tags pivot table (optional if not using array)
@@ -983,7 +992,7 @@ export const questionsRelations = relations(questions, ({ one, many }) => ({
     references: [topics.id],
   }),
   answers: many(answers),
-  votes: many(votes),
+  questionUpvotes: many(questionUpvotes),
   acceptedAnswer: one(answers, {
     fields: [questions.acceptedAnswerId],
     references: [answers.id],
@@ -999,16 +1008,18 @@ export const answersRelations = relations(answers, ({ one, many }) => ({
     fields: [answers.userId],
     references: [users.id],
   }),
-  votes: many(votes),
+  answerUpvotes: many(answerUpvotes),
 }));
 
-export const votesRelations = relations(votes, ({ one }) => ({
-  user: one(users, {
-    fields: [votes.userId],
-    references: [users.id],
-  }),
-  // Note: Can't directly relate to question/answer since votableType and votableId are dynamic
-  // These relationships will be handled in queries
+// New upvote relations
+export const questionUpvotesRelations = relations(questionUpvotes, ({ one }) => ({
+  user: one(users, { fields: [questionUpvotes.userId], references: [users.id] }),
+  question: one(questions, { fields: [questionUpvotes.questionId], references: [questions.id] }),
+}));
+
+export const answerUpvotesRelations = relations(answerUpvotes, ({ one }) => ({
+  user: one(users, { fields: [answerUpvotes.userId], references: [users.id] }),
+  answer: one(answers, { fields: [answerUpvotes.answerId], references: [answers.id] }),
 }));
 
 // ML recommendation relations
@@ -1245,11 +1256,7 @@ export const insertAnswerSchema = createInsertSchema(answers).omit({
   isAccepted: true,
 });
 
-export const insertVoteSchema = createInsertSchema(votes).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+// Old vote schema removed - replaced with new upvote schemas above
 
 // New schemas for enhanced Q&A system
 export const insertCategorySchema = createInsertSchema(categories).omit({
@@ -1266,12 +1273,7 @@ export const insertFollowSchema = createInsertSchema(follows).omit({
   createdAt: true,
 });
 
-// Vote request schema for API
-export const voteRequestSchema = z.object({
-  votableType: z.enum(['question', 'answer']),
-  votableId: z.string(),
-  value: z.number().min(-1).max(1), // -1, 0, or 1
-});
+// Old vote request schema removed - replaced with new upvote toggle schema above
 
 // ML recommendation schemas (userPreferences schema moved above)
 
@@ -1470,9 +1472,7 @@ export type QuestionWithDetails = Question & {
 export type InsertAnswer = z.infer<typeof insertAnswerSchema>;
 export type Answer = typeof answers.$inferSelect;
 export type AnswerWithUser = Answer & { user: User };
-export type InsertVote = z.infer<typeof insertVoteSchema>;
-export type Vote = typeof votes.$inferSelect;
-export type VoteRequest = z.infer<typeof voteRequestSchema>;
+// Old Vote types removed - replaced with new upvote types above
 
 // New Q&A types
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
@@ -1700,3 +1700,26 @@ export type Step3Data = z.infer<typeof Step3Schema>;
 export type Step4Data = z.infer<typeof Step4Schema>;
 export type Step5Data = z.infer<typeof Step5Schema>;
 export type Step6Data = z.infer<typeof Step6Schema>;
+
+// New upvote types
+export type QuestionUpvote = typeof questionUpvotes.$inferSelect;
+export type InsertQuestionUpvote = typeof questionUpvotes.$inferInsert;
+export type AnswerUpvote = typeof answerUpvotes.$inferSelect;
+export type InsertAnswerUpvote = typeof answerUpvotes.$inferInsert;
+
+// New upvote schemas for validation
+export const insertQuestionUpvoteSchema = createInsertSchema(questionUpvotes).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAnswerUpvoteSchema = createInsertSchema(answerUpvotes).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Toggle upvote request schema for API
+export const upvoteToggleRequestSchema = z.object({
+  itemType: z.enum(['question', 'answer']),
+  itemId: z.string(),
+});
