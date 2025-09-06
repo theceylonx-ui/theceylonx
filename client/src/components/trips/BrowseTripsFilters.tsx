@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useLocation } from "wouter";
 import { useTripsFiltersStore } from "@/store/tripsFiltersStore";
 import { encodeFiltersToQuery, decodeFiltersFromQuery } from "@/lib/urlState";
@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import QuickDateChips from "./QuickDateChips";
 import PriceRangeSlider from "./PriceRangeSlider";
@@ -116,17 +119,13 @@ export default function BrowseTripsFilters({
             <MapPin className="h-4 w-4" />
             From Location
           </label>
-          <Select value={filters.from ?? "anywhere"} onValueChange={(v) => set("from", v === "anywhere" ? null : v)}>
-            <SelectTrigger data-testid="select-from-location">
-              <SelectValue placeholder="My Current Location" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="anywhere">My Current Location</SelectItem>
-              {locations.map((loc) => (
-                <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <LocationCombobox
+            value={filters.from}
+            onChange={(value) => set("from", value)}
+            placeholder="My Current Location"
+            locations={locations}
+            testId="select-from-location"
+          />
         </div>
 
         {/* To Location */}
@@ -135,17 +134,13 @@ export default function BrowseTripsFilters({
             <MapPin className="h-4 w-4" />
             To Location
           </label>
-          <Select value={filters.to ?? "anywhere"} onValueChange={(v) => set("to", v === "anywhere" ? null : v)}>
-            <SelectTrigger data-testid="select-to-location">
-              <SelectValue placeholder="Anywhere" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="anywhere">Anywhere</SelectItem>
-              {locations.map((loc) => (
-                <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <LocationCombobox
+            value={filters.to}
+            onChange={(value) => set("to", value)}
+            placeholder="Anywhere"
+            locations={locations}
+            testId="select-to-location"
+          />
         </div>
 
         {/* Region */}
@@ -244,5 +239,97 @@ export default function BrowseTripsFilters({
         </div>
       </div>
     </motion.section>
+  );
+}
+
+// Custom location combobox component that allows both selection and custom input
+function LocationCombobox({ 
+  value, 
+  onChange, 
+  placeholder, 
+  locations, 
+  testId 
+}: {
+  value: string | null;
+  onChange: (value: string | null) => void;
+  placeholder: string;
+  locations: string[];
+  testId: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState(value || "");
+
+  // Update local state when external value changes
+  useEffect(() => {
+    setInputValue(value || "");
+  }, [value]);
+
+  const handleSelect = (selectedValue: string) => {
+    const newValue = selectedValue === "clear" ? null : selectedValue;
+    onChange(newValue);
+    setInputValue(newValue || "");
+    setOpen(false);
+  };
+
+  const handleInputChange = (newInputValue: string) => {
+    setInputValue(newInputValue);
+    // Update the filter with the current input value
+    onChange(newInputValue.trim() || null);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between text-left font-normal"
+          data-testid={testId}
+        >
+          {inputValue || placeholder}
+          <MapPin className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-full p-0" align="start">
+        <Command>
+          <CommandInput 
+            placeholder={`Type or select ${placeholder.toLowerCase()}...`}
+            value={inputValue}
+            onValueChange={handleInputChange}
+            data-testid={`${testId}-input`}
+          />
+          <CommandList>
+            <CommandEmpty>Type a custom location name</CommandEmpty>
+            <CommandGroup>
+              <CommandItem
+                value="clear"
+                onSelect={() => handleSelect("clear")}
+                data-testid={`${testId}-clear`}
+              >
+                <Check className={cn("mr-2 h-4 w-4", !value ? "opacity-100" : "opacity-0")} />
+                {placeholder}
+              </CommandItem>
+              {locations.map((location) => (
+                <CommandItem
+                  key={location}
+                  value={location}
+                  onSelect={() => handleSelect(location)}
+                  data-testid={`${testId}-${location.toLowerCase().replace(/\s+/g, '-')}`}
+                >
+                  <Check 
+                    className={cn(
+                      "mr-2 h-4 w-4", 
+                      value === location ? "opacity-100" : "opacity-0"
+                    )} 
+                  />
+                  {location}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
