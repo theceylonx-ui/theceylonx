@@ -436,57 +436,60 @@ export default function TripCard({ trip, badges }: TripCardProps) {
             </div>
           </div>
           
-          {/* Organizer Info - Separate Row */}
-          <div className="flex items-center pt-4 border-t border-ui-line mt-4" data-testid={`trip-organizer-${trip.id}`}>
-            <Link href={`/profile/${trip.organizerId}`} className="hover:opacity-80 transition-opacity">
-              <UserDisplay 
-                user={trip.organizer}
-                avatarSize="lg"
-                className="gap-3"
-                nameClassName="text-sm font-medium text-text-primary truncate max-w-[120px] sm:max-w-[140px]"
-              />
-            </Link>
-          </div>
-          
-          {/* Actions Row - Clean Layout */}
-          <div className="flex items-center justify-between pt-3">
-            <div className="flex items-center gap-2">
-              {user && !isOwner && (
-                <SaveControl 
-                  tripId={trip.id} 
-                  variant="compact" 
-                  className=""
-                  data-testid={`save-control-${trip.id}`}
+          {/* Trip Footer with Clean Two-Row Layout */}
+          <div className="border-t border-ui-line mt-6 pt-4 space-y-4">
+            {/* Row 1: Organizer Info */}
+            <div className="flex items-center" data-testid={`trip-organizer-${trip.id}`}>
+              <Link href={`/profile/${trip.organizerId}`} className="hover:opacity-80 transition-opacity">
+                <UserDisplay 
+                  user={trip.organizer}
+                  avatarSize="lg"
+                  className="gap-3"
+                  nameClassName="text-sm font-medium text-text-primary"
                 />
-              )}
-              
-              {/* Owner-only actions */}
-              {isOwner && (
-                <ActionsMenu
-                  onEdit={handleEditTrip}
-                  onDelete={handleDeleteTrip}
-                  canEdit={true}
-                  canDelete={true}
-                  isDeleting={deleteTripMutation.isPending}
-                  size="sm"
-                />
-              )}
+              </Link>
             </div>
             
-            <Button 
-              size="sm"
-              className="text-sm px-6 py-2 bg-brand text-white hover:bg-brand-hover font-medium h-9 ml-auto"
-              data-testid={`button-view-${trip.id}`}
-              title="View trip details"
-              asChild
-            >
-              <Link href={createTripDetailLink(trip.id, {
-                from: trip.fromLocation,
-                to: trip.toLocation
-              })}>
-                View Details
-              </Link>
-            </Button>
+            {/* Row 2: Action Buttons - Well Spaced */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {user && !isOwner && (
+                  <SaveControl 
+                    tripId={trip.id} 
+                    variant="compact" 
+                    className=""
+                    data-testid={`save-control-${trip.id}`}
+                  />
+                )}
+                
+                {/* Owner-only actions */}
+                {isOwner && (
+                  <ActionsMenu
+                    onEdit={handleEditTrip}
+                    onDelete={handleDeleteTrip}
+                    canEdit={true}
+                    canDelete={true}
+                    isDeleting={deleteTripMutation.isPending}
+                    size="sm"
+                  />
+                )}
+              </div>
+              
+              <Button 
+                size="sm"
+                className="text-sm px-6 py-2.5 bg-brand text-white hover:bg-brand-hover font-medium h-10 shadow-sm"
+                data-testid={`button-view-${trip.id}`}
+                title="View trip details"
+                asChild
+              >
+                <Link href={createTripDetailLink(trip.id, {
+                  from: trip.fromLocation,
+                  to: trip.toLocation
+                })}>
+                  View Details
+                </Link>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
