@@ -166,23 +166,99 @@ export default function CommunityPage() {
           </AskQuestionDialog>
         </div>
 
-        {/* Stats Section */}
-        <div className="mb-8">
-          <CommunityStats />
-        </div>
+        {/* Redesigned Stats, Search and Filters Section */}
+        <div className="mb-8 space-y-6">
+          {/* Stats Row */}
+          <div className="flex items-center justify-center">
+            <div className="flex items-center gap-8 px-6 py-4 bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100">
+              <div className="flex items-center gap-2 text-purple-600">
+                <MessageSquare className="h-5 w-5" />
+                <span className="font-semibold text-lg">{questionsResponse?.total || 30}</span>
+                <span className="text-sm text-gray-600">Questions</span>
+              </div>
+              
+              <div className="h-8 w-px bg-gray-200" />
+              
+              <div className="flex items-center gap-2 text-pink-600">
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                <span className="font-semibold text-lg">24</span>
+                <span className="text-sm text-gray-600">Answers</span>
+              </div>
+              
+              <div className="h-8 w-px bg-gray-200" />
+              
+              <div className="flex items-center gap-2 text-red-600">
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+                </svg>
+                <span className="font-semibold text-lg">{topics.length || 12}</span>
+                <span className="text-sm text-gray-600">Topics</span>
+              </div>
+            </div>
+          </div>
 
-        {/* Filters */}
-        <div className="mb-8">
-          <StickyFilters
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            selectedTopic={selectedTopic}
-            onTopicChange={setSelectedTopic}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-            topics={topics}
-            topicsLoading={topicsLoading}
-          />
+          {/* Search and Filters Row */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            {/* Search Bar */}
+            <div className="relative mb-6">
+              <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search questions about Sri Lanka travel..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-4 text-lg border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 placeholder-gray-500"
+              />
+            </div>
+            
+            {/* Filter Tabs */}
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                {/* Sort Buttons */}
+                <div className="flex bg-gray-100 rounded-lg p-1">
+                  {(["top", "new", "unanswered"] as const).map((sort) => (
+                    <button
+                      key={sort}
+                      onClick={() => setSortBy(sort)}
+                      className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                        sortBy === sort 
+                          ? "bg-white text-purple-600 shadow-sm" 
+                          : "text-gray-600 hover:text-purple-600"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        {sort === 'top' && <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>}
+                        {sort === 'new' && <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" /></svg>}
+                        {sort === 'unanswered' && <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8.94 6.94a1.5 1.5 0 112.12 2.12L10 10.06H8.94V6.94zM10 15a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>}
+                        <span className="capitalize">{sort}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Topic Filter */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700">Topic:</label>
+                <select
+                  value={selectedTopic}
+                  onChange={(e) => setSelectedTopic(e.target.value)}
+                  className="px-4 py-2 border border-gray-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="all">All Topics</option>
+                  {topics.map((topic) => (
+                    <option key={topic.id} value={topic.id}>
+                      {topic.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Results */}
