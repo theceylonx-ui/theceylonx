@@ -157,28 +157,59 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Quick Stats Section */}
-      <section className="py-16 bg-gray-50">
+      {/* More Trips Section */}
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8 text-center">
-            <div data-testid="stat-active-trips">
-              <div className="text-3xl font-bold text-ceylon-green mb-2">
-                {trendingTrips?.length || 0}
-              </div>
-              <div className="text-gray-600">Active Trips</div>
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-800 mb-2" data-testid="text-more-trips">
+                Discover More Adventures
+              </h2>
+              <p className="text-gray-600">Explore even more exciting trips across Sri Lanka.</p>
             </div>
-            <div data-testid="stat-destinations">
-              <div className="text-3xl font-bold text-ceylon-blue mb-2">
-                {new Set(trendingTrips?.map(rec => rec.trip.region)).size || 0}
+            <Link href="/browse-trips">
+              <Button variant="outline" className="text-ceylon-green border-ceylon-green hover:bg-ceylon-green hover:text-white" data-testid="link-browse-all">
+                Browse All →
+              </Button>
+            </Link>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {isLoading ? (
+              // Loading skeletons
+              Array.from({ length: 6 }).map((_, i) => (
+                <Card key={i} className="overflow-hidden" data-testid={`skeleton-more-trip-${i}`}>
+                  <Skeleton className="w-full h-48" />
+                  <CardContent className="p-6">
+                    <Skeleton className="h-6 w-3/4 mb-4" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : trendingTrips.length > 3 ? (
+              // Show different trips from the trending ones (slice from 3 onwards or show last 3)
+              trendingTrips.slice(-3).map((recommendation) => (
+                <TripCard 
+                  key={`more-${recommendation.trip.id}`} 
+                  trip={recommendation.trip} 
+                  badges={recommendation.features || []}
+                  data-testid={`more-trip-card-${recommendation.trip.id}`} 
+                />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12" data-testid="empty-more-trips">
+                <p className="text-gray-600 text-lg">Discover more amazing trips waiting for you!</p>
+                <Link href="/browse-trips">
+                  <Button className="mt-4 bg-ceylon-green hover:bg-ceylon-green/90" data-testid="button-explore-trips">
+                    Explore All Trips
+                  </Button>
+                </Link>
               </div>
-              <div className="text-gray-600">Destinations</div>
-            </div>
-            <div data-testid="stat-travelers">
-              <div className="text-3xl font-bold text-ceylon-green mb-2">
-                {trendingTrips?.reduce((sum, rec) => sum + rec.trip.seatsAvailable, 0) || 0}
-              </div>
-              <div className="text-gray-600">Available Seats</div>
-            </div>
+            )}
           </div>
         </div>
       </section>
