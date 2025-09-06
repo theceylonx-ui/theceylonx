@@ -166,8 +166,8 @@ export default function ProfileMenu({ className }: ProfileMenuProps) {
           </DropdownMenuItem>
         </Link>
 
-        {/* 5. Settings - Travel Preferences */}
-        <Link href="/me?tab=preferences">
+        {/* 5. Settings - Account Settings */}
+        <Link href="/settings/account">
           <DropdownMenuItem 
             className="cursor-pointer" 
             data-testid="profile-menu-settings"
