@@ -87,6 +87,9 @@ export function createTripDetailLink(tripId: string, preserveFilters = true): st
   // Add the original search as a returnTo parameter so we can navigate back
   if (currentSearch) {
     helper.set('returnTo', encodeURIComponent(`/trips${currentSearch}`));
+  } else {
+    // If no search params, still preserve the browse route
+    helper.set('returnTo', encodeURIComponent('/trips'));
   }
   
   const newSearch = helper.toString();
@@ -97,7 +100,7 @@ export function createTripDetailLink(tripId: string, preserveFilters = true): st
  * Creates a back link that returns to the trips listing with preserved filters
  * @param fallbackPath Fallback path if no returnTo parameter exists
  */
-export function createBackToTripsLink(fallbackPath = '/browse-trips'): string {
+export function createBackToTripsLink(fallbackPath = '/trips'): string {
   const helper = createSearchParamsHelper();
   const returnTo = helper.get('returnTo');
   
@@ -111,6 +114,65 @@ export function createBackToTripsLink(fallbackPath = '/browse-trips'): string {
   }
   
   return fallbackPath;
+}
+
+/**
+ * Creates a Post Trip URL with returnTo context for seamless back navigation
+ * @param currentPath Current path with search parameters to return to
+ */
+export function createPostTripLink(currentPath?: string): string {
+  const pathToReturn = currentPath || `${window.location.pathname}${window.location.search}`;
+  const encodedPath = encodeURIComponent(pathToReturn);
+  return `/trips/new?returnTo=${encodedPath}`;
+}
+
+/**
+ * Enhanced utility to preserve filters in Zustand store and URL sync
+ */
+export interface FilterState {
+  from: string;
+  to: string;
+  date: string;
+  region: string;
+  minPrice: string;
+  maxPrice: string;
+  search: string;
+  view?: 'list' | 'map';
+  page?: number;
+}
+
+/**
+ * Encodes filter state into URL parameters
+ */
+export function encodeFiltersToUrl(filters: FilterState): string {
+  const params = new URLSearchParams();
+  
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value && value !== '') {
+      params.set(key, value.toString());
+    }
+  });
+  
+  return params.toString();
+}
+
+/**
+ * Decodes URL parameters into filter state
+ */
+export function decodeFiltersFromUrl(search: string = window.location.search): FilterState {
+  const params = new URLSearchParams(search);
+  
+  return {
+    from: params.get('from') || '',
+    to: params.get('to') || '',
+    date: params.get('date') || '',
+    region: params.get('region') || '',
+    minPrice: params.get('minPrice') || '',
+    maxPrice: params.get('maxPrice') || '',
+    search: params.get('search') || '',
+    view: (params.get('view') as 'list' | 'map') || 'list',
+    page: parseInt(params.get('page') || '1', 10)
+  };
 }
 
 /**
