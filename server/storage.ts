@@ -1273,7 +1273,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Enhanced Votes API
-  async upsertVote(userId: string, votableType: 'question' | 'answer', votableId: string, value: number): Promise<{ vote: Vote | null; score: number }> {
+  // New upvote system methods
+  async toggleUpvote(userId: string, itemType: 'question' | 'answer', itemId: string): Promise<{ hasUpvoted: boolean; newScore: number; item: any }> {
     // First, try to find existing vote
     const existingVote = await this.getUserVote(userId, votableType, votableId);
     const isQuestion = votableType === 'question';
@@ -1312,7 +1313,24 @@ export class DatabaseStorage implements IStorage {
     // Get current vote after upsert
     const currentVote = value === 0 ? null : await this.getUserVote(userId, votableType, votableId);
     
-    return { vote: currentVote || null, score: newScore };
+    // Check if user already upvoted this item
+    const existingUpvote = await this.getUserUpvote(userId, itemType, itemId);
+    
+    if (existingUpvote) {
+      // Remove upvote
+      await this.removeUpvote(userId, itemType, itemId);
+      const newScore = await this.calculateUpvoteScore(itemType, itemId);
+      await this.updateUpvoteScore(itemType, itemId, newScore);
+      const item = await this.getItemWithScore(itemType, itemId);
+      return { hasUpvoted: false, newScore, item };
+    } else {
+      // Add upvote
+      await this.addUpvote(userId, itemType, itemId);
+      const newScore = await this.calculateUpvoteScore(itemType, itemId);
+      await this.updateUpvoteScore(itemType, itemId, newScore);
+      const item = await this.getItemWithScore(itemType, itemId);
+      return { hasUpvoted: true, newScore, item };
+    }
   }
 
   private async calculateScore(votableType: 'question' | 'answer', votableId: string): Promise<number> {
@@ -2706,6 +2724,107 @@ export class DatabaseStorage implements IStorage {
           eq(chatParticipantState.userId, userId)
         )
       );
+  }
+
+  // New upvote helper methods
+  async getUserUpvote(userId: string, itemType: 'question' | 'answer', itemId: string): Promise<any | undefined> {
+    if (itemType === 'question') {
+      const [upvote] = await db
+        .select()
+        .from(questionUpvotes)
+        .where(and(
+          eq(questionUpvotes.userId, userId),
+          eq(questionUpvotes.questionId, itemId)
+        ));
+      return upvote;
+    } else {
+      const [upvote] = await db
+        .select()
+        .from(answerUpvotes)
+        .where(and(
+          eq(answerUpvotes.userId, userId),
+          eq(answerUpvotes.answerId, itemId)
+        ));
+      return upvote;
+    }
+  }
+
+  async addUpvote(userId: string, itemType: 'question' | 'answer', itemId: string): Promise<void> {
+    if (itemType === 'question') {
+      await db.insert(questionUpvotes).values({
+        userId,
+        questionId: itemId,
+      });
+    } else {
+      await db.insert(answerUpvotes).values({
+        userId,
+        answerId: itemId,
+      });
+    }
+  }
+
+  async removeUpvote(userId: string, itemType: 'question' | 'answer', itemId: string): Promise<void> {
+    if (itemType === 'question') {
+      await db
+        .delete(questionUpvotes)
+        .where(and(
+          eq(questionUpvotes.userId, userId),
+          eq(questionUpvotes.questionId, itemId)
+        ));
+    } else {
+      await db
+        .delete(answerUpvotes)
+        .where(and(
+          eq(answerUpvotes.userId, userId),
+          eq(answerUpvotes.answerId, itemId)
+        ));
+    }
+  }
+
+  async calculateUpvoteScore(itemType: 'question' | 'answer', itemId: string): Promise<number> {
+    if (itemType === 'question') {
+      const result = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(questionUpvotes)
+        .where(eq(questionUpvotes.questionId, itemId));
+      return result[0]?.count || 0;
+    } else {
+      const result = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(answerUpvotes)
+        .where(eq(answerUpvotes.answerId, itemId));
+      return result[0]?.count || 0;
+    }
+  }
+
+  async updateUpvoteScore(itemType: 'question' | 'answer', itemId: string, score: number): Promise<void> {
+    if (itemType === 'question') {
+      await db
+        .update(questions)
+        .set({ score })
+        .where(eq(questions.id, itemId));
+    } else {
+      await db
+        .update(answers)
+        .set({ score })
+        .where(eq(answers.id, itemId));
+    }
+  }
+
+  async getItemWithScore(itemType: 'question' | 'answer', itemId: string): Promise<any> {
+    if (itemType === 'question') {
+      const [question] = await db
+        .select()
+        .from(questions)
+        .where(eq(questions.id, itemId));
+      return question;
+    } else {
+      const [answer] = await db
+        .select()
+        .from(answers)
+        .where(eq(answers.id, itemId));
+      return answer;
+    }
   }
 
   // Raw query execution for admin/moderation operations

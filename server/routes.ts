@@ -1994,40 +1994,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Enhanced Voting System
-  app.post('/api/votes', unifiedAuthGuard, async (req: any, res) => {
+  // New Upvote System
+  app.post('/api/upvotes/toggle', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { votableType, votableId, value } = req.body;
+      const { itemType, itemId } = req.body;
       
       // Validate input
-      if (!['question', 'answer'].includes(votableType)) {
-        return res.status(400).json({ message: "Invalid votable type" });
+      if (!['question', 'answer'].includes(itemType)) {
+        return res.status(400).json({ message: "Invalid item type" });
       }
-      if (!votableId) {
-        return res.status(400).json({ message: "Votable ID is required" });
-      }
-      if (![1, 0].includes(value)) {
-        return res.status(400).json({ message: "Vote value must be 1 (upvote) or 0 (clear)" });
+      if (!itemId) {
+        return res.status(400).json({ message: "Item ID is required" });
       }
       
-      const result = await storage.upsertVote(userId, votableType, votableId, value);
+      const result = await storage.toggleUpvote(userId, itemType, itemId);
       
       // Determine response message
-      let message = "";
-      if (value === 0) {
-        message = "Vote cleared";
-      } else if (value === 1) {
-        message = "Upvoted successfully";
-      } else {
-        message = "Vote processed";
-      }
+      const message = result.hasUpvoted ? "Upvoted successfully" : "Upvote removed";
       
       // Create notification for upvotes only (to reduce spam)
-      if (value === 1) {
+      if (result.hasUpvoted) {
         try {
-          if (votableType === 'question') {
-            const question = await storage.getQuestion(votableId);
+          if (itemType === 'question') {
+            const question = await storage.getQuestion(itemId);
             if (question && question.userId !== userId) {
               const voter = await storage.getUser(userId);
               await storage.createNotification({
@@ -2042,8 +2032,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 isRead: false,
               });
             }
-          } else if (votableType === 'answer') {
-            const answer = await storage.getAnswer(votableId);
+          } else if (itemType === 'answer') {
+            const answer = await storage.getAnswer(itemId);
             if (answer && answer.userId !== userId) {
               const voter = await storage.getUser(userId);
               await storage.createNotification({
@@ -2066,18 +2056,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json({
-        vote: result.vote,
-        score: result.score,
+        hasUpvoted: result.hasUpvoted,
+        score: result.newScore,
+        item: result.item,
         message: message
       });
     } catch (error) {
-      console.error("Error processing vote:", error);
-      res.status(500).json({ message: "Failed to process vote" });
+      console.error("Error processing upvote:", error);
+      res.status(500).json({ message: "Failed to process upvote" });
     }
   });
 
-  // Get current user's vote for an item
-  app.get('/api/votes/:type/:id', unifiedAuthGuard, async (req: any, res) => {
+  // Get current user's upvote status for an item
+  app.get('/api/upvotes/:type/:id', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { type, id } = req.params;
@@ -2086,11 +2077,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid type" });
       }
       
-      const vote = await storage.getUserVote(userId, type as 'question' | 'answer', id);
-      res.json({ vote });
+      const upvote = await storage.getUserUpvote(userId, type as 'question' | 'answer', id);
+      res.json({ hasUpvoted: !!upvote });
     } catch (error) {
-      console.error("Error fetching user vote:", error);
-      res.status(500).json({ message: "Failed to fetch vote" });
+      console.error("Error fetching user upvote:", error);
+      res.status(500).json({ message: "Failed to fetch upvote status" });
     }
   });
 
