@@ -1,0 +1,161 @@
+Goal: Deliver a complete, build-ready blueprint (specs + stubs + checklists) covering architecture, UX, data, APIs, infra, security, testing, and delivery—aligned with “Einstein’s Brain ↔ 5-Year-Old’s Playground”.
+0) Outputs (Deliverables)
+docs/blueprint-v5.0.md (this spec, generated)
+docs/ia-sitemap-v5.0.png (site map)
+docs/api-schema.graphql + REST OpenAPI docs/openapi.yaml
+docs/db-schema.sql + Drizzle models
+docs/ui-style-tokens.md (type, color, spacing, shadows)
+docs/test-plan-v5.0.md (unit/e2e, accessibility)
+Repo scaffolding + stubs per structure below
+One runnable demo page showcasing tokens & components
+A) Product Pillars & KPIs
+Clarity-first UI (Apple-like): quick scanning, big touch targets, plain language.
+Trust & safety by design (predictive moderation, privacy defaults).
+Speed: p95 API <100ms; sub-1s TTI on 4G; offline core.
+KPIs: onboarding completion (+300%), 7-day retention (+250%), moderation workload (–80%), booking uplift (+180%).
+B) Information Architecture (IA)
+Top-level nav: Browse Trips / Post a Trip / Calendar / Community / My Trips / My Questions / Notifications / Profile
+Secondary: Help & FAQ, Terms/Privacy, Admin (Mission Control)
+Provide docs/ia-sitemap-v5.0.png with all routes and backlink rules.
+C) Frontend Stack & Structure
+Tech: Next.js 14 (App Router), React 18, TypeScript, Tailwind, shadcn/ui, Framer Motion, Zustand, next-intl (EN/SI/TA), RSC + edge caching, PWA.
+Folders
+client/
+  src/app/(public)/{trips,community}/page.tsx
+  src/app/(user)/{trips,new,questions,my,notifications,profile}/page.tsx
+  src/app/(trip)/trips/[id]/page.tsx
+  src/components/{trips,community,common,ui}
+  src/store/{tripsFiltersStore,communityStore,userStore}.ts
+  src/lib/{urlState,dateQuickPicks,currency,fetcher,auth,analytics}.ts
+  src/styles/tokens.css
+  public/locales/{en,si,ta}/**/*.json
+Design tokens: typography scale, color roles, shadows, spacing, radii (see section H).
+D) Backend Stack & Services
+Runtime: Node.js 20 + TypeScript
+DB: PostgreSQL 16 + pgvector; Redis cluster; ClickHouse (events); Elasticsearch (search)
+AI/ML: Python microservices (FastAPI) for recsys/moderation; TensorFlow.js where local
+Messaging: Kafka (events)
+API: GraphQL gateway (federated modules) + minimal REST for streaming/SSE
+Infra: Kubernetes (GCP), CI/CD (GitHub Actions), Datadog observability
+Service modules:
+users, trips, community, matchmaking, moderation, notifications, analytics
+E) Data Model (Key Tables)
+users(id, name, username, image_url, locale, created_at, ...)
+trips(id, owner_id, title, from_loc, to_loc, region, start_date, end_date, timezone, price_lkr, active BOOL DEFAULT true, score INT DEFAULT 0, created_at, ...)
+questions(id, owner_id, title, body, is_anonymous BOOL DEFAULT false, score INT DEFAULT 0, created_at, ...)
+answers(id, question_id, owner_id, body, score INT DEFAULT 0, created_at, ...)
+question_upvotes(question_id, user_id, created_at, UNIQUE(question_id,user_id))
+answer_upvotes(answer_id, user_id, created_at, UNIQUE(answer_id,user_id))
+notifications(id, user_id, kind, payload JSONB, read BOOL DEFAULT false, created_at)
+events_clickhouse(...) (behavioral)
+Indexes for active/public queries and search.
+Include docs/db-schema.sql + Drizzle models.
+F) API Contracts
+GraphQL (primary)
+Trips
+query trips(filter: TripsFilter!): TripsPage!
+mutation createTrip(input: CreateTripInput!): Trip!
+mutation updateTripDates(id: ID!, start: DateTime!, end: DateTime!, tz: String!): Trip!
+mutation setTripActive(id: ID!, active: Boolean!): Trip!
+Community
+mutation createQuestion(input: {title, body, isAnonymous}): Question!
+mutation toggleQuestionUpvote(questionId: ID!): Question!
+mutation toggleAnswerUpvote(answerId: ID!): Answer!
+subscription questionScoreUpdated(id: ID!): Question!
+subscription answerScoreUpdated(id: ID!): Answer!
+Notifications
+subscription notifications: Notification!
+REST (SSE/stream fallback)
+GET /api/stream/questions/:id/score, GET /api/stream/answers/:id/score
+Provide docs/api-schema.graphql + openapi.yaml.
+G) Core UX Flows (A→Z)
+Browse Trips
+Filters: search, from/to, region, date range (quick picks), price slider
+Live result count; Clear/Apply; URL ↔ state sync; mobile drawer
+Post a Trip
+Stepper: Basics → Dates → Review → Publish (confetti)
+Draft autosave; date validation; optimistic mutations
+Calendar
+Range picker; Colombo tz; summary chip; inline errors
+My Trips / My Questions
+Owner toggles: Trip Active On/Off; Question Show/Hide
+Owner sees all; public feeds respect visibility
+Community
+Ask dialog (Anonymous checkbox); list (Top/New/Unanswered)
+Upvote-only with realtime scores (list + detail)
+Notifications
+Accept/reject trip joins; votes on your Q/A; reports; system messages
+Profile
+Name, avatar, locale; download data; delete account
+Backlinks
+returnTo pattern preserves filter context across pages
+H) Visual System (Apple-level clarity)
+Typography: headings 32–48px, body 16px/28–30px lh; system font stack
+Color roles (light/dark):
+Text: primary #0B0B0B / #F5F5F5, secondary #4A4A4A / #CFCFCF
+Brand: #0F8B6E / #12A082, hover darken
+Surfaces: #FFFFFF, #F7F7F7 / #0B0B0B, #141414
+Lines: #E6E6E6 / #2A2A2A
+Danger/Success/Info tokens
+Shadows: cards subtle; dialogs elevated; buttons mostly flat
+Avatars/Names: always legible; fallback initials with brand tint
+Motion: subtle fades, micro-bounce on press
+i18n: EN/SI/TA keys for all labels and validation
+Ship docs/ui-style-tokens.md and apply tokens across components.
+I) Search & Recommendations
+Elasticsearch for trips search (synonyms for SL places)
+Recsys pipeline: preference + collaborative + popularity + freshness + seasonality + safety; A/B switch; ClickHouse metrics
+Expose getIntelligentMatches(userId); explain scoring breakdown in admin.
+J) Moderation, Safety, Privacy
+Predictive moderation (toxicity/spam scoring) → auto-actions + human escalation
+Anonymous Q masking PII in public outputs
+Under-18 mode: safer defaults; restricted location sharing
+Consent UI: one-tap privacy; plain language; logs for changes
+GDPR-style data export/delete; audit trails for anon toggle
+K) Performance & Reliability
+Frontend: RSC + edge cache; code-splitting; image optimization; offline PWA; 60fps
+Backend: p95 <100ms; HPA autoscaling; Redis caching; idempotent mutations
+Real-time: Subscriptions/SSE resilient; backoff; dedupe updates
+Provide a Lighthouse/Axe baseline in docs/test-plan-v5.0.md.
+L) Analytics & Telemetry
+Events: trip_created, trip_dates_updated, trip_published, question_created, answer_created, upvote_toggled, join_request_accepted, etc.
+ClickHouse schemas + example queries (CTR, retention, cohort)
+Datadog: dashboards for API latency, error rate, WS connections
+M) Security & Abuse Prevention
+AuthZ checks server-side (ownerId match)
+Rate limits (posting/voting)
+Bot detection (basic); anomaly flags; shadow ban hook
+OWASP checks; headers; CSRF/clickjacking protections
+N) Testing Strategy
+Unit: utils, resolvers, stores
+Integration: GraphQL mutations & permissions
+E2E (Playwright):
+Browse→Post→Back retains filters
+Upvote realtime across two clients
+Owner toggles (trip/question) persist & reflect in public feeds
+Accessibility: axe clean (critical = 0)
+Performance budgets: enforce TTI, bundle sizes
+Ship docs/test-plan-v5.0.md with cases & scripts.
+O) CI/CD & Environments
+GitHub Actions:
+Lint/typecheck/test → build → preview deploy → prod
+Envs: dev / staging / prod; feature previews per PR
+Database migrations (Drizzle) with rollback plan
+P) Rollout & Observability
+Phased rollout flags for:
+Upvote-only system
+New filters UI
+Visibility toggles
+SLOs, alerts (latency, error spikes, WS disconnect rates)
+Q) Roadmap (Quarterly)
+Q1 (Foundation): new filters UI, upvote-only realtime, owner visibility toggles, tokens, i18n pass
+Q2 (Intelligence): recsys A/B, moderation v2, notifications polish
+Q3 (Ecosystem): payments/booking integrations, admin insights
+Q4 (Innovation): adaptive UI, voice, AR route previews, open API
+R) Acceptance Criteria (Sign-off)
+Blueprint docs generated + repo scaffolding compiles
+Demo implements style tokens + core components
+Key flows pass E2E + a11y, in EN/SI/TA
+Realtime upvotes + visibility toggles function as specified
+Metrics streaming to ClickHouse; dashboards visible
+Action: Generate all docs & stubs, wire tokens, scaffold APIs & pages, include a minimal demo, and submit a PR titled “CEYLON EXPAND — Blueprint v5.0” with a 60-90s screencast of the new visual system and the three core flows.
