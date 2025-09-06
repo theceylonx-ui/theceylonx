@@ -407,22 +407,6 @@ export default function UserDashboard() {
     setSelectedAvatarUrl(avatarUrl);
   };
 
-  const handleDeleteTrip = (tripId: string) => {
-    if (confirm("Are you sure you want to delete this trip?")) {
-      deleteTripMutation.mutate(tripId);
-    }
-  };
-
-
-  const handleMarkCompleted = (tripId: string) => {
-    if (confirm("Mark this trip as completed? It will no longer appear in search results and new people won't be able to join.")) {
-      updateTripStatusMutation.mutate({ tripId, status: "completed" });
-    }
-  };
-
-  const handleReactivateTrip = (tripId: string) => {
-    updateTripStatusMutation.mutate({ tripId, status: "active" });
-  };
 
   if (isLoading) {
     return (
@@ -545,39 +529,14 @@ export default function UserDashboard() {
                             >
                               {trip.status}
                             </Badge>
-                            {trip.status === "active" ? (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleMarkCompleted(trip.id)}
-                                disabled={updateTripStatusMutation.isPending}
-                                data-testid={`button-complete-${trip.id}`}
-                                className="text-ceylon-green border-ceylon-green hover:bg-ceylon-green hover:text-white"
-                              >
-                                <Check className="h-4 w-4 mr-1" />
-                                Mark Complete
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleReactivateTrip(trip.id)}
-                                disabled={updateTripStatusMutation.isPending}
-                                data-testid={`button-reactivate-${trip.id}`}
-                                className="text-ceylon-blue border-ceylon-blue hover:bg-ceylon-blue hover:text-white"
-                              >
-                                <X className="h-4 w-4 mr-1" />
-                                Reactivate
-                              </Button>
-                            )}
                             <Button
-                              variant="destructive"
+                              variant="outline"
                               size="sm"
-                              onClick={() => handleDeleteTrip(trip.id)}
-                              disabled={deleteTripMutation.isPending}
-                              data-testid={`button-delete-${trip.id}`}
+                              onClick={() => window.location.href = `/trips/${trip.id}`}
+                              data-testid={`button-view-trip-${trip.id}`}
                             >
-                              Delete
+                              <Eye className="w-4 h-4 mr-1" />
+                              View Details
                             </Button>
                           </div>
                         </div>
