@@ -5,6 +5,5 @@ export type TripsFilters = {
   region: string | null;     // e.g., "Central", "North", ...
   startDate: string | null;  // ISO date (yyyy-mm-dd)
   endDate: string | null;    // ISO date (yyyy-mm-dd)
-  priceMin: number | null;   // in LKR
-  priceMax: number | null;   // in LKR
+  maxPrice: number | null;   // maximum price in LKR (0 = show all)
 };

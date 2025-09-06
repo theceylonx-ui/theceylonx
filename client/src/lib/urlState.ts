@@ -8,8 +8,7 @@ export function encodeFiltersToQuery(f: TripsFilters): string {
   if (f.region) p.set("region", f.region);
   if (f.startDate) p.set("start", f.startDate);
   if (f.endDate) p.set("end", f.endDate);
-  if (f.priceMin != null) p.set("min", String(f.priceMin));
-  if (f.priceMax != null) p.set("max", String(f.priceMax));
+  if (f.maxPrice != null) p.set("maxPrice", String(f.maxPrice));
   const s = p.toString();
   return s ? `?${s}` : "";
 }
@@ -28,7 +27,6 @@ export function decodeFiltersFromQuery(search: string): Partial<TripsFilters> {
     region: pick("region"),
     startDate: pick("start"),
     endDate: pick("end"),
-    priceMin: n("min"),
-    priceMax: n("max"),
+    maxPrice: n("maxPrice"),
   };
 }

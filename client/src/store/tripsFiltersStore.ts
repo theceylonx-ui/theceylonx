@@ -9,8 +9,7 @@ const DEFAULTS: TripsFilters = {
   region: null,
   startDate: null,
   endDate: null,
-  priceMin: null,
-  priceMax: null,
+  maxPrice: null,
 };
 
 type State = {
