@@ -34,6 +34,40 @@ import { apiRequest } from "@/lib/queryClient";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { PreferencesForm } from "@/components/preferences/PreferencesForm";
 
+// Travel Quote Component that generates a new quote each time it renders
+function TravelQuote() {
+  const travelQuotes = [
+    { quote: "Travel makes one modest. You see what a tiny place you occupy in the world.", author: "Gustave Flaubert" },
+    { quote: "The world is a book and those who do not travel read only one page.", author: "Saint Augustine" },
+    { quote: "Adventure is worthwhile in itself.", author: "Amelia Earhart" },
+    { quote: "To travel is to live.", author: "Hans Christian Andersen" },
+    { quote: "Not all those who wander are lost.", author: "J.R.R. Tolkien" },
+    { quote: "Life is short and the world is wide.", author: "Simon Raven" },
+    { quote: "Travel far enough, you meet yourself.", author: "David Mitchell" },
+    { quote: "The journey not the arrival matters.", author: "T.S. Eliot" },
+    { quote: "Wherever you go becomes a part of you somehow.", author: "Anita Desai" },
+    { quote: "We travel, initially, to lose ourselves; and we travel, next, to find ourselves.", author: "Pico Iyer" },
+    { quote: "A journey is best measured in friends, rather than miles.", author: "Tim Cahill" },
+    { quote: "Travel is the only thing you buy that makes you richer.", author: "Anonymous" },
+    { quote: "Man cannot discover new oceans unless he has the courage to lose sight of the shore.", author: "André Gide" },
+    { quote: "Jobs fill your pocket, but adventures fill your soul.", author: "Jaime Lyn Beatty" },
+    { quote: "Take only memories, leave only footprints.", author: "Chief Seattle" }
+  ];
+
+  const randomQuote = travelQuotes[Math.floor(Math.random() * travelQuotes.length)];
+
+  return (
+    <div className="bg-white/15 backdrop-blur-sm rounded-xl p-6 lg:p-8 border border-white/20 max-w-2xl mx-auto text-center">
+      <div className="text-lg lg:text-xl font-medium text-white leading-relaxed mb-3">
+        "{randomQuote.quote}"
+      </div>
+      <div className="text-sm text-white/70 font-light italic">
+        — {randomQuote.author}
+      </div>
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   const { user, isLoading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
@@ -47,6 +81,7 @@ export default function ProfilePage() {
   };
   
   const [activeTab, setActiveTab] = useState(getInitialTab);
+  const [quoteKey, setQuoteKey] = useState(0); // Key to force quote refresh
 
   // Listen for URL changes to update active tab
   useEffect(() => {
@@ -65,6 +100,13 @@ export default function ProfilePage() {
       window.removeEventListener('popstate', handleUrlChange);
     };
   }, []);
+
+  // Generate new quote when switching to overview tab
+  useEffect(() => {
+    if (activeTab === 'overview') {
+      setQuoteKey(prev => prev + 1);
+    }
+  }, [activeTab]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -163,76 +205,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Inspirational Travel Quote */}
-              <div className="bg-white/15 backdrop-blur-sm rounded-xl p-6 lg:p-8 border border-white/20 max-w-2xl mx-auto text-center">
-                <div className="text-lg lg:text-xl font-medium text-white leading-relaxed mb-3">
-                  "{(() => {
-                    const quotes = [
-                      "Travel makes one modest. You see what a tiny place you occupy in the world.",
-                      "The world is a book and those who do not travel read only one page.",
-                      "Adventure is worthwhile in itself.",
-                      "To travel is to live.",
-                      "Not all those who wander are lost.",
-                      "Life is short and the world is wide.",
-                      "Travel far enough, you meet yourself.",
-                      "The journey not the arrival matters.",
-                      "Wherever you go becomes a part of you somehow.",
-                      "We travel, initially, to lose ourselves; and we travel, next, to find ourselves.",
-                      "A journey is best measured in friends, rather than miles.",
-                      "Travel is the only thing you buy that makes you richer."
-                    ];
-                    const authors = [
-                      "Gustave Flaubert",
-                      "Saint Augustine", 
-                      "Amelia Earhart",
-                      "Hans Christian Andersen",
-                      "J.R.R. Tolkien",
-                      "Simon Raven",
-                      "David Mitchell",
-                      "T.S. Eliot",
-                      "Anita Desai",
-                      "Pico Iyer",
-                      "Tim Cahill",
-                      "Anonymous"
-                    ];
-                    const randomIndex = Math.floor(Math.random() * quotes.length);
-                    return quotes[randomIndex];
-                  })()}"
-                </div>
-                <div className="text-sm text-white/70 font-light italic">
-                  — {(() => {
-                    const authors = [
-                      "Gustave Flaubert",
-                      "Saint Augustine", 
-                      "Amelia Earhart",
-                      "Hans Christian Andersen",
-                      "J.R.R. Tolkien",
-                      "Simon Raven",
-                      "David Mitchell",
-                      "T.S. Eliot",
-                      "Anita Desai",
-                      "Pico Iyer",
-                      "Tim Cahill",
-                      "Anonymous"
-                    ];
-                    const quotes = [
-                      "Travel makes one modest. You see what a tiny place you occupy in the world.",
-                      "The world is a book and those who do not travel read only one page.",
-                      "Adventure is worthwhile in itself.",
-                      "To travel is to live.",
-                      "Not all those who wander are lost.",
-                      "Life is short and the world is wide.",
-                      "Travel far enough, you meet yourself.",
-                      "The journey not the arrival matters.",
-                      "Wherever you go becomes a part of you somehow.",
-                      "We travel, initially, to lose ourselves; and we travel, next, to find ourselves.",
-                      "A journey is best measured in friends, rather than miles.",
-                      "Travel is the only thing you buy that makes you richer."
-                    ];
-                    const randomIndex = Math.floor(Math.random() * quotes.length);
-                    return authors[randomIndex];
-                  })()}
-                </div>
-              </div>
+              <TravelQuote key={quoteKey} />
             </div>
           </div>
         </div>
