@@ -60,6 +60,10 @@ export function VisibilityToggle({ type, id, currentValue, currentVisibility, di
       queryClient.invalidateQueries({ queryKey: ['/api/me/activity/trips'] });
       queryClient.invalidateQueries({ queryKey: [`/api/trips/${id}`] });
       setTripUpdating(id, false);
+      toast({
+        title: "Trip Updated",
+        description: "Trip visibility has been successfully updated.",
+      });
     },
     onError: (error) => {
       console.error('Failed to update trip status:', error);
