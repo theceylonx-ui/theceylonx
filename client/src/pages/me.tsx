@@ -34,7 +34,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { PreferencesForm } from "@/components/preferences/PreferencesForm";
 
-// Travel Quote Component that generates a new quote each time it renders
+// Travel Quote Component that uses session-based quote selection
 function TravelQuote() {
   const travelQuotes = [
     { quote: "Travel makes one modest. You see what a tiny place you occupy in the world.", author: "Gustave Flaubert" },
@@ -54,15 +54,30 @@ function TravelQuote() {
     { quote: "Take only memories, leave only footprints.", author: "Chief Seattle" }
   ];
 
-  const randomQuote = travelQuotes[Math.floor(Math.random() * travelQuotes.length)];
+  // Get or generate session quote - only changes on fresh login
+  const getSessionQuote = () => {
+    const sessionQuoteKey = 'ceylon_session_quote';
+    let sessionQuote = sessionStorage.getItem(sessionQuoteKey);
+    
+    if (!sessionQuote) {
+      // Generate new quote for this session
+      const randomIndex = Math.floor(Math.random() * travelQuotes.length);
+      sessionQuote = JSON.stringify(travelQuotes[randomIndex]);
+      sessionStorage.setItem(sessionQuoteKey, sessionQuote);
+    }
+    
+    return JSON.parse(sessionQuote);
+  };
+
+  const sessionQuote = getSessionQuote();
 
   return (
     <div className="bg-white/15 backdrop-blur-sm rounded-xl p-6 lg:p-8 border border-white/20 max-w-2xl mx-auto text-center">
       <div className="text-lg lg:text-xl font-medium text-white leading-relaxed mb-3">
-        "{randomQuote.quote}"
+        "{sessionQuote.quote}"
       </div>
       <div className="text-sm text-white/70 font-light italic">
-        — {randomQuote.author}
+        — {sessionQuote.author}
       </div>
     </div>
   );
@@ -81,7 +96,6 @@ export default function ProfilePage() {
   };
   
   const [activeTab, setActiveTab] = useState(getInitialTab);
-  const [quoteKey, setQuoteKey] = useState(0); // Key to force quote refresh
 
   // Listen for URL changes to update active tab
   useEffect(() => {
@@ -100,13 +114,6 @@ export default function ProfilePage() {
       window.removeEventListener('popstate', handleUrlChange);
     };
   }, []);
-
-  // Generate new quote when switching to overview tab
-  useEffect(() => {
-    if (activeTab === 'overview') {
-      setQuoteKey(prev => prev + 1);
-    }
-  }, [activeTab]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -205,7 +212,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Inspirational Travel Quote */}
-              <TravelQuote key={quoteKey} />
+              <TravelQuote />
             </div>
           </div>
         </div>
