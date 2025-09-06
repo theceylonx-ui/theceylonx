@@ -162,25 +162,75 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Profile Timeline Info */}
-              <div className="grid grid-cols-2 gap-4 lg:gap-6 w-full lg:w-auto">
-                <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 lg:p-6 border border-white/20 flex flex-col items-center justify-center min-h-[100px]">
-                  <div className="text-lg lg:text-xl font-semibold text-white leading-none mb-2">
-                    {new Date(profile.createdAt).toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      year: 'numeric' 
-                    })}
-                  </div>
-                  <div className="text-sm text-white/80 font-medium leading-none">Joined</div>
+              {/* Inspirational Travel Quote */}
+              <div className="bg-white/15 backdrop-blur-sm rounded-xl p-6 lg:p-8 border border-white/20 max-w-2xl mx-auto text-center">
+                <div className="text-lg lg:text-xl font-medium text-white leading-relaxed mb-3">
+                  "{(() => {
+                    const quotes = [
+                      "Travel makes one modest. You see what a tiny place you occupy in the world.",
+                      "The world is a book and those who do not travel read only one page.",
+                      "Adventure is worthwhile in itself.",
+                      "To travel is to live.",
+                      "Not all those who wander are lost.",
+                      "Life is short and the world is wide.",
+                      "Travel far enough, you meet yourself.",
+                      "The journey not the arrival matters.",
+                      "Wherever you go becomes a part of you somehow.",
+                      "We travel, initially, to lose ourselves; and we travel, next, to find ourselves.",
+                      "A journey is best measured in friends, rather than miles.",
+                      "Travel is the only thing you buy that makes you richer."
+                    ];
+                    const authors = [
+                      "Gustave Flaubert",
+                      "Saint Augustine", 
+                      "Amelia Earhart",
+                      "Hans Christian Andersen",
+                      "J.R.R. Tolkien",
+                      "Simon Raven",
+                      "David Mitchell",
+                      "T.S. Eliot",
+                      "Anita Desai",
+                      "Pico Iyer",
+                      "Tim Cahill",
+                      "Anonymous"
+                    ];
+                    const randomIndex = Math.floor(Math.random() * quotes.length);
+                    return quotes[randomIndex];
+                  })()}"
                 </div>
-                <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 lg:p-6 border border-white/20 flex flex-col items-center justify-center min-h-[100px]">
-                  <div className="text-lg lg:text-xl font-semibold text-white leading-none mb-2">
-                    {new Date(profile.updatedAt).toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      day: 'numeric' 
-                    })}
-                  </div>
-                  <div className="text-sm text-white/80 font-medium leading-none">Last Updated</div>
+                <div className="text-sm text-white/70 font-light italic">
+                  — {(() => {
+                    const authors = [
+                      "Gustave Flaubert",
+                      "Saint Augustine", 
+                      "Amelia Earhart",
+                      "Hans Christian Andersen",
+                      "J.R.R. Tolkien",
+                      "Simon Raven",
+                      "David Mitchell",
+                      "T.S. Eliot",
+                      "Anita Desai",
+                      "Pico Iyer",
+                      "Tim Cahill",
+                      "Anonymous"
+                    ];
+                    const quotes = [
+                      "Travel makes one modest. You see what a tiny place you occupy in the world.",
+                      "The world is a book and those who do not travel read only one page.",
+                      "Adventure is worthwhile in itself.",
+                      "To travel is to live.",
+                      "Not all those who wander are lost.",
+                      "Life is short and the world is wide.",
+                      "Travel far enough, you meet yourself.",
+                      "The journey not the arrival matters.",
+                      "Wherever you go becomes a part of you somehow.",
+                      "We travel, initially, to lose ourselves; and we travel, next, to find ourselves.",
+                      "A journey is best measured in friends, rather than miles.",
+                      "Travel is the only thing you buy that makes you richer."
+                    ];
+                    const randomIndex = Math.floor(Math.random() * quotes.length);
+                    return authors[randomIndex];
+                  })()}
                 </div>
               </div>
             </div>
