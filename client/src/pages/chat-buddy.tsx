@@ -281,12 +281,21 @@ export default function ChatBuddy() {
       <Navigation />
       
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <MessageCircle className="h-8 w-8 text-purple-600" />
-            Chat Buddy
-          </h1>
-          <p className="text-muted-foreground">Connect with fellow travelers</p>
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 rounded-2xl p-8 text-white shadow-xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center space-x-3 mb-4">
+                  <MessageCircle className="w-8 h-8" />
+                  <h1 className="text-3xl md:text-4xl font-bold">Chat Buddy</h1>
+                </div>
+                <p className="text-lg opacity-90">
+                  Connect with fellow travelers and coordinate your journey
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
@@ -415,7 +424,7 @@ export default function ChatBuddy() {
                               variant="outline"
                               size="sm"
                               onClick={() => insertCannedMessage("Hi! Thanks for accepting. Where shall we meet?")}
-                              className="w-full text-left justify-start text-xs"
+                              className="w-full text-left justify-start text-xs border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
                             >
                               Hi! Thanks for accepting. Where shall we meet?
                             </Button>
@@ -423,7 +432,7 @@ export default function ChatBuddy() {
                               variant="outline"
                               size="sm"
                               onClick={() => insertCannedMessage("Can we confirm the cost and split?")}
-                              className="w-full text-left justify-start text-xs"
+                              className="w-full text-left justify-start text-xs border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
                             >
                               Can we confirm the cost and split?
                             </Button>
@@ -431,7 +440,7 @@ export default function ChatBuddy() {
                               variant="outline"
                               size="sm"
                               onClick={() => insertCannedMessage("What time should we start?")}
-                              className="w-full text-left justify-start text-xs"
+                              className="w-full text-left justify-start text-xs border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
                             >
                               What time should we start?
                             </Button>
@@ -450,14 +459,14 @@ export default function ChatBuddy() {
                               <div
                                 className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                                   isOwnMessage
-                                    ? 'bg-purple-600 text-white'
+                                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
                                     : 'bg-gray-100 text-gray-900'
                                 }`}
                               >
                                 <p className="text-sm">{message.body}</p>
                                 <p
                                   className={`text-xs mt-1 ${
-                                    isOwnMessage ? 'text-purple-100' : 'text-gray-500'
+                                    isOwnMessage ? 'text-green-100' : 'text-gray-500'
                                   }`}
                                 >
                                   <Clock className="h-3 w-3 inline mr-1" />
@@ -490,6 +499,7 @@ export default function ChatBuddy() {
                         onClick={handleSendMessage}
                         disabled={!messageText.trim() || sendMessageMutation.isPending}
                         size="icon"
+                        className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white disabled:opacity-50"
                       >
                         <Send className="h-4 w-4" />
                       </Button>
