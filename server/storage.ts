@@ -550,7 +550,7 @@ export class DatabaseStorage implements IStorage {
           updatedAt: questions.updatedAt,
         })
         .from(questions)
-        .where(eq(questions.userId, userId))
+        .where(and(eq(questions.userId, userId), eq(questions.isDeleted, false)))
         .orderBy(desc(questions.createdAt));
 
       console.log('✅ Basic questions query successful, found:', result.length);
