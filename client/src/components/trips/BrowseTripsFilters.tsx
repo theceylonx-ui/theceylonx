@@ -116,12 +116,12 @@ export default function BrowseTripsFilters({
             <MapPin className="h-4 w-4" />
             From Location
           </label>
-          <Select value={filters.from ?? ""} onValueChange={(v) => set("from", v || null)}>
+          <Select value={filters.from ?? "anywhere"} onValueChange={(v) => set("from", v === "anywhere" ? null : v)}>
             <SelectTrigger data-testid="select-from-location">
               <SelectValue placeholder="My Current Location" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">My Current Location</SelectItem>
+              <SelectItem value="anywhere">My Current Location</SelectItem>
               {locations.map((loc) => (
                 <SelectItem key={loc} value={loc}>{loc}</SelectItem>
               ))}
@@ -135,12 +135,12 @@ export default function BrowseTripsFilters({
             <MapPin className="h-4 w-4" />
             To Location
           </label>
-          <Select value={filters.to ?? ""} onValueChange={(v) => set("to", v || null)}>
+          <Select value={filters.to ?? "anywhere"} onValueChange={(v) => set("to", v === "anywhere" ? null : v)}>
             <SelectTrigger data-testid="select-to-location">
               <SelectValue placeholder="Anywhere" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Anywhere</SelectItem>
+              <SelectItem value="anywhere">Anywhere</SelectItem>
               {locations.map((loc) => (
                 <SelectItem key={loc} value={loc}>{loc}</SelectItem>
               ))}
@@ -154,12 +154,12 @@ export default function BrowseTripsFilters({
             <Globe className="h-4 w-4" />
             Region
           </label>
-          <Select value={filters.region ?? ""} onValueChange={(v) => set("region", v || null)}>
+          <Select value={filters.region ?? "all"} onValueChange={(v) => set("region", v === "all" ? null : v)}>
             <SelectTrigger data-testid="select-region">
               <SelectValue placeholder="All regions" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All regions</SelectItem>
+              <SelectItem value="all">All regions</SelectItem>
               {regions.map((r) => (
                 <SelectItem key={r} value={r}>{r}</SelectItem>
               ))}
