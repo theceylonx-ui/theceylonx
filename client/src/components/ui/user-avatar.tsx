@@ -36,7 +36,7 @@ export function UserAvatar({ user, size = "md", className }: UserAvatarProps) {
           className="object-cover"
         />
       )}
-      <AvatarFallback className="bg-brand text-white font-medium">
+      <AvatarFallback className="bg-gray-700 text-white font-semibold border-2 border-gray-300">
         {user.initials}
       </AvatarFallback>
     </Avatar>
