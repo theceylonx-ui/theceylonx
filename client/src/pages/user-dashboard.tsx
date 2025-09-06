@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Check, X, RefreshCw, User as UserIcon, Heart, Clock, MessageSquare, Edit, Trash2, Shield, AlertTriangle } from "lucide-react";
+import { Check, X, RefreshCw, User as UserIcon, Heart, Clock, MessageSquare, Edit, Trash2, Shield, AlertTriangle, Eye } from "lucide-react";
 import { generateRandomProfilePicture, getDisplayName, getInitials, type AvatarStyle, AVATAR_STYLES } from "@/lib/profileUtils";
 import { AvatarSelector } from "@/components/avatar-selector";
 import type { User, TripWithOrganizer, QuestionWithDetails } from "@shared/schema";
@@ -257,46 +257,6 @@ export default function UserDashboard() {
     },
   });
 
-  const deleteQuestionMutation = useMutation({
-    mutationFn: async (questionId: string) => {
-      console.log("🔍 Making DELETE request for question:", questionId);
-      try {
-        const result = await apiRequest("DELETE", `/api/questions/${questionId}`);
-        console.log("✅ DELETE request successful:", result);
-        return result;
-      } catch (error) {
-        console.error("❌ DELETE request failed:", error);
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      console.log("✅ Delete mutation successful");
-      toast({
-        title: "Success",
-        description: "Question deleted successfully!",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/me/activity/questions"] });
-    },
-    onError: (error) => {
-      console.error("❌ Delete mutation error:", error);
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/auth/signin";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to delete question. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
 
   // Mutation for handling interest request responses
   const updateInterestRequestMutation = useMutation({
@@ -453,24 +413,6 @@ export default function UserDashboard() {
     }
   };
 
-  const handleEditQuestion = (questionId: string) => {
-    console.log("🔍 Edit button clicked for question:", questionId);
-    console.log("🔍 Current user:", user);
-    console.log("🔍 Redirecting to community page for edit");
-    // Redirect to community page where the edit dialog can be opened
-    window.location.href = `/community?edit=${questionId}`;
-  };
-
-  const handleDeleteQuestion = (questionId: string) => {
-    console.log("🔍 Delete button clicked for question:", questionId);
-    console.log("🔍 Current user:", user);
-    if (confirm("Are you sure you want to delete this question?")) {
-      console.log("🔍 User confirmed deletion, calling mutation");
-      deleteQuestionMutation.mutate(questionId);
-    } else {
-      console.log("🔍 User cancelled deletion");
-    }
-  };
 
   const handleMarkCompleted = (tripId: string) => {
     if (confirm("Mark this trip as completed? It will no longer appear in search results and new people won't be able to join.")) {
@@ -551,22 +493,11 @@ export default function UserDashboard() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleEditQuestion(question.id)}
-                                data-testid={`button-edit-question-${question.id}`}
+                                onClick={() => window.location.href = `/question/${question.id}`}
+                                data-testid={`button-view-question-${question.id}`}
                               >
-                                <Edit className="w-4 h-4 mr-1" />
-                                Edit
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDeleteQuestion(question.id)}
-                                disabled={deleteQuestionMutation.isPending}
-                                data-testid={`button-delete-question-${question.id}`}
-                                className="text-red-600 border-red-300 hover:bg-red-50"
-                              >
-                                <Trash2 className="w-4 h-4 mr-1" />
-                                Delete
+                                <Eye className="w-4 h-4 mr-1" />
+                                View
                               </Button>
                             </div>
                           </div>
