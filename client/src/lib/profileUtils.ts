@@ -72,10 +72,7 @@ export function getDisplayName(user: {
     return 'Anonymous';
   }
   
-  if (user.username) {
-    return user.username;
-  }
-  
+  // Prioritize real name over username
   if (user.firstName && user.lastName) {
     return `${user.firstName} ${user.lastName}`;
   }
@@ -86,6 +83,11 @@ export function getDisplayName(user: {
   
   if (user.lastName) {
     return user.lastName;
+  }
+  
+  // Fall back to username if no real name
+  if (user.username) {
+    return user.username;
   }
   
   if (user.email) {
@@ -111,10 +113,7 @@ export function getInitials(user: {
     return 'A';
   }
   
-  if (user.username) {
-    return user.username.slice(0, 2).toUpperCase();
-  }
-  
+  // Prioritize real name initials over username
   if (user.firstName && user.lastName) {
     return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
   }
@@ -125,6 +124,11 @@ export function getInitials(user: {
   
   if (user.lastName) {
     return user.lastName.slice(0, 2).toUpperCase();
+  }
+  
+  // Fall back to username initials
+  if (user.username) {
+    return user.username.slice(0, 2).toUpperCase();
   }
   
   if (user.email) {
