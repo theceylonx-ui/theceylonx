@@ -116,7 +116,7 @@ export default function PostTripPage() {
                 <BackLink 
                   to={returnTo ? decodeURIComponent(returnTo) : createBackToTripsLink()}
                   label="Back to Browse"
-                  className="bg-white/20 text-white hover:bg-white/30 border-white/30"
+                  className="bg-white/20 text-white hover:bg-white/30 hover:text-white border-white/30"
                 />
               </div>
             </div>
