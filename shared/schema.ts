@@ -574,7 +574,7 @@ export const questions = pgTable("questions", {
   isAnonymous: boolean("is_anonymous").default(false),
   visibility: questionVisibilityEnum("visibility").default("public"),
   votesCount: integer("votes_count").default(0),
-  score: integer("score").default(0), // Computed field: SUM(votes.value) for this question
+  // score: integer("score").default(0), // Computed field: SUM(votes.value) for this question - temporarily disabled
   answersCount: integer("answers_count").default(0),
   acceptedAnswerId: varchar("accepted_answer_id"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -590,7 +590,7 @@ export const answers = pgTable("answers", {
   questionId: varchar("question_id").notNull(),
   userId: varchar("user_id").notNull(),
   votesCount: integer("votes_count").default(0),
-  score: integer("score").default(0), // Computed field: SUM(votes.value) for this answer
+  // score: integer("score").default(0), // Computed field: SUM(votes.value) for this answer - temporarily disabled
   isAccepted: boolean("is_accepted").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

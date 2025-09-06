@@ -950,7 +950,7 @@ export class DatabaseStorage implements IStorage {
         topicId: questions.topicId,
         isAnonymous: questions.isAnonymous,
         views: sql`0`, // Default to 0 since column doesn't exist
-        score: questions.votesCount || sql`0`, // Use votesCount as score for now
+        score: questions.votesCount || sql`0`, // Use votesCount as score
         votesCount: questions.votesCount,
         answersCount: questions.answersCount,
         acceptedAnswerId: questions.acceptedAnswerId,
@@ -1220,7 +1220,7 @@ export class DatabaseStorage implements IStorage {
         questionId: answers.questionId,
         userId: answers.userId,
         votesCount: answers.votesCount,
-        score: answers.votesCount || sql`0`, // Use votesCount as score for now
+        score: answers.votesCount || sql`0`, // Use votesCount as score
         isAccepted: answers.isAccepted,
         isAnonymous: sql`false`.as('isAnonymous'), // Answers don't have anonymity yet, but prepare for future
         createdAt: answers.createdAt,
