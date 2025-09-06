@@ -118,10 +118,19 @@ export default function QuestionDetailPage() {
   const deleteQuestionMutation = useMutation({
     mutationFn: (id: string) => apiRequest('DELETE', `/api/questions/${id}`),
     onSuccess: () => {
+      // Invalidate multiple query caches
+      queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/questions/${question?.id}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/me/activity/questions'] });
+      
       toast({ title: "Question deleted successfully!" });
-      setLocation('/community'); // Redirect back to community
+      // Small delay to ensure cache invalidation completes
+      setTimeout(() => {
+        setLocation('/community');
+      }, 500);
     },
     onError: (error: Error) => {
+      console.error("Delete question error:", error);
       toast({ title: "Failed to delete question", description: error.message, variant: "destructive" });
     },
   });
@@ -289,7 +298,10 @@ export default function QuestionDetailPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setLocation(`/community?edit=${question.id}`)}
+                      onClick={() => {
+                        // Go to community page with edit parameter, ensuring the page has time to load
+                        window.location.href = `/community?edit=${question.id}`;
+                      }}
                       data-testid="button-edit-question"
                     >
                       <Edit className="w-4 h-4 mr-1" />
