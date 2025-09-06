@@ -469,12 +469,19 @@ export default function UserDashboard() {
                   {myQuestions && myQuestions.length > 0 ? (
                     <div className="space-y-4">
                       {myQuestions.map((question) => (
-                        <div key={question.id} className="border rounded-lg p-4 hover:shadow-sm transition-shadow">
+                        <div key={question.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-sm transition-shadow bg-white dark:bg-gray-800">
                           <div className="flex items-start justify-between mb-2">
                             <h4 className="font-medium text-gray-900 dark:text-gray-100">
                               {question.title}
                             </h4>
-                            <div className="flex gap-2">
+                            <div className="flex items-center gap-2">
+                              <Badge 
+                                variant="outline" 
+                                className={question.visibility === "public" ? "text-green-600 border-green-300" : "text-gray-600 border-gray-300"}
+                                data-testid={`badge-question-visibility-${question.id}`}
+                              >
+                                {question.visibility === "public" ? "Public" : "Hidden"}
+                              </Badge>
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -489,7 +496,7 @@ export default function UserDashboard() {
                           <p className="text-gray-600 dark:text-gray-300 text-sm mb-3 line-clamp-2">
                             {question.body.replace(/<[^>]*>/g, '')}
                           </p>
-                          <div className="flex items-center space-x-4 text-xs text-gray-500">
+                          <div className="flex items-center space-x-4 text-xs text-gray-500 mb-4">
                             {question.topic && (
                               <Badge variant="secondary">{question.topic.name}</Badge>
                             )}
@@ -499,6 +506,15 @@ export default function UserDashboard() {
                               {question.isAnonymous ? "Anonymous" : "Public"}
                             </Badge>
                             <span>Asked {new Date(question.createdAt || '').toLocaleDateString()}</span>
+                          </div>
+                          
+                          {/* Visibility Toggle */}
+                          <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
+                            <VisibilityToggle
+                              type="question"
+                              id={question.id}
+                              currentValue={question.visibility === "public"}
+                            />
                           </div>
                         </div>
                       ))}
