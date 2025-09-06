@@ -642,7 +642,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
         {isDayPreviewOpen && (
           <Card className="overflow-hidden shadow-lg border-2 border-gradient">
             <CardHeader className="bg-gradient-to-r from-blue-50 to-emerald-50 dark:from-blue-950/30 dark:to-emerald-950/30 pb-4">
-              <CardTitle className="text-xl font-semibold flex items-center justify-between">
+              <CardTitle className="text-xl font-semibold">
                 <div className="flex flex-col">
                   <span className="bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent">
                     {format(new Date(calendarState.selectedDate + 'T00:00:00'), 'EEEE, MMMM d, yyyy')}
@@ -653,15 +653,6 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
                     </span>
                   )}
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setIsDayPreviewOpen(false)}
-                  className="hover:bg-white/50 rounded-full w-8 h-8 p-0 text-gray-500 hover:text-gray-700"
-                  data-testid="close-day-preview"
-                >
-                  ×
-                </Button>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 sm:p-6">
