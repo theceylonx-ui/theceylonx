@@ -936,7 +936,7 @@ export class DatabaseStorage implements IStorage {
         orderBy = [asc(questions.answersCount), desc(questions.createdAt)];
         break;
       default:
-        orderBy = [desc(questions.votesCount)];
+        orderBy = [desc(questions.score)];
     }
     
     const baseQuery = db
@@ -950,8 +950,8 @@ export class DatabaseStorage implements IStorage {
         topicId: questions.topicId,
         isAnonymous: questions.isAnonymous,
         views: sql`0`, // Default to 0 since column doesn't exist
-        score: questions.votesCount || sql`0`, // Use votesCount as score
-        votesCount: questions.votesCount,
+        score: questions.score || sql`0`, // Use actual score column
+        votesCount: questions.score || sql`0`, // Keep votesCount in sync with score
         answersCount: questions.answersCount,
         acceptedAnswerId: questions.acceptedAnswerId,
         isDeleted: questions.isDeleted,
@@ -1209,8 +1209,8 @@ export class DatabaseStorage implements IStorage {
         body: answers.body,
         questionId: answers.questionId,
         userId: answers.userId,
-        votesCount: answers.votesCount,
-        score: answers.votesCount || sql`0`, // Use votesCount as score
+        votesCount: answers.score || sql`0`, // Keep votesCount in sync with score
+        score: answers.score || sql`0`, // Use actual score column
         isAccepted: answers.isAccepted,
         isAnonymous: sql`false`.as('isAnonymous'), // Answers don't have anonymity yet, but prepare for future
         createdAt: answers.createdAt,
@@ -1226,7 +1226,7 @@ export class DatabaseStorage implements IStorage {
       .from(answers)
       .leftJoin(users, eq(answers.userId, users.id))
       .where(eq(answers.questionId, questionId))
-      .orderBy(desc(answers.votesCount));
+      .orderBy(desc(answers.score));
     
     // For now, answers are not anonymous, but apply the logic for future extensibility
     const maskedAnswers = answersData.map(answer => this.applyAnonymityToAnswer(answer));
@@ -2749,17 +2749,13 @@ export class DatabaseStorage implements IStorage {
         .select({ count: sql<number>`count(*)::int` })
         .from(questionUpvotes)
         .where(eq(questionUpvotes.questionId, itemId));
-      const count = result[0]?.count || 0;
-      console.log(`📊 Question ${itemId} upvote count: ${count}`);
-      return count;
+      return result[0]?.count || 0;
     } else {
       const result = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(answerUpvotes)
         .where(eq(answerUpvotes.answerId, itemId));
-      const count = result[0]?.count || 0;
-      console.log(`📊 Answer ${itemId} upvote count: ${count}`);
-      return count;
+      return result[0]?.count || 0;
     }
   }
 
