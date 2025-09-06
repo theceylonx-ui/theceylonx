@@ -376,7 +376,8 @@ export function EnhancedRecommendedTrips() {
             variant="outline"
             size="sm"
             onClick={() => {
-              setLocation('/me?tab=preferences');
+              // Navigate to profile with preferences tab
+              window.location.href = '/me?tab=preferences';
             }}
             className="text-gray-600 hover:text-gray-800 border-gray-200 hover:border-gray-300"
             data-testid="button-travel-style-settings"
