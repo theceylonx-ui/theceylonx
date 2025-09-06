@@ -110,8 +110,12 @@ export default function Navigation() {
           <div className="flex items-center space-x-3">
             {user && (
               <>
-                <EnhancedNotificationDropdown />
-                <ProfileMenu />
+                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2 hover:bg-white/30 hover:shadow-lg transition-all duration-200 border border-white/30">
+                  <EnhancedNotificationDropdown />
+                </div>
+                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2 hover:bg-white/30 hover:shadow-lg transition-all duration-200 border border-white/30">
+                  <ProfileMenu />
+                </div>
               </>
             )}
 
