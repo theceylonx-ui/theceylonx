@@ -4,6 +4,7 @@ import { useParams, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
@@ -49,6 +50,9 @@ export default function QuestionDetailPage() {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState<string>("");
+  const [editingQuestion, setEditingQuestion] = useState(false);
+  const [editingQuestionTitle, setEditingQuestionTitle] = useState<string>("");
+  const [editingQuestionBody, setEditingQuestionBody] = useState<string>("");
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -114,6 +118,25 @@ export default function QuestionDetailPage() {
     },
   });
 
+  // Edit question mutation
+  const editQuestionMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { title: string; body: string } }) => 
+      apiRequest('PATCH', `/api/questions/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/questions/${id}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/me/activity/questions'] });
+      setEditingQuestion(false);
+      setEditingQuestionTitle("");
+      setEditingQuestionBody("");
+      toast({ title: "Question updated successfully!" });
+    },
+    onError: (error: Error) => {
+      console.error("Question edit error:", error);
+      toast({ title: "Failed to update question", description: error.message, variant: "destructive" });
+    },
+  });
+
   // Delete question mutation
   const deleteQuestionMutation = useMutation({
     mutationFn: (id: string) => apiRequest('DELETE', `/api/questions/${id}`),
@@ -164,6 +187,30 @@ export default function QuestionDetailPage() {
     updateAnswerMutation.mutate({ 
       answerId: editingAnswerId, 
       body: editingText.trim() 
+    });
+  };
+
+  const startEditingQuestion = () => {
+    if (!question) return;
+    setEditingQuestion(true);
+    setEditingQuestionTitle(question.title);
+    setEditingQuestionBody(question.body);
+  };
+
+  const cancelEditingQuestion = () => {
+    setEditingQuestion(false);
+    setEditingQuestionTitle("");
+    setEditingQuestionBody("");
+  };
+
+  const saveEditingQuestion = () => {
+    if (!question || !editingQuestionTitle.trim() || !editingQuestionBody.trim()) return;
+    editQuestionMutation.mutate({ 
+      id: question.id, 
+      data: {
+        title: editingQuestionTitle.trim(),
+        body: editingQuestionBody.trim()
+      }
     });
   };
 
@@ -268,7 +315,17 @@ export default function QuestionDetailPage() {
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <CardTitle className="text-2xl mb-4">{question.title}</CardTitle>
+                {editingQuestion ? (
+                  <Input
+                    value={editingQuestionTitle}
+                    onChange={(e) => setEditingQuestionTitle(e.target.value)}
+                    className="text-2xl mb-4 font-semibold"
+                    placeholder="Question title..."
+                    data-testid="input-edit-question-title"
+                  />
+                ) : (
+                  <CardTitle className="text-2xl mb-4">{question.title}</CardTitle>
+                )}
                 <div className="flex items-center space-x-4 text-sm text-gray-500">
                   <div className="flex items-center">
                     <User className="w-4 h-4 mr-1" />
@@ -295,18 +352,39 @@ export default function QuestionDetailPage() {
                 {/* Edit and Delete buttons for question author */}
                 {user && user.id === question.userId && (
                   <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        // Go to community page with edit parameter, ensuring the page has time to load
-                        window.location.href = `/community?edit=${question.id}`;
-                      }}
-                      data-testid="button-edit-question"
-                    >
-                      <Edit className="w-4 h-4 mr-1" />
-                      Edit
-                    </Button>
+                    {editingQuestion ? (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={saveEditingQuestion}
+                          disabled={editQuestionMutation.isPending}
+                          data-testid="button-save-question"
+                        >
+                          <Save className="w-4 h-4 mr-1" />
+                          {editQuestionMutation.isPending ? 'Saving...' : 'Save'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={cancelEditingQuestion}
+                          data-testid="button-cancel-edit-question"
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={startEditingQuestion}
+                        data-testid="button-edit-question"
+                      >
+                        <Edit className="w-4 h-4 mr-1" />
+                        Edit
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
@@ -338,9 +416,19 @@ export default function QuestionDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="prose max-w-none mb-6">
-              <p className="text-gray-700 whitespace-pre-wrap">
-                {question.body.replace(/<[^>]*>/g, '')}
-              </p>
+              {editingQuestion ? (
+                <Textarea
+                  value={editingQuestionBody}
+                  onChange={(e) => setEditingQuestionBody(e.target.value)}
+                  className="w-full min-h-[150px]"
+                  placeholder="Describe your question in detail..."
+                  data-testid="textarea-edit-question-body"
+                />
+              ) : (
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {question.body.replace(/<[^>]*>/g, '')}
+                </p>
+              )}
             </div>
 
             <div className="flex items-center justify-between border-t pt-4">
