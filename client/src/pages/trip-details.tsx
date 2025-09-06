@@ -827,7 +827,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
               <TripDateRangePicker
                 value={{
                   startDate: trip.date ? new Date(trip.date) : null,
-                  endDate: trip.endDate ? new Date(trip.endDate) : null
+                  endDate: trip.date ? new Date(trip.date) : null
                 }}
                 onChange={(dates) => {
                   setSelectedDates(dates);
