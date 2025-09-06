@@ -468,7 +468,7 @@ export default function CommunityPage() {
                               ) : topicsData.length === 0 ? (
                                 <SelectItem value="no-topics" disabled>No topics available</SelectItem>
                               ) : (
-                                topics.map((topic) => (
+                                topics && topics.length > 0 && topics.map((topic) => (
                                   <SelectItem key={topic.id} value={topic.id}>
                                     {topic.name}
                                   </SelectItem>
@@ -613,7 +613,7 @@ export default function CommunityPage() {
                 >
                   All Topics
                 </Button>
-                {topics.map((topic) => (
+                {topics && topics.length > 0 && topics.map((topic) => (
                   <Button
                     key={topic.id}
                     variant={selectedTopic === topic.slug ? "default" : "outline"}

@@ -250,7 +250,7 @@ export default function CommunityPage() {
                   className="px-4 py-2 border border-gray-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
                   <option value="all">All Topics</option>
-                  {topics.map((topic) => (
+                  {topics && topics.length > 0 && topics.map((topic) => (
                     <option key={topic.id} value={topic.id}>
                       {topic.name}
                     </option>

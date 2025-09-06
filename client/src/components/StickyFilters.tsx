@@ -102,7 +102,7 @@ export function StickyFilters({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Topics</SelectItem>
-                {topics.map((topic) => (
+                {topics && topics.length > 0 && topics.map((topic) => (
                   <SelectItem key={topic.id} value={topic.id}>
                     {topic.name}
                   </SelectItem>

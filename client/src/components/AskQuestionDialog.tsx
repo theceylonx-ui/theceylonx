@@ -193,7 +193,7 @@ export function AskQuestionDialog({ topics, isAuthenticated, onSignInRequired, c
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {topics.map((topic) => (
+                          {topics && topics.length > 0 && topics.map((topic) => (
                             <SelectItem key={topic.id} value={topic.id}>
                               {topic.name}
                             </SelectItem>
