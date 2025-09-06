@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowUp } from 'lucide-react';
+import { ThumbsUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -36,10 +36,8 @@ export function UpvoteButton({
 
   const toggleUpvoteMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('/api/upvotes/toggle', {
-        method: 'POST',
-        body: { itemType, itemId }
-      });
+      const response = await apiRequest('POST', '/api/upvotes/toggle', { itemType, itemId });
+      return response.json();
     },
     onSuccess: (data) => {
       // Update local state with server response
@@ -126,7 +124,7 @@ export function UpvoteButton({
       title={hasUpvoted ? "Remove upvote" : "Upvote this content"}
       data-testid={`upvote-button-${itemType}-${itemId}`}
     >
-      <ArrowUp 
+      <ThumbsUp 
         className={cn(
           iconSizes[size], 
           'transition-transform duration-200',
