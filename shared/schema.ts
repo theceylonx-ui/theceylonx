@@ -602,7 +602,7 @@ export const votes = pgTable("votes", {
   userId: varchar("user_id").notNull(),
   questionId: varchar("question_id"),
   answerId: varchar("answer_id"),
-  value: integer("value").notNull(), // -1 (downvote), 0 (no vote), 1 (upvote)
+  voteType: varchar("vote_type").notNull(), // 'up' or 'down' - temporary rollback to existing schema
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({

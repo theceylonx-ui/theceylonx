@@ -1302,18 +1302,19 @@ export class DatabaseStorage implements IStorage {
         ));
       }
     } else {
-      // Create or update vote using integer value system
+      // Create or update vote using string voteType system (rollback to existing schema)
+      const voteType = value > 0 ? 'up' : 'down';
       if (existingVote) {
         await db.update(votes)
           .set({ 
-            value,
+            voteType,
             updatedAt: new Date()
           })
           .where(eq(votes.id, existingVote.id));
       } else {
         const voteData = {
           userId,
-          value,
+          voteType,
           ...(isQuestion ? { questionId: votableId } : { answerId: votableId })
         };
         await db.insert(votes).values(voteData);
