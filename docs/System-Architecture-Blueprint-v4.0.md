@@ -74,7 +74,7 @@ const playgroundExperience = {
   features: {
     pwa: "Service Workers for offline playground",
     performance: "React Server Components + Edge caching",
-    i18n: "Next-intl for Sinhala/Tamil/English",
+    i18n: "Next-intl for international tourist languages",
     state: "Zustand for simple state management"
   },
   mobile: {
@@ -396,9 +396,8 @@ const accessibilityFeatures = {
   },
   
   languageAccessibility: {
-    multilingual: "Sinhala, Tamil, English with region detection",
-    rtl: "Right-to-left text support for Tamil",
-    translation: "AI-powered real-time translation in chat"
+    multilingual: "International tourist languages with region detection",
+    translation: "AI-powered real-time translation in chat for international visitors"
   }
 }
 ```

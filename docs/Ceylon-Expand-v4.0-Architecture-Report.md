@@ -266,7 +266,7 @@ Extensible architecture for future growth:
 - Recommendation engine activation
 - Gamification system implementation
 - Advanced accessibility features
-- Multi-language support (Sinhala/Tamil/English)
+- Multi-language support for international tourists
 
 **Business Outcomes:**
 - 150% increase in user engagement
