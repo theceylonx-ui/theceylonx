@@ -17,7 +17,11 @@ import {
   Calendar,
   Mail,
   Home,
-  ArrowLeft
+  ArrowLeft,
+  TrendingUp,
+  Eye,
+  Zap,
+  Heart
 } from "lucide-react";
 import { getDisplayName, getInitials, getAvatarOptions, AVATAR_STYLES } from "@/lib/profileUtils";
 import { VisibilityToggle } from "@/components/VisibilityToggle";
@@ -165,52 +169,54 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 bg-white rounded-lg shadow-sm p-1">
-            <TabsTrigger 
-              value="overview" 
-              className="flex items-center space-x-2 data-[state=active]:bg-ceylon-green data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
-            >
-              <User className="h-4 w-4" />
-              <span className="hidden sm:inline">Overview</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="profile" 
-              className="flex items-center space-x-2 data-[state=active]:bg-ceylon-green data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
-            >
-              <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Profile</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="preferences" 
-              className="flex items-center space-x-2 data-[state=active]:bg-ceylon-green data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
-            >
-              <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Preferences</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="activity" 
-              className="flex items-center space-x-2 data-[state=active]:bg-ceylon-green data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
-            >
-              <Activity className="h-4 w-4" />
-              <span className="hidden sm:inline">Activity</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="security" 
-              className="flex items-center space-x-2 data-[state=active]:bg-ceylon-green data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
-            >
-              <Shield className="h-4 w-4" />
-              <span className="hidden sm:inline">Security</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="privacy" 
-              className="flex items-center space-x-2 data-[state=active]:bg-ceylon-green data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
-            >
-              <Lock className="h-4 w-4" />
-              <span className="hidden sm:inline">Privacy</span>
-            </TabsTrigger>
-          </TabsList>
+        {/* Enhanced Navigation Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+          <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-2">
+            <TabsList className="grid w-full grid-cols-6 bg-transparent gap-2">
+              <TabsTrigger 
+                value="overview" 
+                className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-xl border-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
+              >
+                <TrendingUp className="h-5 w-5" />
+                <span className="text-xs sm:text-sm font-medium">Overview</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="profile" 
+                className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-xl border-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
+              >
+                <User className="h-5 w-5" />
+                <span className="text-xs sm:text-sm font-medium">Profile</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="preferences" 
+                className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-xl border-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
+              >
+                <Heart className="h-5 w-5" />
+                <span className="text-xs sm:text-sm font-medium">Preferences</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="activity" 
+                className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-xl border-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
+              >
+                <Zap className="h-5 w-5" />
+                <span className="text-xs sm:text-sm font-medium">Activity</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="security" 
+                className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-xl border-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
+              >
+                <Shield className="h-5 w-5" />
+                <span className="text-xs sm:text-sm font-medium">Security</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="privacy" 
+                className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-xl border-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
+              >
+                <Eye className="h-5 w-5" />
+                <span className="text-xs sm:text-sm font-medium">Privacy</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
