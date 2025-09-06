@@ -339,11 +339,11 @@ export default function CommunityPage() {
             <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 rounded-2xl p-8 text-white shadow-xl">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="flex items-center space-x-3 mb-4">
-                    <MessageSquare className="w-8 h-8" />
-                    <h1 className="text-3xl md:text-4xl font-bold">CeylonX Tribes</h1>
+                  <div className="flex items-center space-x-3 mb-2">
+                    <MessageSquare className="w-6 h-6" />
+                    <h1 className="text-2xl md:text-3xl font-bold">CeylonX Tribes</h1>
                   </div>
-                  <p className="text-lg opacity-90">
+                  <p className="text-base opacity-90">
                     Ask questions, share knowledge, and connect with fellow travelers exploring Sri Lanka
                   </p>
                 </div>
