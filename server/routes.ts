@@ -2161,8 +2161,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storage.getUserTrips(userId)
       ]);
       
+      // Calculate profile completion percentage
+      const calculateProfileCompletion = (profile: any, preferences: any) => {
+        let completed = 0;
+        let total = 6; // Total completion criteria
+        
+        // Basic profile fields (4 criteria)
+        if (profile.profileImageUrl || profile.image) completed++; // Profile Picture
+        if (profile.displayName || profile.name || profile.firstName || profile.lastName) completed++; // Display Name
+        if (profile.bio) completed++; // Bio
+        if (profile.location) completed++; // Location
+        
+        // Preferences completion (2 criteria)
+        if (preferences) {
+          let prefsCompleted = 0;
+          let prefsTotal = 4; // vibe, companions, interests, months
+          
+          if (preferences.vibe?.length > 0) prefsCompleted++;
+          if (preferences.companions?.length > 0) prefsCompleted++;
+          if (preferences.interests?.length > 0) prefsCompleted++;
+          if (preferences.months?.length > 0) prefsCompleted++;
+          
+          // Travel preferences count as 1 point if 50%+ complete, 2 points if 100% complete
+          if (prefsCompleted >= 2) completed++; // 50%+ preferences
+          if (prefsCompleted === prefsTotal) completed++; // 100% preferences
+        }
+        
+        return Math.round((completed / total) * 100);
+      };
+      
+      const profileCompletePct = calculateProfileCompletion(profile, preferences);
+      
       res.json({
-        profile,
+        profile: {
+          ...profile,
+          profileCompletePct
+        },
         preferences,
         privacy,
         notifications,
