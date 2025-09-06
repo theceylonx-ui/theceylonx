@@ -182,10 +182,12 @@ export default function CommunityPage() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const editId = urlParams.get('edit');
-    if (editId && !editingQuestionId && questions.length > 0) {
-      // Find the question to populate the form
-      const questionToEdit = questions.find(q => q.id === editId);
+    if (editId && !editingQuestionId) {
+      // First try to find in existing questions list
+      let questionToEdit = questions.find(q => q.id === editId);
+      
       if (questionToEdit) {
+        // Found in questions list, populate form
         form.setValue('title', questionToEdit.title);
         form.setValue('body', questionToEdit.body);
         form.setValue('topicId', questionToEdit.topic?.id || '');
@@ -194,9 +196,33 @@ export default function CommunityPage() {
         setIsCreateDialogOpen(true);
         // Clear the URL parameter
         window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (questions.length === 0) {
+        // Questions not loaded yet, fetch the specific question
+        fetch(`/api/questions/${editId}`)
+          .then(res => res.json())
+          .then(question => {
+            if (question && !question.message) {
+              form.setValue('title', question.title);
+              form.setValue('body', question.body);
+              form.setValue('topicId', question.topic?.id || '');
+              form.setValue('isAnonymous', question.isAnonymous || false);
+              setEditingQuestionId(editId);
+              setIsCreateDialogOpen(true);
+              // Clear the URL parameter
+              window.history.replaceState({}, document.title, window.location.pathname);
+            }
+          })
+          .catch(err => {
+            console.error('Failed to fetch question for editing:', err);
+            toast({ 
+              title: "Failed to load question", 
+              description: "Could not load the question for editing.",
+              variant: "destructive" 
+            });
+          });
       }
     }
-  }, [questions, editingQuestionId, form]);
+  }, [questions, editingQuestionId, form, toast]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
