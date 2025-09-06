@@ -25,6 +25,7 @@ export function UpvoteButton({
 }: UpvoteButtonProps) {
   const [hasUpvoted, setHasUpvoted] = useState(initialHasUpvoted);
   const [score, setScore] = useState(initialScore);
+  const [hasVoted, setHasVoted] = useState(false); // Track if user has voted in this session
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -38,15 +39,22 @@ export function UpvoteButton({
     enabled: !!itemId,
   });
 
-  // Update state when upvote status is fetched or props change
+  // Initialize state only once when component mounts or itemId changes
   useEffect(() => {
     if (upvoteStatus) {
       setHasUpvoted(upvoteStatus.hasUpvoted);
     } else {
       setHasUpvoted(initialHasUpvoted);
     }
-    setScore(initialScore);
-  }, [upvoteStatus, initialHasUpvoted, initialScore, itemId]);
+  }, [upvoteStatus, initialHasUpvoted]);
+
+  // Set initial score only when props change (not after mutations)
+  useEffect(() => {
+    // Don't override score if user has voted in this session
+    if (!hasVoted) {
+      setScore(initialScore);
+    }
+  }, [initialScore, itemId, hasVoted]);
 
   const toggleUpvoteMutation = useMutation({
     mutationFn: async () => {
@@ -57,6 +65,7 @@ export function UpvoteButton({
       // Update local state with server response - this is the authoritative data
       setHasUpvoted(data.hasUpvoted);
       setScore(data.score);
+      setHasVoted(true); // Mark that user has voted in this session
 
       // Invalidate ALL relevant queries to force refetch with latest data
       queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
