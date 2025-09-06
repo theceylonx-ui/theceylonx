@@ -24,6 +24,7 @@ import type { User, TripWithOrganizer, QuestionWithDetails } from "@shared/schem
 import { AdminReportsTable } from "@/components/AdminReportsTable";
 import { UserHistoryTab } from "@/components/UserHistoryTab";
 import { PreferencesCompletionBanner } from "@/components/PreferencesCompletionBanner";
+import { VisibilityToggle } from "@/components/VisibilityToggle";
 
 const profileSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username must be less than 20 characters").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores").optional().or(z.literal('')),
@@ -519,15 +520,16 @@ export default function UserDashboard() {
                 <div className="space-y-4">
                   {myTrips && myTrips.length > 0 ? (
                     myTrips.map((trip) => (
-                      <div key={trip.id} className="bg-gray-50 rounded-lg p-4" data-testid={`my-trip-${trip.id}`}>
+                      <div key={trip.id} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700" data-testid={`my-trip-${trip.id}`}>
                         <div className="flex justify-between items-start mb-3">
-                          <h3 className="font-semibold text-gray-800">{trip.title}</h3>
+                          <h3 className="font-semibold text-gray-800 dark:text-gray-200">{trip.title}</h3>
                           <div className="flex items-center gap-2">
                             <Badge 
                               variant={trip.status === "active" ? "default" : "secondary"}
                               className={trip.status === "active" ? "bg-ceylon-green" : ""}
+                              data-testid={`badge-trip-status-${trip.id}`}
                             >
-                              {trip.status}
+                              {trip.status === "active" ? "Active" : "Inactive"}
                             </Badge>
                             <Button
                               variant="outline"
@@ -536,15 +538,24 @@ export default function UserDashboard() {
                               data-testid={`button-view-trip-${trip.id}`}
                             >
                               <Eye className="w-4 h-4 mr-1" />
-                              View Details
+                              View
                             </Button>
                           </div>
                         </div>
-                        <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
+                        <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
                           <div>📍 {trip.fromLocation} → {trip.toLocation}</div>
                           <div>📅 {new Date(trip.date).toLocaleDateString()} • {trip.time}</div>
                           <div>👥 {trip.seatsAvailable} seats available</div>
                           <div>💰 {!trip.price || Number(trip.price) === 0 ? 'Free Trip' : `LKR ${trip.price}/person`}</div>
+                        </div>
+                        
+                        {/* Visibility Toggle */}
+                        <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
+                          <VisibilityToggle
+                            type="trip"
+                            id={trip.id}
+                            currentValue={trip.status === "active"}
+                          />
                         </div>
                       </div>
                     ))
