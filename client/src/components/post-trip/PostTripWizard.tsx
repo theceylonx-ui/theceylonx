@@ -383,6 +383,7 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
                   type="button"
                   variant="outline"
                   onClick={handleBack}
+                  className="border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300"
                   data-testid="wizard-back-button"
                 >
                   <ChevronLeft className="w-4 h-4 mr-1" />
@@ -395,6 +396,7 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
                   type="button"
                   variant="outline"
                   onClick={handlePreview}
+                  className="border-pink-200 text-pink-600 hover:bg-pink-50 hover:border-pink-300"
                   data-testid="wizard-preview-button"
                 >
                   <Eye className="w-4 h-4 mr-1" />
@@ -406,7 +408,7 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
                 <Button
                   type="button"
                   onClick={handlePublish}
-                  className="bg-ceylon-green hover:bg-ceylon-green/90"
+                  className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-600 text-white hover:from-orange-600 hover:via-red-600 hover:to-pink-700 transition-all duration-300"
                   data-testid="wizard-publish-button"
                 >
                   <Send className="w-4 h-4 mr-1" />
@@ -417,7 +419,7 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
                   type="button"
                   onClick={handleNext}
                   disabled={!canProceed}
-                  className="bg-ceylon-blue hover:bg-ceylon-blue/90"
+                  className="bg-gradient-to-r from-orange-400 to-pink-500 text-white hover:from-orange-500 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
                   data-testid="wizard-next-button"
                 >
                   Next
