@@ -1,0 +1,118 @@
+Goal
+Anonymity logic: If Anonymous is unchecked, post & display the question using the user’s profile name. If Anonymous is checked, show “Anonymous” and hide any PII.
+Votes: Count and update in real time (no refresh), with optimistic UI and server-side guarantees.
+Audit & fix current implementation (naming, persistence paths, connections to sort/badges/notifications).
+1) Audit – What to check first
+UI: “Ask a Question” form → confirm Anonymous control exists, default unchecked, label & tooltip OK (i18n ready).
+Server: Where the question’s author identity is resolved now (resolver/service). Confirm we do not embed PII in public payload for anonymous posts.
+DB schema: Fields: authorId, authorDisplayName, isAnonymous BOOLEAN DEFAULT false. If authorDisplayName is currently derived at read time, keep that but ensure isAnonymous gates exposure.
+Public query: Community list/detail endpoints must respect isAnonymous.
+Voting code path: Locate vote mutations, aggregation logic, and realtime broadcast (WebSocket/GraphQL subscription) and ensure they’re wired on both list & detail pages.
+Storage paths: Verify where any uploads/logs for questions or votes are written (e.g., /uploads/questions, cloud storage buckets, or DB only). Fix inconsistent or incorrect paths (see Section 6).
+2) Anonymity – Required Behavior
+Create Question:
+Input has isAnonymous: boolean.
+Server stores authorId always; never persists PII in public fields when isAnonymous=true.
+Read Question (public):
+If isAnonymous=true → expose authorDisplay: "Anonymous" and omit authorUsername, profileImageUrl, etc.
+If isAnonymous=false → expose authorDisplay: profile.name and profileImageUrl (safe fields).
+Owner/Moderator Views:
+Owners & moderators can see true identity (for safety/moderation), but never leaked to public queries.
+Editing:
+Allow owner to toggle isAnonymous later (audit trail kept). When toggling from anon→public, populate authorDisplay from profile at that moment.
+UI Copy (i18n keys):
+Checkbox label: “Post anonymously”
+Tooltip: “If checked, your name and photo won’t be shown.”
+3) Voting – Real-Time, Reliable
+Model:
+QuestionVote { id, questionId, userId, value: -1|0|1, createdAt }
+Unique index: (questionId, userId) to ensure 1 vote per user.
+Aggregate on read: score = SUM(value) (materialize to questions.score for fast lists if needed).
+API (GraphQL preferred):
+type Question { id: ID!, score: Int!, viewerVote: Int! } # viewerVote = -1|0|1
+type Mutation {
+  castQuestionVote(questionId: ID!, value: Int!): Question! # clamps to -1..1
+}
+type Subscription {
+  questionVoteUpdates(questionId: ID!): Question! # emits {id, score}
+}
+Client:
+Optimistic update for viewerVote & score.
+Subscribe on list and detail pages:
+List: subscribe to visible question IDs via batched channel or per-row.
+Detail: subscribe to that ID.
+Debounce rapid clicks; disable buttons while saving.
+Server guarantees:
+Upsert vote (idempotent by (questionId,userId)).
+Recompute score atomically (transaction).
+Broadcast update via WS/Subscriptions (or SSE) to all clients.
+Rate limit per user (e.g., 10 vote writes / 10s).
+4) Data Contracts & Privacy
+DB:
+questions.isAnonymous BOOLEAN NOT NULL DEFAULT FALSE
+questions.score INT NOT NULL DEFAULT 0 (optional cache)
+question_votes table with unique (questionId,userId)
+Read filters:
+Public queries never reveal PII when isAnonymous=true.
+Edge cases:
+Deleted user with non-anon question → display “Former User”.
+Anonymous question + owner avatar in UI → never show; use generic avatar.
+5) Frontend Implementation (Next.js + Zustand)
+Form (Ask a Question):
+Add/validate isAnonymous state.
+On submit, pass isAnonymous to mutation.
+QuestionCard & QuestionDetail:
+Render authorDisplay computed from fields returned; masked when anon.
+Show generic avatar for anon.
+Voting UI: upvote/downvote buttons reflect viewerVote; update optimistically; subscribe to updates for live score.
+Sorting & badges connection:
+Sort=Top uses score → ensure list reactivity when score changes.
+Badges/Reputation: owner reputation should not be publicly tied to anon posts, but still accrue privately to owner (for BI); confirm current logic and adjust.
+6) Files & Persistence Paths (audit/fix)
+Verify:
+Client files:
+client/src/app/community/page.tsx (list)
+client/src/app/question/[id]/page.tsx (detail)
+client/src/components/community/AskQuestionDialog.tsx
+client/src/components/community/QuestionCard.tsx
+client/src/store/communityStore.ts
+Server files:
+server/src/modules/community/resolvers.ts
+server/src/modules/community/service.ts
+server/src/modules/community/votes.ts
+server/src/db/schema.ts (or Drizzle models)
+server/src/realtime/pubsub.ts (WS/subscriptions)
+Storage/log paths: Align to environment:
+Use DB for votes; do not write votes to filesystem.
+For logs, ensure LOG_DIR exists or use stdout + Datadog.
+Remove any leftover writes to /tmp or repo paths for votes.
+7) Security & Abuse Prevention
+Auth required to post & vote.
+Server checks: userId from JWT/session; ignore client-sent authorId.
+Anti-spam: minimal interval between creating questions; captcha if flagged.
+Moderation: allow moderators to de-anonize internally only for abuse review.
+8) Telemetry (optional)
+Emit events:
+question_created { questionId, userId, isAnonymous }
+question_vote_cast { questionId, userId, value }
+Use for BI & badge triggers (Community Helper, etc.).
+9) Tests / QA
+Unit (server):
+castQuestionVote enforces unique (questionId,userId); score math correct.
+Anon read path masks PII.
+Unit (client):
+Anon toggle round-trips; author name shows/hides correctly.
+Voting optimistic update rollback on error.
+E2E:
+Post anon → appears as “Anonymous”; switch to public → shows profile name.
+Voting updates score in list and detail in real time across two browsers.
+Sorting by “Top” reorders as scores change.
+A11y:
+Checkbox & vote buttons keyboard accessible, ARIA labels present.
+Acceptance Criteria
+If Anonymous is not selected: question shows profile name + avatar publicly.
+If Anonymous is selected: question shows “Anonymous” + generic avatar; no PII leaks.
+Votes are real-time, consistent, and durable; UI matches server truth.
+No filesystem writes for votes; DB-backed, consistent across instances.
+Sorting, badges, and notifications remain coherent with anonymity and voting.
+Deliverable: PR with fixes + short demo (two windows) showing real-time vote updates and anon/public posting behavior.
