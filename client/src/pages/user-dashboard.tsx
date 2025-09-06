@@ -507,21 +507,6 @@ export default function UserDashboard() {
                             </Badge>
                             <span>Asked {new Date(question.createdAt || '').toLocaleDateString()}</span>
                           </div>
-                          
-                          {/* Visibility Toggle */}
-                          <div className="border-t border-gray-200 dark:border-gray-600 pt-4 bg-green-50 p-3 rounded">
-                            <div className="text-sm font-semibold text-gray-700 mb-2">👁️ Question Visibility Controls</div>
-                            <div className="text-xs text-gray-500 mb-2">Toggle to show/hide this question from others</div>
-                            <div className="flex items-center justify-between p-2 border border-green-300 rounded bg-white">
-                              <span className="text-sm">Visibility: {(question.visibility || "public") === "public" ? "Public (visible to others)" : "Hidden"}</span>
-                              <button 
-                                className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
-                                onClick={() => alert(`Would toggle question ${question.id} from ${question.visibility || "public"} to ${(question.visibility || "public") === "public" ? "hidden" : "public"}`)}
-                              >
-                                Toggle
-                              </button>
-                            </div>
-                          </div>
                         </div>
                       ))}
                     </div>
@@ -569,21 +554,6 @@ export default function UserDashboard() {
                           <div>📅 {new Date(trip.date).toLocaleDateString()} • {trip.time}</div>
                           <div>👥 {trip.seatsAvailable} seats available</div>
                           <div>💰 {!trip.price || Number(trip.price) === 0 ? 'Free Trip' : `LKR ${trip.price}/person`}</div>
-                        </div>
-                        
-                        {/* Visibility Toggle */}
-                        <div className="border-t border-gray-200 dark:border-gray-600 pt-4 bg-blue-50 p-3 rounded">
-                          <div className="text-sm font-semibold text-gray-700 mb-2">🔄 Trip Status Controls</div>
-                          <div className="text-xs text-gray-500 mb-2">Toggle to show/hide this trip from others</div>
-                          <div className="flex items-center justify-between p-2 border border-blue-300 rounded bg-white">
-                            <span className="text-sm">Status: {trip.status === "active" ? "Active (visible to others)" : "Inactive (hidden)"}</span>
-                            <button 
-                              className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-                              onClick={() => alert(`Would toggle trip ${trip.id} from ${trip.status} to ${trip.status === "active" ? "inactive" : "active"}`)}
-                            >
-                              Toggle
-                            </button>
-                          </div>
                         </div>
                       </div>
                     ))
