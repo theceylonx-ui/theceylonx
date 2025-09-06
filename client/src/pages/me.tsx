@@ -1061,7 +1061,7 @@ function UserActivity() {
                           <span>📈 Score: {question.score || 0}</span>
                           <span>👀 Views: {question.views || 0}</span>
                           <span>💬 Answers: {question.answersCount || 0}</span>
-                          <Badge variant={question.visibility === 'hidden' ? 'destructive' : 'default'}>
+                          <Badge variant={question.visibility === 'hidden' ? 'secondary' : 'default'}>
                             {question.visibility === 'hidden' ? '🔒 Hidden' : '🌐 Visible'}
                           </Badge>
                         </div>
