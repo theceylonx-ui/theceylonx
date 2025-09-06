@@ -510,6 +510,9 @@ export default function UserDashboard() {
                           
                           {/* Visibility Toggle */}
                           <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
+                            <div className="mb-2 text-xs text-gray-500">
+                              Debug: visibility={question.visibility || 'undefined'}
+                            </div>
                             <VisibilityToggle
                               type="question"
                               id={question.id}
@@ -567,6 +570,9 @@ export default function UserDashboard() {
                         
                         {/* Visibility Toggle */}
                         <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
+                          <div className="mb-2 text-xs text-gray-500">
+                            Debug: status={trip.status || 'undefined'}
+                          </div>
                           <VisibilityToggle
                             type="trip"
                             id={trip.id}
