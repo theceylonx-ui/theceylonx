@@ -1103,7 +1103,7 @@ function UserActivity() {
                           {trip.fromLocation} → {trip.toLocation}
                         </p>
                         <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                          <span>💰 ${trip.price}</span>
+                          <span>💰 {!trip.price || Number(trip.price) === 0 ? 'Free Trip' : `LKR ${trip.price}`}</span>
                           <span>👥 {trip.seatsAvailable} seats</span>
                           <span>📅 {trip.date ? new Date(trip.date).toLocaleDateString() : 'Date TBD'}</span>
                           <Badge variant={trip.status === 'active' ? 'default' : 'secondary'} className="ml-2">
@@ -1115,19 +1115,10 @@ function UserActivity() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => window.location.href = `/trip/${trip.id}`}
+                          onClick={() => window.location.href = `/trips/${trip.id}`}
                           data-testid={`button-view-trip-${trip.id}`}
                         >
-                          View Details
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-blue-600 hover:text-blue-700"
-                          onClick={() => window.location.href = `/trip/${trip.id}/edit`}
-                          data-testid={`button-edit-trip-${trip.id}`}
-                        >
-                          ✏️ Edit
+                          👁️ View Details
                         </Button>
                       </div>
                     </div>
