@@ -888,8 +888,7 @@ export class DatabaseStorage implements IStorage {
   // Questions
   async createQuestion(questionData: InsertQuestion): Promise<Question> {
     const [question] = await db.insert(questions).values({
-      ...questionData,
-      slug: questionData.slug || questionData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
+      ...questionData
     }).returning();
     return question;
   }
@@ -1312,7 +1311,7 @@ export class DatabaseStorage implements IStorage {
           })
           .where(eq(votes.id, existingVote.id));
       } else {
-        const voteData = {
+        const voteData: any = {
           userId,
           voteType,
           ...(isQuestion ? { questionId: votableId } : { answerId: votableId })
