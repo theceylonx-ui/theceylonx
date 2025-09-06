@@ -221,7 +221,7 @@ export function PreferencesForm() {
     resetPreferencesMutation.mutate();
   };
 
-  // Multi-select chip component
+  // Enhanced Multi-select chip component with beautiful design
   const MultiSelectChips = ({ 
     value, 
     onChange, 
@@ -250,45 +250,65 @@ export function PreferencesForm() {
     const availableOptions = options.filter(option => !value.includes(option));
 
     return (
-      <div className="space-y-3">
+      <div className="space-y-6">
         {/* Selected items */}
         {value.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {value.map((item) => (
-              <Badge
-                key={item}
-                variant="secondary"
-                className="px-3 py-1 text-sm bg-orange-100 text-orange-800 hover:bg-orange-200 transition-colors"
-              >
-                {labels[item] || item}
-                <button
-                  type="button"
-                  onClick={() => handleRemove(item)}
-                  className="ml-2 hover:text-orange-600"
-                  data-testid={`chip-remove-${item}`}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-5 border border-blue-100">
+            <div className="flex items-center mb-3">
+              <div className="bg-blue-500 p-1.5 rounded-lg mr-2">
+                <span className="text-white text-xs font-bold">✓</span>
+              </div>
+              <h4 className="font-semibold text-blue-900">Your Selections</h4>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {value.map((item) => (
+                <div
+                  key={item}
+                  className="group bg-gradient-to-r from-orange-500 to-pink-500 text-white px-4 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                 >
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            ))}
+                  <div className="flex items-center">
+                    <span className="font-medium text-sm">{labels[item] || item}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemove(item)}
+                      className="ml-3 bg-white/20 hover:bg-white/30 p-1 rounded-full transition-colors"
+                      data-testid={`chip-remove-${item}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
         {/* Available options */}
         {availableOptions.length > 0 && (!maxItems || value.length < maxItems) && (
-          <div className="space-y-2">
-            <p className="text-sm text-gray-600">{placeholder}</p>
-            <div className="flex flex-wrap gap-2">
+          <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+            <div className="flex items-center mb-4">
+              <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-1.5 rounded-lg mr-2">
+                <Plus className="h-3 w-3 text-white" />
+              </div>
+              <h4 className="font-semibold text-gray-900">{placeholder}</h4>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {availableOptions.map((option) => (
                 <button
                   key={option}
                   type="button"
                   onClick={() => handleAdd(option)}
-                  className="inline-flex items-center px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full hover:bg-orange-100 hover:text-orange-800 transition-colors"
+                  className="group bg-white hover:bg-gradient-to-r hover:from-emerald-400 hover:to-teal-500 border border-gray-200 hover:border-transparent rounded-xl px-4 py-3 text-left transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:text-white"
                   data-testid={`chip-add-${option}`}
                 >
-                  <Plus className="h-3 w-3 mr-1" />
-                  {labels[option] || option}
+                  <div className="flex items-center">
+                    <div className="bg-gray-100 group-hover:bg-white/20 p-2 rounded-lg mr-3 transition-colors">
+                      <Plus className="h-4 w-4 text-gray-600 group-hover:text-white" />
+                    </div>
+                    <span className="font-medium text-sm text-gray-800 group-hover:text-white">
+                      {labels[option] || option}
+                    </span>
+                  </div>
                 </button>
               ))}
             </div>
@@ -296,9 +316,16 @@ export function PreferencesForm() {
         )}
 
         {maxItems && value.length >= maxItems && (
-          <p className="text-xs text-gray-500">
-            Maximum {maxItems} items selected
-          </p>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div className="flex items-center">
+              <div className="bg-amber-500 p-1.5 rounded-lg mr-2">
+                <span className="text-white text-xs font-bold">!</span>
+              </div>
+              <p className="text-amber-800 font-medium text-sm">
+                Maximum {maxItems} items selected
+              </p>
+            </div>
+          </div>
         )}
       </div>
     );
@@ -333,95 +360,135 @@ export function PreferencesForm() {
   }
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-orange-500" />
-          Travel Preferences
-        </CardTitle>
-        <CardDescription>
-          Customize your travel preferences to get personalized trip recommendations.
-          {isOptimistic && (
-            <span className="inline-block ml-2 px-2 py-1 text-xs bg-orange-100 text-orange-700 rounded">
-              Saving...
-            </span>
-          )}
-        </CardDescription>
-        
-      </CardHeader>
+    <div className="w-full max-w-5xl mx-auto space-y-8">
+      {/* Beautiful Header Section */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500 via-pink-500 to-purple-600 shadow-2xl">
+        <div className="absolute inset-0 bg-black/10">
+          <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent"></div>
+        </div>
+        <div className="relative p-8 lg:p-12">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl lg:text-4xl font-bold text-white mb-3 flex items-center gap-3">
+                <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
+                  <Sparkles className="h-8 w-8 text-white" />
+                </div>
+                Travel Preferences
+              </h1>
+              <p className="text-white/90 text-lg max-w-2xl leading-relaxed">
+                Customize your travel preferences to get personalized trip recommendations and connect with like-minded travelers.
+              </p>
+            </div>
+            {isOptimistic && (
+              <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30">
+                <span className="text-white font-medium text-sm">✨ Saving...</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
       
-      <CardContent className="space-y-6">
+      {/* Form Content */}
+      <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="p-8 space-y-10">
             
-            {/* Travel Vibe */}
-            <FormField
-              control={form.control}
-              name="vibe"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Travel Vibe</FormLabel>
-                  <FormDescription>
-                    What kind of atmosphere do you prefer? (Select up to 3)
-                  </FormDescription>
-                  <FormControl>
-                    <MultiSelectChips
-                      value={field.value}
-                      onChange={field.onChange}
-                      options={taxonomy?.vibe || []}
-                      labels={PREFERENCE_LABELS.vibe}
-                      maxItems={3}
-                      placeholder="Add a travel vibe..."
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Travel Vibe Section */}
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-8 border border-purple-100">
+              <FormField
+                control={form.control}
+                name="vibe"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="mb-6">
+                      <div className="flex items-center mb-3">
+                        <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-3 rounded-xl mr-4">
+                          <span className="text-white text-xl">✨</span>
+                        </div>
+                        <div>
+                          <FormLabel className="text-2xl font-bold text-gray-900">Travel Vibe</FormLabel>
+                          <FormDescription className="text-gray-600 text-lg mt-1">
+                            What kind of atmosphere do you prefer? (Select up to 3)
+                          </FormDescription>
+                        </div>
+                      </div>
+                    </div>
+                    <FormControl>
+                      <MultiSelectChips
+                        value={field.value}
+                        onChange={field.onChange}
+                        options={taxonomy?.vibe || []}
+                        labels={PREFERENCE_LABELS.vibe}
+                        maxItems={3}
+                        placeholder="Add a travel vibe..."
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-            <Separator />
+            {/* Travel Companions Section */}
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-3xl p-8 border border-blue-100">
+              <FormField
+                control={form.control}
+                name="companions"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="mb-6">
+                      <div className="flex items-center mb-3">
+                        <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-3 rounded-xl mr-4">
+                          <span className="text-white text-xl">👥</span>
+                        </div>
+                        <div>
+                          <FormLabel className="text-2xl font-bold text-gray-900">Travel Companions</FormLabel>
+                          <FormDescription className="text-gray-600 text-lg mt-1">
+                            Who do you usually travel with? (Select up to 2)
+                          </FormDescription>
+                        </div>
+                      </div>
+                    </div>
+                    <FormControl>
+                      <MultiSelectChips
+                        value={field.value}
+                        onChange={field.onChange}
+                        options={taxonomy?.companions || []}
+                        labels={PREFERENCE_LABELS.companions}
+                        maxItems={2}
+                        placeholder="Add travel companions..."
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-            {/* Travel Companions */}
-            <FormField
-              control={form.control}
-              name="companions"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Travel Companions</FormLabel>
-                  <FormDescription>
-                    Who do you usually travel with? (Select up to 2)
-                  </FormDescription>
-                  <FormControl>
-                    <MultiSelectChips
-                      value={field.value}
-                      onChange={field.onChange}
-                      options={taxonomy?.companions || []}
-                      labels={PREFERENCE_LABELS.companions}
-                      maxItems={2}
-                      placeholder="Add travel companions..."
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Separator />
-
-            {/* Interests */}
-            <FormField
-              control={form.control}
-              name="interests"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Interests & Activities</FormLabel>
-                  <FormDescription>
-                    What activities and experiences interest you most?
-                  </FormDescription>
-                  <FormControl>
-                    <MultiSelectChips
-                      value={field.value}
-                      onChange={field.onChange}
+            {/* Interests & Activities Section */}
+            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-3xl p-8 border border-emerald-100">
+              <FormField
+                control={form.control}
+                name="interests"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="mb-6">
+                      <div className="flex items-center mb-3">
+                        <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-3 rounded-xl mr-4">
+                          <span className="text-white text-xl">🎯</span>
+                        </div>
+                        <div>
+                          <FormLabel className="text-2xl font-bold text-gray-900">Interests & Activities</FormLabel>
+                          <FormDescription className="text-gray-600 text-lg mt-1">
+                            What activities and experiences interest you most?
+                          </FormDescription>
+                        </div>
+                      </div>
+                    </div>
+                    <FormControl>
+                      <MultiSelectChips
+                        value={field.value}
+                        onChange={field.onChange}
                       options={taxonomy?.interests || []}
                       labels={PREFERENCE_LABELS.interests}
                       placeholder="Add interests..."
@@ -556,7 +623,7 @@ export function PreferencesForm() {
             </div>
           </form>
         </Form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
