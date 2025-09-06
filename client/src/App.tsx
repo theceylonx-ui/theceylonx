@@ -67,6 +67,8 @@ function Router() {
           <>
             <Route path="/" component={Landing} />
             <Route path="/browse-trips" component={BrowseTrips} />
+            <Route path="/trips" component={BrowseTrips} />
+            <Route path="/trips/new" component={PostTrip} />
             <Route path="/trips/:id" component={TripDetails} />
             <Route path="/community" component={CommunityNew} />
             <Route path="/question/:id" component={QuestionDetail} />
@@ -96,6 +98,9 @@ function Router() {
             <Route path="/" component={Home} />
             <Route path="/browse-trips" component={BrowseTrips} />
             <Route path="/post" component={PostTrip} />
+            <Route path="/trips" component={BrowseTrips} />
+            <Route path="/trips/new" component={PostTrip} />
+            <Route path="/post-trip" component={PostTrip} />
             <Route path="/trips/:id" component={TripDetails} />
             <Route path="/dashboard" component={UserDashboard} />
             <Route path="/community" component={CommunityNew} />

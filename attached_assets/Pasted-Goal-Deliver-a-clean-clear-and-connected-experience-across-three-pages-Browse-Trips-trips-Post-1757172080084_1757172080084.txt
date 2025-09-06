@@ -1,0 +1,123 @@
+Goal
+Deliver a clean, clear, and connected experience across three pages:
+Browse Trips (/trips)
+Post a Trip (/trips/new)
+Calendar (date selection within Post flow and trip detail edit)
+Ensure:
+Back links work both ways and preserve context.
+Pages connect logically with zero dead ends.
+All known/visible errors are fixed.
+Mobile-first, accessible UI aligned to v4.0 “Playground” style.
+Routes & Navigation (must-have)
+/trips (Browse Trips)
+CTAs: Post a Trip → navigate to /trips/new
+Card click → /trips/[id]
+/trips/new (Post a Trip)
+Back to Browse link → returns to /trips with previous filters intact
+Select Dates opens in-page Calendar panel/step (no external page)
+On successful create → redirect to /trips/[id] with success toast
+/trips/[id] (Trip Detail)
+Edit Dates → opens Calendar step (inline modal/stepper)
+Back to Browse returns to /trips with preserved filters
+Preserve state in URLs:
+Keep query params on /trips (e.g. ?q=ella&month=11&companions=friends) when returning from /trips/new or /trips/[id].
+Back Link & Context Preservation
+Implement a returnTo pattern:
+When navigating from /trips → /trips/new, append ?returnTo=<encodedPrevURL>.
+“Back to Browse” on /trips/new or /trips/[id]:
+If returnTo exists, go there.
+Else fallback to /trips.
+Persist filters in Zustand and sync to URL so the list re-renders identically on return.
+Calendar: Functional Requirements
+Single source of truth for trip dates: { startDate, endDate, timezone }.
+Timezone: default to Asia/Colombo (no DST), but store ISO datetimes (UTC) and render in user tz.
+Validation:
+startDate >= today
+endDate >= startDate
+Max span (configurable) e.g., 30 days; show error if exceeded.
+Prevent selection of blocked/disabled dates (system maintenance, organizer blackout, etc., if available).
+UX:
+Inline stepper in Post flow: “Basics → Dates → Review”.
+On date pick, show a summary pill: “Sep 22–24, 2025 · 2 nights”.
+Button states: disabled until valid dates; show inline error messages.
+A11y:
+Keyboard navigable grid, ARIA labels for date cells, spoken feedback for selected range.
+Component choice (use what’s already in stack; if missing, add):
+shadcn/ui + a11y-compliant date range picker (or wrap react-day-picker with shadcn styles).
+Data & API Contracts
+GraphQL (preferred):
+type Trip {
+  id: ID!
+  title: String!
+  startDate: DateTime
+  endDate: DateTime
+  timezone: String # e.g., "Asia/Colombo"
+  active: Boolean!
+}
+
+type Mutation {
+  createTrip(input: CreateTripInput!): Trip!
+  updateTripDates(id: ID!, startDate: DateTime!, endDate: DateTime!, timezone: String!): Trip!
+}
+Client flow:
+Post a Trip:
+Step 1 save draft (title/location/etc.)
+Step 2 pick dates → updateTripDates (optimistic update)
+Step 3 review & publish (sets active=true)
+Edit Dates in /trips/[id]:
+Open Calendar, validate, call updateTripDates, toast success, refetch detail.
+Error handling:
+Show inline error below picker: “End date must be after start date.”
+Network or server fail → revert optimistic state + toast “Couldn’t save dates.”
+Public/Private Visibility Rules (alignment with prior toggles)
+Public browse queries must exclude:
+trips without valid dates (optional rule if product wants)
+active=false
+Owner editing is always allowed on their trip detail.
+UI/UX Polish (Playground style)
+Big CTA buttons with clear labels:
+On /trips: “Post a Trip”
+On /trips/new: “Pick Dates”, “Save & Continue”, “Publish”
+Micro-interactions:
+Light bounce on button press; confetti on successful publish.
+Breadcrumbs / inline stepper:
+“Basics → Dates → Review”
+Back link:
+Left-aligned icon button “← Back to Browse”
+Mobile-first:
+44–60px touch targets, sticky bottom action bar on small screens (“Save Dates”, “Continue”).
+Known Pitfalls to Check & Fix
+Back link drops filters: Verify returnTo restore and Zustand ↔ URL sync.
+Calendar off-by-one: Ensure dates saved in UTC but displayed correctly in Asia/Colombo.
+Invalid range silently accepted: Add guards + disabled publish until valid.
+Multiple submissions: Debounce/lock submit; idempotent server ops.
+Refresh loses draft: Save draft-basic fields before date step; autosave every 3–5s.
+A11y gaps: Missing ARIA on picker and back link; add labels and roles.
+i18n: Keys for buttons, errors, months; support EN/SI/TA.
+Files to Touch (suggested)
+client/src/app/trips/page.tsx (Browse)
+client/src/app/trips/new/page.tsx (Post flow)
+client/src/app/trips/[id]/page.tsx (Detail)
+client/src/components/trips/TripDateRangePicker.tsx
+client/src/components/common/BackLink.tsx
+client/src/store/tripsStore.ts (filters, drafts, selected dates)
+client/src/lib/urlState.ts (encode/decode filters, returnTo)
+Tests (must pass)
+E2E:
+From /trips with filters → /trips/new → back → filters persist.
+Post new trip with valid dates → redirected to detail with success toast.
+Edit dates on detail; verify new dates visible on card and detail.
+Unit:
+Date validation util: past start, end < start, span limit.
+URL state: encode/decode filters & returnTo.
+A11y snapshot: No critical violations (axe run) on all three pages.
+Telemetry (optional)
+Emit events (or stub):
+trip_created, trip_dates_updated, post_flow_step_viewed, post_flow_publish_success
+Include { userId, tripId, startDate, endDate, from: returnTo }.
+Acceptance Criteria
+Back links and connections work seamlessly between the three pages with preserved context.
+Calendar validates and saves dates reliably; no off-by-one or timezone glitches.
+No dead ends; clear CTAs guide the user through the flow.
+Mobile + a11y compliant; i18n strings wired.
+No console errors; network failures handled gracefully with rollbacks + toasts.
