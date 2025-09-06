@@ -1,115 +1,52 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
+  /* Ceylon Expand Design System - Light Mode */
   --background: hsl(0 0% 100%);
-  --foreground: hsl(210 25% 7.8431%);
-  --card: hsl(180 6.6667% 97.0588%);
-  --card-foreground: hsl(210 25% 7.8431%);
+  --foreground: hsl(0 0% 4%);
+  --card: hsl(0 0% 97%);
+  --card-foreground: hsl(0 0% 4%);
   --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(210 25% 7.8431%);
-  --primary: hsl(14 100% 46%);
+  --popover-foreground: hsl(0 0% 4%);
+  --primary: hsl(163 65% 31%);
   --primary-foreground: hsl(0 0% 100%);
-  --secondary: hsl(210 25% 7.8431%);
-  --secondary-foreground: hsl(0 0% 100%);
-  --muted: hsl(240 1.9608% 90%);
-  --muted-foreground: hsl(210 25% 7.8431%);
-  --accent: hsl(211.5789 51.3514% 92.7451%);
-  --accent-foreground: hsl(203.8863 88.2845% 53.1373%);
-  --destructive: hsl(356.3033 90.5579% 54.3137%);
+  --secondary: hsl(0 0% 97%);
+  --secondary-foreground: hsl(163 65% 31%);
+  --muted: hsl(0 0% 97%);
+  --muted-foreground: hsl(0 0% 44%);
+  --accent: hsl(163 65% 95%);
+  --accent-foreground: hsl(163 65% 31%);
+  --destructive: hsl(358 76% 51%);
   --destructive-foreground: hsl(0 0% 100%);
-  --border: hsl(201.4286 30.4348% 90.9804%);
-  --input: hsl(200 23.0769% 97.4510%);
-  --ring: hsl(202.8169 89.1213% 53.1373%);
-  --chart-1: hsl(203.8863 88.2845% 53.1373%);
-  --chart-2: hsl(159.7826 100% 36.0784%);
-  --chart-3: hsl(42.0290 92.8251% 56.2745%);
-  --chart-4: hsl(147.1429 78.5047% 41.9608%);
-  --chart-5: hsl(341.4894 75.2000% 50.9804%);
-  --sidebar: hsl(180 6.6667% 97.0588%);
-  --sidebar-foreground: hsl(210 25% 7.8431%);
-  --sidebar-primary: hsl(203.8863 88.2845% 53.1373%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(211.5789 51.3514% 92.7451%);
-  --sidebar-accent-foreground: hsl(203.8863 88.2845% 53.1373%);
-  --sidebar-border: hsl(205.0000 25.0000% 90.5882%);
-  --sidebar-ring: hsl(202.8169 89.1213% 53.1373%);
-  --font-sans: 'Inter', sans-serif;
-  --font-serif: Georgia, serif;
-  --font-mono: Menlo, monospace;
-  --radius: 1.3rem;
-  --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-sm: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-md: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 2px 4px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-lg: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 4px 6px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 8px 10px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-2xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --tracking-normal: 0em;
-  --spacing: 0.25rem;
-  
-  /* Ceylon Expand custom colors - Enhanced for better consistency */
-  --ceylon-green: hsl(158 64% 52%);
-  --ceylon-green-hover: hsl(158 64% 42%);
-  --ceylon-blue: hsl(199 89% 48%);
-  --ceylon-blue-hover: hsl(199 89% 38%);
-  --ceylon-orange: hsl(14 100% 46%);
-  --ceylon-orange-hover: hsl(14 100% 36%);
-  --ceylon-beige: hsl(60 56% 91%);
-  --ceylon-sand: hsl(37 44% 67%);
-  --ceylon-accent: hsl(202 100% 50%);
-  --ceylon-dark: hsl(210 25% 8%);
+  --border: hsl(0 0% 90%);
+  --input: hsl(0 0% 97%);
+  --ring: hsl(163 65% 31%);
+  --radius: 0.75rem;
 }
 
 .dark {
-  --background: hsl(0 0% 0%);
-  --foreground: hsl(200 6.6667% 91.1765%);
-  --card: hsl(228 9.8039% 10%);
-  --card-foreground: hsl(0 0% 85.0980%);
-  --popover: hsl(0 0% 0%);
-  --popover-foreground: hsl(200 6.6667% 91.1765%);
-  --primary: hsl(203.7736 87.6033% 52.5490%);
-  --primary-foreground: hsl(0 0% 100%);
-  --secondary: hsl(195.0000 15.3846% 94.9020%);
-  --secondary-foreground: hsl(210 25% 7.8431%);
-  --muted: hsl(0 0% 9.4118%);
-  --muted-foreground: hsl(210 3.3898% 46.2745%);
-  --accent: hsl(205.7143 70% 7.8431%);
-  --accent-foreground: hsl(203.7736 87.6033% 52.5490%);
-  --destructive: hsl(356.3033 90.5579% 54.3137%);
+  /* Ceylon Expand Design System - Dark Mode */
+  --background: hsl(0 0% 4%);
+  --foreground: hsl(0 0% 96%);
+  --card: hsl(0 0% 8%);
+  --card-foreground: hsl(0 0% 96%);
+  --popover: hsl(0 0% 4%);
+  --popover-foreground: hsl(0 0% 96%);
+  --primary: hsl(163 65% 45%);
+  --primary-foreground: hsl(0 0% 4%);
+  --secondary: hsl(0 0% 8%);
+  --secondary-foreground: hsl(163 65% 45%);
+  --muted: hsl(0 0% 8%);
+  --muted-foreground: hsl(0 0% 65%);
+  --accent: hsl(0 0% 8%);
+  --accent-foreground: hsl(163 65% 45%);
+  --destructive: hsl(358 76% 51%);
   --destructive-foreground: hsl(0 0% 100%);
-  --border: hsl(210 5.2632% 14.9020%);
-  --input: hsl(207.6923 27.6596% 18.4314%);
-  --ring: hsl(202.8169 89.1213% 53.1373%);
-  --chart-1: hsl(203.8863 88.2845% 53.1373%);
-  --chart-2: hsl(159.7826 100% 36.0784%);
-  --chart-3: hsl(42.0290 92.8251% 56.2745%);
-  --chart-4: hsl(147.1429 78.5047% 41.9608%);
-  --chart-5: hsl(341.4894 75.2000% 50.9804%);
-  --sidebar: hsl(228 9.8039% 10%);
-  --sidebar-foreground: hsl(0 0% 85.0980%);
-  --sidebar-primary: hsl(202.8169 89.1213% 53.1373%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(205.7143 70% 7.8431%);
-  --sidebar-accent-foreground: hsl(203.7736 87.6033% 52.5490%);
-  --sidebar-border: hsl(205.7143 15.7895% 26.0784%);
-  --sidebar-ring: hsl(202.8169 89.1213% 53.1373%);
-  --font-sans: 'Inter', sans-serif;
-  --font-serif: Georgia, serif;
-  --font-mono: Menlo, monospace;
-  --radius: 1.3rem;
-  --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-sm: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-md: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 2px 4px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-lg: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 4px 6px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 8px 10px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-2xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --border: hsl(0 0% 16%);
+  --input: hsl(0 0% 8%);
+  --ring: hsl(163 65% 45%);
 }
 
 @layer base {
@@ -118,84 +55,92 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply bg-ui-bg text-text-primary;
+    font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Typography Classes */
+  .h1 {
+    @apply text-4xl md:text-5xl font-semibold tracking-tight text-text-primary;
+  }
+
+  .h2 {
+    @apply text-2xl md:text-3xl font-semibold text-text-primary;
+  }
+
+  .h3 {
+    @apply text-xl font-semibold text-text-primary;
+  }
+
+  .lead {
+    @apply text-base md:text-lg text-text-secondary;
+  }
+
+  .body {
+    @apply text-base text-text-primary leading-7;
+  }
+
+  .caption {
+    @apply text-sm text-text-muted;
+  }
+
+  /* Focus ring for accessibility */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 focus-visible:ring-offset-ui-bg;
+  }
+}
+
+@layer components {
+  /* Button variants */
+  .btn-primary {
+    @apply h-11 rounded-xl px-5 font-semibold bg-brand hover:bg-brand-hover text-white focus-ring;
+  }
+
+  .btn-secondary {
+    @apply h-11 rounded-xl px-5 font-semibold bg-ui-bg border border-ui-line text-brand hover:bg-brand-subtle focus-ring;
+  }
+
+  /* Input styling */
+  .input-base {
+    @apply h-12 rounded-xl border border-ui-line bg-ui-bg px-4 text-base placeholder:text-text-muted focus-ring;
+  }
+
+  /* Card styling */
+  .card-base {
+    @apply bg-ui-surface border border-ui-line rounded-2xl shadow-sm p-6;
+  }
+
+  /* Page container */
+  .page-container {
+    @apply max-w-7xl mx-auto px-4 md:px-6 lg:px-8;
+  }
+
+  /* Section spacing */
+  .section-spacing {
+    @apply py-12 md:py-16 lg:py-20;
   }
 }
 
 @layer utilities {
-  .text-ceylon-green {
-    color: var(--ceylon-green);
+  /* Touch targets */
+  .touch-target {
+    @apply min-h-11 min-w-11;
   }
-  
-  .text-ceylon-blue {
-    color: var(--ceylon-blue);
+
+  /* Animations */
+  .animate-fade-in {
+    animation: fade-in 0.2s ease-out;
   }
-  
-  .text-ceylon-orange {
-    color: var(--ceylon-orange);
+
+  /* Safe area padding for mobile */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
   }
-  
-  .bg-ceylon-green {
-    background-color: var(--ceylon-green);
-  }
-  
-  .bg-ceylon-blue {
-    background-color: var(--ceylon-blue);
-  }
-  
-  .bg-ceylon-orange {
-    background-color: var(--ceylon-orange);
-  }
-  
-  .bg-ceylon-beige {
-    background-color: var(--ceylon-beige);
-  }
-  
-  .bg-ceylon-sand {
-    background-color: var(--ceylon-sand);
-  }
-  
-  .border-ceylon-green {
-    border-color: var(--ceylon-green);
-  }
-  
-  .border-ceylon-blue {
-    border-color: var(--ceylon-blue);
-  }
-  
-  .hover\:bg-ceylon-green\/90:hover {
-    background-color: var(--ceylon-green-hover);
-  }
-  
-  .hover\:bg-ceylon-blue\/90:hover {
-    background-color: var(--ceylon-blue-hover);
-  }
-  
-  .hover\:bg-ceylon-orange\/90:hover {
-    background-color: var(--ceylon-orange-hover);
-  }
-  
-  .text-ceylon-accent {
-    color: var(--ceylon-accent);
-  }
-  
-  .bg-ceylon-accent {
-    background-color: var(--ceylon-accent);
-  }
-  
-  .text-ceylon-dark {
-    color: var(--ceylon-dark);
-  }
-  
-  .bg-ceylon-dark {
-    background-color: var(--ceylon-dark);
-  }
-  
-  .focus\:ring-ceylon-green:focus {
-    --tw-ring-color: var(--ceylon-green);
-  }
-  
-  .focus\:ring-ceylon-blue:focus {
-    --tw-ring-color: var(--ceylon-blue);
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
