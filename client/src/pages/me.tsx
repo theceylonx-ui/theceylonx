@@ -297,104 +297,149 @@ function calculatePreferencesCompletion(preferences: any): number {
   return Math.round((completed / total) * 100);
 }
 
-// Profile Overview Component
+// Enhanced Profile Overview Component with Stunning Design
 function ProfileOverview({ profile, stats, preferences }: any) {
+  const completionPercentage = profile.profileCompletePct || 0;
+  const preferencesCompletion = calculatePreferencesCompletion(preferences);
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <User className="h-5 w-5 mr-2" />
+    <div className="space-y-8">
+      {/* Profile Completion Section */}
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl p-6 border border-blue-200">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-gray-900 flex items-center">
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-2 rounded-lg mr-3">
+              <User className="h-5 w-5 text-white" />
+            </div>
             Profile Completion
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span>Profile Picture</span>
-              <span className={profile.profileImageUrl ? "text-green-600" : "text-gray-400"}>
-                {profile.profileImageUrl ? "✓" : "○"}
+          </h3>
+          <div className="text-right">
+            <div className="text-3xl font-bold text-blue-600">{completionPercentage}%</div>
+            <div className="text-sm text-gray-600">Complete</div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-white/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className={`w-3 h-3 rounded-full mr-3 ${profile.profileImageUrl ? 'bg-green-400' : 'bg-gray-300'}`}></div>
+                <span className="text-sm font-medium">Profile Picture</span>
+              </div>
+              <span className={`text-sm font-bold ${profile.profileImageUrl ? 'text-green-600' : 'text-gray-400'}`}>
+                {profile.profileImageUrl ? '✓' : '○'}
               </span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span>Display Name</span>
-              <span className={profile.displayName ? "text-green-600" : "text-gray-400"}>
-                {profile.displayName ? "✓" : "○"}
+          </div>
+
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-white/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className={`w-3 h-3 rounded-full mr-3 ${profile.displayName ? 'bg-green-400' : 'bg-gray-300'}`}></div>
+                <span className="text-sm font-medium">Display Name</span>
+              </div>
+              <span className={`text-sm font-bold ${profile.displayName ? 'text-green-600' : 'text-gray-400'}`}>
+                {profile.displayName ? '✓' : '○'}
               </span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span>Bio</span>
-              <span className={profile.bio ? "text-green-600" : "text-gray-400"}>
-                {profile.bio ? "✓" : "○"}
+          </div>
+
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-white/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className={`w-3 h-3 rounded-full mr-3 ${profile.bio ? 'bg-green-400' : 'bg-gray-300'}`}></div>
+                <span className="text-sm font-medium">Bio</span>
+              </div>
+              <span className={`text-sm font-bold ${profile.bio ? 'text-green-600' : 'text-gray-400'}`}>
+                {profile.bio ? '✓' : '○'}
               </span>
             </div>
-            <div className="flex justify-between items-center text-sm">
-              <span>Travel Preferences</span>
+          </div>
+
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-white/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className={`w-3 h-3 rounded-full mr-3 ${preferencesCompletion > 0 ? 'bg-green-400' : 'bg-gray-300'}`}></div>
+                <span className="text-sm font-medium">Travel Prefs</span>
+              </div>
               <div className="flex items-center gap-2">
-                {preferences ? (
-                  <>
-                    <div className="w-16 bg-gray-200 rounded-full h-1.5">
-                      <div 
-                        className="bg-ceylon-green h-1.5 rounded-full transition-all duration-300"
-                        style={{ 
-                          width: `${calculatePreferencesCompletion(preferences)}%` 
-                        }}
-                      />
-                    </div>
-                    <span className="text-ceylon-green text-xs font-medium">
-                      {calculatePreferencesCompletion(preferences)}%
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-gray-400">○</span>
-                )}
+                <div className="w-12 bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-gradient-to-r from-blue-400 to-indigo-500 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${preferencesCompletion}%` }}
+                  />
+                </div>
+                <span className="text-xs font-bold text-blue-600">{preferencesCompletion}%</span>
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Activity className="h-5 w-5 mr-2" />
-            Activity Summary
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Questions Asked</span>
-              <Badge variant="secondary">{stats.questions_count}</Badge>
+      {/* Activity Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-3xl font-bold mb-2">{stats.questions_count || 0}</div>
+              <div className="text-emerald-100 font-medium">Questions Asked</div>
+              <div className="text-xs text-emerald-200 mt-1">Get answers from the community</div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Trips Posted</span>
-              <Badge variant="secondary">{stats.trips_count}</Badge>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Trips Saved</span>
-              <Badge variant="secondary">{stats.saved_count}</Badge>
+            <div className="bg-white/20 p-3 rounded-xl">
+              <Activity className="h-8 w-8" />
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Calendar className="h-5 w-5 mr-2" />
-            Recent Activity
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-sm text-gray-500">
-            Member since {new Date(profile.createdAt).toLocaleDateString()}
+        <div className="bg-gradient-to-br from-orange-500 to-pink-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-3xl font-bold mb-2">{stats.trips_count || 0}</div>
+              <div className="text-orange-100 font-medium">Trips Posted</div>
+              <div className="text-xs text-orange-200 mt-1">Share your adventures</div>
+            </div>
+            <div className="bg-white/20 p-3 rounded-xl">
+              <MapPin className="h-8 w-8" />
+            </div>
           </div>
-          <div className="text-sm text-gray-500 mt-1">
-            Last updated {new Date(profile.updatedAt).toLocaleDateString()}
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-3xl font-bold mb-2">{stats.saved_count || 0}</div>
+              <div className="text-purple-100 font-medium">Trips Saved</div>
+              <div className="text-xs text-purple-200 mt-1">Your wishlist collection</div>
+            </div>
+            <div className="bg-white/20 p-3 rounded-xl">
+              <Heart className="h-8 w-8" />
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      {/* Account Info Card */}
+      <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-2xl p-6 border border-gray-200">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-gray-900 flex items-center">
+            <div className="bg-gradient-to-r from-gray-600 to-slate-700 p-2 rounded-lg mr-3">
+              <Calendar className="h-5 w-5 text-white" />
+            </div>
+            Account Information
+          </h3>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-white/50">
+            <div className="text-sm text-gray-600 mb-1">Member Since</div>
+            <div className="font-semibold text-gray-900">{new Date(profile.createdAt).toLocaleDateString()}</div>
+          </div>
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-white/50">
+            <div className="text-sm text-gray-600 mb-1">Last Updated</div>
+            <div className="font-semibold text-gray-900">{new Date(profile.updatedAt).toLocaleDateString()}</div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
