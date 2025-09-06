@@ -1072,30 +1072,7 @@ function UserActivity() {
                           onClick={() => window.location.href = `/question/${question.id}`}
                           data-testid={`button-view-question-${question.id}`}
                         >
-                          View
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-blue-600 hover:text-blue-700"
-                          onClick={() => window.location.href = `/question/${question.id}/edit`}
-                          data-testid={`button-edit-question-${question.id}`}
-                        >
-                          ✏️ Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-red-600 hover:text-red-700"
-                          onClick={() => {
-                            if(confirm('Are you sure you want to delete this question?')) {
-                              // Add delete functionality
-                              console.log('Delete question:', question.id);
-                            }
-                          }}
-                          data-testid={`button-delete-question-${question.id}`}
-                        >
-                          🗑️ Delete
+                          👁️ View
                         </Button>
                       </div>
                     </div>

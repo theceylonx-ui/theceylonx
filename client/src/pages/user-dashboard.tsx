@@ -585,7 +585,7 @@ export default function UserDashboard() {
                           <div>📍 {trip.fromLocation} → {trip.toLocation}</div>
                           <div>📅 {new Date(trip.date).toLocaleDateString()} • {trip.time}</div>
                           <div>👥 {trip.seatsAvailable} seats available</div>
-                          <div>💰 LKR {trip.price}/person</div>
+                          <div>💰 {!trip.price || Number(trip.price) === 0 ? 'Free Trip' : `LKR ${trip.price}/person`}</div>
                         </div>
                       </div>
                     ))
