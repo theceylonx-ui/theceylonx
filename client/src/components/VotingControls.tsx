@@ -36,7 +36,7 @@ export default function VotingControls({
   });
 
   const currentVote = voteData?.vote;
-  const currentVoteValue = currentVote?.value || 0; // Use integer value directly
+  const currentVoteValue = currentVote?.voteType === 'up' ? 1 : 0; // Convert voteType to number
   
   // Vote mutation
   const voteMutation = useMutation({

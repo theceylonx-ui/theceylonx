@@ -2007,8 +2007,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!votableId) {
         return res.status(400).json({ message: "Votable ID is required" });
       }
-      if (![1, -1, 0].includes(value)) {
-        return res.status(400).json({ message: "Vote value must be 1 (upvote), -1 (downvote), or 0 (clear)" });
+      if (![1, 0].includes(value)) {
+        return res.status(400).json({ message: "Vote value must be 1 (upvote) or 0 (clear)" });
       }
       
       const result = await storage.upsertVote(userId, votableType, votableId, value);

@@ -1334,16 +1334,17 @@ export class DatabaseStorage implements IStorage {
   private async calculateScore(votableType: 'question' | 'answer', votableId: string): Promise<number> {
     const isQuestion = votableType === 'question';
     
-    // Calculate score as SUM(votes.value) which supports -1 (downvote), 0, 1 (upvote)
-    const scoreResult = await db
-      .select({ score: sql<number>`COALESCE(SUM(${votes.value}), 0)` })
+    // Count up votes only (using voteType = 'up')
+    const upVotesResult = await db
+      .select({ count: sql<number>`COUNT(*)` })
       .from(votes)
       .where(and(
+        eq(votes.voteType, 'up'),
         isQuestion ? eq(votes.questionId, votableId) : eq(votes.answerId, votableId)
       ));
     
-    const score = Number(scoreResult[0]?.score || 0);
-    return score;
+    const upVotes = Number(upVotesResult[0]?.count || 0);
+    return upVotes;
   }
 
   private async updateScore(votableType: 'question' | 'answer', votableId: string, score: number): Promise<void> {
