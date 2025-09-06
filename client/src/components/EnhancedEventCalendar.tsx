@@ -373,7 +373,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
         </Badge>
         
         <Link href={`/trips/${trip.id}`}>
-          <Button size="sm" variant="outline" className="h-6 text-xs">
+          <Button size="sm" variant="outline" className="h-6 text-xs border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300">
             View Details
           </Button>
         </Link>
@@ -405,7 +405,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
               onPressedChange={() => handleFilterToggle(filterKey)}
               disabled={isDisabled}
               className={`flex items-center gap-2 text-xs ${
-                isActive ? 'bg-ceylon-green text-white' : ''
+                isActive ? 'bg-gradient-to-r from-emerald-500 to-blue-500 text-white' : ''
               } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
               data-testid={`filter-${filterKey}`}
             >

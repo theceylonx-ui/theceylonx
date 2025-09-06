@@ -29,7 +29,7 @@ export default function CalendarPage() {
                 </div>
                 <div className="hidden md:block">
                   <Link href="/post">
-                    <Button variant="secondary" size="lg" className="text-ceylon-green">
+                    <Button variant="secondary" size="lg" className="bg-white/20 text-white hover:bg-white/30 hover:text-white border-white/30">
                       <CalendarPlus className="w-5 h-5 mr-2" />
                       Add Trip
                     </Button>
