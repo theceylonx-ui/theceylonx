@@ -616,6 +616,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Trip status update endpoint for visibility control
+  app.patch('/api/trips/:id/status', unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const tripId = req.params.id;
+      const { status } = req.body;
+      
+      // Validate status value
+      const validStatuses = ['active', 'inactive', 'full', 'completed', 'cancelled', 'deleted', 'under_review'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ message: "Invalid status value" });
+      }
+      
+      // Check if user is the organizer
+      const trip = await storage.getTrip(tripId);
+      if (!trip || trip.organizerId !== userId) {
+        return res.status(403).json({ message: "Only the trip organizer can change trip status" });
+      }
+      
+      const updatedTrip = await storage.updateTrip(tripId, { status });
+      res.json({ id: tripId, status: updatedTrip.status });
+    } catch (error) {
+      console.error("Error updating trip status:", error);
+      res.status(500).json({ message: "Failed to update trip status" });
+    }
+  });
+
   app.delete('/api/trips/:id', unifiedAuthGuard, async (req, res) => {
     try {
       const userId = req.user!.id;
@@ -1770,6 +1797,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.error("❌ Error updating question:", error);
       res.status(500).json({ message: "Failed to update question" });
+    }
+  });
+
+  // Question visibility update endpoint for visibility control
+  app.patch('/api/questions/:id/visibility', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      console.log("📝 PATCH /api/questions/:id/visibility - attempting to update question visibility");
+      
+      const userId = req.user?.id;
+      const questionId = req.params.id;
+      const { visibility } = req.body;
+      
+      // Validate visibility value
+      if (!['public', 'hidden'].includes(visibility)) {
+        return res.status(400).json({ message: "Invalid visibility value. Must be 'public' or 'hidden'" });
+      }
+      
+      // Check if the question exists and belongs to the user
+      const existingQuestion = await storage.getQuestion(questionId);
+      if (!existingQuestion) {
+        return res.status(404).json({ message: "Question not found" });
+      }
+      if (existingQuestion.userId !== userId) {
+        return res.status(403).json({ message: "Only the question author can change question visibility" });
+      }
+      
+      const question = await storage.updateQuestion(questionId, { visibility });
+      console.log("✅ Question visibility updated successfully:", { id: questionId, visibility });
+      res.json({ id: questionId, visibility: question.visibility });
+    } catch (error) {
+      console.error("❌ Error updating question visibility:", error);
+      res.status(500).json({ message: "Failed to update question visibility" });
     }
   });
 
