@@ -114,6 +114,18 @@ export default function QuestionDetailPage() {
     },
   });
 
+  // Delete question mutation
+  const deleteQuestionMutation = useMutation({
+    mutationFn: (id: string) => apiRequest('DELETE', `/api/questions/${id}`),
+    onSuccess: () => {
+      toast({ title: "Question deleted successfully!" });
+      setLocation('/community'); // Redirect back to community
+    },
+    onError: (error: Error) => {
+      toast({ title: "Failed to delete question", description: error.message, variant: "destructive" });
+    },
+  });
+
   // Vote handling is now done by VotingControls component
 
   const onSubmitAnswer = (data: AnswerFormData) => {
@@ -288,19 +300,15 @@ export default function QuestionDetailPage() {
                       size="sm"
                       onClick={() => {
                         if (confirm('Are you sure you want to delete this question? This action cannot be undone.')) {
-                          // TODO: Implement delete question functionality
-                          toast({ 
-                            title: "Delete functionality", 
-                            description: "Question deletion will be implemented soon.",
-                            variant: "destructive"
-                          });
+                          deleteQuestionMutation.mutate(question.id);
                         }
                       }}
+                      disabled={deleteQuestionMutation.isPending}
                       data-testid="button-delete-question"
                       className="text-red-600 hover:text-red-700 border-red-300 hover:border-red-400"
                     >
                       <Trash2 className="w-4 h-4 mr-1" />
-                      Delete
+                      {deleteQuestionMutation.isPending ? 'Deleting...' : 'Delete'}
                     </Button>
                   </>
                 )}
