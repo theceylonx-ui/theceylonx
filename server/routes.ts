@@ -2166,11 +2166,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let completed = 0;
         let total = 6; // Total completion criteria
         
+        console.log("🔍 Profile completion calculation:");
+        console.log("Profile data:", {
+          profileImageUrl: profile.profileImageUrl,
+          image: profile.image,
+          displayName: profile.displayName,
+          name: profile.name,
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          bio: profile.bio,
+          location: profile.location
+        });
+        console.log("Preferences data:", preferences);
+        
         // Basic profile fields (4 criteria)
-        if (profile.profileImageUrl || profile.image) completed++; // Profile Picture
-        if (profile.displayName || profile.name || profile.firstName || profile.lastName) completed++; // Display Name
-        if (profile.bio) completed++; // Bio
-        if (profile.location) completed++; // Location
+        if (profile.profileImageUrl || profile.image) {
+          completed++;
+          console.log("✅ Profile Picture: YES");
+        } else {
+          console.log("❌ Profile Picture: NO");
+        }
+        
+        if (profile.displayName || profile.name || profile.firstName || profile.lastName) {
+          completed++;
+          console.log("✅ Display Name: YES");
+        } else {
+          console.log("❌ Display Name: NO");
+        }
+        
+        if (profile.bio) {
+          completed++;
+          console.log("✅ Bio: YES");
+        } else {
+          console.log("❌ Bio: NO");
+        }
+        
+        if (profile.location) {
+          completed++;
+          console.log("✅ Location: YES");
+        } else {
+          console.log("❌ Location: NO");
+        }
         
         // Preferences completion (2 criteria)
         if (preferences) {
@@ -2182,12 +2218,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (preferences.interests?.length > 0) prefsCompleted++;
           if (preferences.months?.length > 0) prefsCompleted++;
           
+          console.log(`📊 Preferences: ${prefsCompleted}/${prefsTotal} completed`);
+          
           // Travel preferences count as 1 point if 50%+ complete, 2 points if 100% complete
-          if (prefsCompleted >= 2) completed++; // 50%+ preferences
-          if (prefsCompleted === prefsTotal) completed++; // 100% preferences
+          if (prefsCompleted >= 2) {
+            completed++;
+            console.log("✅ Travel Preferences (50%+): YES");
+          }
+          if (prefsCompleted === prefsTotal) {
+            completed++;
+            console.log("✅ Travel Preferences (100%): YES");
+          }
+        } else {
+          console.log("❌ No preferences found");
         }
         
-        return Math.round((completed / total) * 100);
+        const percentage = Math.round((completed / total) * 100);
+        console.log(`🎯 Final calculation: ${completed}/${total} = ${percentage}%`);
+        return percentage;
       };
       
       const profileCompletePct = calculateProfileCompletion(profile, preferences);
