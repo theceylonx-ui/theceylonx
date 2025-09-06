@@ -3334,6 +3334,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get all trips for the date range
       const allTrips = await storage.getTripsInDateRange(startOfDayLocal, endOfDayLocal);
       
+      
       // Apply region and tags filters on the retrieved trips
       let filteredTrips = allTrips;
       
@@ -3550,6 +3551,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get all trips in the month
       const allTrips = await storage.getTripsInDateRange(startOfMonth, endOfMonth);
       
+      
       // Apply base filters (region, tags)
       let filteredTrips = allTrips;
       
@@ -3606,11 +3608,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Return daily counts for the month
         const dayCounts = new Map<string, number>();
         
-        filteredTrips.forEach(trip => {
-          const tripDate = new Date(trip.date);
-          const dateKey = tripDate.toISOString().split('T')[0]; // YYYY-MM-DD
-          dayCounts.set(dateKey, (dayCounts.get(dateKey) || 0) + 1);
-        });
+        // Only count active trips to match day API behavior
+        filteredTrips
+          .filter(trip => trip.status === 'active')
+          .forEach(trip => {
+            const tripDate = new Date(trip.date);
+            const dateKey = tripDate.toISOString().split('T')[0]; // YYYY-MM-DD
+            dayCounts.set(dateKey, (dayCounts.get(dateKey) || 0) + 1);
+          });
         
         const days = Array.from(dayCounts.entries()).map(([date, count]) => ({
           date,
