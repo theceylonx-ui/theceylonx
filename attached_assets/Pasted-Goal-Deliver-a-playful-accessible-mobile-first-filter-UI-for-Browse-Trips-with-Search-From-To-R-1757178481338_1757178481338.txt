@@ -1,0 +1,399 @@
+Goal
+Deliver a playful, accessible, mobile-first filter UI for Browse Trips with:
+Search, From/To, Region, Date Range (with quick picks), Price Range slider
+Live results count, Clear/Apply, URL/state sync, and instant feedback
+Aligned with Ceylon Expand v4.0 (Playground visuals, A11y, i18n EN/SI/TA)
+Routes / Files (suggested)
+client/src/app/trips/page.tsx — page container (renders Filters + TripList)
+client/src/components/trips/BrowseTripsFilters.tsx — the new filter panel
+client/src/components/trips/QuickDateChips.tsx — date quick picks
+client/src/components/trips/PriceRangeSlider.tsx — LKR range slider
+client/src/components/trips/FilterBarMobile.tsx — mobile drawer/accordion
+client/src/store/tripsFiltersStore.ts — Zustand store (single source of truth)
+client/src/lib/urlState.ts — encode/decode filters ↔ URL query
+client/src/lib/dateQuickPicks.ts — helpers for weekend/nextWeek/holidays
+client/src/lib/currency.ts — LKR formatting helpers
+client/src/components/ui/* — shadcn/ui primitives already in project (Switch, Drawer, Slider, Button, Badge, Input, Select, Popover, Calendar)
+Data Model (filters shape)
+export type TripsFilters = {
+  q: string;                 // text search
+  from: string | null;       // city code or name
+  to: string | null;         // city code or name
+  region: string | null;     // e.g., "Central", "North", ...
+  startDate: string | null;  // ISO date (yyyy-mm-dd)
+  endDate: string | null;    // ISO date (yyyy-mm-dd)
+  priceMin: number | null;   // in LKR
+  priceMax: number | null;   // in LKR
+};
+Zustand Store (tripsFiltersStore.ts)
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { TripsFilters } from "@/types";
+
+const DEFAULTS: TripsFilters = {
+  q: "",
+  from: null,
+  to: null,
+  region: null,
+  startDate: null,
+  endDate: null,
+  priceMin: null,
+  priceMax: null,
+};
+
+type State = {
+  filters: TripsFilters;
+  resultsCount: number;       // updated by TripList after fetch
+  set<K extends keyof TripsFilters>(key: K, val: TripsFilters[K]): void;
+  setMany(vals: Partial<TripsFilters>): void;
+  clearAll(): void;
+  setResultsCount(n: number): void;
+};
+
+export const useTripsFiltersStore = create<State>()(
+  persist(
+    (set, get) => ({
+      filters: DEFAULTS,
+      resultsCount: 0,
+      set: (key, val) => set({ filters: { ...get().filters, [key]: val } }),
+      setMany: (vals) => set({ filters: { ...get().filters, ...vals } }),
+      clearAll: () => set({ filters: DEFAULTS }),
+      setResultsCount: (n) => set({ resultsCount: n }),
+    }),
+    { name: "trips-filters" }
+  )
+);
+URL Sync (urlState.ts)
+import { TripsFilters } from "@/types";
+
+export function encodeFiltersToQuery(f: TripsFilters): string {
+  const p = new URLSearchParams();
+  if (f.q) p.set("q", f.q);
+  if (f.from) p.set("from", f.from);
+  if (f.to) p.set("to", f.to);
+  if (f.region) p.set("region", f.region);
+  if (f.startDate) p.set("start", f.startDate);
+  if (f.endDate) p.set("end", f.endDate);
+  if (f.priceMin != null) p.set("min", String(f.priceMin));
+  if (f.priceMax != null) p.set("max", String(f.priceMax));
+  const s = p.toString();
+  return s ? `?${s}` : "";
+}
+
+export function decodeFiltersFromQuery(search: string): Partial<TripsFilters> {
+  const q = new URLSearchParams(search);
+  const pick = (k: string) => q.get(k);
+  const n = (k: string) => {
+    const v = q.get(k); if (v == null) return null;
+    const num = Number(v); return Number.isFinite(num) ? num : null;
+  };
+  return {
+    q: pick("q") ?? "",
+    from: pick("from"),
+    to: pick("to"),
+    region: pick("region"),
+    startDate: pick("start"),
+    endDate: pick("end"),
+    priceMin: n("min"),
+    priceMax: n("max"),
+  };
+}
+Date Quick Picks (dateQuickPicks.ts)
+import { formatISO, addDays, nextMonday, nextSaturday } from "date-fns";
+
+// Returns ISO yyyy-mm-dd (no time)
+const iso = (d: Date) => formatISO(d, { representation: "date" });
+
+export const quickPicks = {
+  thisWeekend(): { start: string; end: string } {
+    const now = new Date();
+    const sat = nextSaturday(now);
+    const end = addDays(sat, 1); // Sunday
+    return { start: iso(sat), end: iso(end) };
+  },
+  nextWeek(): { start: string; end: string } {
+    const start = nextMonday(new Date());
+    const end = addDays(start, 7);
+    return { start: iso(start), end: iso(end) };
+  },
+  // Placeholder. Wire real holidays later.
+  upcomingHolidays(): { start: string; end: string } {
+    const start = addDays(new Date(), 14);
+    const end = addDays(start, 3);
+    return { start: iso(start), end: iso(end) };
+  },
+};
+Price Slider (PriceRangeSlider.tsx)
+"use client";
+import { Slider } from "@/components/ui/slider";
+import { useTripsFiltersStore } from "@/store/tripsFiltersStore";
+import { formatLKR } from "@/lib/currency";
+import { useState, useEffect } from "react";
+
+const MAX_LKR = 100_000; // adjust as needed
+
+export default function PriceRangeSlider() {
+  const { filters, setMany } = useTripsFiltersStore();
+  const [range, setRange] = useState<[number, number]>([
+    filters.priceMin ?? 0, filters.priceMax ?? MAX_LKR
+  ]);
+
+  useEffect(() => {
+    setRange([filters.priceMin ?? 0, filters.priceMax ?? MAX_LKR]);
+  }, [filters.priceMin, filters.priceMax]);
+
+  const onCommit = (v: number[]) => {
+    const [min, max] = v as [number, number];
+    setMany({ priceMin: min === 0 ? null : min, priceMax: max === MAX_LKR ? null : max });
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="text-sm text-muted-foreground">
+        {formatLKR(range[0])} — {formatLKR(range[1])}
+      </div>
+      <Slider
+        min={0} max={MAX_LKR} step={500}
+        value={range}
+        onValueChange={(v) => setRange(v as [number, number])}
+        onValueCommit={onCommit}
+        aria-label="Price range in LKR"
+      />
+    </div>
+  );
+}
+Date Quick Chips (QuickDateChips.tsx)
+"use client";
+import { Button } from "@/components/ui/button";
+import { useTripsFiltersStore } from "@/store/tripsFiltersStore";
+import { quickPicks } from "@/lib/dateQuickPicks";
+
+export default function QuickDateChips() {
+  const { setMany } = useTripsFiltersStore();
+  const apply = (fn: () => { start: string; end: string }) => {
+    const { start, end } = fn();
+    setMany({ startDate: start, endDate: end });
+  };
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Button variant="secondary" size="sm" onClick={() => apply(quickPicks.thisWeekend)}>
+        This Weekend
+      </Button>
+      <Button variant="secondary" size="sm" onClick={() => apply(quickPicks.nextWeek)}>
+        Next Week
+      </Button>
+      <Button variant="secondary" size="sm" onClick={() => apply(quickPicks.upcomingHolidays)}>
+        Upcoming Holidays
+      </Button>
+    </div>
+  );
+}
+Filters Panel (BrowseTripsFilters.tsx)
+"use client";
+import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useTripsFiltersStore } from "@/store/tripsFiltersStore";
+import { encodeFiltersToQuery, decodeFiltersFromQuery } from "@/lib/urlState";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Badge } from "@/components/ui/badge";
+import QuickDateChips from "./QuickDateChips";
+import PriceRangeSlider from "./PriceRangeSlider";
+import { motion } from "framer-motion";
+
+type Props = {
+  regions: string[];        // provide from server
+  locations: string[];      // provide from server
+};
+
+export default function BrowseTripsFilters({ regions, locations }: Props) {
+  const router = useRouter();
+  const params = useSearchParams();
+  const { filters, set, setMany, clearAll, resultsCount } = useTripsFiltersStore();
+
+  // 1) Initialize from URL
+  useEffect(() => {
+    const decoded = decodeFiltersFromQuery(params.toString());
+    setMany(decoded);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 2) Push URL on change (debounced could be added)
+  useEffect(() => {
+    const q = encodeFiltersToQuery(filters);
+    router.replace(`/trips${q}`);
+  }, [filters, router]);
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-3xl border bg-card p-5 md:p-6 shadow-sm"
+      aria-labelledby="filter-heading"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <h2 id="filter-heading" className="text-lg font-semibold">Filter Trips 🔍</h2>
+        <div className="flex items-center gap-3">
+          <Badge variant="outline" aria-live="polite">{resultsCount} trips found</Badge>
+          <Button variant="ghost" onClick={clearAll} aria-label="Clear all filters">Clear All</Button>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="mb-4">
+        <Input
+          placeholder="🔎 Search by title, location, or keyword…"
+          value={filters.q}
+          onChange={(e) => set("q", e.target.value)}
+          aria-label="Search trips"
+        />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* From Location */}
+        <div className="space-y-1">
+          <label className="text-sm font-medium">📍 From Location</label>
+          <Select value={filters.from ?? ""} onValueChange={(v) => set("from", v || null)}>
+            <SelectTrigger><SelectValue placeholder="My Current Location" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">My Current Location</SelectItem>
+              {locations.map((loc) => <SelectItem key={loc} value={loc}>{loc}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* To Location */}
+        <div className="space-y-1">
+          <label className="text-sm font-medium">🗺️ To Location</label>
+          <Select value={filters.to ?? ""} onValueChange={(v) => set("to", v || null)}>
+            <SelectTrigger><SelectValue placeholder="Anywhere" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Anywhere</SelectItem>
+              {locations.map((loc) => <SelectItem key={loc} value={loc}>{loc}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Region */}
+        <div className="space-y-1">
+          <label className="text-sm font-medium">🌍 Region</label>
+          <Select value={filters.region ?? ""} onValueChange={(v) => set("region", v || null)}>
+            <SelectTrigger><SelectValue placeholder="All regions" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All regions</SelectItem>
+              {regions.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Date Range */}
+        <div className="space-y-2 lg:col-span-2">
+          <label className="text-sm font-medium">📅 Date</label>
+          <div className="flex flex-col gap-2">
+            <QuickDateChips />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="justify-between">
+                  {filters.startDate && filters.endDate
+                    ? `${filters.startDate} → ${filters.endDate}`
+                    : "Select date range"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="p-3">
+                <Calendar
+                  mode="range"
+                  selected={
+                    filters.startDate && filters.endDate
+                      ? { from: new Date(filters.startDate), to: new Date(filters.endDate) }
+                      : undefined
+                  }
+                  onSelect={(range: any) => {
+                    setMany({
+                      startDate: range?.from ? range.from.toISOString().slice(0,10) : null,
+                      endDate: range?.to ? range.to.toISOString().slice(0,10) : null,
+                    });
+                  }}
+                  numberOfMonths={2}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+
+        {/* Price Range */}
+        <div className="space-y-1">
+          <label className="text-sm font-medium">💸 Price Range (LKR)</label>
+          <PriceRangeSlider />
+        </div>
+      </div>
+
+      {/* Mobile sticky actions (desktop can rely on live updates) */}
+      <div className="mt-4 flex items-center justify-end gap-3">
+        <Button variant="secondary" onClick={clearAll}>Clear</Button>
+        <Button onClick={() => router.replace(`/trips${encodeFiltersToQuery(filters)}`)} aria-label="Apply filters">
+          ✅ Apply Filters
+        </Button>
+      </div>
+    </motion.section>
+  );
+}
+Page Container (/trips/page.tsx) — skeleton
+import BrowseTripsFilters from "@/components/trips/BrowseTripsFilters";
+import TripList from "@/components/trips/TripList"; // your existing list
+import { useTripsFiltersStore } from "@/store/tripsFiltersStore";
+
+export default async function TripsPage() {
+  // Fetch options server-side if you like:
+  const regions = ["All Island", "Central", "Northern", "Eastern", "Western", "Southern", "North Central", "North Western", "Sabaragamuwa", "Uva"];
+  const locations = ["Colombo", "Kandy", "Galle", "Jaffna", "Ella", "Nuwara Eliya"]; // sample
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold">Browse Trips</h1>
+      <p className="text-muted-foreground">Discover amazing travel opportunities across Sri Lanka.</p>
+
+      <BrowseTripsFilters regions={regions} locations={locations} />
+
+      {/* TripList must read filters from Zustand and update resultsCount */}
+      <TripList />
+    </div>
+  );
+}
+TripList contract (update)
+Reads filters via useTripsFiltersStore().filters
+Calls your API (/api/trips?…) or GraphQL with those params
+After fetch, calls useTripsFiltersStore.getState().setResultsCount(data.total)
+i18n keys (examples)
+filters.title = "Filter Trips"
+filters.search.placeholder = "Search by title, location, or keyword…"
+filters.from = "From Location"
+filters.to = "To Location"
+filters.region = "Region"
+filters.date = "Date"
+filters.price = "Price Range (LKR)"
+filters.quick.thisWeekend = "This Weekend"
+filters.quick.nextWeek = "Next Week"
+filters.quick.holidays = "Upcoming Holidays"
+filters.clear = "Clear All"
+filters.apply = "Apply Filters"
+filters.results = "{count} trips found"
+Accessibility
+All controls have labels and aria-labels
+Calendar is keyboard navigable (shadcn Calendar)
+Badges announce results count with aria-live="polite"
+Touch targets ≥ 44px, sufficient contrast per WCAG 2.2
+Acceptance Criteria
+Filters update URL and state; reloading preserves filters.
+Date range and price slider behave as expected (no off-by-one).
+Results count updates live; Clear resets everything.
+Mobile drawer or sticky action row works one-handed.
+No console errors; Lighthouse/Axe shows no critical A11y issues.
+Notes
+Keep all numeric prices in LKR (no currency conversion).
+Defer heavy queries; debounce search input ~300ms if needed.
+Add subtle micro-animations (Framer Motion) on apply/clear for “Playground” feel.
+Deliverable: PR implementing the above + short screen capture (desktop & mobile) demonstrating filter usage and preserved state on refresh/navigation.
