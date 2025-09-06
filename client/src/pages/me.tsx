@@ -1064,6 +1064,9 @@ function UserActivity() {
                           <Badge variant={question.acceptedAnswerId ? 'default' : 'secondary'}>
                             {question.acceptedAnswerId ? 'Answered' : 'Open'}
                           </Badge>
+                          <Badge variant={question.visibility === 'hidden' ? 'destructive' : 'outline'}>
+                            {question.visibility === 'hidden' ? '🔒 Hidden' : '🌐 Public'}
+                          </Badge>
                         </div>
                       </div>
                       <div className="flex flex-col gap-2 ml-4">
