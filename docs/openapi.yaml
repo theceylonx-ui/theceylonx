@@ -1,0 +1,866 @@
+openapi: 3.0.3
+info:
+  title: Ceylon Expand v5.0 API
+  description: REST API endpoints for Ceylon Expand travel buddy platform
+  version: 5.0.0
+  contact:
+    name: Ceylon Expand Team
+    url: https://ceylonexpand.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.ceylonexpand.com/v5
+    description: Production server
+  - url: https://staging-api.ceylonexpand.com/v5
+    description: Staging server
+  - url: http://localhost:5000/api
+    description: Development server
+
+paths:
+  # Authentication endpoints
+  /auth/me:
+    get:
+      summary: Get current user
+      description: Returns the authenticated user's profile information
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/login:
+    post:
+      summary: User login
+      description: Authenticate user with email and password
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+                  refreshToken:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      summary: User logout
+      description: Log out the current user and invalidate tokens
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  # Trip endpoints
+  /trips:
+    get:
+      summary: Get trips
+      description: Retrieve trips with optional filtering and pagination
+      tags:
+        - Trips
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search query for trip titles and descriptions
+        - name: from
+          in: query
+          schema:
+            type: string
+          description: Starting location filter
+        - name: to
+          in: query
+          schema:
+            type: string
+          description: Destination location filter
+        - name: region
+          in: query
+          schema:
+            $ref: '#/components/schemas/Region'
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: minPrice
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+        - name: maxPrice
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Trips retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trips:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Trip'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+    post:
+      summary: Create trip
+      description: Create a new trip posting
+      tags:
+        - Trips
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTripInput'
+      responses:
+        '201':
+          description: Trip created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /trips/{id}:
+    get:
+      summary: Get trip by ID
+      description: Retrieve detailed information about a specific trip
+      tags:
+        - Trips
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Trip retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update trip
+      description: Update an existing trip (owner only)
+      tags:
+        - Trips
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTripInput'
+      responses:
+        '200':
+          description: Trip updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Community Q&A endpoints
+  /questions:
+    get:
+      summary: Get questions
+      description: Retrieve community questions with filtering
+      tags:
+        - Community
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: topic
+          in: query
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [newest, oldest, top, unanswered]
+            default: newest
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        '200':
+          description: Questions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  questions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Question'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+    post:
+      summary: Create question
+      description: Post a new question to the community
+      tags:
+        - Community
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuestionInput'
+      responses:
+        '201':
+          description: Question created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /questions/{id}/upvote:
+    post:
+      summary: Toggle question upvote
+      description: Add or remove upvote for a question
+      tags:
+        - Community
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Upvote toggled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  upvoted:
+                    type: boolean
+                  totalUpvotes:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Notification endpoints
+  /notifications:
+    get:
+      summary: Get notifications
+      description: Retrieve user notifications
+      tags:
+        - Notifications
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - name: unread
+          in: query
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Notifications retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /notifications/unread-count:
+    get:
+      summary: Get unread notification count
+      description: Get the count of unread notifications for the current user
+      tags:
+        - Notifications
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Unread count retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+
+  # Streaming endpoints
+  /stream/questions/{id}/score:
+    get:
+      summary: Stream question score updates
+      description: Server-sent events for real-time question score updates
+      tags:
+        - Streaming
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Score update stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /stream/answers/{id}/score:
+    get:
+      summary: Stream answer score updates
+      description: Server-sent events for real-time answer score updates
+      tags:
+        - Streaming
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Score update stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  # Health check
+  /health:
+    get:
+      summary: Health check
+      description: System health and status check
+      tags:
+        - System
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                  uptime:
+                    type: number
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: accessToken
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        username:
+          type: string
+        imageUrl:
+          type: string
+          format: uri
+        locale:
+          $ref: '#/components/schemas/Locale'
+        emailVerified:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Trip:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        fromLocation:
+          type: string
+        toLocation:
+          type: string
+        region:
+          $ref: '#/components/schemas/Region'
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        timezone:
+          type: string
+        priceLkr:
+          type: integer
+          minimum: 0
+        maxParticipants:
+          type: integer
+          minimum: 1
+        currentParticipants:
+          type: integer
+          minimum: 0
+        active:
+          type: boolean
+        score:
+          type: integer
+        status:
+          $ref: '#/components/schemas/TripStatus'
+        owner:
+          $ref: '#/components/schemas/User'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Question:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        isAnonymous:
+          type: boolean
+        score:
+          type: integer
+        viewCount:
+          type: integer
+        status:
+          $ref: '#/components/schemas/QuestionStatus'
+        owner:
+          $ref: '#/components/schemas/User'
+        answerCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          $ref: '#/components/schemas/NotificationKind'
+        title:
+          type: string
+        message:
+          type: string
+        payload:
+          type: object
+        read:
+          type: boolean
+        actionUrl:
+          type: string
+          format: uri
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateTripInput:
+      type: object
+      required:
+        - title
+        - fromLocation
+        - toLocation
+        - region
+        - startDate
+        - endDate
+        - timezone
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        fromLocation:
+          type: string
+          maxLength: 100
+        toLocation:
+          type: string
+          maxLength: 100
+        region:
+          $ref: '#/components/schemas/Region'
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        timezone:
+          type: string
+        priceLkr:
+          type: integer
+          minimum: 0
+        maxParticipants:
+          type: integer
+          minimum: 1
+          maximum: 50
+
+    UpdateTripInput:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        fromLocation:
+          type: string
+          maxLength: 100
+        toLocation:
+          type: string
+          maxLength: 100
+        region:
+          $ref: '#/components/schemas/Region'
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        timezone:
+          type: string
+        priceLkr:
+          type: integer
+          minimum: 0
+        maxParticipants:
+          type: integer
+          minimum: 1
+          maximum: 50
+
+    CreateQuestionInput:
+      type: object
+      required:
+        - title
+        - body
+      properties:
+        title:
+          type: string
+          maxLength: 300
+        body:
+          type: string
+          maxLength: 5000
+        isAnonymous:
+          type: boolean
+          default: false
+        topicIds:
+          type: array
+          items:
+            type: string
+
+    Pagination:
+      type: object
+      properties:
+        currentPage:
+          type: integer
+        totalPages:
+          type: integer
+        totalItems:
+          type: integer
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean
+
+    Region:
+      type: string
+      enum:
+        - WESTERN
+        - CENTRAL
+        - SOUTHERN
+        - NORTHERN
+        - EASTERN
+        - NORTH_WESTERN
+        - NORTH_CENTRAL
+        - UVA
+        - SABARAGAMUWA
+
+    Locale:
+      type: string
+      enum:
+        - EN
+        - SI
+        - TA
+
+    TripStatus:
+      type: string
+      enum:
+        - DRAFT
+        - PUBLISHED
+        - FULL
+        - COMPLETED
+        - CANCELLED
+
+    QuestionStatus:
+      type: string
+      enum:
+        - PUBLISHED
+        - HIDDEN
+        - DELETED
+        - UNDER_REVIEW
+
+    NotificationKind:
+      type: string
+      enum:
+        - TRIP_JOIN_REQUEST
+        - TRIP_REQUEST_ACCEPTED
+        - TRIP_REQUEST_DECLINED
+        - TRIP_COMMENT
+        - QUESTION_UPVOTE
+        - ANSWER_UPVOTE
+        - ANSWER_ACCEPTED
+        - SYSTEM_ANNOUNCEMENT
+        - MODERATION_ACTION
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: integer
+        details:
+          type: object
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Bad Request"
+            message: "Invalid input parameters"
+            code: 400
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Unauthorized"
+            message: "Authentication required"
+            code: 401
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Forbidden"
+            message: "Insufficient permissions"
+            code: 403
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Not Found"
+            message: "The requested resource was not found"
+            code: 404
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Internal Server Error"
+            message: "An unexpected error occurred"
+            code: 500
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Trips
+    description: Trip management and discovery
+  - name: Community
+    description: Q&A community features
+  - name: Notifications
+    description: User notifications
+  - name: Streaming
+    description: Real-time data streaming
+  - name: System
+    description: System health and monitoring

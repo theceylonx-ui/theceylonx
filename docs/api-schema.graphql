@@ -1,0 +1,538 @@
+# Ceylon Expand v5.0 - GraphQL Schema
+
+scalar DateTime
+scalar JSON
+
+# ===== USER TYPES =====
+
+type User {
+  id: ID!
+  email: String!
+  name: String
+  username: String
+  imageUrl: String
+  locale: Locale!
+  emailVerified: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  
+  # Relations
+  trips: [Trip!]!
+  questions: [Question!]!
+  answers: [Answer!]!
+  notifications: [Notification!]!
+  savedTrips: [SavedTrip!]!
+}
+
+enum Locale {
+  EN
+  SI
+  TA
+}
+
+# ===== TRIP TYPES =====
+
+type Trip {
+  id: ID!
+  title: String!
+  description: String
+  fromLocation: String!
+  toLocation: String!
+  region: Region!
+  startDate: DateTime!
+  endDate: DateTime!
+  timezone: String!
+  priceLkr: Int
+  maxParticipants: Int
+  currentParticipants: Int!
+  active: Boolean!
+  score: Int!
+  status: TripStatus!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  
+  # Relations
+  owner: User!
+  participants: [TripParticipant!]!
+  comments: [TripComment!]!
+  savedBy: [SavedTrip!]!
+  interestRequests: [TripInterestRequest!]!
+}
+
+enum Region {
+  WESTERN
+  CENTRAL
+  SOUTHERN
+  NORTHERN
+  EASTERN
+  NORTH_WESTERN
+  NORTH_CENTRAL
+  UVA
+  SABARAGAMUWA
+}
+
+enum TripStatus {
+  DRAFT
+  PUBLISHED
+  FULL
+  COMPLETED
+  CANCELLED
+}
+
+type TripParticipant {
+  id: ID!
+  trip: Trip!
+  user: User!
+  status: ParticipantStatus!
+  joinedAt: DateTime!
+}
+
+enum ParticipantStatus {
+  PENDING
+  CONFIRMED
+  DECLINED
+  REMOVED
+}
+
+type TripComment {
+  id: ID!
+  trip: Trip!
+  author: User!
+  content: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type SavedTrip {
+  id: ID!
+  user: User!
+  trip: Trip!
+  saveType: SaveType!
+  createdAt: DateTime!
+}
+
+enum SaveType {
+  INTERESTED
+  WISHLIST
+  BOOKMARK
+}
+
+type TripInterestRequest {
+  id: ID!
+  trip: Trip!
+  user: User!
+  message: String
+  status: InterestRequestStatus!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum InterestRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+# ===== COMMUNITY TYPES =====
+
+type Question {
+  id: ID!
+  title: String!
+  body: String!
+  isAnonymous: Boolean!
+  score: Int!
+  viewCount: Int!
+  status: QuestionStatus!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  
+  # Relations
+  owner: User
+  answers: [Answer!]!
+  upvotes: [QuestionUpvote!]!
+  topics: [QuestionTopic!]!
+}
+
+enum QuestionStatus {
+  PUBLISHED
+  HIDDEN
+  DELETED
+  UNDER_REVIEW
+}
+
+type Answer {
+  id: ID!
+  question: Question!
+  body: String!
+  score: Int!
+  isAccepted: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  
+  # Relations
+  owner: User!
+  upvotes: [AnswerUpvote!]!
+}
+
+type QuestionUpvote {
+  id: ID!
+  question: Question!
+  user: User!
+  createdAt: DateTime!
+}
+
+type AnswerUpvote {
+  id: ID!
+  answer: Answer!
+  user: User!
+  createdAt: DateTime!
+}
+
+type Topic {
+  id: ID!
+  name: String!
+  description: String
+  color: String
+  icon: String
+  createdAt: DateTime!
+  
+  # Relations
+  questions: [QuestionTopic!]!
+}
+
+type QuestionTopic {
+  id: ID!
+  question: Question!
+  topic: Topic!
+  createdAt: DateTime!
+}
+
+# ===== NOTIFICATION TYPES =====
+
+type Notification {
+  id: ID!
+  user: User!
+  kind: NotificationKind!
+  title: String!
+  message: String!
+  payload: JSON
+  read: Boolean!
+  actionUrl: String
+  createdAt: DateTime!
+}
+
+enum NotificationKind {
+  TRIP_JOIN_REQUEST
+  TRIP_REQUEST_ACCEPTED
+  TRIP_REQUEST_DECLINED
+  TRIP_COMMENT
+  QUESTION_UPVOTE
+  ANSWER_UPVOTE
+  ANSWER_ACCEPTED
+  SYSTEM_ANNOUNCEMENT
+  MODERATION_ACTION
+}
+
+# ===== ANALYTICS TYPES =====
+
+type UserInteraction {
+  id: ID!
+  user: User
+  sessionId: String!
+  actionType: InteractionType!
+  entityType: EntityType!
+  entityId: String!
+  metadata: JSON
+  createdAt: DateTime!
+}
+
+enum InteractionType {
+  VIEW
+  CLICK
+  SAVE
+  SHARE
+  SEARCH
+  FILTER
+  COMMENT
+  UPVOTE
+  JOIN_REQUEST
+}
+
+enum EntityType {
+  TRIP
+  QUESTION
+  ANSWER
+  USER
+  SEARCH_RESULT
+}
+
+# ===== PAGINATION TYPES =====
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+  totalCount: Int!
+}
+
+type TripsConnection {
+  edges: [TripEdge!]!
+  pageInfo: PageInfo!
+}
+
+type TripEdge {
+  node: Trip!
+  cursor: String!
+}
+
+type QuestionsConnection {
+  edges: [QuestionEdge!]!
+  pageInfo: PageInfo!
+}
+
+type QuestionEdge {
+  node: Question!
+  cursor: String!
+}
+
+# ===== INPUT TYPES =====
+
+input TripsFilter {
+  search: String
+  fromLocation: String
+  toLocation: String
+  region: Region
+  startDate: DateTime
+  endDate: DateTime
+  minPrice: Int
+  maxPrice: Int
+  hasAvailableSpots: Boolean
+  ownerId: ID
+  active: Boolean
+  sortBy: TripSortBy
+  sortOrder: SortOrder
+}
+
+enum TripSortBy {
+  CREATED_AT
+  START_DATE
+  PRICE
+  SCORE
+  TITLE
+}
+
+enum SortOrder {
+  ASC
+  DESC
+}
+
+input QuestionsFilter {
+  search: String
+  topicIds: [ID!]
+  answered: Boolean
+  ownerId: ID
+  isAnonymous: Boolean
+  sortBy: QuestionSortBy
+  sortOrder: SortOrder
+}
+
+enum QuestionSortBy {
+  CREATED_AT
+  SCORE
+  VIEW_COUNT
+  ANSWER_COUNT
+}
+
+input CreateTripInput {
+  title: String!
+  description: String
+  fromLocation: String!
+  toLocation: String!
+  region: Region!
+  startDate: DateTime!
+  endDate: DateTime!
+  timezone: String!
+  priceLkr: Int
+  maxParticipants: Int
+}
+
+input UpdateTripInput {
+  title: String
+  description: String
+  fromLocation: String
+  toLocation: String
+  region: Region
+  startDate: DateTime
+  endDate: DateTime
+  timezone: String
+  priceLkr: Int
+  maxParticipants: Int
+}
+
+input CreateQuestionInput {
+  title: String!
+  body: String!
+  isAnonymous: Boolean! = false
+  topicIds: [ID!]
+}
+
+input CreateAnswerInput {
+  questionId: ID!
+  body: String!
+}
+
+input CreateNotificationInput {
+  userId: ID!
+  kind: NotificationKind!
+  title: String!
+  message: String!
+  payload: JSON
+  actionUrl: String
+}
+
+# ===== QUERIES =====
+
+type Query {
+  # User queries
+  me: User
+  user(id: ID!): User
+  users(filter: String, first: Int, after: String): [User!]!
+  
+  # Trip queries
+  trip(id: ID!): Trip
+  trips(filter: TripsFilter, first: Int = 20, after: String): TripsConnection!
+  myTrips(filter: TripsFilter, first: Int = 20, after: String): TripsConnection!
+  savedTrips(first: Int = 20, after: String): TripsConnection!
+  recommendedTrips(limit: Int = 10): [Trip!]!
+  trendingTrips(limit: Int = 10): [Trip!]!
+  
+  # Community queries
+  question(id: ID!): Question
+  questions(filter: QuestionsFilter, first: Int = 20, after: String): QuestionsConnection!
+  myQuestions(filter: QuestionsFilter, first: Int = 20, after: String): QuestionsConnection!
+  topics: [Topic!]!
+  
+  # Notification queries
+  notifications(read: Boolean, first: Int = 20, after: String): [Notification!]!
+  unreadNotificationCount: Int!
+  
+  # Search queries
+  search(query: String!, types: [EntityType!], first: Int = 20): SearchResult!
+  
+  # Analytics queries (admin only)
+  userInteractions(userId: ID, entityType: EntityType, first: Int = 100): [UserInteraction!]!
+  platformStats: PlatformStats!
+}
+
+type SearchResult {
+  trips: [Trip!]!
+  questions: [Question!]!
+  users: [User!]!
+  totalCount: Int!
+}
+
+type PlatformStats {
+  totalUsers: Int!
+  totalTrips: Int!
+  totalQuestions: Int!
+  activeTrips: Int!
+  monthlyActiveUsers: Int!
+  avgResponseTime: Float!
+}
+
+# ===== MUTATIONS =====
+
+type Mutation {
+  # User mutations
+  updateProfile(input: UpdateProfileInput!): User!
+  deleteAccount: Boolean!
+  
+  # Trip mutations
+  createTrip(input: CreateTripInput!): Trip!
+  updateTrip(id: ID!, input: UpdateTripInput!): Trip!
+  updateTripDates(id: ID!, startDate: DateTime!, endDate: DateTime!, timezone: String!): Trip!
+  setTripActive(id: ID!, active: Boolean!): Trip!
+  deleteTrip(id: ID!): Boolean!
+  
+  # Trip interaction mutations
+  saveTrip(tripId: ID!, saveType: SaveType!): SavedTrip!
+  unsaveTrip(tripId: ID!): Boolean!
+  requestToJoinTrip(tripId: ID!, message: String): TripInterestRequest!
+  respondToJoinRequest(requestId: ID!, accept: Boolean!): TripInterestRequest!
+  addTripComment(tripId: ID!, content: String!): TripComment!
+  
+  # Community mutations
+  createQuestion(input: CreateQuestionInput!): Question!
+  updateQuestion(id: ID!, title: String, body: String): Question!
+  setQuestionVisibility(id: ID!, visible: Boolean!): Question!
+  deleteQuestion(id: ID!): Boolean!
+  
+  createAnswer(input: CreateAnswerInput!): Answer!
+  updateAnswer(id: ID!, body: String!): Answer!
+  acceptAnswer(id: ID!): Answer!
+  deleteAnswer(id: ID!): Boolean!
+  
+  toggleQuestionUpvote(questionId: ID!): Question!
+  toggleAnswerUpvote(answerId: ID!): Answer!
+  
+  # Notification mutations
+  markNotificationRead(id: ID!): Notification!
+  markAllNotificationsRead: Boolean!
+  deleteNotification(id: ID!): Boolean!
+  
+  # Analytics mutations
+  trackUserInteraction(input: TrackInteractionInput!): UserInteraction!
+  
+  # Admin mutations
+  banUser(userId: ID!, reason: String!): User!
+  unbanUser(userId: ID!): User!
+  moderateContent(entityType: EntityType!, entityId: ID!, action: ModerationAction!): Boolean!
+}
+
+input UpdateProfileInput {
+  name: String
+  username: String
+  imageUrl: String
+  locale: Locale
+}
+
+input TrackInteractionInput {
+  actionType: InteractionType!
+  entityType: EntityType!
+  entityId: String!
+  metadata: JSON
+}
+
+enum ModerationAction {
+  APPROVE
+  REJECT
+  FLAG
+  HIDE
+  DELETE
+}
+
+# ===== SUBSCRIPTIONS =====
+
+type Subscription {
+  # Real-time score updates
+  questionScoreUpdated(id: ID!): Question!
+  answerScoreUpdated(id: ID!): Answer!
+  
+  # Real-time notifications
+  notifications: Notification!
+  
+  # Real-time trip updates
+  tripUpdated(id: ID!): Trip!
+  
+  # Real-time community updates
+  newQuestionInTopic(topicId: ID!): Question!
+  newAnswerForQuestion(questionId: ID!): Answer!
+}
+
+# ===== DIRECTIVES =====
+
+directive @auth on FIELD_DEFINITION
+directive @rateLimit(max: Int!, window: Int!) on FIELD_DEFINITION
+directive @admin on FIELD_DEFINITION
+directive @deprecated(reason: String) on FIELD_DEFINITION | ENUM_VALUE
