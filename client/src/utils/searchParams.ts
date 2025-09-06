@@ -123,7 +123,7 @@ export function createBackToTripsLink(fallbackPath = '/trips'): string {
 export function createPostTripLink(currentPath?: string): string {
   const pathToReturn = currentPath || `${window.location.pathname}${window.location.search}`;
   const encodedPath = encodeURIComponent(pathToReturn);
-  return `/trips/new?returnTo=${encodedPath}`;
+  return `/post?returnTo=${encodedPath}`;
 }
 
 /**

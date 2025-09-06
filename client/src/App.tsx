@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -47,6 +47,7 @@ import MeRedirect from "@/pages/me-redirect";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
 
   // Show loading while authentication state is being determined
   if (isLoading) {
@@ -68,7 +69,7 @@ function Router() {
             <Route path="/" component={Landing} />
             <Route path="/browse-trips" component={BrowseTrips} />
             <Route path="/trips" component={BrowseTrips} />
-            <Route path="/trips/new" component={PostTrip} />
+            <Route path="/trips/new" component={() => { setLocation("/post"); return null; }} />
             <Route path="/trips/:id" component={TripDetails} />
             <Route path="/community" component={CommunityNew} />
             <Route path="/question/:id" component={QuestionDetail} />
@@ -99,7 +100,7 @@ function Router() {
             <Route path="/browse-trips" component={BrowseTrips} />
             <Route path="/post" component={PostTrip} />
             <Route path="/trips" component={BrowseTrips} />
-            <Route path="/trips/new" component={PostTrip} />
+            <Route path="/trips/new" component={() => { setLocation("/post"); return null; }} />
             <Route path="/post-trip" component={PostTrip} />
             <Route path="/trips/:id" component={TripDetails} />
             <Route path="/dashboard" component={UserDashboard} />

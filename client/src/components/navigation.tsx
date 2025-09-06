@@ -13,7 +13,12 @@ export default function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => {
-    return location === path;
+    // Handle post trip routes - both /post and /trips/new should highlight /post
+    if (path === '/post') {
+      return location === '/post' || location.startsWith('/post?') || location === '/trips/new' || location.startsWith('/trips/new?');
+    }
+    // For other routes, check exact match or with query parameters
+    return location === path || location.startsWith(path + '?');
   };
 
   const toggleMobileMenu = () => {
