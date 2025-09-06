@@ -312,7 +312,7 @@ export default function QuestionDetailPage() {
         </div>
 
         {/* Question Card */}
-        <Card className="mb-6">
+        <Card className="mb-6 bg-gradient-to-br from-blue-50 via-white to-purple-50 border-l-4 border-l-blue-500 shadow-lg hover:shadow-xl transition-all duration-300 ring-1 ring-blue-100">
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -578,7 +578,14 @@ export default function QuestionDetailPage() {
                 </div>
               ) : (
                 sortedAnswers.map((answer) => (
-                  <div key={answer.id} className="border-b border-gray-200 pb-6 last:border-b-0">
+                  <div 
+                    key={answer.id} 
+                    className={`rounded-lg p-6 border-l-4 transition-all duration-200 hover:shadow-md ${
+                      answer.id === question.acceptedAnswerId 
+                        ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-l-green-500 ring-1 ring-green-200' 
+                        : 'bg-gradient-to-r from-gray-50 to-slate-50 border-l-gray-400 hover:border-l-indigo-400 hover:from-indigo-50 hover:to-blue-50'
+                    }`}
+                  >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-3 text-sm text-gray-500">
                         <div className="flex items-center">
