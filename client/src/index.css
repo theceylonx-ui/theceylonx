@@ -12,7 +12,7 @@
   --popover-foreground: hsl(0 0% 4%);
   --primary: hsl(163 65% 31%);
   --primary-foreground: hsl(0 0% 100%);
-  --secondary: hsl(0 0% 97%);
+  --secondary: hsl(0 0% 100%);
   --secondary-foreground: hsl(163 65% 31%);
   --muted: hsl(0 0% 97%);
   --muted-foreground: hsl(0 0% 44%);
@@ -24,6 +24,25 @@
   --input: hsl(0 0% 97%);
   --ring: hsl(163 65% 31%);
   --radius: 0.75rem;
+  
+  /* Enhanced text hierarchy */
+  --text-primary: hsl(0 0% 4%);
+  --text-secondary: hsl(0 0% 29%);
+  --text-muted: hsl(0 0% 44%);
+  
+  /* Vibrant accents */
+  --brand: hsl(163 65% 31%);
+  --brand-hover: hsl(163 65% 25%);
+  --brand-subtle: hsl(163 65% 95%);
+  
+  /* UI surfaces */
+  --ui-bg: hsl(0 0% 100%);
+  --ui-surface: hsl(0 0% 97%);
+  --ui-line: hsl(0 0% 90%);
+  
+  /* Danger state */
+  --danger: hsl(358 76% 51%);
+  --danger-hover: hsl(358 76% 40%);
 }
 
 .dark {
@@ -35,7 +54,7 @@
   --popover: hsl(0 0% 4%);
   --popover-foreground: hsl(0 0% 96%);
   --primary: hsl(163 65% 45%);
-  --primary-foreground: hsl(0 0% 4%);
+  --primary-foreground: hsl(0 0% 100%);
   --secondary: hsl(0 0% 8%);
   --secondary-foreground: hsl(163 65% 45%);
   --muted: hsl(0 0% 8%);
@@ -47,6 +66,25 @@
   --border: hsl(0 0% 16%);
   --input: hsl(0 0% 8%);
   --ring: hsl(163 65% 45%);
+  
+  /* Enhanced text hierarchy - dark mode */
+  --text-primary: hsl(0 0% 96%);
+  --text-secondary: hsl(0 0% 81%);
+  --text-muted: hsl(0 0% 60%);
+  
+  /* Vibrant accents - dark mode */
+  --brand: hsl(163 65% 45%);
+  --brand-hover: hsl(163 65% 40%);
+  --brand-subtle: hsl(163 65% 8%);
+  
+  /* UI surfaces - dark mode */
+  --ui-bg: hsl(0 0% 4%);
+  --ui-surface: hsl(0 0% 8%);
+  --ui-line: hsl(0 0% 16%);
+  
+  /* Danger state - dark mode */
+  --danger: hsl(358 76% 55%);
+  --danger-hover: hsl(358 76% 50%);
 }
 
 @layer base {
@@ -100,17 +138,21 @@
   }
 
   .btn-secondary {
-    @apply h-11 rounded-xl px-5 font-semibold bg-ui-bg border border-ui-line text-brand hover:bg-brand-subtle focus-ring;
+    @apply h-11 rounded-xl px-5 font-semibold bg-white border border-ui-line text-brand hover:bg-brand-subtle focus-ring;
+  }
+
+  .btn-danger {
+    @apply h-11 rounded-xl px-5 font-semibold bg-danger hover:bg-danger-hover text-white focus-ring;
   }
 
   /* Input styling */
   .input-base {
-    @apply h-12 rounded-xl border border-ui-line bg-ui-bg px-4 text-base placeholder:text-text-muted focus-ring;
+    @apply h-12 rounded-xl border border-ui-line bg-ui-bg px-4 text-base placeholder:text-muted focus-ring;
   }
 
-  /* Card styling */
+  /* Card styling with subtle shadow */
   .card-base {
-    @apply bg-ui-surface border border-ui-line rounded-2xl shadow-sm p-6;
+    @apply bg-ui-surface border border-ui-line rounded-2xl shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.4)] p-6;
   }
 
   /* Page container */
@@ -121,6 +163,19 @@
   /* Section spacing */
   .section-spacing {
     @apply py-12 md:py-16 lg:py-20;
+  }
+
+  /* Profile components */
+  .profile-avatar {
+    @apply w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-white;
+  }
+
+  .profile-name {
+    @apply font-medium text-text-primary;
+  }
+
+  .profile-meta {
+    @apply text-text-secondary text-sm;
   }
 }
 
