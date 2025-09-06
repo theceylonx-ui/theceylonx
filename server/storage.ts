@@ -545,6 +545,7 @@ export class DatabaseStorage implements IStorage {
           body: questions.body,
           userId: questions.userId,
           topicId: questions.topicId,
+          visibility: questions.visibility,
           createdAt: questions.createdAt,
           updatedAt: questions.updatedAt,
         })
@@ -902,8 +903,8 @@ export class DatabaseStorage implements IStorage {
     const limit = filters?.limit || 10;
     const offset = filters?.offset || 0;
     
-    // Build where conditions
-    const conditions = [eq(questions.isDeleted, false)];
+    // Build where conditions - only show public questions for public listing
+    const conditions = [eq(questions.isDeleted, false), eq(questions.visibility, "public")];
     
     if (filters?.search) {
       const searchCondition = or(

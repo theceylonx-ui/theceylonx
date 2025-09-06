@@ -51,11 +51,7 @@ export function VisibilityToggle({ type, id, currentValue, disabled = false }: V
   // Trip status mutation
   const tripMutation = useMutation({
     mutationFn: async (newStatus: TripStatus) => {
-      return apiRequest(`/api/trips/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
+      return apiRequest(`/api/trips/${id}/status`, 'PATCH', { status: newStatus });
     },
     onSuccess: () => {
       // Invalidate relevant queries
@@ -79,11 +75,7 @@ export function VisibilityToggle({ type, id, currentValue, disabled = false }: V
   // Question visibility mutation
   const questionMutation = useMutation({
     mutationFn: async (newVisibility: QuestionVisibility) => {
-      return apiRequest(`/api/questions/${id}/visibility`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ visibility: newVisibility }),
-      });
+      return apiRequest(`/api/questions/${id}/visibility`, 'PATCH', { visibility: newVisibility });
     },
     onSuccess: () => {
       // Invalidate relevant queries
