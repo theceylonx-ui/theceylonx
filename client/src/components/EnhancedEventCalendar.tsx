@@ -457,13 +457,15 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
               pressed={isActive}
               onPressedChange={() => handleFilterToggle(filterKey)}
               disabled={isDisabled}
-              className={`flex items-center gap-2 text-xs ${
-                isActive ? 'bg-gradient-to-r from-emerald-500 to-blue-500 text-white' : ''
-              } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm min-h-[60px] sm:min-h-[44px] rounded-lg transition-all duration-200 ${
+                isActive 
+                  ? 'bg-gradient-to-r from-emerald-500 to-blue-500 text-white shadow-lg scale-105' 
+                  : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-emerald-300 hover:bg-emerald-50'
+              } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'}`}
               data-testid={`filter-${filterKey}`}
             >
-              <Icon className="h-3 w-3" />
-              {label}
+              <Icon className="h-4 w-4 sm:h-3 sm:w-3 flex-shrink-0" />
+              <span className="text-center sm:text-left font-medium">{label}</span>
             </Toggle>
           </TooltipTrigger>
           <TooltipContent>
@@ -475,19 +477,24 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
   }
   
   return (
-    <div className={`w-full space-y-6 ${className}`}>
-      {/* Filter Controls */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            Calendar Filters
-            <Badge variant="outline" className="ml-auto">
+    <div className={`w-full space-y-4 sm:space-y-6 ${className}`}>
+      {/* Enhanced Filter Controls */}
+      <Card className="overflow-hidden border-2 border-gray-100 shadow-sm">
+        <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100/50 pb-4">
+          <CardTitle className="text-xl font-semibold flex items-center justify-between">
+            <span className="bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent">
+              Trip Filters
+            </span>
+            <Badge 
+              variant="outline" 
+              className="bg-emerald-50 border-emerald-200 text-emerald-700 font-medium px-3 py-1"
+            >
               {Object.values(calendarState.filters).filter(Boolean).length} active
             </Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
+        <CardContent className="p-4 sm:p-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
             <FilterToggle filterKey="all" icon={MapPin} label="All Trips" />
             <FilterToggle filterKey="free" icon={Heart} label="Free Trips" />
             <FilterToggle filterKey="pinned" icon={Pin} label="Pinned" requiresAuth />
@@ -497,7 +504,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
         </CardContent>
       </Card>
       
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Enhanced Calendar View */}
         <Card className="overflow-hidden">
           <CardHeader className="bg-gradient-to-r from-emerald-50 to-blue-50 dark:from-emerald-950/30 dark:to-blue-950/30">
