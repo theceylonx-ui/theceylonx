@@ -62,6 +62,7 @@ export function getAvatarOptions(userId: string): Array<{ style: AvatarStyle; ur
 
 // Generate display name based on user data - general version
 export function getDisplayName(user: {
+  displayName?: string | null;
   username?: string | null;
   firstName?: string | null;
   lastName?: string | null;
@@ -72,7 +73,12 @@ export function getDisplayName(user: {
     return 'Anonymous';
   }
   
-  // Prioritize real name over username
+  // Prioritize displayName field first (from profile form)
+  if (user.displayName?.trim()) {
+    return user.displayName.trim();
+  }
+  
+  // Then check for firstName + lastName combination
   if (user.firstName && user.lastName) {
     return `${user.firstName} ${user.lastName}`;
   }
@@ -104,6 +110,7 @@ export function getDisplayName(user: {
 
 // Get initials for avatar fallback
 export function getInitials(user: {
+  displayName?: string | null;
   username?: string | null;
   firstName?: string | null;
   lastName?: string | null;
@@ -111,6 +118,15 @@ export function getInitials(user: {
 } | null | undefined): string {
   if (!user) {
     return 'A';
+  }
+  
+  // Use displayName for initials if available
+  if (user.displayName?.trim()) {
+    const words = user.displayName.trim().split(/\s+/);
+    if (words.length >= 2) {
+      return `${words[0][0]}${words[1][0]}`.toUpperCase();
+    }
+    return user.displayName.slice(0, 2).toUpperCase();
   }
   
   // Prioritize real name initials over username
