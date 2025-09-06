@@ -630,7 +630,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if user is the organizer
+      console.log("🔍 Looking for trip:", tripId);
       const trip = await storage.getTrip(tripId);
+      console.log("🔍 Found trip:", trip ? "YES" : "NO");
       if (!trip || trip.organizerId !== userId) {
         return res.status(403).json({ message: "Only the trip organizer can change trip status" });
       }
@@ -1815,7 +1817,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if the question exists and belongs to the user
+      console.log("🔍 Looking for question:", questionId);
       const existingQuestion = await storage.getQuestion(questionId);
+      console.log("🔍 Found question:", existingQuestion ? "YES" : "NO");
       if (!existingQuestion) {
         return res.status(404).json({ message: "Question not found" });
       }
