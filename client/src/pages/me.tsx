@@ -1062,7 +1062,7 @@ function UserActivity() {
                           <span>👀 Views: {question.views || 0}</span>
                           <span>💬 Answers: {question.answersCount || 0}</span>
                           <Badge variant={question.acceptedAnswerId ? 'default' : 'secondary'}>
-                            {question.acceptedAnswerId ? 'Answered' : 'Open'}
+                            {question.acceptedAnswerId ? 'Answered' : 'Not Answered'}
                           </Badge>
                           <Badge variant={question.visibility === 'hidden' ? 'destructive' : 'outline'}>
                             {question.visibility === 'hidden' ? '🔒 Hidden' : '🌐 Public'}
