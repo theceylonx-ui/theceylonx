@@ -45,10 +45,10 @@ export default function CalendarPage() {
           
           {/* Help Text */}
           <div className="mt-8 text-center">
-            <Card className="bg-blue-50 border-blue-200">
+            <Card className="bg-emerald-50 border-emerald-200">
               <CardContent className="p-6">
-                <h3 className="font-semibold text-blue-900 mb-2">How to Use Your Calendar</h3>
-                <div className="text-sm text-blue-800 space-y-1">
+                <h3 className="font-semibold text-emerald-900 mb-2">How to Use Your Calendar</h3>
+                <div className="text-sm text-emerald-800 space-y-1">
                   <p>• <strong>Filter toggles:</strong> Use "All Trips", "Free Trips", "Pinned", "Interested", or "My Trips" to filter what you see</p>
                   <p>• <strong>Bold dates:</strong> Calendar dates appear bold with green count badges when trips are available</p>
                   <p>• <strong>Free Trips filter:</strong> Shows only trips with no cost (marked with 💚 Free Trip badge)</p>
