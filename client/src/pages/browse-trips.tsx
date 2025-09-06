@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Grid3X3, List, MapPin } from "lucide-react";
+import { Grid3X3, List, MapPin, Plus } from "lucide-react";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import TripCard from "@/components/trip-card";
@@ -11,33 +11,36 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { updateSearchParam } from "@/utils/searchParams";
+import { updateSearchParam, decodeFiltersFromUrl, encodeFiltersToUrl, createPostTripLink } from "@/utils/searchParams";
 import { EmptyState } from "@/components/EmptyState";
+import { useTripsStore } from "@/store/tripsStore";
 import type { TripWithOrganizer } from "@shared/schema";
 
 export default function BrowseTrips() {
   const [, setLocation] = useLocation();
+  const { filters, setFilters } = useTripsStore();
   const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState({
-    from: "",
-    to: "",
-    date: "",
-    region: "",
-    minPrice: "",
-    maxPrice: "",
-    search: "",
-  });
 
-  // Get view mode from URL parameters (default to 'list')
-  const urlParams = new URLSearchParams(window.location.search);
-  const [viewMode, setViewMode] = useState<'list' | 'map'>(
-    (urlParams.get('view') as 'list' | 'map') || 'list'
-  );
+  // Initialize filters from URL on mount
+  useEffect(() => {
+    const urlFilters = decodeFiltersFromUrl();
+    setFilters(urlFilters);
+    setCurrentPage(urlFilters.page || 1);
+  }, [setFilters]);
+
+  // Sync filters to URL whenever they change
+  useEffect(() => {
+    const newSearch = encodeFiltersToUrl({ ...filters, page: currentPage });
+    const newPath = newSearch ? `/trips?${newSearch}` : '/trips';
+    window.history.replaceState({}, '', newPath);
+  }, [filters, currentPage]);
+
+  const [viewMode, setViewMode] = useState<'list' | 'map'>(filters.view || 'list');
 
   // Update view mode and preserve other filters in URL
   const handleViewModeChange = (newView: 'list' | 'map') => {
     setViewMode(newView);
-    updateSearchParam('view', newView, setLocation);
+    setFilters({ view: newView });
   };
 
   const { data, isLoading } = useQuery<{
@@ -68,9 +71,16 @@ export default function BrowseTrips() {
   const pagination = data?.pagination;
 
   // Reset to page 1 when filters change
-  const handleFiltersChange = (newFilters: typeof filters) => {
-    setFilters(newFilters);
+  const handleFiltersChange = (newFilters: any) => {
+    setFilters({ ...newFilters, page: 1 });
     setCurrentPage(1);
+  };
+
+  // Handle Post Trip navigation with current context
+  const handlePostTrip = () => {
+    const currentPath = `${window.location.pathname}${window.location.search}`;
+    const postTripUrl = createPostTripLink(currentPath);
+    setLocation(postTripUrl);
   };
   
   const handlePageChange = (page: number) => {
@@ -166,13 +176,25 @@ export default function BrowseTrips() {
       <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2" data-testid="page-title">
-            Browse Trips
-          </h1>
-          <p className="text-gray-600" data-testid="page-subtitle">
-            Discover amazing travel opportunities across Sri Lanka.
-          </p>
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2" data-testid="page-title">
+              Browse Trips
+            </h1>
+            <p className="text-gray-600" data-testid="page-subtitle">
+              Discover amazing travel opportunities across Sri Lanka.
+            </p>
+          </div>
+          
+          <Button
+            onClick={handlePostTrip}
+            className="bg-ceylon-green hover:bg-ceylon-green/90 text-white shadow-lg hover:shadow-xl transition-all duration-200 shrink-0"
+            size="lg"
+            data-testid="button-post-trip"
+          >
+            <Plus className="mr-2 h-5 w-5" />
+            Post a Trip
+          </Button>
         </div>
 
         {/* Filters */}
@@ -245,7 +267,7 @@ export default function BrowseTrips() {
               ))
             ) : trips.length > 0 ? (
               trips.map((trip) => (
-                <TripCard key={trip.id} trip={trip} data-testid={`trip-card-${trip.id}`} />
+                <TripCard key={trip.id} trip={trip as any} data-testid={`trip-card-${trip.id}`} />
               ))
             ) : (
               <div className="col-span-full">
@@ -253,7 +275,7 @@ export default function BrowseTrips() {
                   type="trips"
                   primaryAction={{
                     label: "Post a Trip",
-                    onClick: () => window.location.href = '/post-trip'
+                    onClick: handlePostTrip
                   }}
                   secondaryAction={{
                     label: "Clear filters",

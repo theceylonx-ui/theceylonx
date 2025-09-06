@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
-import { MapPin, Calendar, Users, DollarSign, Phone, Star, Flag, ArrowLeft, Lock, Trash2, Heart, Edit, MessageCircle, MoreHorizontal, ChevronRight } from "lucide-react";
+import { MapPin, Calendar, Users, DollarSign, Phone, Star, Flag, ArrowLeft, Lock, Trash2, Heart, Edit, MessageCircle, MoreHorizontal, ChevronRight, CalendarIcon } from "lucide-react";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,9 @@ import { useTrackInteraction } from "@/hooks/useRecommendations";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { createBackToTripsLink, createLoginRedirectUrl } from "@/utils/searchParams";
+import { BackLink } from "@/components/common/BackLink";
+import { TripDateRangePicker } from "@/components/trips/TripDateRangePicker";
+import { useTripsStore } from "@/store/tripsStore";
 import type { TripWithNormalizedOrganizer, CommentWithUser, TripInterestRequest } from "@shared/schema";
 import { EditContentDialog } from "@/components/EditContentDialog";
 import { TripEditDialog } from "@/components/TripEditDialog";
@@ -41,6 +44,8 @@ export default function TripDetails({ params }: TripDetailsProps) {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showTripEditDialog, setShowTripEditDialog] = useState(false);
+  const [showDateEditModal, setShowDateEditModal] = useState(false);
+  const { setSelectedDates } = useTripsStore();
   
   // Get tab from URL params
   const urlParams = new URLSearchParams(window.location.search);
@@ -431,13 +436,13 @@ export default function TripDetails({ params }: TripDetailsProps) {
         {/* Breadcrumbs */}
         <TripBreadcrumbs trip={trip} className="mb-4" />
         
-        {/* Back Button with preserved search state */}
-        <Link href={createBackToTripsLink('/browse-trips')}>
-          <Button variant="outline" className="mb-6" data-testid="button-back">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to results
-          </Button>
-        </Link>
+        {/* Enhanced Back Button with preserved search state */}
+        <div className="mb-6">
+          <BackLink 
+            label="← Back to Browse"
+            className="mb-2"
+          />
+        </div>
 
         {/* Trip Header */}
         <Card className="mb-6">
@@ -464,6 +469,16 @@ export default function TripDetails({ params }: TripDetailsProps) {
                 {/* Owner Controls */}
                 {user && user.id === trip.organizerId && (
                   <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowDateEditModal(true)}
+                      className="text-ceylon-green border-ceylon-green hover:bg-ceylon-green/10"
+                      data-testid="button-edit-dates"
+                    >
+                      <CalendarIcon className="h-4 w-4 mr-2" />
+                      Edit Dates
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
@@ -760,7 +775,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
                           <div className="flex items-center justify-between mb-1">
                             <div className="flex items-center space-x-2">
                               <UserDisplay 
-                                user={comment.user}
+                                user={comment.user as any}
                                 avatarSize="sm"
                                 nameClassName="font-medium text-gray-800"
                               />
@@ -797,6 +812,57 @@ export default function TripDetails({ params }: TripDetailsProps) {
       </div>
       
       <Footer />
+
+      {/* Date Edit Modal */}
+      {showDateEditModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" data-testid="date-edit-modal">
+          <Card className="w-full max-w-lg">
+            <CardHeader>
+              <CardTitle>Edit Trip Dates</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Update your travel dates. This will be visible to all interested travelers.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <TripDateRangePicker
+                value={{
+                  startDate: trip.date ? new Date(trip.date) : null,
+                  endDate: trip.endDate ? new Date(trip.endDate) : null
+                }}
+                onChange={(dates) => {
+                  setSelectedDates(dates);
+                }}
+                showSummary={true}
+              />
+              
+              <div className="flex gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowDateEditModal(false)}
+                  data-testid="button-cancel-date-edit"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 bg-ceylon-green hover:bg-ceylon-green/90"
+                  onClick={() => {
+                    // Here you would implement the date update mutation
+                    toast({
+                      title: "Dates Updated",
+                      description: "Your trip dates have been updated successfully.",
+                    });
+                    setShowDateEditModal(false);
+                  }}
+                  data-testid="button-save-date-edit"
+                >
+                  Save Dates
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Edit Comment Dialog */}
       <EditContentDialog

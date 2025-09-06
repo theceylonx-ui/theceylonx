@@ -1,23 +1,47 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { PostTripWizard } from "@/components/post-trip/PostTripWizard";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
+import { BackLink } from "@/components/common/BackLink";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useTripsStore } from "@/store/tripsStore";
+import { createBackToTripsLink } from "@/utils/searchParams";
 import type { TripFormData } from "@shared/schema";
 
 export default function PostTripPage() {
   const [, setLocation] = useLocation();
-  const [, params] = useRoute("/post-trip");
+  const [, params] = useRoute("/trips/new");
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { currentDraft, setCurrentDraft } = useTripsStore();
+  const [currentStep, setCurrentStep] = useState<'basics' | 'dates' | 'review'>('basics');
   
   // Get URL parameters
   const urlParams = new URLSearchParams(window.location.search);
   const draftId = urlParams.get("draftId");
   const tripId = urlParams.get("tripId");
+  const returnTo = urlParams.get("returnTo");
   const selectedDate = urlParams.get('date') || '';
+  
+  // Handle success navigation with return context
+  const handleSuccessNavigation = (createdTripId: string) => {
+    // Clear draft on successful creation
+    setCurrentDraft(null);
+    
+    // Navigate to trip detail with success toast
+    toast({
+      title: "Trip Posted Successfully!",
+      description: "Your trip is now live and visible to other travelers.",
+      variant: "default",
+    });
+    
+    // Navigate to the created trip detail
+    setLocation(`/trips/${createdTripId}`);
+  };
 
   // Load existing draft if editing
   const { data: existingDraft, isLoading: draftLoading } = useQuery({
@@ -72,10 +96,51 @@ export default function PostTripPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      <PostTripWizard
-        draftId={draftId || undefined}
-        initialData={initialData}
-      />
+      
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* Header with Back Link */}
+        <div className="mb-6">
+          <BackLink 
+            to={returnTo ? decodeURIComponent(returnTo) : createBackToTripsLink()}
+            label="← Back to Browse"
+            className="mb-4"
+          />
+          
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2" data-testid="page-title">
+                Post a Trip
+              </h1>
+              <p className="text-gray-600" data-testid="page-subtitle">
+                Share your travel plans and find companions for your Sri Lankan adventure.
+              </p>
+            </div>
+            
+            {/* Step indicator */}
+            <div className="flex items-center gap-2" data-testid="step-indicator">
+              <Badge variant={currentStep === 'basics' ? 'default' : 'outline'}>
+                1. Basics
+              </Badge>
+              <Badge variant={currentStep === 'dates' ? 'default' : 'outline'}>
+                2. Dates
+              </Badge>
+              <Badge variant={currentStep === 'review' ? 'default' : 'outline'}>
+                3. Review
+              </Badge>
+            </div>
+          </div>
+        </div>
+
+        {/* Post Trip Wizard */}
+        <Card className="shadow-lg">
+          <CardContent className="p-6">
+            <PostTripWizard
+              draftId={draftId || undefined}
+              initialData={initialData}
+            />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
