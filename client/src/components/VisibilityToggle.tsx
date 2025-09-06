@@ -42,9 +42,9 @@ export function VisibilityToggle({ type, id, currentValue, disabled = false }: V
     : currentValue;
 
   // Convert to boolean for switch
-  const isChecked = isTrip 
-    ? actualValue === 'active'
-    : actualValue === 'public';
+  const isChecked = typeof actualValue === 'boolean' 
+    ? actualValue 
+    : (isTrip ? actualValue === 'active' : actualValue === 'public');
 
   const isLoading = isTrip ? isUpdatingTrip[id] : isUpdatingQuestion[id];
 
