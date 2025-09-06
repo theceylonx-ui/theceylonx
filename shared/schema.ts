@@ -574,6 +574,7 @@ export const questions = pgTable("questions", {
   isAnonymous: boolean("is_anonymous").default(false),
   visibility: questionVisibilityEnum("visibility").default("public"),
   votesCount: integer("votes_count").default(0),
+  score: integer("score").default(0), // Computed field: SUM(votes.value) for this question
   answersCount: integer("answers_count").default(0),
   acceptedAnswerId: varchar("accepted_answer_id"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -589,6 +590,7 @@ export const answers = pgTable("answers", {
   questionId: varchar("question_id").notNull(),
   userId: varchar("user_id").notNull(),
   votesCount: integer("votes_count").default(0),
+  score: integer("score").default(0), // Computed field: SUM(votes.value) for this answer
   isAccepted: boolean("is_accepted").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -600,9 +602,18 @@ export const votes = pgTable("votes", {
   userId: varchar("user_id").notNull(),
   questionId: varchar("question_id"),
   answerId: varchar("answer_id"),
-  voteType: varchar("vote_type").notNull(), // 'up' | 'down'
+  value: integer("value").notNull(), // -1 (downvote), 0 (no vote), 1 (upvote)
   createdAt: timestamp("created_at").defaultNow(),
-});
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  // Unique constraint to ensure 1 vote per user per question/answer
+  uniqueUserQuestion: unique().on(table.userId, table.questionId),
+  uniqueUserAnswer: unique().on(table.userId, table.answerId),
+  // Performance indexes
+  questionIdIdx: index("votes_question_id_idx").on(table.questionId),
+  answerIdIdx: index("votes_answer_id_idx").on(table.answerId),
+  userIdIdx: index("votes_user_id_idx").on(table.userId),
+}));
 
 // Question tags pivot table (optional if not using array)
 export const questionTags = pgTable("question_tags", {
