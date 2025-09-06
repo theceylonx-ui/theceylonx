@@ -321,59 +321,112 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
     )
   }
   
-  // Trip card component with proper privacy handling
+  // Enhanced Trip card component with better mobile design
   const TripCard = ({ trip }: { trip: CalendarTrip }) => (
-    <div className="border rounded-lg p-3 hover:bg-gray-50 transition-colors" data-testid={`trip-card-${trip.id}`}>
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <h4 className="font-medium text-sm flex-1 truncate">
-          {trip.flags && (
-            <span className="mr-2">
-              {trip.flags.interested && '⭐'}
-              {trip.flags.pinned && !trip.flags.interested && '📌'}
-              {trip.flags.mine && '👤'}
-              {trip.flags.free && '💚'}
-            </span>
+    <div className="relative group overflow-hidden bg-white border-2 border-gray-100 rounded-xl p-4 hover:border-emerald-200 hover:shadow-lg transition-all duration-300 hover:scale-[1.01]" data-testid={`trip-card-${trip.id}`}>
+      {/* Status flags */}
+      {trip.flags && (
+        <div className="absolute top-3 right-3 flex gap-1">
+          {trip.flags.mine && (
+            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+              <User className="h-3 w-3 text-blue-600" />
+            </div>
           )}
+          {trip.flags.pinned && (
+            <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center">
+              <Pin className="h-3 w-3 text-orange-600" />
+            </div>
+          )}
+          {trip.flags.interested && (
+            <div className="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center">
+              <Star className="h-3 w-3 text-yellow-600" />
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* Trip title */}
+      <div className="mb-3 pr-12">
+        <h4 className="font-semibold text-base text-gray-900 line-clamp-2 leading-tight">
           {trip.title}
         </h4>
       </div>
       
-      <div className="space-y-1 text-xs text-gray-600">
-        <div className="flex items-center gap-1">
-          <MapPin className="h-3 w-3" />
-          <span className="truncate">{trip.fromLocation} → {trip.toLocation}</span>
+      {/* Route information - prominent display */}
+      <div className="mb-4 p-3 bg-gradient-to-r from-emerald-50 to-blue-50 rounded-lg border border-emerald-100">
+        <div className="flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium text-gray-800 truncate">
+              {trip.fromLocation}
+            </div>
+            <div className="text-xs text-gray-600 mt-1">to</div>
+            <div className="text-sm font-medium text-gray-800 truncate">
+              {trip.toLocation}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Trip details grid */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+            <Clock className="h-4 w-4 text-blue-600" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs text-gray-500">Time</div>
+            <div className="text-sm font-medium text-gray-800">{trip.time}</div>
+          </div>
         </div>
         
-        <div className="flex items-center gap-1">
-          <Clock className="h-3 w-3" />
-          <span>{trip.time}</span>
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center">
+            <Users className="h-4 w-4 text-purple-600" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs text-gray-500">Seats</div>
+            <div className="text-sm font-medium text-gray-800">{trip.seatsAvailable}</div>
+          </div>
         </div>
-        
-        <div className="flex items-center gap-1">
-          <Users className="h-3 w-3" />
-          <span>{trip.seatsAvailable} seats</span>
-        </div>
-        
+      </div>
+      
+      {/* Price section */}
+      <div className="mb-4">
         {trip.price && Number(trip.price) > 0 ? (
-          <div className="flex items-center gap-1">
-            <DollarSign className="h-3 w-3" />
-            <span>LKR {trip.price}</span>
+          <div className="flex items-center gap-2 p-2 bg-orange-50 rounded-lg">
+            <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+              <DollarSign className="h-4 w-4 text-orange-600" />
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">Price</div>
+              <div className="text-sm font-semibold text-orange-700">LKR {trip.price}</div>
+            </div>
           </div>
         ) : (
-          <div className="flex items-center gap-1 text-green-600">
-            <Heart className="h-3 w-3" />
-            <span>Free Trip</span>
+          <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
+            <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+              <Heart className="h-4 w-4 text-green-600" />
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">Price</div>
+              <div className="text-sm font-semibold text-green-700">Free Trip</div>
+            </div>
           </div>
         )}
       </div>
       
-      <div className="mt-2 flex items-center justify-between">
-        <Badge variant="outline" className="text-xs">
+      {/* Footer */}
+      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+        <Badge variant="outline" className="text-xs bg-gray-50 border-gray-200 text-gray-600">
           {trip.region}
         </Badge>
         
         <Link href={`/trips/${trip.id}`}>
-          <Button size="sm" variant="outline" className="h-6 text-xs border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300">
+          <Button 
+            size="sm" 
+            className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
+          >
             View Details
           </Button>
         </Link>
@@ -444,21 +497,132 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
         </CardContent>
       </Card>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Calendar View */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Calendar</CardTitle>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
+        {/* Enhanced Calendar View */}
+        <Card className="overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-emerald-50 to-blue-50 dark:from-emerald-950/30 dark:to-blue-950/30">
+            <CardTitle className="text-xl font-semibold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Calendar</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-2 sm:p-4">
+            <style>{`
+              .enhanced-calendar {
+                --rdp-cell-size: 48px;
+                --rdp-accent-color: #059669;
+                --rdp-background-color: #f0fdf4;
+                --rdp-accent-color-dark: #065f46;
+                --rdp-background-color-dark: #064e3b;
+                --rdp-outline: 2px solid var(--rdp-accent-color);
+                --rdp-outline-selected: 3px solid var(--rdp-accent-color);
+                font-size: 14px;
+              }
+              
+              @media (max-width: 640px) {
+                .enhanced-calendar {
+                  --rdp-cell-size: 44px;
+                  font-size: 13px;
+                }
+              }
+              
+              .enhanced-calendar .rdp-table {
+                width: 100%;
+                max-width: none;
+              }
+              
+              .enhanced-calendar .rdp-cell {
+                padding: 2px;
+                position: relative;
+              }
+              
+              .enhanced-calendar .rdp-button {
+                width: var(--rdp-cell-size);
+                height: var(--rdp-cell-size);
+                border-radius: 12px;
+                font-weight: 500;
+                border: 2px solid transparent;
+                transition: all 0.2s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+              }
+              
+              .enhanced-calendar .rdp-button:hover {
+                background-color: #f0fdf4;
+                border-color: #a7f3d0;
+                transform: scale(1.05);
+                box-shadow: 0 4px 12px rgba(6, 95, 70, 0.15);
+              }
+              
+              .enhanced-calendar .rdp-button.rdp-day_selected {
+                background: linear-gradient(135deg, #059669, #0891b2);
+                color: white;
+                border-color: #047857;
+                box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+                transform: scale(1.1);
+              }
+              
+              .enhanced-calendar .rdp-button.rdp-day_today {
+                border-color: #fbbf24;
+                background-color: #fef3c7;
+                color: #92400e;
+                font-weight: 600;
+              }
+              
+              .enhanced-calendar .rdp-head_cell {
+                font-weight: 600;
+                color: #374151;
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                padding: 8px 0;
+              }
+              
+              .enhanced-calendar .day-badge {
+                position: absolute;
+                top: -2px;
+                right: -2px;
+                min-width: 18px;
+                height: 18px;
+                border-radius: 10px;
+                background: linear-gradient(135deg, #dc2626, #ef4444);
+                color: white;
+                font-size: 10px;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 2px solid white;
+                box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+                z-index: 10;
+                animation: pulse 2s infinite;
+              }
+              
+              @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.8; }
+              }
+              
+              .enhanced-calendar .day-content {
+                position: relative;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }
+            `}</style>
             <DayPicker
               mode="single"
               selected={new Date(calendarState.selectedDate + 'T00:00:00')}
               onSelect={handleDateSelect}
-              className="w-full"
+              className="enhanced-calendar w-full"
               components={{
-                Day: ({ date, ...props }) => (
-                  <div {...props} onClick={() => handleDateSelect(date)}>
+                Day: ({ date, displayMonth, ...props }) => (
+                  <div 
+                    {...props} 
+                    onClick={() => handleDateSelect(date)}
+                    className="day-content"
+                  >
                     {dayRenderer(date)}
                   </div>
                 )
@@ -467,61 +631,94 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
           </CardContent>
         </Card>
         
-        {/* Day Agenda Panel */}
+        {/* Enhanced Day Preview Panel */}
         {isDayPreviewOpen && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center justify-between">
-                <span>
-                  {format(new Date(calendarState.selectedDate + 'T00:00:00'), 'EEEE, MMMM d, yyyy')}
-                </span>
+          <Card className="overflow-hidden shadow-lg border-2 border-gradient">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-emerald-50 dark:from-blue-950/30 dark:to-emerald-950/30 pb-4">
+              <CardTitle className="text-xl font-semibold flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent">
+                    {format(new Date(calendarState.selectedDate + 'T00:00:00'), 'EEEE, MMMM d, yyyy')}
+                  </span>
+                  {dayResponse?.total && (
+                    <span className="text-sm font-normal text-gray-600 mt-1">
+                      {dayResponse.total} trip{dayResponse.total !== 1 ? 's' : ''} available
+                    </span>
+                  )}
+                </div>
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   onClick={() => setIsDayPreviewOpen(false)}
+                  className="hover:bg-white/50 rounded-full w-8 h-8 p-0 text-gray-500 hover:text-gray-700"
                   data-testid="close-day-preview"
                 >
                   ×
                 </Button>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6">
               {isDayLoading ? (
-                <div className="text-center py-8 text-gray-500">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ceylon-green mx-auto mb-2"></div>
-                  Loading trips...
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-3 border-emerald-200 border-t-emerald-500 mx-auto mb-4"></div>
+                  <p className="text-gray-600 font-medium">Loading trips...</p>
                 </div>
               ) : dayError?.message?.includes('401') ? (
-                <div className="text-center py-8">
-                  <Lock className="h-12 w-12 text-gray-300 mx-auto mb-2" />
-                  <p className="text-gray-500 mb-4">Sign in to see filtered trips</p>
-                  <Button asChild size="sm">
+                <div className="text-center py-12">
+                  <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Lock className="h-10 w-10 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Sign in Required</h3>
+                  <p className="text-gray-500 mb-6">Sign in to see filtered trips and personalized content</p>
+                  <Button asChild className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600">
                     <Link href="/login">Sign In</Link>
                   </Button>
                 </div>
               ) : !dayResponse?.items.length ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500 mb-4">No trips on this day with current filters.</p>
-                  <div className="flex gap-2 justify-center">
-                    <Button asChild variant="outline" size="sm">
-                      <Link href="/browse-trips">Browse Trips</Link>
+                <div className="text-center py-12">
+                  <div className="w-20 h-20 bg-gradient-to-br from-emerald-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MapPin className="h-10 w-10 text-emerald-500" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">No Trips Found</h3>
+                  <p className="text-gray-500 mb-6">No trips on this day with your current filters</p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button asChild variant="outline" className="border-emerald-200 text-emerald-600 hover:bg-emerald-50">
+                      <Link href="/browse-trips">Browse All Trips</Link>
                     </Button>
-                    <Button asChild size="sm">
+                    <Button asChild className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600">
                       <Link href={`/post?date=${calendarState.selectedDate}`}>Post a Trip</Link>
                     </Button>
                   </div>
                 </div>
               ) : (
                 <>
-                  <div className="mb-4 text-sm text-gray-600">
-                    Showing {dayResponse.items.length} of {dayResponse.total} trips
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-800">Available Trips</h3>
+                      <Badge variant="outline" className="bg-emerald-50 border-emerald-200 text-emerald-700">
+                        {dayResponse.items.length} of {dayResponse.total}
+                      </Badge>
+                    </div>
                   </div>
-                  <ScrollArea className="h-96">
-                    <div className="space-y-3">
-                      {dayResponse.items.map((trip) => (
-                        <TripCard key={trip.id} trip={trip} />
+                  <ScrollArea className="h-[400px] sm:h-[450px] pr-4">
+                    <div className="space-y-4">
+                      {dayResponse.items.map((trip, index) => (
+                        <div 
+                          key={trip.id} 
+                          className="transform transition-all duration-200 hover:scale-[1.02]"
+                          style={{ animationDelay: `${index * 100}ms` }}
+                        >
+                          <TripCard trip={trip} />
+                        </div>
                       ))}
                     </div>
+                    {dayResponse.total > dayResponse.items.length && (
+                      <div className="text-center mt-6 pt-4 border-t border-gray-100">
+                        <Button variant="outline" size="sm" className="border-emerald-200 text-emerald-600 hover:bg-emerald-50">
+                          Load More Trips
+                        </Button>
+                      </div>
+                    )}
                   </ScrollArea>
                 </>
               )}
