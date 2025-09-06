@@ -105,6 +105,7 @@ export default function BrowseTrips() {
           size="sm"
           onClick={() => handlePageChange(page - 1)}
           disabled={page === 1}
+          className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50"
           data-testid="pagination-prev"
         >
           Previous
@@ -116,6 +117,7 @@ export default function BrowseTrips() {
               variant="outline"
               size="sm"
               onClick={() => handlePageChange(1)}
+              className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
               data-testid="pagination-page-1"
             >
               1
@@ -130,6 +132,7 @@ export default function BrowseTrips() {
             variant={page === pageNum ? "default" : "outline"}
             size="sm"
             onClick={() => handlePageChange(pageNum)}
+            className={page === pageNum ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 border-none" : "border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"}
             data-testid={`pagination-page-${pageNum}`}
           >
             {pageNum}
@@ -143,6 +146,7 @@ export default function BrowseTrips() {
               variant="outline"
               size="sm"
               onClick={() => handlePageChange(totalPages)}
+              className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
               data-testid={`pagination-page-${totalPages}`}
             >
               {totalPages}
@@ -155,6 +159,7 @@ export default function BrowseTrips() {
           size="sm"
           onClick={() => handlePageChange(page + 1)}
           disabled={page === totalPages}
+          className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50"
           data-testid="pagination-next"
         >
           Next
