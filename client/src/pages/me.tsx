@@ -162,25 +162,25 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Enhanced Stats Cards with Perfect Text Balance */}
-              <div className="grid grid-cols-3 gap-4 lg:gap-6 w-full lg:w-auto">
-                <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 lg:p-6 border border-white/20 hover:bg-white/20 transition-all duration-200 flex flex-col items-center justify-center min-h-[100px] lg:min-h-[120px]">
-                  <div className="text-3xl lg:text-4xl font-bold text-white leading-none mb-2">
-                    {stats.questions_count || 0}
+              {/* Profile Timeline Info */}
+              <div className="grid grid-cols-2 gap-4 lg:gap-6 w-full lg:w-auto">
+                <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 lg:p-6 border border-white/20 flex flex-col items-center justify-center min-h-[100px]">
+                  <div className="text-lg lg:text-xl font-semibold text-white leading-none mb-2">
+                    {new Date(profile.createdAt).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      year: 'numeric' 
+                    })}
                   </div>
-                  <div className="text-sm text-white/80 font-medium leading-none">Questions</div>
+                  <div className="text-sm text-white/80 font-medium leading-none">Joined</div>
                 </div>
-                <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 lg:p-6 border border-white/20 hover:bg-white/20 transition-all duration-200 flex flex-col items-center justify-center min-h-[100px] lg:min-h-[120px]">
-                  <div className="text-3xl lg:text-4xl font-bold text-white leading-none mb-2">
-                    {stats.trips_count || 0}
+                <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 lg:p-6 border border-white/20 flex flex-col items-center justify-center min-h-[100px]">
+                  <div className="text-lg lg:text-xl font-semibold text-white leading-none mb-2">
+                    {new Date(profile.updatedAt).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric' 
+                    })}
                   </div>
-                  <div className="text-sm text-white/80 font-medium leading-none">Trips</div>
-                </div>
-                <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 lg:p-6 border border-white/20 hover:bg-white/20 transition-all duration-200 flex flex-col items-center justify-center min-h-[100px] lg:min-h-[120px]">
-                  <div className="text-3xl lg:text-4xl font-bold text-white leading-none mb-2">
-                    {profile.profileCompletePct || 0}%
-                  </div>
-                  <div className="text-sm text-white/80 font-medium leading-none">Complete</div>
+                  <div className="text-sm text-white/80 font-medium leading-none">Last Updated</div>
                 </div>
               </div>
             </div>
