@@ -34,6 +34,7 @@ export const tripCategoryEnum = pgEnum('trip_category', [
   'workshop', 'wildlife', 'food', 'adventure_sport', 'unknown'
 ]);
 export const draftStatusEnum = pgEnum('draft_status', ['draft', 'published']);
+export const questionVisibilityEnum = pgEnum('question_visibility', ['public', 'hidden']);
 
 // Preferences enums
 export const preferenceEventEnum = pgEnum('preference_event', ['created', 'updated', 'reset']);
@@ -571,6 +572,7 @@ export const questions = pgTable("questions", {
   userId: varchar("user_id").notNull(),
   topicId: varchar("topic_id"),
   isAnonymous: boolean("is_anonymous").default(false),
+  visibility: questionVisibilityEnum("visibility").default("public"),
   votesCount: integer("votes_count").default(0),
   answersCount: integer("answers_count").default(0),
   acceptedAnswerId: varchar("accepted_answer_id"),

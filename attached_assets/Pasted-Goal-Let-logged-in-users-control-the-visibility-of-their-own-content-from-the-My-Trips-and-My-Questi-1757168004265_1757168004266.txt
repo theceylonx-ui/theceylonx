@@ -1,0 +1,105 @@
+Goal
+Let logged-in users control the visibility of their own content from the My Trips and My Questions pages using simple toggles:
+Trip status: Active (On) / Inactive (Off)
+Question status: Show / Hide
+Owner changes should update immediately in the UI (optimistic) and persist so that other users only see what the owner saved.
+Scope & Requirements
+1) UI Controls
+My Trips list/cards:
+Add a right-aligned toggle labeled “Trip Active” with states:
+On → active = true
+Off → active = false
+Use an accessible switch control (keyboard + ARIA). Show helper text on hover/focus:
+On: “Others can discover and join this trip.”
+Off: “Hidden from discovery; only you can see it here.”
+My Questions list/cards:
+Add a right-aligned toggle labeled “Show Question” with states:
+On → visibility = "public"
+Off → visibility = "hidden"
+Helper text:
+On: “Visible to the community.”
+Off: “Hidden from the community; only you can see it here.”
+2) State & Persistence
+Frontend state via Zustand (existing store): optimistic update on toggle.
+Persist via API:
+GraphQL (preferred):
+mutation UpdateTripStatus($id: ID!, $active: Boolean!)
+mutation UpdateQuestionVisibility($id: ID!, $visibility: VisibilityEnum!)
+where VisibilityEnum = PUBLIC | HIDDEN
+REST (fallback):
+PATCH /api/trips/:id { active: boolean }
+PATCH /api/questions/:id { visibility: "public" | "hidden" }
+On success: keep optimistic state.
+On error: revert toggle, show toast “Couldn’t save. Try again.”
+3) Read Rules (what others see)
+Update queries/filters used across the site so non-owners only see:
+Trips where active = true.
+Questions where visibility = "public".
+Owners (on “My Trips” / “My Questions”) should see all their items regardless of status, with the correct toggle state.
+4) Access Control
+Only the owner can toggle their items.
+Backend must verify userId === ownerId before updating.
+5) UI/UX Details
+Use our playground style:
+Shadcn/UI Switch (or our existing Toggle component).
+Label on the left, switch on the right of each card row.
+Show a tiny status pill on the card:
+Trips: “Active” / “Inactive”
+Questions: “Public” / “Hidden”
+Loading state: disable switch while saving; show subtle spinner in the switch thumb.
+i18n keys:
+myTrips.toggle.label, myTrips.status.active, myTrips.status.inactive
+myQuestions.toggle.label, myQuestions.status.public, myQuestions.status.hidden
+common.saveError
+6) Data Model (add if missing)
+Trip: active BOOLEAN DEFAULT true NOT NULL
+Question: visibility ENUM('public','hidden') DEFAULT 'public' NOT NULL
+Add indexes used by feed queries (e.g., WHERE active = true, WHERE visibility = 'public').
+7) Components & Files (suggested)
+client/src/pages/my-trips.tsx
+Map through user trips → render TripCard with <VisibilityToggle type="trip" />
+client/src/pages/my-questions.tsx
+Map through user questions → render QuestionCard with <VisibilityToggle type="question" />
+client/src/components/VisibilityToggle.tsx
+Props: { type: 'trip' | 'question', id: string, value: boolean | 'public' | 'hidden' }
+Handles optimistic state, mutation, error rollback.
+client/src/store/userContentStore.ts (Zustand)
+Actions: setTripActive(id, active), setQuestionVisibility(id, visibility)
+8) API Layer (GraphQL example)
+// mutations.ts
+export const UPDATE_TRIP_STATUS = `
+mutation UpdateTripStatus($id: ID!, $active: Boolean!) {
+  updateTripStatus(id: $id, active: $active) { id active }
+}`;
+
+export const UPDATE_QUESTION_VISIBILITY = `
+mutation UpdateQuestionVisibility($id: ID!, $visibility: VisibilityEnum!) {
+  updateQuestionVisibility(id: $id, visibility: $visibility) { id visibility }
+}`;
+9) Server (GraphQL resolvers)
+updateTripStatus(id, active):
+Auth check owner → update → return { id, active }
+updateQuestionVisibility(id, visibility):
+Auth check owner → update → return { id, visibility }
+10) Filtering in Public Feeds
+Trips: add active: true to existing list queries.
+Questions: add visibility: PUBLIC to existing list queries.
+Ensure owner views bypass these filters on “My …” pages.
+11) Telemetry
+Emit events to Kafka (if wired) or console stub:
+trip_visibility_changed { tripId, ownerId, active }
+question_visibility_changed { questionId, ownerId, visibility }
+12) Acceptance Criteria
+Toggling a Trip between Active/Inactive updates instantly in UI and persists.
+Toggling a Question between Show/Hide updates instantly in UI and persists.
+Public lists never display inactive trips or hidden questions.
+Owner sees accurate states in “My …” pages at all times.
+Keyboard/screen-reader accessible switches with ARIA.
+Error handling: failed save reverts toggle + toast.
+13) Edge Cases
+Network fail mid-toggle → revert + toast.
+Permission fail (not owner) → revert + toast “You can only change your own items.”
+Rapid toggling (debounce 300ms or lock while saving).
+i18n strings present for all three locales (EN/SI/TA).
+Deliverables: PR with UI changes, GraphQL/REST mutations, filters, Zustand actions, and basic unit tests for the toggle component + integration test for visibility filtering.
+Style: Follow v4.0 “Playground” theme; use accessible switches and concise helper text.
