@@ -439,7 +439,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
         {/* Enhanced Back Button with preserved search state */}
         <div className="mb-6">
           <BackLink 
-            label="← Back to Browse"
+            label="Back to Browse"
             className="mb-2"
           />
         </div>

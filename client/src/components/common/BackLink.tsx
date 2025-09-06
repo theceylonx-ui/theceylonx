@@ -54,7 +54,7 @@ export function BackLink({
 // Alternative link version for when you need actual link behavior
 export function BackLinkComponent({ 
   to, 
-  label = "← Back to Browse", 
+  label = "Back to Browse", 
   className 
 }: { 
   to?: string; 
