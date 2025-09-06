@@ -498,63 +498,92 @@ export function PreferencesForm() {
                 </FormItem>
               )}
             />
+            </div>
 
-            <Separator />
+            {/* Travel Months Section */}
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl p-8 border border-amber-100">
+              <FormField
+                control={form.control}
+                name="months"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="mb-6">
+                      <div className="flex items-center mb-3">
+                        <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-3 rounded-xl mr-4">
+                          <span className="text-white text-xl">📅</span>
+                        </div>
+                        <div>
+                          <FormLabel className="text-2xl font-bold text-gray-900">Preferred Travel Months</FormLabel>
+                          <FormDescription className="text-gray-600 text-lg mt-1">
+                            When do you prefer to travel? (Optional)
+                          </FormDescription>
+                        </div>
+                      </div>
+                    </div>
+                    <FormControl>
+                      <MultiSelectChips
+                        value={field.value}
+                        onChange={field.onChange}
+                        options={taxonomy?.months || []}
+                        labels={PREFERENCE_LABELS.months}
+                        placeholder="Add preferred months..."
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-            {/* Travel Months */}
-            <FormField
-              control={form.control}
-              name="months"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Preferred Travel Months</FormLabel>
-                  <FormDescription>
-                    When do you prefer to travel? (Optional)
-                  </FormDescription>
-                  <FormControl>
-                    <MultiSelectChips
-                      value={field.value}
-                      onChange={field.onChange}
-                      options={taxonomy?.months || []}
-                      labels={PREFERENCE_LABELS.months}
-                      placeholder="Add preferred months..."
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Regions Section */}
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl p-8 border border-indigo-100">
+              <FormField
+                control={form.control}
+                name="regions"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="mb-6">
+                      <div className="flex items-center mb-3">
+                        <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-3 rounded-xl mr-4">
+                          <span className="text-white text-xl">🗺️</span>
+                        </div>
+                        <div>
+                          <FormLabel className="text-2xl font-bold text-gray-900">Preferred Regions</FormLabel>
+                          <FormDescription className="text-gray-600 text-lg mt-1">
+                            Which regions in Sri Lanka interest you most? (Optional)
+                          </FormDescription>
+                        </div>
+                      </div>
+                    </div>
+                    <FormControl>
+                      <MultiSelectChips
+                        value={field.value}
+                        onChange={field.onChange}
+                        options={taxonomy?.regions || []}
+                        labels={PREFERENCE_LABELS.regions}
+                        placeholder="Add preferred regions..."
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-            <Separator />
-
-            {/* Regions */}
-            <FormField
-              control={form.control}
-              name="regions"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Preferred Regions</FormLabel>
-                  <FormDescription>
-                    Which regions in Sri Lanka interest you most? (Optional)
-                  </FormDescription>
-                  <FormControl>
-                    <MultiSelectChips
-                      value={field.value}
-                      onChange={field.onChange}
-                      options={taxonomy?.regions || []}
-                      labels={PREFERENCE_LABELS.regions}
-                      placeholder="Add preferred regions..."
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Separator />
-
-            {/* Budget Range */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Budget Range Section */}
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl p-8 border border-green-100">
+              <div className="mb-6">
+                <div className="flex items-center mb-3">
+                  <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-3 rounded-xl mr-4">
+                    <span className="text-white text-xl">💰</span>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">Budget Range</h3>
+                    <p className="text-gray-600 text-lg mt-1">Set your comfortable spending range (Optional)</p>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
                 name="budgetMin"
@@ -594,8 +623,8 @@ export function PreferencesForm() {
                   </FormItem>
                 )}
               />
+              </div>
             </div>
-
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
