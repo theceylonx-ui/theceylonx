@@ -11,9 +11,9 @@ const buttonVariants = cva(
       variant: {
         default: "bg-brand text-white hover:bg-brand-hover focus-visible:ring-brand/50 focus-visible:ring-offset-ui-bg rounded-xl",
         destructive: "bg-danger text-white hover:bg-danger-hover focus-visible:ring-danger/50 focus-visible:ring-offset-ui-bg rounded-xl",
-        outline: "border border-ui-line bg-white text-brand hover:bg-brand-subtle focus-visible:ring-brand/50 focus-visible:ring-offset-ui-bg rounded-xl",
-        secondary: "bg-ui-surface text-text-primary hover:bg-ui-line/50 focus-visible:ring-ui-line focus-visible:ring-offset-ui-bg rounded-xl",
-        ghost: "text-text-primary hover:bg-ui-surface focus-visible:ring-ui-line focus-visible:ring-offset-ui-bg rounded-xl",
+        outline: "border-2 border-brand bg-white text-brand hover:bg-brand-subtle hover:border-brand-hover focus-visible:ring-brand/50 focus-visible:ring-offset-ui-bg rounded-xl",
+        secondary: "bg-ui-surface border border-ui-line text-text-primary hover:bg-ui-line/80 hover:border-ui-line focus-visible:ring-ui-line focus-visible:ring-offset-ui-bg rounded-xl",
+        ghost: "text-text-primary hover:bg-ui-surface hover:text-brand focus-visible:ring-ui-line focus-visible:ring-offset-ui-bg rounded-xl",
         link: "text-brand underline-offset-4 hover:underline focus-visible:ring-brand/50 p-0 h-auto",
       },
       size: {

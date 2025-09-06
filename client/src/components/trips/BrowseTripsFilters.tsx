@@ -86,12 +86,12 @@ export default function BrowseTripsFilters({
           </Badge>
           {hasActiveFilters && (
             <Button 
-              variant="ghost" 
+              variant="outline" 
               size="sm"
               onClick={clearAll} 
               aria-label="Clear all filters"
               data-testid="btn-clear-all"
-              className="text-sm"
+              className="text-sm text-text-muted hover:text-danger hover:border-danger"
             >
               <X className="h-4 w-4 mr-1" />
               Clear All

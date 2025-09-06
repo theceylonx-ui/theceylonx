@@ -4,15 +4,22 @@ import { useTripsFiltersStore } from "@/store/tripsFiltersStore";
 import { quickPicks } from "@/lib/dateQuickPicks";
 
 export default function QuickDateChips() {
-  const { setMany } = useTripsFiltersStore();
+  const { filters, setMany } = useTripsFiltersStore();
   const apply = (fn: () => { start: string; end: string }) => {
     const { start, end } = fn();
     setMany({ startDate: start, endDate: end });
   };
+
+  // Check if a chip is active by comparing dates
+  const isChipActive = (chipFn: () => { start: string; end: string }) => {
+    const { start, end } = chipFn();
+    return filters.startDate === start && filters.endDate === end;
+  };
+
   return (
     <div className="flex flex-wrap gap-2" data-testid="quick-date-chips">
       <Button 
-        variant="secondary" 
+        variant={isChipActive(quickPicks.thisWeekend) ? "default" : "outline"} 
         size="sm" 
         onClick={() => apply(quickPicks.thisWeekend)}
         data-testid="btn-this-weekend"
@@ -20,7 +27,7 @@ export default function QuickDateChips() {
         This Weekend
       </Button>
       <Button 
-        variant="secondary" 
+        variant={isChipActive(quickPicks.nextWeek) ? "default" : "outline"} 
         size="sm" 
         onClick={() => apply(quickPicks.nextWeek)}
         data-testid="btn-next-week"
@@ -28,7 +35,7 @@ export default function QuickDateChips() {
         Next Week
       </Button>
       <Button 
-        variant="secondary" 
+        variant={isChipActive(quickPicks.upcomingHolidays) ? "default" : "outline"} 
         size="sm" 
         onClick={() => apply(quickPicks.upcomingHolidays)}
         data-testid="btn-upcoming-holidays"

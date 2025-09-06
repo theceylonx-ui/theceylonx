@@ -24,38 +24,38 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-ui-bg">
       {/* Navigation Header */}
-      <nav className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200">
+      <nav className="bg-ui-bg shadow-sm sticky top-0 z-50 border-b border-ui-line">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
               <img src={logoImage} alt="Ceylon Expand Logo" className="h-8 w-8" data-testid="logo-icon" />
-              <span className="text-xl font-bold text-ceylon-dark" data-testid="logo-text">Ceylon Expand</span>
+              <span className="text-xl font-bold text-text-primary" data-testid="logo-text">Ceylon Expand</span>
             </div>
             <div className="hidden md:flex items-center space-x-6">
               <Link href="/browse-trips">
-                <span className="text-gray-600 hover:text-ceylon-green transition-colors font-medium cursor-pointer" data-testid="nav-browse">Browse Trips</span>
+                <span className="text-text-secondary hover:text-brand transition-colors font-medium cursor-pointer" data-testid="nav-browse">Browse Trips</span>
               </Link>
               <Link href="/post">
-                <span className="text-gray-600 hover:text-ceylon-green transition-colors font-medium cursor-pointer" data-testid="nav-post">Post a Trip</span>
+                <span className="text-text-secondary hover:text-brand transition-colors font-medium cursor-pointer" data-testid="nav-post">Post a Trip</span>
               </Link>
               <Link href="/community">
-                <span className="text-gray-600 hover:text-ceylon-green transition-colors font-medium cursor-pointer" data-testid="nav-community">CeylonX Tribes</span>
+                <span className="text-text-secondary hover:text-brand transition-colors font-medium cursor-pointer" data-testid="nav-community">CeylonX Tribes</span>
               </Link>
             </div>
             <div className="flex items-center space-x-3">
               <Button 
                 variant="ghost" 
                 onClick={handleLogin} 
-                className="text-gray-600 hover:text-ceylon-green transition-colors"
+                className="text-text-secondary hover:text-brand transition-colors"
                 data-testid="button-signin"
               >
                 Sign In
               </Button>
               <Button 
                 onClick={handleSignUp} 
-                className="bg-ceylon-green text-white hover:bg-ceylon-green/90 shadow-sm"
+                className="bg-brand text-white hover:bg-brand-hover shadow-sm"
                 data-testid="button-signup"
               >
                 Sign Up
@@ -65,7 +65,7 @@ export default function Landing() {
         </div>
       </nav>
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-ceylon-green to-ceylon-blue min-h-[500px] flex items-center">
+      <section className="relative bg-gradient-to-br from-brand to-info min-h-[500px] flex items-center">
         <div className="absolute inset-0 bg-black opacity-60"></div>
         <div 
           className="absolute inset-0" 
@@ -87,7 +87,7 @@ export default function Landing() {
             <Link href="/browse-trips">
               <Button 
                 size="lg"
-                className="bg-ceylon-green text-white hover:bg-ceylon-green/90 text-base sm:text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:scale-105 px-6 py-3"
+                className="bg-brand text-white hover:bg-brand-hover text-base sm:text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:scale-105 px-6 py-3"
                 data-testid="button-browse-trips"
               >
                 Browse Trips
@@ -96,7 +96,7 @@ export default function Landing() {
             <Link href="/post">
               <Button 
                 size="lg"
-                className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-base sm:text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:scale-105 px-6 py-3"
+                className="bg-info text-white hover:bg-info/90 text-base sm:text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:scale-105 px-6 py-3"
                 data-testid="button-post-trip"
               >
                 Post a Trip

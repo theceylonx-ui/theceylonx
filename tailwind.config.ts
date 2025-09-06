@@ -30,8 +30,13 @@ export default {
           line: "hsl(0 0% 90%)",       // #E6E6E6 - borders/dividers
         },
         danger: "hsl(358 76% 51%)",    // #D92D20 - red
+        "danger-hover": "hsl(358 76% 40%)", // darker danger
         success: "hsl(158 75% 33%)",   // #099250 - green
         info: "hsl(207 71% 51%)",      // #1E88E5 - blue
+        // Legacy Ceylon colors for backward compatibility
+        "ceylon-green": "hsl(163 65% 31%)", // brand
+        "ceylon-blue": "hsl(207 71% 51%)",  // info
+        "ceylon-dark": "hsl(0 0% 4%)",      // text-primary
         
         // Keep shadcn compatibility
         background: "var(--background)",
