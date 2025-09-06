@@ -35,7 +35,8 @@ import { useAuth } from "@/hooks/useAuth";
 import type { QuestionWithDetails, Answer, User as UserType } from "@shared/schema";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
-// VotingControls removed - will be replaced with new UpvoteButton
+// VotingControls removed - replaced with new UpvoteButton
+import { UpvoteButton } from '@/components/UpvoteButton';
 
 const answerSchema = z.object({
   body: z.string().min(10, "Answer must be at least 10 characters"),
@@ -433,10 +434,12 @@ export default function QuestionDetailPage() {
 
             <div className="flex items-center justify-between border-t pt-4">
               <div className="flex items-center space-x-4">
-                {/* TODO: Replace with new UpvoteButton */}
-                <div className="text-sm text-gray-500">
-                  Score: {question.score || 0}
-                </div>
+                <UpvoteButton
+                  itemType="question"
+                  itemId={question.id}
+                  initialScore={question.score || 0}
+                  size="md"
+                />
                 <div className="flex items-center text-sm text-gray-500">
                   <MessageSquare className="w-4 h-4 mr-1" />
                   {question.answersCount || 0} {(question.answersCount || 0) === 1 ? 'answer' : 'answers'}
@@ -660,10 +663,12 @@ export default function QuestionDetailPage() {
                       )}
                     </div>
 
-                    {/* TODO: Replace with new UpvoteButton */}
-                    <div className="text-sm text-gray-500">
-                      Score: {answer.score || 0}
-                    </div>
+                    <UpvoteButton
+                      itemType="answer"
+                      itemId={answer.id}
+                      initialScore={answer.score || 0}
+                      size="sm"
+                    />
                   </div>
                 ))
               )}

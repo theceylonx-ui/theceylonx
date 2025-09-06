@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, ThumbsUp, Eye, Edit, Trash2, Clock, User } from "lucide-react";
+import { UpvoteButton } from '@/components/UpvoteButton';
 import { formatDistanceToNow } from "date-fns";
 import { getDisplayName, getInitials } from "@/lib/profileUtils";
 import type { QuestionWithDetails } from "@shared/schema";
@@ -120,10 +121,13 @@ export function QuestionCard({ question, onEdit, onDelete, currentUserId, showPr
 
           {/* Stats */}
           <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-            <div className="flex items-center gap-1">
-              <ThumbsUp className="h-4 w-4" />
-              <span>{question.votesCount || question.score || 0}</span>
-            </div>
+            <UpvoteButton
+              itemType="question"
+              itemId={question.id}
+              initialScore={question.score || 0}
+              size="sm"
+              className="text-xs"
+            />
             
             <div className="flex items-center gap-1">
               <MessageSquare className="h-4 w-4" />

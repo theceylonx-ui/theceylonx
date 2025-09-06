@@ -36,11 +36,10 @@ export function UpvoteButton({
 
   const toggleUpvoteMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('/api/upvotes/toggle', {
+      return await apiRequest('/api/upvotes/toggle', {
         method: 'POST',
         body: { itemType, itemId }
       });
-      return response;
     },
     onSuccess: (data) => {
       // Update local state with server response
