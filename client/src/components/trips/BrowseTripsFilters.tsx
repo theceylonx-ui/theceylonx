@@ -81,7 +81,7 @@ export default function BrowseTripsFilters({
           Filter Trips
         </h2>
         <div className="flex items-center gap-3">
-          <Badge variant="outline" aria-live="polite" data-testid="results-count">
+          <Badge variant="secondary" className="bg-brand-subtle text-brand border-brand/20" aria-live="polite" data-testid="results-count">
             {resultsCount} trips found
           </Badge>
           {hasActiveFilters && (
