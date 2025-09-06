@@ -21,26 +21,26 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="bg-ui-bg border-b border-ui-line/50 sticky top-0 z-50 backdrop-blur-sm bg-ui-bg/95">
+      <div className="page-container">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/">
-            <div className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-all duration-200" data-testid="nav-logo">
+            <div className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-all duration-200" data-testid="nav-logo">
               <img src={logoImage} alt="Ceylon Expand Logo" className="h-8 w-8" />
-              <span className="text-xl font-bold text-ceylon-dark">Ceylon Expand</span>
+              <span className="text-xl font-semibold text-text-primary">Ceylon Expand</span>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden md:flex items-center space-x-8">
             <Link href="/browse-trips">
               <span 
-                className={`transition-colors cursor-pointer ${
+                className={`transition-all duration-200 cursor-pointer relative py-2 ${
                   isActive('/browse-trips') 
-                    ? 'text-ceylon-green font-medium' 
-                    : 'text-gray-600 hover:text-ceylon-green'
-                }`}
+                    ? 'text-brand font-semibold' 
+                    : 'text-text-secondary hover:text-brand'
+                } ${isActive('/browse-trips') ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand after:rounded-full' : ''}`}
                 data-testid="nav-browse"
               >
                 Browse Trips
@@ -48,11 +48,11 @@ export default function Navigation() {
             </Link>
             <Link href="/post">
               <span 
-                className={`transition-colors cursor-pointer ${
+                className={`transition-all duration-200 cursor-pointer relative py-2 ${
                   isActive('/post') 
-                    ? 'text-ceylon-green font-medium' 
-                    : 'text-gray-600 hover:text-ceylon-green'
-                }`}
+                    ? 'text-brand font-semibold' 
+                    : 'text-text-secondary hover:text-brand'
+                } ${isActive('/post') ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand after:rounded-full' : ''}`}
                 data-testid="nav-post"
               >
                 Post a Trip
@@ -61,11 +61,11 @@ export default function Navigation() {
             {user && (
               <Link href="/calendar">
                 <span 
-                  className={`transition-colors cursor-pointer flex items-center gap-1 ${
+                  className={`transition-all duration-200 cursor-pointer flex items-center gap-2 relative py-2 ${
                     isActive('/calendar') 
-                      ? 'text-ceylon-green font-medium' 
-                      : 'text-gray-600 hover:text-ceylon-green'
-                  }`}
+                      ? 'text-brand font-semibold' 
+                      : 'text-text-secondary hover:text-brand'
+                  } ${isActive('/calendar') ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand after:rounded-full' : ''}`}
                   data-testid="nav-calendar"
                 >
                   <Calendar className="w-4 h-4" />
@@ -76,11 +76,11 @@ export default function Navigation() {
             {user && (
               <Link href="/chat">
                 <span 
-                  className={`transition-colors cursor-pointer flex items-center gap-1 ${
+                  className={`transition-all duration-200 cursor-pointer flex items-center gap-2 relative py-2 ${
                     isActive('/chat') || location.startsWith('/chat/') 
-                      ? 'text-ceylon-green font-medium' 
-                      : 'text-gray-600 hover:text-ceylon-green'
-                  }`}
+                      ? 'text-brand font-semibold' 
+                      : 'text-text-secondary hover:text-brand'
+                  } ${(isActive('/chat') || location.startsWith('/chat/')) ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand after:rounded-full' : ''}`}
                   data-testid="nav-chat"
                 >
                   <MessageSquare className="w-4 h-4" />
@@ -90,24 +90,14 @@ export default function Navigation() {
             )}
             <Link href="/community">
               <span 
-                className={`transition-colors cursor-pointer ${
+                className={`transition-all duration-200 cursor-pointer relative py-2 ${
                   isActive('/community') 
-                    ? 'text-ceylon-green font-medium' 
-                    : 'text-gray-600 hover:text-ceylon-green'
-                }`}
+                    ? 'text-brand font-semibold' 
+                    : 'text-text-secondary hover:text-brand'
+                } ${isActive('/community') ? 'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand after:rounded-full' : ''}`}
                 data-testid="nav-community"
-              >CeylonX Tribes</span>
-            </Link>
-            <Link href="/help/faq">
-              <span 
-                className={`transition-colors cursor-pointer ${
-                  isActive('/help/faq') 
-                    ? 'text-ceylon-green font-medium' 
-                    : 'text-gray-600 hover:text-ceylon-green'
-                }`}
-                data-testid="nav-faq"
               >
-                FAQ
+                Community
               </span>
             </Link>
           </div>
@@ -125,102 +115,89 @@ export default function Navigation() {
             <Button
               variant="ghost"
               size="sm"
-              className="md:hidden"
               onClick={toggleMobileMenu}
-              data-testid="mobile-menu-toggle"
+              className="md:hidden p-2 text-text-secondary hover:text-brand hover:bg-ui-surface"
+              data-testid="mobile-menu-button"
             >
-              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t py-4 bg-white" data-testid="mobile-menu">
-            <div className="flex flex-col space-y-1 px-4">
+          <div className="md:hidden py-6 border-t border-ui-line/50 animate-fade-in">
+            <div className="space-y-4">
               <Link href="/browse-trips">
-                <span 
-                  className={`block px-3 py-2 text-base transition-colors cursor-pointer ${
+                <div 
+                  className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
                     isActive('/browse-trips') 
-                      ? 'text-ceylon-green font-medium' 
-                      : 'text-gray-600 hover:text-ceylon-green'
+                      ? 'bg-brand-subtle text-brand font-semibold' 
+                      : 'text-text-secondary hover:bg-ui-surface hover:text-brand'
                   }`}
-                  onClick={toggleMobileMenu}
+                  onClick={() => setIsMobileMenuOpen(false)}
                   data-testid="mobile-nav-browse"
                 >
                   Browse Trips
-                </span>
+                </div>
               </Link>
               <Link href="/post">
-                <span 
-                  className={`block px-3 py-2 text-base transition-colors cursor-pointer ${
+                <div 
+                  className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
                     isActive('/post') 
-                      ? 'text-ceylon-green font-medium' 
-                      : 'text-gray-600 hover:text-ceylon-green'
+                      ? 'bg-brand-subtle text-brand font-semibold' 
+                      : 'text-text-secondary hover:bg-ui-surface hover:text-brand'
                   }`}
-                  onClick={toggleMobileMenu}
+                  onClick={() => setIsMobileMenuOpen(false)}
                   data-testid="mobile-nav-post"
                 >
                   Post a Trip
-                </span>
+                </div>
               </Link>
               {user && (
                 <Link href="/calendar">
-                  <span 
-                    className={`block px-3 py-2 text-base transition-colors cursor-pointer flex items-center gap-2 ${
+                  <div 
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                       isActive('/calendar') 
-                        ? 'text-ceylon-green font-medium' 
-                        : 'text-gray-600 hover:text-ceylon-green'
+                        ? 'bg-brand-subtle text-brand font-semibold' 
+                        : 'text-text-secondary hover:bg-ui-surface hover:text-brand'
                     }`}
-                    onClick={toggleMobileMenu}
+                    onClick={() => setIsMobileMenuOpen(false)}
                     data-testid="mobile-nav-calendar"
                   >
                     <Calendar className="w-4 h-4" />
                     Calendar
-                  </span>
+                  </div>
                 </Link>
               )}
               {user && (
                 <Link href="/chat">
-                  <span 
-                    className={`block px-3 py-2 text-base transition-colors cursor-pointer flex items-center gap-2 ${
+                  <div 
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                       isActive('/chat') || location.startsWith('/chat/') 
-                        ? 'text-ceylon-green font-medium' 
-                        : 'text-gray-600 hover:text-ceylon-green'
+                        ? 'bg-brand-subtle text-brand font-semibold' 
+                        : 'text-text-secondary hover:bg-ui-surface hover:text-brand'
                     }`}
-                    onClick={toggleMobileMenu}
+                    onClick={() => setIsMobileMenuOpen(false)}
                     data-testid="mobile-nav-chat"
                   >
                     <MessageSquare className="w-4 h-4" />
                     Chat Buddy
-                  </span>
+                  </div>
                 </Link>
               )}
               <Link href="/community">
-                <span 
-                  className={`block px-3 py-2 text-base transition-colors cursor-pointer ${
+                <div 
+                  className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
                     isActive('/community') 
-                      ? 'text-ceylon-green font-medium' 
-                      : 'text-gray-600 hover:text-ceylon-green'
+                      ? 'bg-brand-subtle text-brand font-semibold' 
+                      : 'text-text-secondary hover:bg-ui-surface hover:text-brand'
                   }`}
-                  onClick={toggleMobileMenu}
+                  onClick={() => setIsMobileMenuOpen(false)}
                   data-testid="mobile-nav-community"
                 >
                   Community
-                </span>
-              </Link>
-              <Link href="/help/faq">
-                <span 
-                  className={`block px-3 py-2 text-base transition-colors cursor-pointer ${
-                    isActive('/help/faq') 
-                      ? 'text-ceylon-green font-medium' 
-                      : 'text-gray-600 hover:text-ceylon-green'
-                  }`}
-                  onClick={toggleMobileMenu}
-                  data-testid="mobile-nav-faq"
-                >
-                  FAQ
-                </span>
+                </div>
               </Link>
             </div>
           </div>

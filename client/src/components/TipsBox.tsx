@@ -14,10 +14,10 @@ export function TipsBox({ title, tips, className = "", defaultCollapsed = false 
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
 
   return (
-    <Card className={`bg-blue-50 border-blue-200 ${className}`} data-testid="tips-box">
+    <Card className={`bg-brand-subtle border-brand/20 ${className}`} data-testid="tips-box">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium text-blue-900 flex items-center gap-2">
+          <CardTitle className="caption font-semibold text-brand flex items-center gap-2">
             <HelpCircle className="h-4 w-4" />
             {title}
           </CardTitle>
@@ -25,7 +25,7 @@ export function TipsBox({ title, tips, className = "", defaultCollapsed = false 
             variant="ghost"
             size="sm"
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="h-6 w-6 p-0 text-blue-700 hover:bg-blue-100"
+            className="h-8 w-8 p-0 text-brand hover:bg-brand/10 rounded-lg"
             data-testid="tips-toggle"
           >
             {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
@@ -35,10 +35,10 @@ export function TipsBox({ title, tips, className = "", defaultCollapsed = false 
       
       {!isCollapsed && (
         <CardContent className="pt-0">
-          <ul className="space-y-2" data-testid="tips-list">
+          <ul className="space-y-3" data-testid="tips-list">
             {tips.map((tip, index) => (
-              <li key={index} className="text-sm text-blue-800 flex items-start gap-2">
-                <span className="text-blue-600 font-medium">•</span>
+              <li key={index} className="caption text-text-secondary flex items-start gap-3">
+                <span className="text-brand font-medium text-sm">•</span>
                 <span dangerouslySetInnerHTML={{ __html: tip }} />
               </li>
             ))}
