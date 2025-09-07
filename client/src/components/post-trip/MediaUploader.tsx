@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from "react";
-import { Upload, X, Image as ImageIcon, MoveUp, MoveDown, Star } from "lucide-react";
+import { Upload, X, Image as ImageIcon, MoveUp, MoveDown, Star, Zap } from "lucide-react";
+import { compressImage, getOptimalCompressionSettings, formatFileSize } from "@/lib/imageCompression";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,12 @@ export function MediaUploader({
   className
 }: MediaUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [compressionStats, setCompressionStats] = useState<{
+    originalSize: number;
+    compressedSize: number;
+    compressionRatio: number;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const handleDragOver = useCallback((e: React.DragEvent) => {
