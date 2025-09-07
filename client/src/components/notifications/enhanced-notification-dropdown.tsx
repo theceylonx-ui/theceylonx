@@ -30,10 +30,7 @@ export function EnhancedNotificationDropdown() {
     enabled: isOpen,
   });
 
-  // Log success when notifications load with data
-  if (notifications.length > 0 && notifications[0].title) {
-    console.log("✅ Notifications loaded successfully with title and message!");
-  }
+  // Notifications loaded successfully
 
   // Fetch unread count
   const { data: unreadCountData } = useQuery<{ count: number }>({
@@ -287,19 +284,7 @@ export function EnhancedNotificationDropdown() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
-                            <p style={{ 
-                              color: '#000000 !important', 
-                              fontSize: '14px !important',
-                              fontWeight: '700 !important',
-                              opacity: '1 !important',
-                              visibility: 'visible !important',
-                              display: 'block !important',
-                              textIndent: '0 !important',
-                              textTransform: 'none !important',
-                              letterSpacing: 'normal !important',
-                              lineHeight: '1.3 !important',
-                              fontFamily: 'system-ui, -apple-system, sans-serif !important'
-                            }}>
+                            <p className="text-sm leading-tight font-semibold text-gray-900 dark:text-gray-100">
                               {notification.title}
                               {notification.priority === "critical" && (
                                 <Badge variant="destructive" className="ml-2 text-xs">
@@ -307,20 +292,7 @@ export function EnhancedNotificationDropdown() {
                                 </Badge>
                               )}
                             </p>
-                            <p style={{ 
-                              color: '#444444 !important', 
-                              fontSize: '12px !important',
-                              fontWeight: '400 !important',
-                              opacity: '1 !important',
-                              visibility: 'visible !important',
-                              display: 'block !important',
-                              textIndent: '0 !important',
-                              textTransform: 'none !important',
-                              letterSpacing: 'normal !important',
-                              lineHeight: '1.4 !important',
-                              marginTop: '4px !important',
-                              fontFamily: 'system-ui, -apple-system, sans-serif !important'
-                            }}>
+                            <p className="text-xs mt-1 line-clamp-2 text-gray-600 dark:text-gray-300">
                               {notification.message}
                             </p>
                           </div>
