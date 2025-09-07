@@ -269,7 +269,7 @@ export function EnhancedNotificationDropdown() {
                   {filteredNotifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className={`group relative flex items-start gap-3 p-3 border-l-4 hover:bg-muted cursor-pointer ${
+                      className={`group relative flex items-start gap-3 p-3 border-l-4 hover:bg-gray-100 cursor-pointer ${
                         getPriorityColor(notification.priority as NotificationPriority)
                       } ${!notification.isRead ? "font-medium" : ""}`}
                       onClick={() => handleNotificationClick(notification)}
@@ -282,7 +282,7 @@ export function EnhancedNotificationDropdown() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
-                            <p className="text-sm leading-tight font-medium text-foreground">
+                            <p className="text-sm leading-tight font-medium" style={{ color: '#1a1a1a' }}>
                               {notification.title}
                               {notification.priority === "critical" && (
                                 <Badge variant="destructive" className="ml-2 text-xs">
@@ -290,7 +290,7 @@ export function EnhancedNotificationDropdown() {
                                 </Badge>
                               )}
                             </p>
-                            <p className="text-xs mt-1 line-clamp-2 text-muted-foreground">
+                            <p className="text-xs mt-1 line-clamp-2" style={{ color: '#4a4a4a' }}>
                               {notification.message}
                             </p>
                           </div>
