@@ -204,8 +204,8 @@ export function EnhancedNotificationDropdown() {
         data-testid="dropdown-notifications"
       >
         <div className="flex items-center justify-between px-3 py-2">
-          <DropdownMenuLabel className="text-sm font-semibold">
-            Notifications
+          <DropdownMenuLabel className="text-sm font-semibold text-red-600" style={{ color: 'red !important' }}>
+            🚨 ENHANCED NOTIFICATIONS ACTIVE 🚨
           </DropdownMenuLabel>
           <div className="flex items-center gap-2">
             {unreadCount > 0 && (
@@ -283,7 +283,7 @@ export function EnhancedNotificationDropdown() {
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
                             <p className="text-sm leading-tight font-semibold text-gray-900 dark:text-gray-100">
-                              {notification.title}
+                              🚨 ENHANCED FILE ACTIVE 🚨 {notification.title}
                               {notification.priority === "critical" && (
                                 <Badge variant="destructive" className="ml-2 text-xs">
                                   Urgent
