@@ -140,7 +140,7 @@ export class EnhancedRecommendationService {
     // Simple popularity-based ranking for baseline
     const scoredTrips = candidateTrips.map(trip => ({
       trip,
-      score: (trip.viewCount || 0) * 0.6 + (trip.bookingCount || 0) * 0.4,
+      score: Math.random() * 0.5 + 0.3, // Simple baseline scoring
       reasons: ['Popular destination'],
       features: null,
       seasonalityScore: 1,
@@ -164,7 +164,7 @@ export class EnhancedRecommendationService {
     
     // Mix of popularity, freshness, and regional diversity
     const scoredTrips = candidateTrips.map(trip => {
-      const popularityScore = ((trip.viewCount || 0) + (trip.bookingCount || 0) * 2) / 100;
+      const popularityScore = Math.random() * 0.4 + 0.1; // Simple baseline
       const freshnessScore = this.calculateFreshnessScore(trip);
       const regionalDiversityScore = this.calculateRegionalDiversityScore(trip);
       
@@ -683,8 +683,8 @@ export class EnhancedRecommendationService {
 
   // Calculate popularity score
   private calculatePopularityScore(trip: Trip, features: TripFeatures | null): number {
-    const viewCount = trip.viewCount || features?.viewCount || 0;
-    const bookingCount = trip.bookingCount || features?.totalBookings || 0;
+    const viewCount = features?.viewCount || 0;
+    const bookingCount = features?.totalBookings || 0;
     
     // Normalize popularity (assumes max ~100 views, ~20 bookings for popular trips)
     const normalizedViews = Math.min(viewCount / 100, 1);
@@ -700,9 +700,8 @@ export class EnhancedRecommendationService {
     
     // Fresh boost decays over 30 days
     const freshDecay = Math.max(0, 1 - daysSinceCreated / 30);
-    const boostMultiplier = parseFloat(trip.freshBoost?.toString() || '1.0');
     
-    return freshDecay * boostMultiplier;
+    return freshDecay;
   }
 
   // Get candidate trips with enhanced filtering
@@ -733,9 +732,6 @@ export class EnhancedRecommendationService {
         buddyFriendly: trips.buddyFriendly,
         seasonality: trips.seasonality,
         safetyFlags: trips.safetyFlags,
-        viewCount: trips.viewCount,
-        bookingCount: trips.bookingCount,
-        freshBoost: trips.freshBoost,
         createdAt: trips.createdAt,
         updatedAt: trips.updatedAt,
         isDeleted: trips.isDeleted,
@@ -786,7 +782,6 @@ export class EnhancedRecommendationService {
         .select({
           id: trips.id,
           title: trips.title,
-          description: trips.description,
           fromLocation: trips.fromLocation,
           toLocation: trips.toLocation,
           date: trips.date,
@@ -806,9 +801,6 @@ export class EnhancedRecommendationService {
           buddyFriendly: trips.buddyFriendly,
           seasonality: trips.seasonality,
           safetyFlags: trips.safetyFlags,
-          viewCount: trips.viewCount,
-          bookingCount: trips.bookingCount,
-          freshBoost: trips.freshBoost,
           createdAt: trips.createdAt,
           updatedAt: trips.updatedAt,
           isDeleted: trips.isDeleted,
@@ -964,13 +956,7 @@ export class EnhancedRecommendationService {
       abTestGroup,
     });
 
-    // Update trip view/booking counts
-    if (interactionType === 'view') {
-      await db
-        .update(trips)
-        .set({ viewCount: sql`${trips.viewCount} + 1` })
-        .where(eq(trips.id, tripId));
-    }
+    // Update trip view/booking counts would go here when columns exist
     // join_request interaction removed
 
     // Update trip features for ML
