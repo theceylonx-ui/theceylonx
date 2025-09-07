@@ -177,6 +177,11 @@ export const trips = pgTable("trips", {
   priceMin: decimal("price_min", { precision: 10, scale: 2 }),
   priceMax: decimal("price_max", { precision: 10, scale: 2 }),
   
+  // Image fields for trip photos
+  imageUrl: varchar("image_url"), // Single fallback image URL
+  mediaUrls: text("media_urls").array().default(sql`'{}'::text[]`), // Array of uploaded images
+  coverImageIndex: integer("cover_image_index").default(0), // Which image to use as cover
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   isDeleted: boolean("is_deleted").default(false),
