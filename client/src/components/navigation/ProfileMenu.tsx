@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { 
   User, 
   MessageSquare, 
@@ -28,6 +28,7 @@ export default function ProfileMenu({ className }: ProfileMenuProps) {
   const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const [, setLocation] = useLocation();
 
   // Analytics helper
   const trackEvent = (event: string, data?: Record<string, any>) => {
@@ -166,17 +167,18 @@ export default function ProfileMenu({ className }: ProfileMenuProps) {
           </DropdownMenuItem>
         </Link>
 
-        {/* 5. Settings - Account Settings */}
-        <Link href="/settings/account">
-          <DropdownMenuItem 
-            className="cursor-pointer" 
-            data-testid="profile-menu-settings"
-            onClick={() => handleMenuItemClick('Settings')}
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-          </DropdownMenuItem>
-        </Link>
+        {/* 5. Travel Settings */}
+        <DropdownMenuItem 
+          className="cursor-pointer" 
+          data-testid="profile-menu-settings"
+          onClick={() => {
+            handleMenuItemClick('TravelSettings');
+            setLocation('/me?tab=preferences');
+          }}
+        >
+          <Settings className="mr-2 h-4 w-4" />
+          Travel Settings
+        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
