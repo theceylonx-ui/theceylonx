@@ -218,6 +218,9 @@ export const tripStats = pgTable("trip_stats", {
   imageProvider: text("image_provider").default("curated"),
   imageAttribution: jsonb("image_attribution").default(sql`'{}'::jsonb`),
   imageFetchedAt: timestamp("image_fetched_at"),
+  // User uploaded images from trip creation form
+  mediaUrls: text("media_urls").array().default(sql`'{}'::text[]`),
+  coverImageIndex: integer("cover_image_index").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -1037,6 +1040,9 @@ export const insertTripSchema = z.object({
   organizerId: z.string(),
   status: z.string().optional(),
   imageUrl: z.string().optional(),
+  // User uploaded images from trip creation form
+  mediaUrls: z.array(z.string().url()).max(12, "Maximum 12 images allowed").optional(),
+  coverImageIndex: z.number().min(0).default(0).optional(),
 });
 
 
