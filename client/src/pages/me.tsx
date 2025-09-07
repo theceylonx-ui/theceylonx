@@ -1128,7 +1128,7 @@ function SavedTrips() {
                 <p className="text-sm text-gray-400 mt-1">
                   Mark trips as interested to track ones you might want to join.
                 </p>
-                <Button className="mt-4" onClick={() => window.location.href = '/browse-trips'}>
+                <Button className="mt-4" onClick={() => setLocation('/browse-trips')}>
                   Browse Trips to Save
                 </Button>
               </div>
