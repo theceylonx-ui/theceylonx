@@ -186,26 +186,47 @@ export function MediaUploader({
         onDrop={handleDrop}
         data-testid="media-upload-area"
       >
-        <ImageIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        <div className="text-lg font-medium text-gray-900 mb-2">
-          {isDragging ? 'Drop images here' : 'Upload trip photos'}
-        </div>
-        <p className="text-sm text-gray-600 mb-4">
-          Drag and drop your images here, or click to browse
-        </p>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={value.length >= maxFiles}
-          data-testid="media-upload-button"
-        >
-          <Upload className="w-4 h-4 mr-2" />
-          Choose Files
-        </Button>
-        <p className="text-xs text-gray-500 mt-2">
-          Maximum {maxFiles} images, JPG/PNG format
-        </p>
+        {isCompressing ? (
+          <div className="space-y-4">
+            <Zap className="mx-auto h-12 w-12 text-green-500 animate-pulse" />
+            <div className="text-lg font-medium text-gray-900">
+              Compressing Images...
+            </div>
+            <p className="text-sm text-gray-600">
+              Optimizing your photos for faster uploads and better performance
+            </p>
+          </div>
+        ) : (
+          <>
+            <ImageIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <div className="text-lg font-medium text-gray-900 mb-2">
+              {isDragging ? 'Drop images here' : 'Upload trip photos'}
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Drag and drop your images here, or click to browse
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={value.length >= maxFiles || isCompressing}
+              data-testid="media-upload-button"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Choose Files
+            </Button>
+            <p className="text-xs text-gray-500 mt-2">
+              Maximum {maxFiles} images • Auto-compressed for optimal quality
+            </p>
+            {compressionStats && (
+              <div className="mt-3 text-xs text-green-600 bg-green-50 rounded-lg px-3 py-2 inline-block">
+                <Zap className="inline h-3 w-3 mr-1" />
+                Last upload saved {formatFileSize(compressionStats.originalSize - compressionStats.compressedSize)} 
+                ({compressionStats.compressionRatio.toFixed(0)}% smaller)
+              </div>
+            )}
+          </>
+        )}
         <input
           ref={fileInputRef}
           type="file"
