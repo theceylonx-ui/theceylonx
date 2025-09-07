@@ -4011,6 +4011,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Image Upload URL Generation for Chat
+  app.post('/api/chat/upload-url', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Generate a unique filename
+      const timestamp = Date.now();
+      const randomId = Math.random().toString(36).substring(2, 15);
+      const filename = `chat-image-${userId}-${timestamp}-${randomId}.jpg`;
+      
+      // For now, return a mock URL until object storage is fully integrated
+      const uploadUrl = `https://storage.googleapis.com/replit-objstore-ec75efb9-dcc1-41c7-9909-6b7ac54918f4/.private/${filename}`;
+      
+      res.json({ uploadUrl });
+    } catch (error) {
+      console.error('Error generating upload URL:', error);
+      res.status(500).json({ message: 'Failed to generate upload URL' });
+    }
+  });
+
   // Chat Messages Management
   app.post('/api/chat/threads/:id/messages', unifiedAuthGuard, async (req: any, res) => {
     try {
