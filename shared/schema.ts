@@ -102,6 +102,21 @@ export const users = pgTable("users", {
   languages: text("languages").array(),
   linksJson: jsonb("links_json").default(sql`'{}'::jsonb`),
   profileCompletePct: integer("profile_complete_pct").default(0).notNull(),
+  
+  // Travel preferences (consolidated from user_preferences table)
+  vibe: text("vibe").array().default(sql`'{}'::text[]`), 
+  companions: text("companions").array().default(sql`'{}'::text[]`),
+  interests: text("interests").array().default(sql`'{}'::text[]`),
+  months: text("months").array().default(sql`'{}'::text[]`),
+  regions: text("regions").array().default(sql`'{}'::text[]`),
+  budgetMin: integer("budget_min"),
+  budgetMax: integer("budget_max"),
+  
+  // Personalization settings (consolidated from user_personalization table)
+  isPaused: boolean("is_paused").default(false),
+  resetAt: timestamp("reset_at"),
+  abTestGroup: varchar("ab_test_group").default('personalized'),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
@@ -1483,9 +1498,7 @@ export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
 export type InsertPreferenceEvent = z.infer<typeof insertPreferenceEventSchema>;
 export type PreferenceEvent = typeof preferenceEvents.$inferSelect;
 
-// Trip draft types
-export type TripDraft = typeof tripDrafts.$inferSelect;
-export type InsertTripDraft = typeof tripDrafts.$inferInsert;
+// Trip draft types (removed - feature not implemented)
 
 // Post Trip V3 schema for form validation
 const TripMediaSchema = z.object({
