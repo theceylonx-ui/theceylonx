@@ -284,10 +284,18 @@ export function EnhancedNotificationDropdown() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
-                            <p className="text-sm leading-tight font-semibold" style={{ 
-                              color: '#000000', 
-                              fontSize: '14px',
-                              fontWeight: '600'
+                            <p style={{ 
+                              color: '#000000 !important', 
+                              fontSize: '14px !important',
+                              fontWeight: '700 !important',
+                              opacity: '1 !important',
+                              visibility: 'visible !important',
+                              display: 'block !important',
+                              textIndent: '0 !important',
+                              textTransform: 'none !important',
+                              letterSpacing: 'normal !important',
+                              lineHeight: '1.3 !important',
+                              fontFamily: 'system-ui, -apple-system, sans-serif !important'
                             }}>
                               {notification.title}
                               {notification.priority === "critical" && (
@@ -296,10 +304,19 @@ export function EnhancedNotificationDropdown() {
                                 </Badge>
                               )}
                             </p>
-                            <p className="text-xs mt-1 line-clamp-2" style={{ 
-                              color: '#333333', 
-                              fontSize: '12px',
-                              lineHeight: '1.4'
+                            <p style={{ 
+                              color: '#444444 !important', 
+                              fontSize: '12px !important',
+                              fontWeight: '400 !important',
+                              opacity: '1 !important',
+                              visibility: 'visible !important',
+                              display: 'block !important',
+                              textIndent: '0 !important',
+                              textTransform: 'none !important',
+                              letterSpacing: 'normal !important',
+                              lineHeight: '1.4 !important',
+                              marginTop: '4px !important',
+                              fontFamily: 'system-ui, -apple-system, sans-serif !important'
                             }}>
                               {notification.message}
                             </p>
