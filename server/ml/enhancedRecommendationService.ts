@@ -973,32 +973,23 @@ export class EnhancedRecommendationService {
 
   // Reset user recommendations
   async resetUserRecommendations(userId: string): Promise<void> {
-    // Update personalization settings
-    await db.insert(userPersonalization).values({
-      userId,
-      resetAt: sql`NOW()`,
-      isPaused: false,
-    }).onConflictDoUpdate({
-      target: userPersonalization.userId,
-      set: {
+    // Update user table with reset timestamp since personalization was consolidated
+    await db.update(users)
+      .set({
         resetAt: sql`NOW()`,
         updatedAt: sql`NOW()`,
-      },
-    });
+      })
+      .where(eq(users.id, userId));
   }
 
   // Pause/unpause personalization
   async togglePersonalization(userId: string, isPaused: boolean): Promise<void> {
-    await db.insert(userPersonalization).values({
-      userId,
-      isPaused,
-    }).onConflictDoUpdate({
-      target: userPersonalization.userId,
-      set: {
+    await db.update(users)
+      .set({
         isPaused,
         updatedAt: sql`NOW()`,
-      },
-    });
+      })
+      .where(eq(users.id, userId));
   }
 
   // Get current season for Sri Lanka
