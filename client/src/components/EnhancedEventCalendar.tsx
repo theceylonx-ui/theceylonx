@@ -159,8 +159,8 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
   const [calendarState, setCalendarState] = useState<CalendarState>(getInitialState)
   const [isDayPreviewOpen, setIsDayPreviewOpen] = useState(true)
   
-  // Debounce state changes for API calls
-  const debouncedState = useDebounce(calendarState, 150)
+  // Debounce state changes for API calls - increased for better performance
+  const debouncedState = useDebounce(calendarState, 300)
   
   // Update state and persist to storage/URL
   const updateCalendarState = useCallback((updates: Partial<CalendarState>) => {
@@ -180,7 +180,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
     }
   }, [updateCalendarState])
   
-  // Handle filter toggles with auth gating
+  // Handle filter toggles with auth gating and optimistic updates
   const handleFilterToggle = useCallback((filterType: keyof CalendarState['filters']) => {
     // Check if user is authenticated for user-specific filters
     if (!isAuthenticated && ['pinned', 'interested', 'my'].includes(filterType)) {
@@ -188,32 +188,43 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
       return
     }
     
-    // Special handling for "all" filter - if toggled on, turn off other filters
-    let newFilters = { ...calendarState.filters }
-    
-    if (filterType === 'all' && !calendarState.filters.all) {
-      // Turn on "all" and turn off others
-      newFilters = {
-        all: true,
-        pinned: false,
-        interested: false,
-        my: false,
-        free: false
+    // Optimistic update - immediately update UI
+    setCalendarState(prev => {
+      // Special handling for "all" filter - if toggled on, turn off other filters
+      let newFilters = { ...prev.filters }
+      
+      if (filterType === 'all' && !prev.filters.all) {
+        // Turn on "all" and turn off others
+        newFilters = {
+          all: true,
+          pinned: false,
+          interested: false,
+          my: false,
+          free: false
+        }
+      } else if (filterType !== 'all') {
+        // If any other filter is turned on, turn off "all"
+        newFilters = {
+          ...prev.filters,
+          all: false,
+          [filterType]: !prev.filters[filterType]
+        }
+      } else {
+        // Toggling "all" off
+        newFilters[filterType] = !prev.filters[filterType]
       }
-    } else if (filterType !== 'all') {
-      // If any other filter is turned on, turn off "all"
-      newFilters = {
-        ...calendarState.filters,
-        all: false,
-        [filterType]: !calendarState.filters[filterType]
-      }
-    } else {
-      // Toggling "all" off
-      newFilters[filterType] = !calendarState.filters[filterType]
-    }
-    
-    updateCalendarState({ filters: newFilters })
-  }, [calendarState.filters, isAuthenticated, updateCalendarState])
+      
+      const newState = { ...prev, filters: newFilters }
+      
+      // Debounced persistence to avoid excessive storage/URL updates
+      setTimeout(() => {
+        saveStateToStorage(newState)
+        updateURLFromState(newState)
+      }, 100)
+      
+      return newState
+    })
+  }, [isAuthenticated])
   
   // Keyboard navigation handler
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
@@ -261,10 +272,11 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
   
-  // Get day events with proper error handling
+  // Get day events with proper error handling and caching
   const { data: dayResponse, isLoading: isDayLoading, error: dayError } = useQuery<CalendarResponse>({
-    queryKey: [`/api/calendar/day?date=${debouncedState.selectedDate}&filters=${buildFiltersString(debouncedState.filters)}&region=${debouncedState.region || ''}&tags=${debouncedState.tags.join(',')}`],
+    queryKey: ['/api/calendar/day', debouncedState.selectedDate, buildFiltersString(debouncedState.filters), debouncedState.region || '', debouncedState.tags.join(',')],
     enabled: true,
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
     retry: (failureCount, error) => {
       // Don't retry on auth errors
       if (error?.message?.includes('401') || error?.message?.includes('Unauthorized')) {
@@ -274,11 +286,12 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
     }
   })
   
-  // Get monthly day counts for calendar display
+  // Get monthly day counts for calendar display with better caching
   const currentMonth = format(new Date(calendarState.selectedDate + 'T00:00:00'), 'yyyy-MM')
   const { data: monthCounts } = useQuery<DayCountsResponse>({
-    queryKey: [`/api/calendar/month?month=${currentMonth}&summary=true&filters=${buildFiltersString(debouncedState.filters)}&region=${debouncedState.region || ''}&tags=${debouncedState.tags.join(',')}`],
+    queryKey: ['/api/calendar/month', currentMonth, buildFiltersString(debouncedState.filters), debouncedState.region || '', debouncedState.tags.join(',')],
     enabled: true,
+    staleTime: 5 * 60 * 1000, // Cache monthly data for 5 minutes
     retry: false
   })
   
