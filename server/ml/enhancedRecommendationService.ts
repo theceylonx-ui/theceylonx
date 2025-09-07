@@ -1085,41 +1085,10 @@ export class EnhancedRecommendationService {
 
   // Generate trending trips (public endpoint, no user-specific data)
   async getTrendingTrips(limit: number = 10): Promise<TripRecommendation[]> {
-    // Get all active trips with organizer info - using explicit field selection
+    // Get all active trips with simple selection to avoid Drizzle errors
     const candidateTrips = await db
-      .select({
-        id: trips.id,
-        title: trips.title,
-        description: trips.description,
-        fromLocation: trips.fromLocation,
-        toLocation: trips.toLocation,
-        date: trips.date,
-        time: trips.time,
-        seatsAvailable: trips.seatsAvailable,
-        price: trips.price,
-        region: trips.region,
-        contactInfo: trips.contactInfo,
-        organizerId: trips.organizerId,
-        status: trips.status,
-        createdAt: trips.createdAt,
-        updatedAt: trips.updatedAt,
-        isDeleted: trips.isDeleted,
-        deletedAt: trips.deletedAt,
-        // Flatten organizer fields
-        organizerEmail: users.email,
-        organizerName: users.name,
-        organizerFirstName: users.firstName,
-        organizerLastName: users.lastName,
-        organizerUsername: users.username,
-        organizerProfileImageUrl: users.profileImageUrl,
-        organizerPhoneNumber: users.phoneNumber,
-        organizerBio: users.bio,
-        organizerEmailVerified: users.emailVerified,
-        organizerCreatedAt: users.createdAt,
-        organizerUpdatedAt: users.updatedAt
-      })
+      .select()
       .from(trips)
-      .leftJoin(users, eq(trips.organizerId, users.id))
       .where(
         and(
           eq(trips.status, 'active'),
@@ -1129,44 +1098,20 @@ export class EnhancedRecommendationService {
       );
 
     // Score for trending (mix of popularity, freshness, and regional diversity)
-    const scoredTrips = candidateTrips.map(row => {
-      // Transform flattened data back to nested structure
+    const scoredTrips = candidateTrips.map(tripData => {
+      // Use trip data directly without complex joins
       const trip = {
-        id: row.id,
-        title: row.title,
-        description: row.description,
-        fromLocation: row.fromLocation,
-        toLocation: row.toLocation,
-        date: row.date,
-        time: row.time,
-        seatsAvailable: row.seatsAvailable,
-        price: row.price,
-        region: row.region,
-        contactInfo: row.contactInfo,
-        organizerId: row.organizerId,
-        status: row.status,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        isDeleted: row.isDeleted,
-        deletedAt: row.deletedAt,
-        // Default values for missing fields to avoid errors
+        ...tripData,
         viewCount: 0,
         bookingCount: 0,
         freshBoost: '1.0',
         tags: [],
         organizer: {
-          id: row.organizerId,
-          email: row.organizerEmail,
-          name: row.organizerName,
-          firstName: row.organizerFirstName,
-          lastName: row.organizerLastName,
-          username: row.organizerUsername,
-          profileImageUrl: row.organizerProfileImageUrl,
-          phoneNumber: row.organizerPhoneNumber,
-          bio: row.organizerBio,
-          emailVerified: row.organizerEmailVerified,
-          createdAt: row.organizerCreatedAt,
-          updatedAt: row.organizerUpdatedAt
+          id: tripData.organizerId,
+          email: null,
+          firstName: null,
+          lastName: null,
+          profileImageUrl: null
         }
       };
       
