@@ -2,6 +2,7 @@ import type { User } from "@shared/schema";
 
 export interface NormalizedUser {
   id: string;
+  username: string | null;
   displayName: string;
   avatarUrl: string | null;
   initials: string;
@@ -12,18 +13,21 @@ export interface NormalizedUser {
 /**
  * Normalizes user data for UI consumption with safe fallbacks
  * Implements the displayName fallback strategy:
- * 1. Use 'name' if available
- * 2. Use firstName + lastName if available
- * 3. Use email prefix if email exists
- * 4. Use "Traveler" + short ID as last resort
+ * 1. Use 'displayName' field if available (user's preferred display name)
+ * 2. Use 'name' if available
+ * 3. Use firstName + lastName if available
+ * 4. Use email prefix if email exists
+ * 5. Use "Traveler" + short ID as last resort
  */
 export function normalizeUserForUI(user: User | null): NormalizedUser | null {
   if (!user) return null;
 
-  // Generate display name with fallback strategy
+  // Generate display name with fallback strategy (prioritize displayName field)
   let displayName = '';
   
-  if (user.name?.trim()) {
+  if (user.displayName?.trim()) {
+    displayName = user.displayName.trim();
+  } else if (user.name?.trim()) {
     displayName = user.name.trim();
   } else if (user.firstName?.trim() || user.lastName?.trim()) {
     displayName = [user.firstName?.trim(), user.lastName?.trim()]
@@ -37,6 +41,13 @@ export function normalizeUserForUI(user: User | null): NormalizedUser | null {
     displayName = `Traveler${shortId}`;
   }
 
+  // Generate username fallback if not available
+  let username = user.username?.trim() || null;
+  if (!username && user.email?.includes('@')) {
+    // Generate username from email prefix if no username set
+    username = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+
   // Generate initials from display name
   const initials = generateInitials(displayName);
 
@@ -45,6 +56,7 @@ export function normalizeUserForUI(user: User | null): NormalizedUser | null {
 
   return {
     id: user.id,
+    username,
     displayName,
     avatarUrl,
     initials,

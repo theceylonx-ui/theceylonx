@@ -4,6 +4,7 @@ import type { User, Trip, Question, Comment, Answer } from '@shared/schema';
 // Normalized user type for UI consumption
 export const normalizedUserSchema = z.object({
   id: z.string(),
+  username: z.string().nullable(),
   displayName: z.string(),
   avatarUrl: z.string().nullable(),
   initials: z.string(),
