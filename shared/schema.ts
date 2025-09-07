@@ -18,26 +18,29 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // PostgreSQL Enums for data integrity
-export const tripStatusEnum = pgEnum('trip_status', ['active', 'full', 'completed', 'cancelled', 'inactive', 'deleted', 'under_review']);
+// tripStatusEnum removed - using varchar instead
 export const saveTypeEnum = pgEnum('save_type', ['pinned', 'interested']);
 export const notificationTypeEnum = pgEnum('notification_type', ['trip_updated', 'trip_removed', 'save_removed']);
 // Difficulty enum removed - using varchar instead
-export const userRoleEnum = pgEnum('user_role', ['user', 'moderator', 'admin', 'superadmin']);
-export const reportStatusEnum = pgEnum('report_status', ['open', 'investigating', 'resolved', 'dismissed']);
+// userRoleEnum removed - using varchar instead
+// reportStatusEnum removed - using varchar instead
 export const reportContextEnum = pgEnum('report_context', ['trip', 'user', 'chat_message']);
-export const notificationPriorityEnum = pgEnum('notification_priority', ['critical', 'high', 'normal', 'low']);
-export const messageTypeEnum = pgEnum('message_type', ['text', 'contact_card']);
+// notificationPriorityEnum removed - using varchar instead
+// messageTypeEnum removed - using varchar instead
 export const chatThreadStatusEnum = pgEnum('chat_thread_status', ['open', 'locked', 'closed']);
 export const chatMessageKindEnum = pgEnum('chat_message_kind', ['text', 'media', 'system', 'contact_share']);
 export const tripCategoryEnum = pgEnum('trip_category', [
   'roadtrip', 'hiking', 'beach', 'culture', 'wellness', 'festival', 
   'workshop', 'wildlife', 'food', 'adventure_sport', 'unknown'
 ]);
-export const draftStatusEnum = pgEnum('draft_status', ['draft', 'published']);
+// draftStatusEnum removed - using varchar instead
 export const questionVisibilityEnum = pgEnum('question_visibility', ['public', 'hidden']);
 
 // Preferences enums
 export const preferenceEventEnum = pgEnum('preference_event', ['created', 'updated', 'reset']);
+
+// Join status enum (exists in database)
+export const joinStatusEnum = pgEnum('join_status', ['pending', 'accepted', 'declined', 'cancelled']);
 
 // Session storage table for Replit Auth
 export const sessions = pgTable(
@@ -131,7 +134,7 @@ export const trips = pgTable("trips", {
   contactInfo: varchar("contact_info").notNull(),
   notes: text("notes"),
   organizerId: varchar("organizer_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  status: tripStatusEnum("status").default("active"),
+  status: varchar("status").default("active"),
   
   // Optional enhanced fields for better recommendations
   tags: jsonb("tags"), // JSONB for GIN index support
@@ -219,7 +222,7 @@ export const tripDrafts = pgTable("trip_drafts", {
   seasonality: text("seasonality").array(),
   
   // Draft metadata
-  status: draftStatusEnum("status").default("draft"),
+  status: varchar("status").default("draft"),
   currentStep: integer("current_step").default(1),
   completedSteps: text("completed_steps").array().default(sql`'{}'::text[]`),
   lastSavedAt: timestamp("last_saved_at").defaultNow(),
@@ -455,7 +458,7 @@ export const reports = pgTable("reports", {
   reporterId: varchar("reporter_id").notNull(),
   reason: varchar("reason").notNull(),
   description: text("description"),
-  status: reportStatusEnum("status").default("open"),
+  status: varchar("status").default("open"),
   // Enhanced moderation fields (added via ALTER TABLE)
   priority: varchar("priority", { enum: ['low', 'medium', 'high', 'critical'] }).default('medium'),
   severity: varchar("severity", { enum: ['low', 'medium', 'high', 'critical'] }).default('low'),
@@ -871,7 +874,7 @@ export const moderationFlags = pgTable("moderation_flags", {
   targetId: varchar("target_id").notNull(),
   reason: varchar("reason").notNull(),
   description: text("description"),
-  status: reportStatusEnum("status").default("open"),
+  status: varchar("status").default("open"),
   severity: varchar("severity").default("medium"), // 'low', 'medium', 'high', 'critical'
   resolvedBy: varchar("resolved_by").references(() => users.id, { onDelete: 'set null' }),
   resolutionNote: text("resolution_note"),
