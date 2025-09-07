@@ -42,8 +42,8 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
     seatsAvailable: trip.seatsAvailable,
     price: trip.price?.toString() || "",
     region: trip.region,
-    category: trip.category || "roadtrip",
-    notes: trip.notes || "",
+    category: (trip as any).category || "roadtrip",
+    notes: (trip as any).notes || "",
   });
 
   // Handle image upload
@@ -65,8 +65,9 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
       const compressionOptions = getOptimalCompressionSettings(file);
       const result = await compressImage(file, compressionOptions);
       
+      // Automatically remove existing image when uploading new one
       setNewUploadedImage(result.compressedFile);
-      setSelectedImage(result.compressedFile);
+      setSelectedImage(""); // Clear existing selected image
       
       toast({
         title: "Image uploaded!",
@@ -96,8 +97,8 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
         seatsAvailable: trip.seatsAvailable,
         price: trip.price?.toString() || "",
         region: trip.region,
-        category: trip.category || "roadtrip",
-        notes: trip.notes || "",
+        category: (trip as any).category || "roadtrip",
+        notes: (trip as any).notes || "",
       });
       setSelectedImage(trip.imageUrl || "");
       setNewUploadedImage(null);
@@ -115,13 +116,21 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
     mutationFn: async (data: any) => {
       const updateData = {
         ...data,
-        selectedCategoryImage: selectedImage,
       };
       
-      // If there's a new uploaded image, include it in mediaUrls
+      // Handle image updates
       if (newUploadedImage) {
+        // New image uploaded - use it and clear any existing image
         updateData.mediaUrls = [newUploadedImage];
         updateData.coverImageIndex = 0;
+        updateData.selectedCategoryImage = ""; // Clear existing image
+      } else if (selectedImage) {
+        // Keep existing selected image
+        updateData.selectedCategoryImage = selectedImage;
+      } else {
+        // No image selected - clear both
+        updateData.selectedCategoryImage = "";
+        updateData.mediaUrls = [];
       }
       
       return await apiRequest("PATCH", `/api/trips/${trip.id}`, updateData);
@@ -170,8 +179,8 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
     if (formData.seatsAvailable !== trip.seatsAvailable) updatedData.seatsAvailable = formData.seatsAvailable;
     if (formData.price !== trip.price?.toString()) updatedData.price = parseFloat(formData.price) || 0;
     if (formData.region !== trip.region) updatedData.region = formData.region;
-    if (formData.category !== trip.category) updatedData.category = formData.category;
-    if (formData.notes !== trip.notes) updatedData.notes = formData.notes;
+    if (formData.category !== (trip as any).category) updatedData.category = formData.category;
+    if (formData.notes !== (trip as any).notes) updatedData.notes = formData.notes;
     
     // Handle date separately to avoid conversion issues
     const currentDate = trip.date ? new Date(trip.date).toISOString().split('T')[0] : "";
