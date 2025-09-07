@@ -9,8 +9,10 @@ export default function MeRedirect() {
 
   useEffect(() => {
     if (!isLoading && user) {
-      // Redirect to the user's profile page
-      setLocation(`/profile/${user.id}`, { replace: true });
+      // Preserve URL parameters (like tab=preferences) when redirecting
+      const currentSearch = window.location.search;
+      const redirectUrl = `/profile/${user.id}${currentSearch}`;
+      setLocation(redirectUrl, { replace: true });
     } else if (!isLoading && !user) {
       // Redirect to sign-in if not authenticated
       setLocation('/auth/signin', { replace: true });

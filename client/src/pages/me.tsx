@@ -97,12 +97,6 @@ export default function ProfilePage() {
     // Valid tabs: overview, profile, preferences, activity, security, privacy
     const validTabs = ['overview', 'profile', 'preferences', 'activity', 'security', 'privacy'];
     const selectedTab = tabParam && validTabs.includes(tabParam) ? tabParam : 'overview';
-    console.log('🔍 Tab selection from URL:', {
-      search: window.location.search,
-      tabParam,
-      selectedTab,
-      allValidTabs: validTabs
-    });
     return selectedTab;
   };
   
@@ -128,7 +122,6 @@ export default function ProfilePage() {
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      console.log('🔍 Auth redirect triggered - user not authenticated');
       setLocation("/");
     }
   }, [user, authLoading, setLocation]);
