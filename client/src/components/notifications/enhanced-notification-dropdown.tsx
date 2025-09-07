@@ -25,9 +25,19 @@ export function EnhancedNotificationDropdown() {
   const [activeTab, setActiveTab] = useState<NotificationCategory | "all">("all");
 
   // Fetch notifications
-  const { data: notifications = [], isLoading } = useQuery<Notification[]>({
+  const { data: notifications = [], isLoading, error } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
     enabled: isOpen,
+  });
+
+  // Debug: Log the actual data received
+  console.log("🔍 Enhanced Notifications Debug:", { 
+    notifications, 
+    isLoading, 
+    error,
+    isOpen,
+    notificationCount: notifications?.length,
+    firstNotification: notifications?.[0]
   });
 
   // Fetch unread count

@@ -2670,18 +2670,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Notification routes
-  app.get('/api/notifications', unifiedAuthGuard, async (req, res) => {
-    try {
-      const userId = req.user!.id;
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
-      const notifications = await storage.getUserNotifications(userId, limit);
-      res.json(notifications);
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-      res.status(500).json({ message: "Failed to fetch notifications" });
-    }
-  });
+  // Notification routes (REMOVED - duplicate route, using improved version below)
 
   app.get('/api/notifications/unread-count', unifiedAuthGuard, async (req, res) => {
     try {
@@ -3832,15 +3821,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const filtered = unreadOnly ? notifications.filter(n => !n.isRead) : notifications;
       const paginated = filtered.slice((page - 1) * limit, page * limit);
       
-      res.json({
-        notifications: paginated,
-        pagination: {
-          page,
-          limit,
-          total: filtered.length,
-          hasMore: filtered.length > page * limit
-        }
-      });
+      // Return direct array to match frontend expectations  
+      console.log(`🔍 API returning ${paginated.length} notifications for user ${userId}`);
+      res.json(paginated);
     } catch (error) {
       console.error('Error fetching notifications:', error);
       res.status(500).json({ message: 'Failed to fetch notifications' });
