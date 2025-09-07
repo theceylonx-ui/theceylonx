@@ -281,17 +281,17 @@ export function EnhancedNotificationDropdown() {
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <p className="text-sm leading-tight" style={{ color: '#000000 !important', fontWeight: 'bold' }}>
-                              {notification.title}
+                          <div style={{ backgroundColor: '#ff0000 !important', padding: '10px', border: '3px solid yellow' }}>
+                            <p className="text-sm leading-tight" style={{ color: '#ffffff !important', fontWeight: 'bold', backgroundColor: '#000000' }}>
+                              🚨 ENHANCED: {notification.title}
                               {notification.priority === "critical" && (
                                 <Badge variant="destructive" className="ml-2 text-xs">
                                   Urgent
                                 </Badge>
                               )}
                             </p>
-                            <p className="text-xs mt-1 line-clamp-2" style={{ color: '#444444 !important', lineHeight: '1.4' }}>
-                              {notification.message}
+                            <p className="text-xs mt-1 line-clamp-2" style={{ color: '#ffffff !important', lineHeight: '1.4', backgroundColor: '#0000ff' }}>
+                              🚨 ENHANCED: {notification.message}
                             </p>
                           </div>
                           
