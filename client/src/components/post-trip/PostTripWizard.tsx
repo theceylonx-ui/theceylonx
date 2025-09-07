@@ -98,10 +98,10 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
       seasonality: [],
       ...initialData,
     },
-    mode: "onChange",
+    mode: "onBlur", // Changed from onChange to reduce re-renders
   });
   
-  const formData = form.watch();
+  const formData = form.watch(); // Keep for autosave but optimize below
   
   // Autosave functionality
   const { saveDraft, isSaving, isSuccess } = useAutosaveDraft(formData, {
