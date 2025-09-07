@@ -127,6 +127,12 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   deleteUser(id: string): Promise<void>;
   
+  // User preferences and personalization operations
+  getUserPreferences(userId: string): Promise<any>;
+  updateUserPreferences(userId: string, preferences: any): Promise<any>;
+  getUserPersonalization(userId: string): Promise<any>;
+  updateUserPersonalization(userId: string, personalization: any): Promise<any>;
+  
   // Trip operations
   createTrip(trip: InsertTrip): Promise<Trip>;
   getTrip(id: string): Promise<TripWithOrganizer | undefined>;
@@ -2726,6 +2732,102 @@ export class DatabaseStorage implements IStorage {
 
   async getAllTrips(): Promise<Trip[]> {
     return await db.select().from(trips);
+  }
+
+  // User preferences operations (from users table)
+  async getUserPreferences(userId: string): Promise<any> {
+    const [user] = await db
+      .select({
+        vibe: users.vibe,
+        companions: users.companions,
+        interests: users.interests,
+        months: users.months,
+        regions: users.regions,
+        budgetMin: users.budgetMin,
+        budgetMax: users.budgetMax,
+      })
+      .from(users)
+      .where(eq(users.id, userId));
+    
+    return user || {
+      vibe: [],
+      companions: [],
+      interests: [],
+      months: [],
+      regions: [],
+      budgetMin: null,
+      budgetMax: null,
+    };
+  }
+
+  async updateUserPreferences(userId: string, preferences: any): Promise<any> {
+    const updateData: any = {};
+    
+    if (preferences.vibe !== undefined) updateData.vibe = preferences.vibe;
+    if (preferences.companions !== undefined) updateData.companions = preferences.companions;
+    if (preferences.interests !== undefined) updateData.interests = preferences.interests;
+    if (preferences.months !== undefined) updateData.months = preferences.months;
+    if (preferences.regions !== undefined) updateData.regions = preferences.regions;
+    if (preferences.budgetMin !== undefined) updateData.budgetMin = preferences.budgetMin;
+    if (preferences.budgetMax !== undefined) updateData.budgetMax = preferences.budgetMax;
+    
+    updateData.updatedAt = new Date();
+
+    const [updatedUser] = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, userId))
+      .returning({
+        vibe: users.vibe,
+        companions: users.companions,
+        interests: users.interests,
+        months: users.months,
+        regions: users.regions,
+        budgetMin: users.budgetMin,
+        budgetMax: users.budgetMax,
+      });
+
+    return updatedUser;
+  }
+
+  // User personalization operations (from users table)
+  async getUserPersonalization(userId: string): Promise<any> {
+    const [user] = await db
+      .select({
+        isPaused: users.isPaused,
+        resetAt: users.resetAt,
+        abTestGroup: users.abTestGroup,
+      })
+      .from(users)
+      .where(eq(users.id, userId));
+    
+    return user || {
+      isPaused: false,
+      resetAt: null,
+      abTestGroup: 'personalized',
+    };
+  }
+
+  async updateUserPersonalization(userId: string, personalization: any): Promise<any> {
+    const updateData: any = {};
+    
+    if (personalization.isPaused !== undefined) updateData.isPaused = personalization.isPaused;
+    if (personalization.resetAt !== undefined) updateData.resetAt = personalization.resetAt;
+    if (personalization.abTestGroup !== undefined) updateData.abTestGroup = personalization.abTestGroup;
+    
+    updateData.updatedAt = new Date();
+
+    const [updatedUser] = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, userId))
+      .returning({
+        isPaused: users.isPaused,
+        resetAt: users.resetAt,
+        abTestGroup: users.abTestGroup,
+      });
+
+    return updatedUser;
   }
 }
 
