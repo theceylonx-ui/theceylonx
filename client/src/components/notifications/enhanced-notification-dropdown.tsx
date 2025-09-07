@@ -22,6 +22,9 @@ type NotificationPriority = "critical" | "normal" | "info";
 
 export function EnhancedNotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  
+  // EXTREME DEBUG: Log every state change
+  console.log("🔥 DROPDOWN STATE:", { isOpen });
   const [activeTab, setActiveTab] = useState<NotificationCategory | "all">("all");
 
   // Fetch notifications
@@ -39,6 +42,11 @@ export function EnhancedNotificationDropdown() {
     notificationCount: notifications?.length,
     firstNotification: notifications?.[0]
   });
+
+  // EXTREME DEBUG: Log raw data to see what we're actually getting
+  if (notifications && notifications.length > 0) {
+    console.log("🚨 RAW NOTIFICATION DATA:", JSON.stringify(notifications[0], null, 2));
+  }
 
   // Fetch unread count
   const { data: unreadCountData } = useQuery<{ count: number }>({
@@ -292,16 +300,26 @@ export function EnhancedNotificationDropdown() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
-                            <p className="text-sm leading-tight font-semibold" style={{ color: '#1f2937' }}>
-                              {notification.title}
+                            <p className="text-sm leading-tight font-semibold" style={{ 
+                              color: '#1f2937', 
+                              backgroundColor: '#ffff00', 
+                              padding: '2px',
+                              border: '2px solid red'
+                            }}>
+                              🚨 TITLE: {notification.title}
                               {notification.priority === "critical" && (
                                 <Badge variant="destructive" className="ml-2 text-xs">
                                   Urgent
                                 </Badge>
                               )}
                             </p>
-                            <p className="text-xs mt-1 line-clamp-2" style={{ color: '#374151' }}>
-                              {notification.message}
+                            <p className="text-xs mt-1 line-clamp-2" style={{ 
+                              color: '#374151', 
+                              backgroundColor: '#ffcccc', 
+                              padding: '2px',
+                              border: '2px solid blue'
+                            }}>
+                              🚨 MSG: {notification.message}
                             </p>
                           </div>
                           
