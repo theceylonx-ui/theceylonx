@@ -297,7 +297,7 @@ export function EnhancedNotificationDropdown() {
                               lineHeight: '1.3 !important',
                               fontFamily: 'system-ui, -apple-system, sans-serif !important'
                             }}>
-                              {notification.title}
+                              HARDCODED TEST: {notification.title || "No title"}
                               {notification.priority === "critical" && (
                                 <Badge variant="destructive" className="ml-2 text-xs">
                                   Urgent
@@ -318,7 +318,7 @@ export function EnhancedNotificationDropdown() {
                               marginTop: '4px !important',
                               fontFamily: 'system-ui, -apple-system, sans-serif !important'
                             }}>
-                              {notification.message}
+                              HARDCODED MSG: {notification.message || "No message"}
                             </p>
                           </div>
                           
