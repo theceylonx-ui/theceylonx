@@ -4011,8 +4011,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Image Upload URL Generation for Chat
-  app.post('/api/chat/image-upload-url', unifiedAuthGuard, async (req: any, res) => {
+  // Image Upload URL Generation for Chat (MUST BE BEFORE /:userId route)
+  app.post('/api/chat-images/upload-url', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       
@@ -4022,7 +4022,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const filename = `chat-image-${userId}-${timestamp}-${randomId}.jpg`;
       
       // For demo purposes, create a local storage URL that will work
-      const uploadUrl = `${req.protocol}://${req.get('host')}/api/chat/images/${filename}?upload=true`;
+      const uploadUrl = `${req.protocol}://${req.get('host')}/api/chat-images/${filename}?upload=true`;
       
       console.log("🔥 Generated upload URL:", uploadUrl);
       
@@ -4034,7 +4034,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Simple image storage endpoint for demo
-  app.put('/api/chat/images/:filename', unifiedAuthGuard, async (req: any, res) => {
+  app.put('/api/chat-images/:filename', unifiedAuthGuard, async (req: any, res) => {
     try {
       const { filename } = req.params;
       console.log("🔥 Image upload received for:", filename);
@@ -4043,7 +4043,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // In production, this would save to actual object storage
       res.status(200).json({ 
         success: true, 
-        url: `${req.protocol}://${req.get('host')}/api/chat/images/${filename}`
+        url: `${req.protocol}://${req.get('host')}/api/chat-images/${filename}`
       });
     } catch (error) {
       console.error('Error uploading image:', error);
@@ -4052,7 +4052,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Serve uploaded images (demo endpoint)
-  app.get('/api/chat/images/:filename', async (req, res) => {
+  app.get('/api/chat-images/:filename', async (req, res) => {
     try {
       const { filename } = req.params;
       console.log("🔥 Image request for:", filename);
