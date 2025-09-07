@@ -84,6 +84,13 @@ export function EnhancedRecommendedTrips() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Fetch trending trips as fallback when no enhanced recommendations
+  const { data: trendingTrips = [], isLoading: trendingLoading } = useQuery<any[]>({
+    queryKey: ['/api/recommendations/trending'],
+    queryFn: () => fetch('/api/recommendations/trending?limit=3').then(res => res.json()),
+    enabled: recommendations.length === 0 && !isLoading,
+  });
+
   // Fetch personalization settings
   const { data: personalizationSettings } = useQuery<{ isPaused?: boolean }>({
     queryKey: ['/api/user/personalization'],
@@ -126,10 +133,23 @@ export function EnhancedRecommendedTrips() {
     },
   });
 
+  // Convert trending trips to enhanced recommendation format for display
+  const fallbackRecommendations: EnhancedRecommendation[] = trendingTrips.map((trendingItem: any) => ({
+    trip: trendingItem.trip,
+    score: trendingItem.score || 0.8,
+    noveltyScore: 1.0,
+    seasonalityScore: 1.0,
+    reasons: ['Popular with travelers', 'Trending destination'],
+    features: ['trending', 'popular']
+  }));
+
+  // Use enhanced recommendations if available, otherwise use trending trips as fallback
+  const displayRecommendations = recommendations.length > 0 ? recommendations : fallbackRecommendations;
+
   // Track top 5 view event when recommendations load
   useEffect(() => {
-    if (recommendations.length >= 5 && !isLoading) {
-      const topFiveIds = recommendations.slice(0, 5).map((r: EnhancedRecommendation) => r.trip.id);
+    if (displayRecommendations.length >= 5 && !isLoading && !trendingLoading) {
+      const topFiveIds = displayRecommendations.slice(0, 5).map((r: EnhancedRecommendation) => r.trip.id);
       trackKpiMutation.mutate({
         eventType: 'ctr_top5',
         abTestGroup,
@@ -137,7 +157,7 @@ export function EnhancedRecommendedTrips() {
         eventData: { tripIds: topFiveIds }
       });
     }
-  }, [recommendations, isLoading, abTestGroup, sessionId]);
+  }, [displayRecommendations, isLoading, trendingLoading, abTestGroup, sessionId]);
 
   const handleTripView = (tripId: string) => {
     if (!viewedTrips.has(tripId)) {
@@ -312,7 +332,7 @@ export function EnhancedRecommendedTrips() {
     }).format(price);
   };
 
-  if (isLoading) {
+  if (isLoading || trendingLoading) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -389,7 +409,7 @@ export function EnhancedRecommendedTrips() {
 
       {/* Enhanced Recommendations Grid - Show exactly 3 cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {recommendations.slice(0, 3).map((recommendation: EnhancedRecommendation, index: number) => {
+        {displayRecommendations.slice(0, 3).map((recommendation: EnhancedRecommendation, index: number) => {
           const { trip } = recommendation;
           const isViewed = viewedTrips.has(trip.id);
           
@@ -497,7 +517,7 @@ export function EnhancedRecommendedTrips() {
         })}
       </div>
 
-      {recommendations.length === 0 && (
+      {displayRecommendations.length === 0 && (
         <Card className="p-8">
           <div className="text-center">
             <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
