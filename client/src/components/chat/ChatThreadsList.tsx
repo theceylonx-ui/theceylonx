@@ -34,9 +34,25 @@ interface ChatThread {
 }
 
 export function ChatThreadsList() {
+  // 🔥 EXTREME VISUAL DEBUG 🔥
   const { data: threads, isLoading, error } = useQuery<ChatThread[]>({
     queryKey: ["/api/threads"],
+    onSuccess: (data) => {
+      console.log("🔥 CEYLONX DEBUG - Chat threads API response:", data);
+      console.log("🔥 First thread:", data?.[0]);
+    },
+    onError: (err) => {
+      console.error("🔥 CEYLONX DEBUG - Chat threads error:", err);
+    }
   });
+
+  // 🔥 VISUAL DEBUG PANEL 🔥
+  const debugInfo = {
+    threadsData: threads,
+    isLoading,
+    error: error?.message,
+    threadCount: threads?.length || 0
+  };
 
   if (isLoading) {
     return (
@@ -67,13 +83,23 @@ export function ChatThreadsList() {
 
   if (!threads || threads.length === 0) {
     return (
-      <EmptyState 
-        type="chat"
-        primaryAction={{
-          label: "Browse Trips",
-          onClick: () => window.location.href = '/browse-trips'
-        }}
-      />
+      <div>
+        {/* 🔥 EXTREME DEBUG INFO 🔥 */}
+        <div className="bg-red-500 text-white p-4 mb-4 rounded">
+          <h3 className="font-bold">🔥 CEYLONX CHALLENGE DEBUG 🔥</h3>
+          <pre className="text-xs mt-2 overflow-auto">
+            {JSON.stringify(debugInfo, null, 2)}
+          </pre>
+        </div>
+        
+        <EmptyState 
+          type="chat"
+          primaryAction={{
+            label: "Browse Trips",
+            onClick: () => window.location.href = '/browse-trips'
+          }}
+        />
+      </div>
     );
   }
 
