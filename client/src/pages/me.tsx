@@ -89,23 +89,24 @@ export default function ProfilePage() {
   const { toast } = useToast();
   
   // Check URL parameters for tab selection
-  const getInitialTab = () => {
+  const getTabFromUrl = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab');
-    return tabParam === 'preferences' ? 'preferences' : 'overview';
+    // Valid tabs: overview, profile, preferences, activity, security, privacy
+    const validTabs = ['overview', 'profile', 'preferences', 'activity', 'security', 'privacy'];
+    return validTabs.includes(tabParam) ? tabParam : 'overview';
   };
   
-  const [activeTab, setActiveTab] = useState(getInitialTab);
+  const [activeTab, setActiveTab] = useState(() => getTabFromUrl());
 
   // Listen for URL changes to update active tab
   useEffect(() => {
     const handleUrlChange = () => {
-      const newTab = getInitialTab();
-      setActiveTab(newTab);
+      const newTab = getTabFromUrl();
+      if (newTab !== activeTab) {
+        setActiveTab(newTab);
+      }
     };
-
-    // Initial check
-    handleUrlChange();
 
     // Listen for browser navigation events
     window.addEventListener('popstate', handleUrlChange);
@@ -113,7 +114,7 @@ export default function ProfilePage() {
     return () => {
       window.removeEventListener('popstate', handleUrlChange);
     };
-  }, []);
+  }, [activeTab]);
 
   // Redirect if not authenticated
   useEffect(() => {
