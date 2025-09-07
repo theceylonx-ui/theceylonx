@@ -94,7 +94,7 @@ export default function ProfilePage() {
     const tabParam = urlParams.get('tab');
     // Valid tabs: overview, profile, preferences, activity, security, privacy
     const validTabs = ['overview', 'profile', 'preferences', 'activity', 'security', 'privacy'];
-    const selectedTab = validTabs.includes(tabParam) ? tabParam : 'overview';
+    const selectedTab = tabParam && validTabs.includes(tabParam) ? tabParam : 'overview';
     console.log('🔍 Tab selection from URL:', {
       search: window.location.search,
       tabParam,
@@ -132,7 +132,7 @@ export default function ProfilePage() {
   }, [user, authLoading, setLocation]);
 
   // Fetch aggregated profile data
-  const { data: profileData, isLoading, refetch } = useQuery({
+  const { data: profileData = {}, isLoading, refetch } = useQuery<any>({
     queryKey: ["/api/me"],
     enabled: !!user,
   });
@@ -149,7 +149,7 @@ export default function ProfilePage() {
     return <div>Loading...</div>;
   }
 
-  const { profile, preferences, privacy, notifications, stats } = profileData;
+  const { profile = user, preferences = {}, privacy = {}, notifications = {}, stats = {} } = profileData;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -180,7 +180,7 @@ export default function ProfilePage() {
               <div className="flex items-center space-x-6">
                 <div className="relative">
                   <Avatar className="h-28 w-28 lg:h-32 lg:w-32 ring-4 ring-white/30 shadow-xl">
-                    <AvatarImage src={profile.profileImageUrl} alt="Profile" />
+                    <AvatarImage src={profile?.profileImageUrl || user?.profileImageUrl} alt="Profile" />
                     <AvatarFallback className="text-2xl bg-white/20 text-white backdrop-blur-sm">
                       {getInitials(profile)}
                     </AvatarFallback>
@@ -1007,20 +1007,20 @@ function SavedTrips() {
   const [activeSubTab, setActiveSubTab] = useState("all");
   
   // Get all saved trips
-  const { data: allSavedTrips, isLoading: allLoading } = useQuery({
+  const { data: allSavedTrips = { items: [], total: 0, totalPages: 0 }, isLoading: allLoading } = useQuery<any>({
     queryKey: ['/api/user/saved-trips'],
     enabled: !!user,
   });
 
   // Get pinned trips only
-  const { data: pinnedTrips, isLoading: pinnedLoading } = useQuery({
+  const { data: pinnedTrips = { items: [], total: 0, totalPages: 0 }, isLoading: pinnedLoading } = useQuery<any>({
     queryKey: ['/api/user/saved-trips', { saveType: 'pinned' }],
     queryFn: () => fetch('/api/user/saved-trips?saveType=pinned').then(res => res.json()),
     enabled: !!user,
   });
 
   // Get interested trips only
-  const { data: interestedTrips, isLoading: interestedLoading } = useQuery({
+  const { data: interestedTrips = { items: [], total: 0, totalPages: 0 }, isLoading: interestedLoading } = useQuery<any>({
     queryKey: ['/api/user/saved-trips', { saveType: 'interested' }],
     queryFn: () => fetch('/api/user/saved-trips?saveType=interested').then(res => res.json()),
     enabled: !!user,
@@ -1150,12 +1150,12 @@ function UserActivity() {
   const { user } = useAuth();
   const [activeSubTab, setActiveSubTab] = useState("questions");
   
-  const { data: questions, isLoading: questionsLoading } = useQuery({
+  const { data: questions = [], isLoading: questionsLoading } = useQuery<any>({
     queryKey: ['/api/me/activity/questions'],
     enabled: !!user,
   });
 
-  const { data: trips, isLoading: tripsLoading } = useQuery({
+  const { data: trips = [], isLoading: tripsLoading } = useQuery<any>({
     queryKey: ['/api/me/activity/trips'],
     enabled: !!user,
   });

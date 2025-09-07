@@ -20,14 +20,19 @@ interface Report {
   createdAt: string;
 }
 
+interface ExtendedReport extends Report {
+  tripTitle?: string;
+  organizerName?: string;
+}
+
 export function AdminReportsTable() {
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [selectedReport, setSelectedReport] = useState<ExtendedReport | null>(null);
   const [chatModalOpen, setChatModalOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch reports
-  const { data: reports = [], isLoading } = useQuery({
+  const { data: reports = [], isLoading } = useQuery<Report[]>({
     queryKey: ["/api/admin/reports"],
   });
 

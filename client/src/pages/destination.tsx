@@ -181,11 +181,6 @@ export default function DestinationPage() {
                           </div>
                         </div>
                         
-                        {trip.notes && (
-                          <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
-                            {trip.notes}
-                          </p>
-                        )}
                         
                         <div className="flex items-center justify-between">
                           <div className="text-sm text-gray-500">
