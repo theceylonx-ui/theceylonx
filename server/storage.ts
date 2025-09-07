@@ -607,7 +607,7 @@ export class DatabaseStorage implements IStorage {
       .from(trips)
       .where(and(...conditions));
 
-    // Get paginated results (only select existing columns)
+    // Get paginated results (including new image fields)
     const query = db
       .select({
         trips: {
@@ -625,6 +625,10 @@ export class DatabaseStorage implements IStorage {
           status: trips.status,
           priceMin: trips.priceMin,
           priceMax: trips.priceMax,
+          // Image fields for trip photos
+          imageUrl: trips.imageUrl,
+          mediaUrls: trips.mediaUrls,
+          coverImageIndex: trips.coverImageIndex,
           createdAt: trips.createdAt,
           updatedAt: trips.updatedAt,
           isDeleted: trips.isDeleted,
