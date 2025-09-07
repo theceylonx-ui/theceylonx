@@ -199,7 +199,16 @@ export class EnhancedRecommendationService {
 
     // Get trip features
     const [features] = await db
-      .select()
+      .select({
+        id: tripFeatures.id,
+        tripId: tripFeatures.tripId,
+        viewCount: tripFeatures.viewCount,
+        totalBookings: tripFeatures.totalBookings,
+        popularityScore: tripFeatures.popularityScore,
+        tags: tripFeatures.tags,
+        createdAt: tripFeatures.createdAt,
+        updatedAt: tripFeatures.updatedAt
+      })
       .from(tripFeatures)
       .where(eq(tripFeatures.tripId, trip.id));
 
@@ -464,7 +473,9 @@ export class EnhancedRecommendationService {
     candidateTrips: (Trip & { organizer: User })[]
   ): Promise<(Trip & { organizer: User })[]> {
     const notInterestedTrips = await db
-      .select({ tripId: userInteractions.tripId })
+      .select({ 
+        tripId: userInteractions.tripId 
+      })
       .from(userInteractions)
       .where(and(
         eq(userInteractions.userId, userId),
@@ -654,7 +665,9 @@ export class EnhancedRecommendationService {
   private async calculateCollaborativeScore(trip: Trip, userId: string): Promise<number> {
     // Find similar users who liked this trip
     const tripInteractions = await db
-      .select({ userId: userInteractions.userId })
+      .select({ 
+        userId: userInteractions.userId 
+      })
       .from(userInteractions)
       .where(and(
         eq(userInteractions.tripId, trip.id),
@@ -893,7 +906,15 @@ export class EnhancedRecommendationService {
 
     // Get user interactions (last 90 days)
     const interactions = await db
-      .select()
+      .select({
+        id: userInteractions.id,
+        userId: userInteractions.userId,
+        tripId: userInteractions.tripId,
+        interactionType: userInteractions.interactionType,
+        duration: userInteractions.duration,
+        sessionId: userInteractions.sessionId,
+        createdAt: userInteractions.createdAt
+      })
       .from(userInteractions)
       .where(and(
         eq(userInteractions.userId, userId),
@@ -959,7 +980,13 @@ export class EnhancedRecommendationService {
   // Update trip features based on interactions
   private async updateTripFeatures(tripId: string): Promise<void> {
     const trip = await db
-      .select()
+      .select({
+        id: trips.id,
+        title: trips.title,
+        organizerId: trips.organizerId,
+        createdAt: trips.createdAt,
+        updatedAt: trips.updatedAt
+      })
       .from(trips)
       .where(eq(trips.id, tripId))
       .limit(1);
