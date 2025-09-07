@@ -1124,9 +1124,39 @@ export class EnhancedRecommendationService {
 
   // Generate trending trips (public endpoint, no user-specific data)
   async getTrendingTrips(limit: number = 10): Promise<TripRecommendation[]> {
-    // Get all active trips with organizer info
+    // Get all active trips with organizer info - using explicit field selection
     const candidateTrips = await db
-      .select()
+      .select({
+        id: trips.id,
+        title: trips.title,
+        description: trips.description,
+        fromLocation: trips.fromLocation,
+        toLocation: trips.toLocation,
+        date: trips.date,
+        time: trips.time,
+        seatsAvailable: trips.seatsAvailable,
+        price: trips.price,
+        region: trips.region,
+        contactInfo: trips.contactInfo,
+        organizerId: trips.organizerId,
+        status: trips.status,
+        createdAt: trips.createdAt,
+        updatedAt: trips.updatedAt,
+        isDeleted: trips.isDeleted,
+        deletedAt: trips.deletedAt,
+        // Flatten organizer fields
+        organizerEmail: users.email,
+        organizerName: users.name,
+        organizerFirstName: users.firstName,
+        organizerLastName: users.lastName,
+        organizerUsername: users.username,
+        organizerProfileImageUrl: users.profileImageUrl,
+        organizerPhoneNumber: users.phoneNumber,
+        organizerBio: users.bio,
+        organizerEmailVerified: users.emailVerified,
+        organizerCreatedAt: users.createdAt,
+        organizerUpdatedAt: users.updatedAt
+      })
       .from(trips)
       .leftJoin(users, eq(trips.organizerId, users.id))
       .where(
@@ -1139,7 +1169,47 @@ export class EnhancedRecommendationService {
 
     // Score for trending (mix of popularity, freshness, and regional diversity)
     const scoredTrips = candidateTrips.map(row => {
-      const trip = { ...row.trips, organizer: row.users! };
+      // Transform flattened data back to nested structure
+      const trip = {
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        fromLocation: row.fromLocation,
+        toLocation: row.toLocation,
+        date: row.date,
+        time: row.time,
+        seatsAvailable: row.seatsAvailable,
+        price: row.price,
+        region: row.region,
+        contactInfo: row.contactInfo,
+        organizerId: row.organizerId,
+        status: row.status,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        isDeleted: row.isDeleted,
+        deletedAt: row.deletedAt,
+        // Default values for missing fields to avoid errors
+        viewCount: 0,
+        bookingCount: 0,
+        freshBoost: '1.0',
+        tags: [],
+        seasonality: [],
+        safetyFlags: [],
+        organizer: {
+          id: row.organizerId,
+          email: row.organizerEmail,
+          name: row.organizerName,
+          firstName: row.organizerFirstName,
+          lastName: row.organizerLastName,
+          username: row.organizerUsername,
+          profileImageUrl: row.organizerProfileImageUrl,
+          phoneNumber: row.organizerPhoneNumber,
+          bio: row.organizerBio,
+          emailVerified: row.organizerEmailVerified,
+          createdAt: row.organizerCreatedAt,
+          updatedAt: row.organizerUpdatedAt
+        }
+      };
       
       const popularityScore = ((trip.viewCount || 0) + (trip.bookingCount || 0) * 2) / 50;
       const freshnessScore = this.calculateFreshnessScore(trip);
