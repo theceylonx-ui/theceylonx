@@ -71,11 +71,6 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
     enabled: isOpen,
   });
 
-  // Fetch images for selected category
-  const { data: categoryImages } = useQuery<{ images: ImageOption[] }>({
-    queryKey: ["/api/categories", formData.category, "images"],
-    enabled: isOpen && !!formData.category,
-  });
 
   const updateTripMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -285,11 +280,7 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
               </Label>
               <Select
                 value={formData.category}
-                onValueChange={(value) => {
-                  setFormData({ ...formData, category: value });
-                  // Reset selected image when category changes
-                  setSelectedImage("");
-                }}
+                onValueChange={(value) => setFormData({ ...formData, category: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
@@ -305,38 +296,57 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
             </div>
           </div>
 
-          {/* Image Selection */}
-          {categoryImages && categoryImages.images.length > 0 && (
-            <div className="space-y-2">
-              <Label>Choose Image</Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {categoryImages.images.map((image, index) => (
-                  <div
-                    key={index}
-                    className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
-                      selectedImage === image.imageUrl
-                        ? "border-ceylon-green ring-2 ring-ceylon-green/50"
-                        : "border-gray-200 hover:border-ceylon-green/50"
-                    }`}
-                    onClick={() => setSelectedImage(image.url)}
-                  >
-                    <img
-                      src={image.url}
-                      alt={image.description || "Trip image"}
-                      className="w-full h-24 object-cover"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-all" />
-                    {selectedImage === image.url && (
-                      <div className="absolute top-1 right-1 bg-ceylon-green text-white rounded-full p-1">
-                        <Camera className="h-3 w-3" />
-                      </div>
-                    )}
+          {/* Image Options */}
+          <div className="space-y-3">
+            <Label>Trip Image</Label>
+            <div className="space-y-3">
+              {/* Remove existing image option */}
+              {trip.imageUrl && (
+                <div className="flex items-center space-x-3 p-3 border rounded-lg">
+                  <img 
+                    src={trip.imageUrl} 
+                    alt="Current trip image" 
+                    className="w-16 h-16 object-cover rounded"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Current Image</p>
+                    <p className="text-xs text-gray-500">Currently used for this trip</p>
                   </div>
-                ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedImage("")}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    Remove
+                  </Button>
+                </div>
+              )}
+              
+              {/* New upload option */}
+              <div className="flex items-center space-x-3 p-3 border rounded-lg border-dashed hover:border-ceylon-green">
+                <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Upload New Image</p>
+                  <p className="text-xs text-gray-500">Add a custom image for this trip</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled
+                  className="text-gray-400"
+                >
+                  Coming Soon
+                </Button>
               </div>
             </div>
-          )}
+          </div>
 
           {/* Notes */}
           <div className="space-y-2">
