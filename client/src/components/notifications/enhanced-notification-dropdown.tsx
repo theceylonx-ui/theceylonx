@@ -290,7 +290,7 @@ export function EnhancedNotificationDropdown() {
                                 </Badge>
                               )}
                             </p>
-                            <p className="text-xs mt-1 line-clamp-2 text-gray-700 dark:text-gray-300">
+                            <p className="text-xs mt-1 line-clamp-2 text-gray-900 dark:text-gray-100 font-medium">
                               {notification.message}
                             </p>
                           </div>
