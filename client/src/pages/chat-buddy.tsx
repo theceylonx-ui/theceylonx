@@ -66,6 +66,16 @@ export default function ChatBuddy() {
   const urlParams = new URLSearchParams(window.location.search);
   const tripId = urlParams.get('tripId');
 
+  // Fetch trip data and status for current user
+  const { data: tripData, isLoading: tripLoading } = useQuery<any>({
+    queryKey: ['/api/trips', tripId],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/trips/${tripId}`);
+      return response.json();
+    },
+    enabled: !!tripId,
+  });
+
   // Fetch trip status for current user
   const { data: tripStatus, isLoading: statusLoading } = useQuery<TripStatus>({
     queryKey: ['/api/trips', tripId, 'status'],
@@ -173,7 +183,52 @@ export default function ChatBuddy() {
     );
   }
 
-  if (statusLoading) {
+  // Check if trip is deleted or unavailable
+  if (tripData && ['deleted', 'cancelled', 'inactive'].includes(tripData.status)) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <MessageCircle className="h-8 w-8 text-purple-600" />
+              Chat Buddy
+            </h1>
+          </div>
+
+          <Card>
+            <CardContent className="p-12 text-center">
+              <div className="mb-6">
+                <div className="w-20 h-20 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+                  <MessageSquare className="h-10 w-10 text-red-500" />
+                </div>
+                <h2 className="text-2xl font-semibold mb-2">Trip No Longer Available</h2>
+                <p className="text-muted-foreground text-lg mb-4">
+                  This trip has been {tripData.status}. Chat functionality is no longer available.
+                </p>
+                <p className="text-sm text-gray-400 mb-8">
+                  {tripData.status === 'deleted' ? 'The trip organizer has removed this trip.' :
+                   tripData.status === 'cancelled' ? 'This trip has been cancelled.' :
+                   'This trip is currently inactive.'}
+                </p>
+              </div>
+
+              <Button
+                onClick={() => window.history.back()}
+                variant="outline"
+                className="mt-4"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Go Back
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (statusLoading || tripLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
@@ -218,8 +273,8 @@ export default function ChatBuddy() {
     );
   }
 
-  // Empty state for non-accepted users
-  if (tripStatus?.status !== 'accepted') {
+  // Empty state for non-accepted users or inactive trips
+  if (tripStatus?.status !== 'accepted' || (tripData && !['active', 'full'].includes(tripData.status))) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
@@ -237,9 +292,15 @@ export default function ChatBuddy() {
                 <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                   <MessageSquare className="h-10 w-10 text-gray-400" />
                 </div>
-                <h2 className="text-2xl font-semibold mb-2">Chat will unlock after acceptance</h2>
+                <h2 className="text-2xl font-semibold mb-2">
+                  {tripData && !['active', 'full'].includes(tripData.status) 
+                    ? 'Chat unavailable for this trip' 
+                    : 'Chat will unlock after acceptance'}
+                </h2>
                 <p className="text-muted-foreground text-lg mb-8">
-                  You can message the organizer once they accept your request for this trip.
+                  {tripData && !['active', 'full'].includes(tripData.status)
+                    ? `This trip is ${tripData.status}. Chat functionality is not available.`
+                    : 'You can message the organizer once they accept your request for this trip.'}
                 </p>
               </div>
 

@@ -223,6 +223,27 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
     );
   }
 
+  // Check if trip is deleted or unavailable
+  if (!threadData.thread.trip) {
+    return (
+      <Card className="h-full flex items-center justify-center">
+        <div className="text-center text-gray-500">
+          <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-red-500" />
+          <h3 className="text-lg font-semibold mb-2">Trip No Longer Available</h3>
+          <p className="mb-4">This trip has been deleted or is no longer accessible.</p>
+          <p className="text-sm text-gray-400 mb-4">Your chat history is preserved but no new messages can be sent.</p>
+          <Button onClick={onBack} className="mt-4">
+            Go Back
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
+  // Check if trip is inactive/cancelled
+  const tripStatus = threadData.thread.trip.status;
+  const isTripUnavailable = ['deleted', 'cancelled', 'inactive'].includes(tripStatus);
+
   return (
     <Card className="h-full flex flex-col">
       {/* Header */}
@@ -233,9 +254,17 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
           </Button>
           
           <div>
-            <h3 className="font-semibold text-lg">{threadData.thread.trip.title}</h3>
+            <h3 className="font-semibold text-lg">
+              {threadData.thread.trip.title}
+              {isTripUnavailable && (
+                <span className="ml-2 text-red-500 text-sm">[{tripStatus.toUpperCase()}]</span>
+              )}
+            </h3>
             <p className="text-sm text-gray-500">
-              {threadData.thread.trip.origin} → {threadData.thread.trip.destination}
+              {threadData.thread.trip.fromLocation} → {threadData.thread.trip.toLocation}
+              {isTripUnavailable && (
+                <span className="ml-2 text-red-500">• Trip no longer active</span>
+              )}
             </p>
           </div>
         </div>
@@ -350,7 +379,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
       </div>
 
       {/* Input Area */}
-      {threadData.thread.status === 'active' ? (
+      {threadData.thread.status === 'active' && !isTripUnavailable ? (
         <>
           <Separator />
           <form onSubmit={handleSendMessage} className="p-4">
@@ -388,7 +417,15 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
         </>
       ) : (
         <div className="p-4 text-center text-gray-500 bg-gray-50 dark:bg-gray-800">
-          <p>This chat is {threadData.thread.status}. No new messages can be sent.</p>
+          {isTripUnavailable ? (
+            <div>
+              <AlertTriangle className="w-5 h-5 mx-auto mb-2 text-red-500" />
+              <p>This trip is {tripStatus}. Chat is read-only.</p>
+              <p className="text-sm mt-1">No new messages can be sent for inactive trips.</p>
+            </div>
+          ) : (
+            <p>This chat is {threadData.thread.status}. No new messages can be sent.</p>
+          )}
         </div>
       )}
     </Card>

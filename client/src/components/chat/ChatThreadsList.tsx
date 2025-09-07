@@ -145,10 +145,13 @@ export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
                   </div>
                   
                   {/* Trip Info */}
-                  {thread.trip && (
+                  {thread.trip ? (
                     <div className="mt-1">
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                         {thread.trip.title}
+                        {(thread.trip.status === 'deleted' || thread.trip.status === 'cancelled') && (
+                          <span className="ml-2 text-red-500 text-xs">[{thread.trip.status.toUpperCase()}]</span>
+                        )}
                       </p>
                       <div className="flex items-center text-xs text-gray-500 mt-1">
                         <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
@@ -158,6 +161,10 @@ export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
                         <span className="mx-2">•</span>
                         <span>{format(new Date(thread.trip.date), "MMM d, yyyy")}</span>
                       </div>
+                    </div>
+                  ) : (
+                    <div className="mt-1">
+                      <p className="text-sm text-red-500 italic">Trip no longer available</p>
                     </div>
                   )}
 
@@ -175,8 +182,23 @@ export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
                     {thread.trip?.status && (
                       <>
                         <span className="mx-2 text-gray-300">•</span>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge 
+                          variant={
+                            thread.trip.status === 'active' ? 'outline' :
+                            thread.trip.status === 'inactive' ? 'secondary' :
+                            ['deleted', 'cancelled'].includes(thread.trip.status) ? 'destructive' : 'outline'
+                          }
+                          className="text-xs"
+                        >
                           Trip: {thread.trip.status}
+                        </Badge>
+                      </>
+                    )}
+                    {!thread.trip && (
+                      <>
+                        <span className="mx-2 text-gray-300">•</span>
+                        <Badge variant="destructive" className="text-xs">
+                          Trip: Deleted
                         </Badge>
                       </>
                     )}
