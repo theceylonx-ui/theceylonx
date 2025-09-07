@@ -65,29 +65,73 @@ export function MediaUploader({
     handleFiles(files);
   }, []);
   
-  const handleFiles = useCallback((files: File[]) => {
+  const handleFiles = useCallback(async (files: File[]) => {
     if (value.length + files.length > maxFiles) {
       alert(`Maximum ${maxFiles} files allowed`);
       return;
     }
     
-    files.forEach((file) => {
-      if (!file.type.startsWith('image/')) {
-        alert('Only image files are allowed');
-        return;
+    setIsCompressing(true);
+    let totalOriginalSize = 0;
+    let totalCompressedSize = 0;
+    
+    try {
+      const compressedItems: MediaItem[] = [];
+      
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) {
+          alert('Only image files are allowed');
+          continue;
+        }
+        
+        try {
+          // Get optimal compression settings based on file size
+          const compressionOptions = getOptimalCompressionSettings(file);
+          
+          // Compress the image
+          const result = await compressImage(file, compressionOptions);
+          
+          totalOriginalSize += result.originalSize;
+          totalCompressedSize += result.compressedSize;
+          
+          const newItem: MediaItem = {
+            url: result.compressedFile,
+            alt: '',
+            caption: ''
+          };
+          
+          compressedItems.push(newItem);
+        } catch (error) {
+          console.error('Error compressing image:', error);
+          // Fallback to original file if compression fails
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const newItem: MediaItem = {
+              url: e.target?.result as string,
+              alt: '',
+              caption: ''
+            };
+            compressedItems.push(newItem);
+          };
+          reader.readAsDataURL(file);
+        }
       }
       
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const newItem: MediaItem = {
-          url: e.target?.result as string,
-          alt: '',
-          caption: ''
-        };
-        onChange([...value, newItem]);
-      };
-      reader.readAsDataURL(file);
-    });
+      // Update compression stats
+      if (totalOriginalSize > 0) {
+        const compressionRatio = ((totalOriginalSize - totalCompressedSize) / totalOriginalSize) * 100;
+        setCompressionStats({
+          originalSize: totalOriginalSize,
+          compressedSize: totalCompressedSize,
+          compressionRatio
+        });
+      }
+      
+      // Add compressed items to the current value
+      onChange([...value, ...compressedItems]);
+    } finally {
+      setIsCompressing(false);
+    }
   }, [value, onChange, maxFiles]);
   
   const removeItem = useCallback((index: number) => {
