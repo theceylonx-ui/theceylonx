@@ -67,7 +67,13 @@ export function NotificationDropdown() {
   });
 
   const handleNotificationClick = (notification: Notification) => {
-    console.log('Notification clicked:', notification);
+    console.log('Notification clicked:', {
+      id: notification.id,
+      title: notification.title,
+      message: notification.message,
+      primaryActionUrl: notification.primaryActionUrl,
+      actionUrl: notification.actionUrl
+    });
     if (!notification.isRead) {
       markAsReadMutation.mutate(notification.id);
     }
@@ -171,12 +177,12 @@ export function NotificationDropdown() {
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-medium leading-tight text-gray-900 dark:text-gray-100">
-                          {notification.title}
+                      <div className="flex-1">
+                        <p className="text-sm font-medium leading-tight text-black dark:text-white" style={{ color: '#000' }}>
+                          {notification.title || 'No title'}
                         </p>
-                        <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
-                          {notification.message}
+                        <p className="text-xs text-gray-700 dark:text-gray-200 mt-1 line-clamp-2" style={{ color: '#333' }}>
+                          {notification.message || 'No message'}
                         </p>
                       </div>
                       
