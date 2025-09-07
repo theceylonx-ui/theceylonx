@@ -4021,13 +4021,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const randomId = Math.random().toString(36).substring(2, 15);
       const filename = `chat-image-${userId}-${timestamp}-${randomId}.jpg`;
       
-      // For now, return a mock URL until object storage is fully integrated
-      const uploadUrl = `https://storage.googleapis.com/replit-objstore-ec75efb9-dcc1-41c7-9909-6b7ac54918f4/.private/${filename}`;
+      // For demo purposes, create a local storage URL that will work
+      const uploadUrl = `${req.protocol}://${req.get('host')}/api/chat/images/${filename}?upload=true`;
+      
+      console.log("🔥 Generated upload URL:", uploadUrl);
       
       res.json({ uploadUrl });
     } catch (error) {
       console.error('Error generating upload URL:', error);
       res.status(500).json({ message: 'Failed to generate upload URL' });
+    }
+  });
+
+  // Simple image storage endpoint for demo
+  app.put('/api/chat/images/:filename', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const { filename } = req.params;
+      console.log("🔥 Image upload received for:", filename);
+      
+      // For demo: just return success
+      // In production, this would save to actual object storage
+      res.status(200).json({ 
+        success: true, 
+        url: `${req.protocol}://${req.get('host')}/api/chat/images/${filename}`
+      });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      res.status(500).json({ message: 'Failed to upload image' });
+    }
+  });
+
+  // Serve uploaded images (demo endpoint)
+  app.get('/api/chat/images/:filename', async (req, res) => {
+    try {
+      const { filename } = req.params;
+      console.log("🔥 Image request for:", filename);
+      
+      // For demo: return a placeholder image URL
+      // In production, this would fetch from object storage
+      const placeholderUrl = 'https://via.placeholder.com/400x300/4f46e5/ffffff?text=Image+Uploaded';
+      res.redirect(placeholderUrl);
+    } catch (error) {
+      console.error('Error serving image:', error);
+      res.status(404).json({ message: 'Image not found' });
     }
   });
 

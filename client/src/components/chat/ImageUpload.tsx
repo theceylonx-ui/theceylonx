@@ -34,8 +34,18 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
 
   // Get upload URL mutation
   const getUploadUrlMutation = useMutation({
-    mutationFn: async (): Promise<{ uploadURL: string }> => {
-      return apiRequest("POST", "/api/profile/upload-url", {});
+    mutationFn: async (): Promise<{ uploadUrl: string }> => {
+      const response = await fetch('/api/chat/upload-url', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to get upload URL');
+      }
+      return response.json();
     },
   });
 
@@ -57,7 +67,10 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
         throw new Error('Failed to upload image');
       }
 
-      return { success: true, url: uploadUrl };
+      // Extract the base URL without query parameters for storage
+      const cleanUrl = uploadUrl.split('?')[0];
+      console.log("🔥 Upload successful, clean URL:", cleanUrl);
+      return { success: true, url: cleanUrl };
     },
     onSuccess: (data) => {
       setUploadProgress(100);
@@ -170,13 +183,14 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
       setUploadProgress(10);
       
       // Get upload URL
-      const { uploadURL } = await getUploadUrlMutation.mutateAsync();
+      const { uploadUrl } = await getUploadUrlMutation.mutateAsync();
+      console.log("🔥 Got upload URL:", uploadUrl);
       setUploadProgress(30);
       
       // Upload the file
       await uploadImageMutation.mutateAsync({
         file: selectedFile,
-        uploadUrl: uploadURL,
+        uploadUrl: uploadUrl,
       });
     } catch (error) {
       toast({
