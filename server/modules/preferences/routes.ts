@@ -10,7 +10,15 @@ import {
 } from "../../../shared/schema";
 
 // Server-side type that includes version and updatedAt for upserts
-type ServerUserPreferences = InsertUserPreferences & {
+type ServerUserPreferences = {
+  userId?: string;
+  vibe?: string[];
+  companions?: string[];
+  interests?: string[];
+  months?: string[];
+  regions?: string[];
+  budgetMin?: number | null;
+  budgetMax?: number | null;
   version?: number;
   updatedAt?: Date;
 };
@@ -28,18 +36,16 @@ import { mlRefreshService } from "./ml-refresh";
  */
 export function registerPreferencesRoutes(app: Express) {
   
-  // GET /api/preferences - Get user preferences with fallback to defaults
+  // GET /api/preferences - Get user preferences with fallback to defaults  
   app.get("/api/preferences", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       
-      const [existing] = await db
-        .select()
-        .from(userPreferences)
-        .where(eq(userPreferences.userId, userId))
-        .limit(1);
+      // Use storage method instead of direct DB access
+      const storage = (await import("../../storage")).storage;
+      const preferences = await storage.getUserPreferences(userId);
       
-      if (!existing) {
+      if (!preferences || Object.keys(preferences).length === 0) {
         // Return default preferences if none exist
         res.json({
           ...DEFAULT_PREFERENCES,
@@ -50,7 +56,12 @@ export function registerPreferencesRoutes(app: Express) {
         return;
       }
       
-      res.json(existing);
+      res.json({
+        ...preferences,
+        userId,
+        version: 1,
+        updatedAt: new Date().toISOString()
+      });
       
     } catch (error) {
       console.error("Error fetching preferences:", error);
@@ -80,56 +91,16 @@ export function registerPreferencesRoutes(app: Express) {
       
       const validatedData = validation.data!;
       
-      // Get current version for conflict detection
-      const [current] = await db
-        .select({ version: userPreferences.version })
-        .from(userPreferences)
-        .where(eq(userPreferences.userId, userId))
-        .limit(1);
-      
-      // Check for version conflicts
-      if (current && clientVersion && current.version !== clientVersion) {
-        return res.status(409).json({
-          error: "Conflict detected",
-          message: "Preferences were modified by another session",
-          currentVersion: current.version,
-          clientVersion
-        });
-      }
-      
-      const nextVersion = current ? current.version + 1 : 1;
-      
-      // Prepare upsert data
-      const upsertData: ServerUserPreferences = {
-        userId,
-        ...validatedData,
-        version: nextVersion,
-        updatedAt: new Date()
-      };
-      
-      // Perform upsert with optimistic concurrency control
-      const [result] = await db
-        .insert(userPreferences)
-        .values(upsertData)
-        .onConflictDoUpdate({
-          target: userPreferences.userId,
-          set: {
-            ...validatedData,
-            version: nextVersion,
-            updatedAt: new Date()
-          },
-          where: current 
-            ? eq(userPreferences.version, current.version)
-            : undefined
-        })
-        .returning();
+      // Use storage method to update preferences
+      const storage = (await import("../../storage")).storage;
+      const result = await storage.updateUserPreferences(userId, validatedData);
       
       // Create audit trail event
       await db.insert(preferenceEvents).values({
         userId,
-        event: current ? 'updated' : 'created',
+        event: 'updated',
         diff: {
-          old: current ? undefined : null,
+          old: null,
           new: validatedData
         }
       });
@@ -137,7 +108,7 @@ export function registerPreferencesRoutes(app: Express) {
       // Trigger ML refresh asynchronously (don't block response)
       mlRefreshService.refreshUserMLFeatures(
         userId, 
-        current || undefined, 
+        undefined, 
         result
       ).catch(error => {
         console.error("ML refresh failed but preferences saved:", error);
@@ -146,7 +117,7 @@ export function registerPreferencesRoutes(app: Express) {
       res.json({
         success: true,
         preferences: result,
-        message: current ? "Preferences updated" : "Preferences created"
+        message: "Preferences updated"
       });
       
     } catch (error) {
@@ -172,33 +143,19 @@ export function registerPreferencesRoutes(app: Express) {
     try {
       const userId = req.user.claims.sub;
       
-      // Get current preferences for audit trail
-      const [current] = await db
-        .select()
-        .from(userPreferences)
-        .where(eq(userPreferences.userId, userId))
-        .limit(1);
+      // Use storage method to reset preferences
+      const storage = (await import("../../storage")).storage;
+      const current = await storage.getUserPreferences(userId);
       
       if (!current) {
         return res.status(404).json({
-          error: "No preferences found",
+          error: "No preferences found", 
           message: "User has no preferences to delete"
         });
       }
       
-      // Reset to defaults
-      const resetData: ServerUserPreferences = {
-        userId,
-        ...DEFAULT_PREFERENCES,
-        version: current.version + 1,
-        updatedAt: new Date()
-      };
-      
-      const [result] = await db
-        .update(userPreferences)
-        .set(resetData)
-        .where(eq(userPreferences.userId, userId))
-        .returning();
+      // Reset to defaults using storage method
+      const result = await storage.updateUserPreferences(userId, DEFAULT_PREFERENCES);
       
       // Create audit trail event
       await db.insert(preferenceEvents).values({
