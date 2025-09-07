@@ -28,6 +28,9 @@ export const tripWithOrganizerSchema = z.object({
   status: z.string(),
   category: z.string(),
   imageUrl: z.string().nullable(),
+  // User uploaded images from trip creation form
+  mediaUrls: z.array(z.string()).default([]),
+  coverImageIndex: z.number().default(0),
   organizer: normalizedUserSchema,
   viewCount: z.number().default(0),
   bookingCount: z.number().default(0),

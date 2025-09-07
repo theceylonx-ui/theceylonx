@@ -8,7 +8,7 @@ import { UserDisplay } from "@/components/ui/user-display";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { TripWithNormalizedOrganizer } from "@shared/schema";
+import type { TripWithOrganizer } from "@shared/types/api";
 import { ActionsMenu } from "@/components/ActionsMenu";
 import { EditContentDialog } from "@/components/EditContentDialog";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
@@ -17,7 +17,7 @@ import { createTripDetailLink } from "@/utils/searchParams";
 import { useState } from "react";
 
 interface TripCardProps {
-  trip: TripWithNormalizedOrganizer & { isPinned?: boolean; isInterested?: boolean };
+  trip: TripWithOrganizer & { isPinned?: boolean; isInterested?: boolean };
   badges?: string[];
 }
 
@@ -338,7 +338,14 @@ export default function TripCard({ trip, badges }: TripCardProps) {
   };
 
   const getTripImage = () => {
-    // Priority 1: Use database image (user uploaded or Ceylon Expand logo)
+    // Priority 1: Use user-uploaded images from mediaUrls
+    if (trip.mediaUrls && trip.mediaUrls.length > 0) {
+      const coverIndex = trip.coverImageIndex || 0;
+      const coverImageUrl = trip.mediaUrls[Math.min(coverIndex, trip.mediaUrls.length - 1)];
+      return coverImageUrl;
+    }
+    
+    // Priority 2: Use database imageUrl (fallback or external image)
     if (trip.imageUrl) {
       // If it's a local asset path, ensure it works in both dev and production
       if (trip.imageUrl.startsWith('/assets/')) {
@@ -347,7 +354,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
       return trip.imageUrl;
     }
     
-    // Priority 2: Ceylon Expand logo as fallback (no more regional images)
+    // Priority 3: Ceylon Expand logo as fallback
     return '/assets/5_1756417819316.png';
   };
 
@@ -358,16 +365,72 @@ export default function TripCard({ trip, badges }: TripCardProps) {
     <Link href={tripDetailLink}>
       <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group border-0 shadow-sm" data-testid={`trip-card-${trip.id}`}>
         <div className="relative">
-          <img 
-            src={getTripImage()}
-            alt={`${trip.region} travel photo of Sri Lanka - ${trip.fromLocation} to ${trip.toLocation}`}
-            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-            loading="lazy"
-            onError={(e) => {
-              // Fallback to Ceylon Expand logo if image fails
-              e.currentTarget.src = '/assets/5_1756417819316.png';
-            }}
-          />
+          {getTripImage() === '/assets/5_1756417819316.png' && !trip.mediaUrls?.length && !trip.imageUrl ? (
+            // Beautiful Ceylon Expand fallback design
+            <div className="w-full h-48 bg-gradient-to-br from-ceylon-green via-ceylon-blue to-purple-600 flex flex-col items-center justify-center relative overflow-hidden">
+              {/* Background pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-4 left-4 w-8 h-8 border-2 border-white rounded-full"></div>
+                <div className="absolute top-12 right-8 w-4 h-4 border border-white rounded-full"></div>
+                <div className="absolute bottom-8 left-12 w-6 h-6 border border-white rounded-full"></div>
+                <div className="absolute bottom-4 right-4 w-3 h-3 bg-white rounded-full opacity-50"></div>
+              </div>
+              
+              {/* Tribe icon */}
+              <div className="text-white mb-2">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" className="drop-shadow-sm">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                  <circle cx="18" cy="8" r="2"/>
+                  <circle cx="6" cy="8" r="2"/>
+                  <path d="M18 10c-1.33 0-2.67.33-3.33 1H15v2h1.67c.66-.67 2-.33 3.33-1v-2z"/>
+                  <path d="M6 10v2c1.33.67 2.67.33 3.33 1H11v-2H9.33C8.67 10.33 7.33 10 6 10z"/>
+                </svg>
+              </div>
+              
+              {/* Ceylon Expand text */}
+              <div className="text-center text-white">
+                <div className="text-lg font-bold tracking-wide drop-shadow-sm">Ceylon Expand</div>
+                <div className="text-xs opacity-90 mt-1">Travel Together</div>
+              </div>
+            </div>
+          ) : (
+            <img 
+              src={getTripImage()}
+              alt={`${trip.region} travel photo of Sri Lanka - ${trip.fromLocation} to ${trip.toLocation}`}
+              className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+              onError={(e) => {
+                // Replace with beautiful Ceylon Expand fallback
+                const target = e.currentTarget;
+                const container = target.parentElement;
+                if (container) {
+                  container.innerHTML = `
+                    <div class="w-full h-48 bg-gradient-to-br from-ceylon-green via-ceylon-blue to-purple-600 flex flex-col items-center justify-center relative overflow-hidden">
+                      <div class="absolute inset-0 opacity-10">
+                        <div class="absolute top-4 left-4 w-8 h-8 border-2 border-white rounded-full"></div>
+                        <div class="absolute top-12 right-8 w-4 h-4 border border-white rounded-full"></div>
+                        <div class="absolute bottom-8 left-12 w-6 h-6 border border-white rounded-full"></div>
+                        <div class="absolute bottom-4 right-4 w-3 h-3 bg-white rounded-full opacity-50"></div>
+                      </div>
+                      <div class="text-white mb-2">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" class="drop-shadow-sm">
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                          <circle cx="18" cy="8" r="2"/>
+                          <circle cx="6" cy="8" r="2"/>
+                          <path d="M18 10c-1.33 0-2.67.33-3.33 1H15v2h1.67c.66-.67 2-.33 3.33-1v-2z"/>
+                          <path d="M6 10v2c1.33.67 2.67.33 3.33 1H11v-2H9.33C8.67 10.33 7.33 10 6 10z"/>
+                        </svg>
+                      </div>
+                      <div class="text-center text-white">
+                        <div class="text-lg font-bold tracking-wide drop-shadow-sm">Ceylon Expand</div>
+                        <div class="text-xs opacity-90 mt-1">Travel Together</div>
+                      </div>
+                    </div>
+                  `;
+                }
+              }}
+            />
+          )}
           <div className="absolute top-3 right-3">
             <Badge 
               className={`${getRegionColor(trip.region)} text-white border-0`}

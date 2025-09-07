@@ -369,7 +369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       console.log("Creating trip with data:", { ...req.body, organizerId: userId });
       
-      // Extract user-uploaded images and other image fields
+      // Extract image fields - use mediaUrls from form
       const { imageUrl, imageProvider, imageAttribution, imageFetchedAt, selectedCategoryImage, images, ...clientData } = req.body;
       
       const tripData = insertTripSchema.parse({ ...clientData, organizerId: userId });
@@ -377,22 +377,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let finalImageData;
       
-      // Priority 1: Use user-uploaded image if available
-      if (images && images.length > 0) {
+      // Priority 1: Use user-uploaded mediaUrls if available
+      if (tripData.mediaUrls && tripData.mediaUrls.length > 0) {
+        const coverIndex = tripData.coverImageIndex || 0;
+        const coverImageUrl = tripData.mediaUrls[Math.min(coverIndex, tripData.mediaUrls.length - 1)];
+        
         finalImageData = {
-          imageUrl: images[0], // Use first uploaded image
+          imageUrl: coverImageUrl, // Use cover image from mediaUrls
           imageProvider: 'user_upload',
           imageAttribution: null,
-          imageFetchedAt: new Date()
+          imageFetchedAt: new Date(),
+          mediaUrls: tripData.mediaUrls,
+          coverImageIndex: coverIndex
         };
-        console.log("Using user-uploaded image:", images[0]);
+        console.log(`Using user-uploaded image (${coverIndex + 1}/${tripData.mediaUrls.length}):`, coverImageUrl);
       } else {
         // Priority 2: Use Ceylon Expand logo as fallback
         finalImageData = {
           imageUrl: '/assets/5_1756417819316.png', // Ceylon Expand logo
           imageProvider: 'ceylon_expand_logo',
           imageAttribution: null,
-          imageFetchedAt: new Date()
+          imageFetchedAt: new Date(),
+          mediaUrls: [],
+          coverImageIndex: 0
         };
         console.log("Using Ceylon Expand logo as fallback image");
       }
@@ -403,11 +410,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tripWithImage = {
         ...tripData,
         category: safeCategory,
-        images: images || [], // Store uploaded images array
         ...finalImageData
       };
       
       console.log("Final image assigned:", finalImageData.imageUrl);
+      console.log("MediaUrls stored:", finalImageData.mediaUrls);
       
       const trip = await storage.createTrip(tripWithImage);
       res.json(trip);
