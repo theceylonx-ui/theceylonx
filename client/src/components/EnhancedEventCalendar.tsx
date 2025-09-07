@@ -299,11 +299,12 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
   const dayCountsMap = new Map(monthCounts?.days.map(day => [day.date, day.count]) || [])
   
   // Day cell renderer with counts and accessibility
-  const dayRenderer = (date: Date) => {
+  const dayRenderer = (date: Date, displayMonth: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd')
     const count = dayCountsMap.get(dateStr) || 0
     const isSelected = dateStr === calendarState.selectedDate
     const hasEvents = count > 0
+    const isOutsideMonth = date.getMonth() !== displayMonth.getMonth()
     
     return (
       <div 
@@ -321,7 +322,9 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
         }}
       >
         <span className={`text-sm ${hasEvents ? 'font-bold' : 'font-normal'} ${
-          isSelected ? 'text-white' : hasEvents ? 'text-ceylon-green' : 'text-gray-700'
+          isSelected ? 'text-white' : 
+          isOutsideMonth ? 'text-gray-400' : 
+          hasEvents ? 'text-ceylon-green' : 'text-gray-700'
         }`}>
           {format(date, 'd')}
         </span>
@@ -630,12 +633,70 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
                 align-items: center;
                 justify-content: center;
               }
+              
+              .enhanced-calendar .rdp-button.rdp-day_outside {
+                color: #9ca3af !important;
+                opacity: 0.6;
+              }
+              
+              .enhanced-calendar .rdp-button.rdp-day_outside:hover {
+                background-color: #f9fafb;
+                color: #6b7280 !important;
+              }
+              
+              .enhanced-calendar .rdp-nav {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 16px;
+              }
+              
+              .enhanced-calendar .rdp-caption {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex: 1;
+                margin: 0;
+              }
+              
+              .enhanced-calendar .rdp-caption_label {
+                font-size: 18px;
+                font-weight: 600;
+                color: #374151;
+                margin: 0;
+              }
+              
+              .enhanced-calendar .rdp-nav_button {
+                width: 40px;
+                height: 40px;
+                border-radius: 8px;
+                border: 1px solid #d1d5db;
+                background: white;
+                color: #374151;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+                margin: 0 8px;
+              }
+              
+              .enhanced-calendar .rdp-nav_button:hover {
+                background: #f3f4f6;
+                border-color: #9ca3af;
+                transform: scale(1.05);
+              }
+              
+              .enhanced-calendar .rdp-nav_button:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+              }
             `}</style>
             <DayPicker
               mode="single"
               selected={new Date(calendarState.selectedDate + 'T00:00:00')}
               onSelect={handleDateSelect}
               className="enhanced-calendar w-full"
+              showOutsideDays={true}
               components={{
                 Day: ({ date, displayMonth, ...props }) => (
                   <div 
@@ -643,7 +704,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
                     onClick={() => handleDateSelect(date)}
                     className="day-content"
                   >
-                    {dayRenderer(date)}
+                    {dayRenderer(date, displayMonth)}
                   </div>
                 )
               }}
