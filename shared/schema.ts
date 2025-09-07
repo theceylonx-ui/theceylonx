@@ -1046,7 +1046,10 @@ export const insertTripSchema = z.object({
   status: z.string().optional(),
   imageUrl: z.string().optional(),
   // User uploaded images from trip creation form
-  mediaUrls: z.array(z.string().url()).max(12, "Maximum 12 images allowed").optional(),
+  mediaUrls: z.array(z.string().refine((url) => {
+    // Allow data URLs (base64) and regular URLs
+    return url.startsWith('data:') || z.string().url().safeParse(url).success;
+  }, "Invalid image URL or data format")).max(12, "Maximum 12 images allowed").optional(),
   coverImageIndex: z.number().min(0).default(0).optional(),
 });
 
@@ -1508,7 +1511,10 @@ export const TripSchema = z.object({
   buddyFriendly: z.boolean().default(false),
   
   // Step 5: Media
-  mediaUrls: z.array(z.string().url()).max(12, "Maximum 12 images allowed").optional(),
+  mediaUrls: z.array(z.string().refine((url) => {
+    // Allow data URLs (base64) and regular URLs
+    return url.startsWith('data:') || z.string().url().safeParse(url).success;
+  }, "Invalid image URL or data format")).max(12, "Maximum 12 images allowed").optional(),
   coverImageIndex: z.number().min(0).default(0),
   mediaMetadata: z.array(TripMediaSchema).optional(),
   
@@ -1561,7 +1567,10 @@ const BaseTripSchema = z.object({
   buddyFriendly: z.boolean().default(false),
   
   // Step 5: Media
-  mediaUrls: z.array(z.string().url()).max(12, "Maximum 12 images allowed").optional(),
+  mediaUrls: z.array(z.string().refine((url) => {
+    // Allow data URLs (base64) and regular URLs
+    return url.startsWith('data:') || z.string().url().safeParse(url).success;
+  }, "Invalid image URL or data format")).max(12, "Maximum 12 images allowed").optional(),
   coverImageIndex: z.number().min(0).default(0),
   mediaMetadata: z.array(TripMediaSchema).optional(),
   

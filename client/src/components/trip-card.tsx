@@ -342,11 +342,18 @@ export default function TripCard({ trip, badges }: TripCardProps) {
     if (trip.mediaUrls && trip.mediaUrls.length > 0) {
       const coverIndex = trip.coverImageIndex || 0;
       const coverImageUrl = trip.mediaUrls[Math.min(coverIndex, trip.mediaUrls.length - 1)];
+      
+      // Debug logging
+      console.log('Trip mediaUrls:', trip.mediaUrls);
+      console.log('Cover index:', coverIndex);
+      console.log('Selected image URL:', coverImageUrl);
+      
       return coverImageUrl;
     }
     
     // Priority 2: Use database imageUrl (fallback or external image)
     if (trip.imageUrl) {
+      console.log('Using trip.imageUrl:', trip.imageUrl);
       // If it's a local asset path, ensure it works in both dev and production
       if (trip.imageUrl.startsWith('/assets/')) {
         return trip.imageUrl;
@@ -355,6 +362,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
     }
     
     // Priority 3: Ceylon Expand logo as fallback
+    console.log('Using fallback image');
     return '/assets/5_1756417819316.png';
   };
 
