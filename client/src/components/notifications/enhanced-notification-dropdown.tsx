@@ -291,7 +291,7 @@ export function EnhancedNotificationDropdown() {
                               )}
                             </p>
                             <p className="text-xs mt-1 line-clamp-2 text-gray-700 dark:text-gray-300">
-                              {notification.message}
+                              🚨 MSG DEBUG: "{notification.message}" | TITLE: "{notification.title}"
                             </p>
                           </div>
                           
