@@ -1007,8 +1007,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
 
       // Verify valid status
-      if (!["active", "completed", "cancelled"].includes(status)) {
-        return res.status(400).json({ message: "Invalid status. Must be active, completed, or cancelled" });
+      if (!["active", "inactive", "completed", "cancelled"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status. Must be active, inactive, completed, or cancelled" });
       }
 
       // Verify the user owns this trip
