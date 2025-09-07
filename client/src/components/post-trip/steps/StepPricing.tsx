@@ -46,16 +46,31 @@ export function StepPricing({ form }: StepPricingProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="use-price-range"
-                checked={useRange}
-                onCheckedChange={handleToggleRange}
-                data-testid="price-range-toggle"
-              />
-              <label htmlFor="use-price-range" className="text-sm font-medium">
-                Use price range instead of fixed price
-              </label>
+            <div className="flex items-center justify-between p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-300 transition-colors">
+              <div className="flex items-center space-x-3">
+                <span className="text-lg">💰</span>
+                <div>
+                  <label htmlFor="use-price-range" className="text-sm font-semibold block">
+                    Use price range instead of fixed price
+                  </label>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    {useRange ? 'Flexible pricing with min/max values' : 'Single fixed price for all participants'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`text-sm font-semibold ${
+                  useRange ? 'text-green-600' : 'text-gray-500'
+                }`}>
+                  {useRange ? '✓ Range' : 'Fixed'}
+                </span>
+                <Switch
+                  id="use-price-range"
+                  checked={useRange}
+                  onCheckedChange={handleToggleRange}
+                  data-testid="price-range-toggle"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>

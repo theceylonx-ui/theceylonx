@@ -80,9 +80,10 @@ export function StepCapacity({ form }: StepCapacityProps) {
               control={form.control}
               name="buddyFriendly"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border-2 border-gray-200 p-4 bg-white hover:border-pink-300 transition-colors">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">
+                    <FormLabel className="text-base font-semibold flex items-center gap-2">
+                      <span className="text-lg">❤️</span>
                       Solo Traveler Friendly Trip
                     </FormLabel>
                     <div className="text-sm text-gray-600">
@@ -90,11 +91,18 @@ export function StepCapacity({ form }: StepCapacityProps) {
                     </div>
                   </div>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      data-testid="buddy-friendly-switch"
-                    />
+                    <div className="flex items-center gap-3">
+                      <span className={`text-sm font-semibold ${
+                        field.value ? 'text-green-600' : 'text-gray-500'
+                      }`}>
+                        {field.value ? '✓ Enabled' : 'Disabled'}
+                      </span>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        data-testid="buddy-friendly-switch"
+                      />
+                    </div>
                   </FormControl>
                 </FormItem>
               )}
