@@ -201,63 +201,7 @@ export const trips = pgTable("trips", {
   index("trips_category_idx").on(table.category),
 ]);
 
-// Trip drafts table for Post Trip V3 flow
-export const tripDrafts = pgTable("trip_drafts", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  
-  // Step 1: Basics
-  title: varchar("title"),
-  description: text("description"),
-  category: tripCategoryEnum("category"),
-  
-  // Step 2: Schedule
-  fromLocation: varchar("from_location"),
-  toLocation: varchar("to_location"),
-  region: varchar("region"),
-  date: timestamp("date"),
-  time: varchar("time"),
-  duration: varchar("duration"),
-  
-  // Step 3: Pricing
-  price: decimal("price", { precision: 10, scale: 2 }),
-  priceMin: decimal("price_min", { precision: 10, scale: 2 }),
-  priceMax: decimal("price_max", { precision: 10, scale: 2 }),
-  
-  // Step 4: Capacity
-  seatsAvailable: integer("seats_available"),
-  buddyFriendly: boolean("buddy_friendly").default(false),
-  
-  // Step 5: Media
-  mediaUrls: text("media_urls").array(),
-  coverImageIndex: integer("cover_image_index").default(0),
-  mediaMetadata: jsonb("media_metadata"), // Alt text, captions
-  
-  // Step 6: Safety & Terms
-  safetyFlags: text("safety_flags").array(),
-  termsAccepted: boolean("terms_accepted").default(false),
-  contactInfo: varchar("contact_info"),
-  notes: text("notes"),
-  
-  // Additional fields
-  tags: jsonb("tags"),
-  difficulty: varchar("difficulty"),
-  seasonality: text("seasonality").array(),
-  
-  // Draft metadata
-  status: varchar("status").default("draft"),
-  currentStep: integer("current_step").default(1),
-  completedSteps: text("completed_steps").array().default(sql`'{}'::text[]`),
-  lastSavedAt: timestamp("last_saved_at").defaultNow(),
-  publishedTripId: varchar("published_trip_id"), // Links to published trip
-  
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => [
-  index("trip_drafts_user_idx").on(table.userId),
-  index("trip_drafts_status_idx").on(table.status),
-  index("trip_drafts_updated_idx").on(table.updatedAt),
-]);
+// tripDrafts table removed - feature not implemented yet
 
 // Saved trips table for Pin and Interest functionality
 export const savedTrips = pgTable("saved_trips", {
@@ -570,15 +514,7 @@ export const adminChatMessages = pgTable("admin_chat_messages", {
 
 // Community Q&A Tables
 
-// Categories table for categorizing questions (renamed from topics for clarity)
-export const categories = pgTable("categories", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: varchar("name").notNull(),
-  slug: varchar("slug").notNull().unique(),
-  description: text("description"),
-  sortOrder: integer("sort_order").default(0),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+// Categories table removed - using topics table instead
 
 // Topics table (keep for backward compatibility, but use categories for new features)
 export const topics = pgTable("topics", {
@@ -649,25 +585,9 @@ export const answerUpvotes = pgTable("answer_upvotes", {
   userIdIdx: index("idx_answer_upvotes_u").on(table.userId),
 }));
 
-// Question tags pivot table (optional if not using array)
-export const questionTags = pgTable("question_tags", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  questionId: varchar("question_id").notNull(),
-  tag: varchar("tag").notNull(),
-}, (table) => ({
-  uniqueQuestionTag: unique().on(table.questionId, table.tag),
-}));
+// questionTags table removed - questions use tags array field instead
 
-// Follows table for watching questions/categories/tags
-export const follows = pgTable("follows", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(),
-  followType: varchar("follow_type").notNull(), // 'question' | 'category' | 'tag'
-  followIdOrValue: varchar("follow_id_or_value").notNull(), // ID for question/category, value for tag
-  createdAt: timestamp("created_at").defaultNow(),
-}, (table) => ({
-  uniqueUserFollow: unique().on(table.userId, table.followType, table.followIdOrValue),
-}));
+// Follows table removed - feature not implemented yet
 
 // User preferences table - single source of truth for travel preferences
 export const userPreferences = pgTable("user_preferences", {
@@ -875,39 +795,13 @@ export const userTripFlags = pgTable("user_trip_flags", {
 
 // Missing Infrastructure Tables
 
-// Regions table for preventing typos in trip regions
-export const regions = pgTable("regions", {
-  id: varchar("id").primaryKey(),
-  name: varchar("name").notNull().unique(),
-  province: varchar("province").notNull(),
-  description: text("description"),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+// regions table removed - feature not implemented yet
 
 // Note: mediaAssets and auditLogs tables are defined in the admin section above
 
 // User follows table removed - not needed for travel buddy platform
 
-// Enhanced moderation flags
-export const moderationFlags = pgTable("moderation_flags", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  reporterId: varchar("reporter_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  targetType: varchar("target_type").notNull(),
-  targetId: varchar("target_id").notNull(),
-  reason: varchar("reason").notNull(),
-  description: text("description"),
-  status: varchar("status").default("open"),
-  severity: varchar("severity").default("medium"), // 'low', 'medium', 'high', 'critical'
-  resolvedBy: varchar("resolved_by").references(() => users.id, { onDelete: 'set null' }),
-  resolutionNote: text("resolution_note"),
-  createdAt: timestamp("created_at").defaultNow(),
-  resolvedAt: timestamp("resolved_at"),
-}, (table) => [
-  index("moderation_flags_status_idx").on(table.status),
-  index("moderation_flags_target_idx").on(table.targetType, table.targetId),
-  index("moderation_flags_reporter_idx").on(table.reporterId),
-]);
+// moderationFlags table removed - feature not implemented yet
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
@@ -1283,19 +1177,11 @@ export const insertAnswerSchema = createInsertSchema(answers).omit({
 // Old vote schema removed - replaced with new upvote schemas above
 
 // New schemas for enhanced Q&A system
-export const insertCategorySchema = createInsertSchema(categories).omit({
-  id: true,
-  createdAt: true,
-});
+// insertCategorySchema removed - using topics instead
 
-export const insertQuestionTagSchema = createInsertSchema(questionTags).omit({
-  id: true,
-});
+// insertQuestionTagSchema removed - using array tags instead
 
-export const insertFollowSchema = createInsertSchema(follows).omit({
-  id: true,
-  createdAt: true,
-});
+// insertFollowSchema removed - follows feature not implemented
 
 // Old vote request schema removed - replaced with new upvote toggle schema above
 
@@ -1499,20 +1385,17 @@ export type AnswerWithUser = Answer & { user: User };
 // Old Vote types removed - replaced with new upvote types above
 
 // New Q&A types
-export type InsertCategory = z.infer<typeof insertCategorySchema>;
-export type Category = typeof categories.$inferSelect;
-export type InsertQuestionTag = z.infer<typeof insertQuestionTagSchema>;
-export type QuestionTag = typeof questionTags.$inferSelect;
-export type InsertFollow = z.infer<typeof insertFollowSchema>;
-export type Follow = typeof follows.$inferSelect;
+// Category types removed - using Topic types instead
+// QuestionTag types removed - using array tags instead
+// Follow types removed - feature not implemented
 
 // Enhanced Q&A types
 export type QuestionWithDetailsEnhanced = Question & {
   user: User;
-  category?: Category;
+  topic?: Topic;
   answers?: AnswerWithUserEnhanced[];
   myVote?: number; // -1, 0, or 1
-  isFollowed?: boolean;
+  // isFollowed removed - follows feature not implemented
 };
 
 export type AnswerWithUserEnhanced = Answer & { 
