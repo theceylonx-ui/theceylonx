@@ -15,7 +15,6 @@ export function useClerkAuth() {
       window.location.href = '/';
     },
     onError: (error) => {
-      console.error('Logout error:', error);
       // Force logout even if request fails
       window.location.href = '/';
     },

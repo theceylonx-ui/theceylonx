@@ -37,7 +37,6 @@ export function useAuth() {
       }
       
       const userData = await res.json();
-      console.log("🔄 useAuth fetched user data:", userData);
       return userData;
     },
   });
@@ -58,7 +57,6 @@ export function useAuth() {
       window.location.href = '/';
     },
     onError: (error) => {
-      console.error('Logout error:', error);
       queryClient.setQueryData(["/api/auth/me"], null);
       window.location.href = '/';
     },

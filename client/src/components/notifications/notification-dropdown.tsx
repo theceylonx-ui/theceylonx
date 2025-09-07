@@ -67,23 +67,13 @@ export function NotificationDropdown() {
   });
 
   const handleNotificationClick = (notification: Notification) => {
-    console.log('Notification clicked:', {
-      id: notification.id,
-      title: notification.title,
-      message: notification.message,
-      primaryActionUrl: notification.primaryActionUrl,
-      actionUrl: notification.actionUrl
-    });
     if (!notification.isRead) {
       markAsReadMutation.mutate(notification.id);
     }
     // Try primary action URL first, then fallback to actionUrl
     const targetUrl = notification.primaryActionUrl || notification.actionUrl;
     if (targetUrl) {
-      console.log('Navigating to:', targetUrl);
       window.location.href = targetUrl;
-    } else {
-      console.log('No action URL found for notification:', notification);
     }
   };
 

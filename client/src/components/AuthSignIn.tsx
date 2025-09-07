@@ -52,7 +52,6 @@ export function AuthSignIn({ onSuccess }: AuthSignInProps) {
                     toast({ title: "Development login failed", variant: "destructive" });
                   }
                 } catch (error) {
-                  console.error('Dev login failed:', error);
                   toast({ title: "Development login failed", variant: "destructive" });
                 } finally {
                   setIsLoading(false);

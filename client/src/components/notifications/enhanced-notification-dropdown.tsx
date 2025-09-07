@@ -84,23 +84,13 @@ export function EnhancedNotificationDropdown() {
   });
 
   const handleNotificationClick = (notification: Notification) => {
-    console.log('Enhanced Notification clicked:', {
-      id: notification.id,
-      title: notification.title,
-      message: notification.message,
-      actionUrl: notification.actionUrl,
-      primaryActionUrl: notification.primaryActionUrl
-    });
     if (!notification.isRead) {
       markAsReadMutation.mutate(notification.id);
     }
     // Try primary action URL first, then fallback to actionUrl
     const targetUrl = notification.primaryActionUrl || notification.actionUrl;
     if (targetUrl) {
-      console.log('Navigating to:', targetUrl);
       window.location.href = targetUrl;
-    } else {
-      console.log('No action URL found for notification:', notification);
     }
   };
 
