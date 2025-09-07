@@ -1457,8 +1457,7 @@ export type InsertUserNotifications = typeof userNotifications.$inferInsert;
 export type UserPrivacy = typeof userPrivacy.$inferSelect;
 export type InsertUserPrivacy = typeof userPrivacy.$inferInsert;
 
-// Preferences types
-export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
+// Preferences types - user preferences are now consolidated into the users table
 export type InsertPreferenceEvent = z.infer<typeof insertPreferenceEventSchema>;
 export type PreferenceEvent = typeof preferenceEvents.$inferSelect;
 

@@ -11,11 +11,9 @@ import {
   answers,
   questionUpvotes,
   answerUpvotes,
-  // userPreferences, // Consolidated into users table
   userInteractions,
   tripFeatures,
   kpiEvents,
-  // userPersonalization, // Consolidated into users table
   notifications,
   tripViews,
   authSessions,
@@ -28,6 +26,8 @@ import {
   chatMessages,
   chatParticipantState,
   userTripFlags,
+  threadUsers,
+  messages,
   type User,
   type UpsertUser,
   type InsertTrip,
@@ -50,32 +50,23 @@ import {
   type InsertAnswer,
   type Answer,
   type AnswerWithUser,
-  type InsertVote,
-  type Vote,
-  // type InsertUserPreferences, // Consolidated into users table
-  type UserPreferences,
   type InsertUserInteraction,
   type UserInteraction,
   type InsertTripFeatures,
   type TripFeatures,
   type InsertKpiEvent,
   type KpiEvent,
-  type InsertUserPersonalization,
-  type UserPersonalization,
   type Notification,
   type InsertNotification,
   type TripInterestRequest,
   type InsertTripInterestRequest,
-  chatThreads,
   type ChatThread,
   type InsertChatThread,
-  chatMessages,
   type ChatMessage,
   type InsertChatMessage,
   chatAttachments,
   type ChatAttachment,
   type InsertChatAttachment,
-  chatParticipantState,
   type ChatParticipantState,
   type InsertChatParticipantState,
   type CalendarEvent,
@@ -206,15 +197,11 @@ export interface IStorage {
   deleteAnswer(id: string): Promise<void>;
   acceptAnswer(questionId: string, answerId: string): Promise<void>;
   
-  // Votes
-  createVote(vote: InsertVote): Promise<Vote>;
-  getUserVote(userId: string, questionId?: string, answerId?: string): Promise<Vote | undefined>;
-  updateVote(userId: string, questionId: string | undefined, answerId: string | undefined, voteType: 'up' | 'down'): Promise<Vote>;
-  deleteVote(userId: string, questionId?: string, answerId?: string): Promise<void>;
-
-  // ML Recommendations
-  getUserPreferences(userId: string): Promise<UserPreferences | undefined>;
-  upsertUserPreferences(userId: string, preferences: Partial<InsertUserPreferences>): Promise<UserPreferences>;
+  // Upvotes (replaced the voting system)
+  toggleQuestionUpvote(userId: string, questionId: string): Promise<boolean>;
+  toggleAnswerUpvote(userId: string, answerId: string): Promise<boolean>;
+  
+  // ML Recommendations (user preferences now in users table)
   createUserInteraction(interaction: InsertUserInteraction): Promise<UserInteraction>;
   getUserInteractions(userId: string, limit?: number): Promise<UserInteraction[]>;
   getTripFeatures(tripId: string): Promise<TripFeatures | undefined>;
@@ -230,9 +217,7 @@ export interface IStorage {
     endDate?: Date;
   }): Promise<KpiEvent[]>;
   
-  // User Personalization
-  getUserPersonalization(userId: string): Promise<UserPersonalization | undefined>;
-  upsertUserPersonalization(userId: string, settings: Partial<InsertUserPersonalization>): Promise<UserPersonalization>;
+  // User Personalization (now consolidated into users table)
   
   // Notification operations
   createNotification(notification: InsertNotification): Promise<Notification>;
@@ -251,31 +236,18 @@ export interface IStorage {
   // Chat thread operations
   createChatThread(thread: InsertChatThread): Promise<ChatThread>;
   getChatThread(id: string): Promise<ChatThread | undefined>;
-  getUserChatThreads(userId: string): Promise<(ChatThread & { lastMessage?: Message, unreadCount: number, otherUser?: User, trip?: Trip })[]>;
-  addUserToThread(threadUser: InsertThreadUser): Promise<ThreadUser>;
+  getUserChatThreads(userId: string): Promise<(ChatThread & { lastMessage?: ChatMessage, unreadCount: number, otherUser?: User, trip?: Trip })[]>;
+  addUserToThread(userId: string, threadId: string): Promise<void>;
   removeUserFromThread(threadId: string, userId: string): Promise<void>;
   isUserInThread(threadId: string, userId: string): Promise<boolean>;
   getOrCreateChatThread(tripId: string, user1Id: string, user2Id: string): Promise<ChatThread>;
   
   // Message operations
-  createMessage(message: InsertMessage): Promise<Message>;
-  getThreadMessages(threadId: string, limit?: number, cursor?: string): Promise<(Message & { author: User })[]>;
+  createMessage(message: InsertChatMessage): Promise<ChatMessage>;
+  getThreadMessages(threadId: string, limit?: number, cursor?: string): Promise<(ChatMessage & { author: User })[]>;
   getThreadUsers(threadId: string): Promise<User[]>;
   
-  // Contact sharing operations
-  isThreadOrganizer(userId: string, threadId: string): Promise<boolean>;
-  createContactShare(contactShare: InsertContactShare): Promise<ContactShare>;
-  createAuditLog(action: string, actorUserId: string, metadata?: any): Promise<void>;
-  getRecentContactShares(threadId: string, hoursBack?: number): Promise<ContactShare[]>;
-  
   // Admin/moderation operations
-  getContactSharesForAdmin(filters?: {
-    threadId?: string;
-    userId?: string;
-    startDate?: Date;
-    endDate?: Date;
-    limit?: number;
-  }): Promise<(ContactShare & { user: User, threadDetails?: any })[]>;
   getAuditLogs(filters?: {
     action?: string;
     userId?: string;
@@ -1312,20 +1284,59 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  private async calculateScore(votableType: 'question' | 'answer', votableId: string): Promise<number> {
-    const isQuestion = votableType === 'question';
-    
-    // Count up votes only (using voteType = 'up')
-    const upVotesResult = await db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(votes)
+  // New upvote system using dedicated tables
+  async toggleQuestionUpvote(userId: string, questionId: string): Promise<boolean> {
+    const existing = await db
+      .select()
+      .from(questionUpvotes)
       .where(and(
-        eq(votes.voteType, 'up'),
-        isQuestion ? eq(votes.questionId, votableId) : eq(votes.answerId, votableId)
+        eq(questionUpvotes.userId, userId),
+        eq(questionUpvotes.questionId, questionId)
       ));
-    
-    const upVotes = Number(upVotesResult[0]?.count || 0);
-    return upVotes;
+
+    if (existing.length > 0) {
+      // Remove upvote
+      await db
+        .delete(questionUpvotes)
+        .where(and(
+          eq(questionUpvotes.userId, userId),
+          eq(questionUpvotes.questionId, questionId)
+        ));
+      return false;
+    } else {
+      // Add upvote
+      await db
+        .insert(questionUpvotes)
+        .values({ userId, questionId });
+      return true;
+    }
+  }
+
+  async toggleAnswerUpvote(userId: string, answerId: string): Promise<boolean> {
+    const existing = await db
+      .select()
+      .from(answerUpvotes)
+      .where(and(
+        eq(answerUpvotes.userId, userId),
+        eq(answerUpvotes.answerId, answerId)
+      ));
+
+    if (existing.length > 0) {
+      // Remove upvote
+      await db
+        .delete(answerUpvotes)
+        .where(and(
+          eq(answerUpvotes.userId, userId),
+          eq(answerUpvotes.answerId, answerId)
+        ));
+      return false;
+    } else {
+      // Add upvote
+      await db
+        .insert(answerUpvotes)
+        .values({ userId, answerId });
+      return true;
+    }
   }
 
   private async updateScore(votableType: 'question' | 'answer', votableId: string, score: number): Promise<void> {
@@ -1344,27 +1355,27 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getUserVote(userId: string, votableType: 'question' | 'answer', votableId: string): Promise<Vote | undefined> {
-    const isQuestion = votableType === 'question';
-    const [vote] = await db
+  // Check if user has upvoted content
+  async hasUserUpvotedQuestion(userId: string, questionId: string): Promise<boolean> {
+    const existing = await db
       .select()
-      .from(votes)
+      .from(questionUpvotes)
       .where(and(
-        eq(votes.userId, userId),
-        isQuestion ? eq(votes.questionId, votableId) : eq(votes.answerId, votableId)
+        eq(questionUpvotes.userId, userId),
+        eq(questionUpvotes.questionId, questionId)
       ));
-    
-    return vote;
+    return existing.length > 0;
   }
 
-  // Legacy method for backward compatibility
-  async getUserVoteLegacy(userId: string, questionId?: string, answerId?: string): Promise<Vote | undefined> {
-    const votableType = questionId ? 'question' : 'answer';
-    const votableId = questionId || answerId;
-    
-    if (!votableId) return undefined;
-    
-    return this.getUserVote(userId, votableType, votableId);
+  async hasUserUpvotedAnswer(userId: string, answerId: string): Promise<boolean> {
+    const existing = await db
+      .select()
+      .from(answerUpvotes)
+      .where(and(
+        eq(answerUpvotes.userId, userId),
+        eq(answerUpvotes.answerId, answerId)
+      ));
+    return existing.length > 0;
   }
 
   // Legacy methods - will be removed in future versions
@@ -1372,98 +1383,42 @@ export class DatabaseStorage implements IStorage {
   // TODO: Fix TypeScript errors in audit logging and contact sharing
   // These errors don't affect voting functionality
 
-  // ML Recommendations implementation
-  async getUserPreferences(userId: string): Promise<UserPreferences | undefined> {
-    try {
-      const [preferences] = await db
-        .select()
-        .from(userPreferences)
-        .where(eq(userPreferences.userId, userId));
-      return preferences;
-    } catch (error) {
-      console.error("Error getting user preferences:", error);
-      return undefined; // Return undefined if table/column doesn't exist yet
-    }
+  // User preferences are now part of the users table
+  async getUserTravelPreferences(userId: string) {
+    const [user] = await db
+      .select({
+        vibe: users.vibe,
+        companions: users.companions,
+        interests: users.interests,
+        months: users.months,
+        regions: users.regions,
+        budgetMin: users.budgetMin,
+        budgetMax: users.budgetMax,
+      })
+      .from(users)
+      .where(eq(users.id, userId));
+    return user;
   }
 
-  async upsertUserPreferences(userId: string, prefs: Partial<InsertUserPreferences>): Promise<UserPreferences> {
-    try {
-      const [preferences] = await db
-        .insert(userPreferences)
-        .values({
-          userId,
-          ...prefs,
-        } as any)
-        .onConflictDoUpdate({
-          target: userPreferences.userId,
-          set: {
-            ...prefs,
-            updatedAt: new Date(),
-          } as any,
-        })
-        .returning();
-      return preferences;
-    } catch (error) {
-      console.error("Error saving user preferences:", error);
-      // Return a fallback object if database columns don't exist yet
-      return {
-        id: `temp-${userId}`,
-        userId,
-        preferredRegions: prefs.preferredRegions || [],
-        budgetRange: prefs.budgetRange || { min: 0, max: 1000 },
-        preferredDays: prefs.preferredDays || [],
-        preferredTimes: prefs.preferredTimes || [],
-        tripTypes: prefs.tripTypes || [],
-        groupSize: prefs.groupSize || "",
-        travelStyle: prefs.travelStyle || "",
-        interests: prefs.interests || [],
-        createdAt: new Date(),
+  async updateUserTravelPreferences(userId: string, preferences: {
+    vibe?: string[];
+    companions?: string[];
+    interests?: string[];
+    months?: string[];
+    regions?: string[];
+    budgetMin?: number;
+    budgetMax?: number;
+  }) {
+    await db
+      .update(users)
+      .set({
+        ...preferences,
         updatedAt: new Date(),
-      } as any;
-    }
+      })
+      .where(eq(users.id, userId));
   }
 
-  // New Travel Style Settings implementation
-  async updateTravelStyleSettings(userId: string, settings: any): Promise<UserPreferences> {
-    try {
-      const [preferences] = await db
-        .insert(userPreferences)
-        .values({
-          userId,
-          vibe: settings.vibe,
-          when: settings.when,
-          companions: settings.companions,
-          interests: settings.interests,
-          updatedAt: new Date(),
-        } as any)
-        .onConflictDoUpdate({
-          target: userPreferences.userId,
-          set: {
-            vibe: settings.vibe,
-            when: settings.when,
-            companions: settings.companions,
-            interests: settings.interests,
-            updatedAt: new Date(),
-          } as any,
-        })
-        .returning();
-      
-      return preferences;
-    } catch (error) {
-      console.error("Error updating travel style settings:", error);
-      // Return a fallback object
-      return {
-        id: `temp-${userId}`,
-        userId,
-        vibe: settings.vibe || [],
-        when: settings.when || [],
-        companions: settings.companions || [],
-        interests: settings.interests || [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      } as any;
-    }
-  }
+  // Travel style settings are now handled through updateUserTravelPreferences
 
   async createUserInteraction(interaction: InsertUserInteraction): Promise<UserInteraction> {
     const [newInteraction] = await db
@@ -1553,31 +1508,31 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(kpiEvents.createdAt));
   }
 
-  // User Personalization implementation
-  async getUserPersonalization(userId: string): Promise<UserPersonalization | undefined> {
-    const [personalization] = await db
-      .select()
-      .from(userPersonalization)
-      .where(eq(userPersonalization.userId, userId));
-    return personalization;
+  // User personalization is now part of the users table
+  async getUserPersonalizationSettings(userId: string) {
+    const [user] = await db
+      .select({
+        isPaused: users.isPaused,
+        resetAt: users.resetAt,
+        abTestGroup: users.abTestGroup,
+      })
+      .from(users)
+      .where(eq(users.id, userId));
+    return user;
   }
 
-  async upsertUserPersonalization(userId: string, settings: Partial<InsertUserPersonalization>): Promise<UserPersonalization> {
-    const [personalization] = await db
-      .insert(userPersonalization)
-      .values({
-        userId,
+  async updateUserPersonalizationSettings(userId: string, settings: {
+    isPaused?: boolean;
+    resetAt?: Date;
+    abTestGroup?: string;
+  }) {
+    await db
+      .update(users)
+      .set({
         ...settings,
-      } as any)
-      .onConflictDoUpdate({
-        target: userPersonalization.userId,
-        set: {
-          ...settings,
-          updatedAt: new Date(),
-        } as any,
+        updatedAt: new Date(),
       })
-      .returning();
-    return personalization;
+      .where(eq(users.id, userId));
   }
 
   // Notification implementation
@@ -1716,12 +1671,17 @@ export class DatabaseStorage implements IStorage {
     return threads;
   }
 
-  async addUserToThread(threadUser: InsertThreadUser): Promise<ThreadUser> {
-    const [newThreadUser] = await db
-      .insert(threadUsers)
-      .values(threadUser)
-      .returning();
-    return newThreadUser;
+  async addUserToThread(userId: string, threadId: string): Promise<void> {
+    // Add user to thread using chat participant state
+    await db
+      .insert(chatParticipantState)
+      .values({
+        threadId,
+        userId,
+        unreadCount: 0,
+        lastReadAt: new Date(),
+      })
+      .onConflictDoNothing();
   }
 
   async removeUserFromThread(threadId: string, userId: string): Promise<void> {
@@ -2271,83 +2231,9 @@ export class DatabaseStorage implements IStorage {
       ));
   }
 
-  // Missing vote methods for interface compliance
-  async createVote(vote: InsertVote): Promise<Vote> {
-    const [newVote] = await db.insert(votes).values(vote).returning();
-    return newVote;
-  }
+  // Legacy vote methods removed - replaced with upvote system
 
-  async updateVote(userId: string, questionId: string | undefined, answerId: string | undefined, voteType: 'up' | 'down'): Promise<Vote> {
-    const value = voteType === 'up' ? 1 : -1;
-    const votableType = questionId ? 'question' : 'answer';
-    const votableId = questionId || answerId!;
-    
-    const [updatedVote] = await db
-      .update(votes)
-      .set({ value, updatedAt: new Date() })
-      .where(and(
-        eq(votes.userId, userId),
-        eq(votes.votableType, votableType),
-        eq(votes.votableId, votableId)
-      ))
-      .returning();
-    
-    return updatedVote;
-  }
-
-  async deleteVote(userId: string, questionId?: string, answerId?: string): Promise<void> {
-    const votableType = questionId ? 'question' : 'answer';
-    const votableId = questionId || answerId!;
-    
-    await db
-      .delete(votes)
-      .where(and(
-        eq(votes.userId, userId),
-        eq(votes.votableType, votableType),
-        eq(votes.votableId, votableId)
-      ));
-  }
-
-  // Contact sharing operations
-  async isThreadOrganizer(userId: string, threadId: string): Promise<boolean> {
-    const thread = await this.getChatThread(threadId);
-    if (!thread?.tripId) return false;
-    
-    const trip = await this.getTrip(thread.tripId);
-    return trip?.organizerId === userId;
-  }
-
-  async createContactShare(contactShare: InsertContactShare): Promise<ContactShare> {
-    const [newContactShare] = await db
-      .insert(contactShares)
-      .values(contactShare)
-      .returning();
-    return newContactShare;
-  }
-
-  async createAuditLog(action: string, actorUserId: string, metadata?: any): Promise<void> {
-    await db
-      .insert(auditLogs)
-      .values({
-        action,
-        actorUserId,
-        targetType: 'contact_share',
-        targetId: metadata?.threadId || '',
-        metadata,
-      });
-  }
-
-  async getRecentContactShares(threadId: string, hoursBack: number = 1): Promise<ContactShare[]> {
-    const hoursAgo = new Date(Date.now() - hoursBack * 60 * 60 * 1000);
-    return await db
-      .select()
-      .from(contactShares)
-      .where(and(
-        eq(contactShares.threadId, threadId),
-        gte(contactShares.sharedAt, hoursAgo)
-      ))
-      .orderBy(desc(contactShares.sharedAt));
-  }
+  // Contact sharing feature deprecated - removed from Ceylon Expand
 
   // Admin/moderation methods for contact sharing oversight
   async getContactSharesForAdmin(filters?: {
