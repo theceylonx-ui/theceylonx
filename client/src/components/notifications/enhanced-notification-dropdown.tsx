@@ -282,7 +282,7 @@ export function EnhancedNotificationDropdown() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
-                            <p className="text-sm leading-tight font-medium text-text-primary">
+                            <p className="text-sm leading-tight font-semibold text-gray-900 dark:text-gray-100">
                               {notification.title}
                               {notification.priority === "critical" && (
                                 <Badge variant="destructive" className="ml-2 text-xs">
@@ -290,7 +290,7 @@ export function EnhancedNotificationDropdown() {
                                 </Badge>
                               )}
                             </p>
-                            <p className="text-xs mt-1 line-clamp-2 text-text-muted">
+                            <p className="text-xs mt-1 line-clamp-2 text-gray-700 dark:text-gray-300">
                               {notification.message}
                             </p>
                           </div>
@@ -301,10 +301,10 @@ export function EnhancedNotificationDropdown() {
                         </div>
                         
                         <div className="flex items-center justify-between mt-2">
-                          <p className="text-xs text-text-muted">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
                             {formatDistanceToNow(new Date(notification.createdAt || new Date()), { addSuffix: true })}
                           </p>
-                          <Badge variant="outline" className="text-xs border-ui-line text-text-muted">
+                          <Badge variant="outline" className="text-xs text-gray-600 dark:text-gray-400">
                             {getCategoryLabel(notification.category as NotificationCategory)}
                           </Badge>
                         </div>
