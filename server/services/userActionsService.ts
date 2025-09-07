@@ -2,6 +2,7 @@ import { db } from '../db';
 import { pinnedTrips, userHistory, tripInterestRequests, trips, users } from '../../shared/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import type { InsertUserHistoryEntry, InsertTripInterestRequest } from '../../shared/schema';
+import { storage } from '../storage';
 
 export type UserActionType = 'PIN' | 'UNPIN' | 'INTEREST' | 'WITHDRAW' | 'INTEREST_ACCEPTED' | 'INTEREST_DECLINED';
 
@@ -228,6 +229,31 @@ export class UserActionsService {
     await this.logAction(request.userId, 'INTEREST_ACCEPTED', request.tripId, {
       acceptedBy: organizerId
     });
+
+    // Create notification for the interested user
+    const [trip] = await db.select().from(trips).where(eq(trips.id, request.tripId));
+    if (trip) {
+      await storage.createNotification({
+        userId: request.userId,
+        tripId: request.tripId,
+        type: null, // This will be handled by the notification enum
+        category: 'trips',
+        priority: 'normal',
+        title: 'Trip Request Accepted!',
+        message: `Your interest in "${trip.title}" has been accepted by the organizer. You can now chat with them to coordinate details.`,
+        relatedUserId: organizerId,
+        actionUrl: `/trips/${request.tripId}`,
+        primaryActionLabel: 'View Trip',
+        primaryActionUrl: `/trips/${request.tripId}`,
+        secondaryActionLabel: 'Start Chat',
+        secondaryActionUrl: `/chat`, // Will be updated with thread ID later
+        metadata: {
+          action: 'interest_accepted',
+          tripTitle: trip.title,
+          organizerId: organizerId
+        }
+      });
+    }
   }
 
   /**

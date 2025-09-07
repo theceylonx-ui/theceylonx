@@ -87,6 +87,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
     trip: Trip | null;
   }>({
     queryKey: [`/api/chat/threads/${threadId}`],
+    retry: 1,
   });
 
   // Fetch messages
@@ -95,6 +96,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   }>({
     queryKey: [`/api/chat/threads/${threadId}/messages`],
     refetchInterval: 5000, // Polling for new messages
+    retry: 1,
   });
 
   // Send message mutation
