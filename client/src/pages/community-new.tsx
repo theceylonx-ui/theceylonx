@@ -14,6 +14,7 @@ import { StickyFilters } from "@/components/StickyFilters";
 import { AskQuestionDialog } from "@/components/AskQuestionDialog";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useAuth } from "@/hooks/useAuth";
+import { TipsBox } from "@/components/TipsBox";
 
 export default function CommunityPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -340,6 +341,23 @@ export default function CommunityPage() {
             {renderPagination()}
           </>
         )}
+      </div>
+
+      {/* Tips Section */}
+      <div className="mt-16 mb-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <TipsBox
+            title="🌟 Community Q&A Guidelines"
+            tips={[
+              "Search existing questions <strong>before posting</strong> to avoid duplicates",
+              "Write <strong>clear, specific titles</strong> that describe your question well", 
+              "Include <strong>relevant details</strong> like dates, locations, and preferences",
+              "Use appropriate <strong>topic tags</strong> to help others find your question",
+              "Be respectful and helpful when <strong>answering others' questions</strong>",
+              "Vote up useful answers and mark the <strong>best answer</strong> to help future travelers"
+            ]}
+          />
+        </div>
       </div>
       
       <Footer />

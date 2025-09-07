@@ -337,6 +337,23 @@ export default function BrowseTrips() {
         )}
       </div>
       
+      {/* Tips Section */}
+      <div className="mt-16 mb-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <TipsBox
+            title="🎯 Pro Tips for Finding Great Trips"
+            tips={[
+              "Use <strong>filters</strong> to narrow down trips by location, date, or price range",
+              "Check the <strong>trip organizer's profile</strong> and ratings before joining", 
+              "Look for the <strong>💚 Free Trip</strong> badge for cost-effective adventures",
+              "Read <strong>trip descriptions carefully</strong> to understand what's included",
+              "Use <strong>Chat Buddy</strong> to message organizers before committing",
+              "Save interesting trips by clicking the <strong>📌 Pin</strong> button"
+            ]}
+          />
+        </div>
+      </div>
+
       <Footer />
     </div>
   );

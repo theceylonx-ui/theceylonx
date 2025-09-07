@@ -11,6 +11,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTripsStore } from "@/store/tripsStore";
 import { createBackToTripsLink } from "@/utils/searchParams";
+import { TipsBox } from "@/components/TipsBox";
+import Footer from "@/components/Footer";
 import type { TripFormData } from "@shared/schema";
 
 export default function PostTripPage() {
@@ -165,7 +167,26 @@ export default function PostTripPage() {
             />
           </CardContent>
         </Card>
+
+        {/* Tips Section */}
+        <div className="mt-16 mb-8">
+          <div className="max-w-4xl mx-auto">
+            <TipsBox
+              title="✨ Tips for Creating Amazing Trips"
+              tips={[
+                "Write a <strong>clear, detailed description</strong> to attract the right travelers",
+                "Include <strong>pickup/meetup locations</strong> and any special requirements", 
+                "Be upfront about <strong>costs and what's included</strong> in your trip",
+                "Add <strong>photos</strong> to showcase the destination and build trust",
+                "Set realistic <strong>group sizes</strong> - smaller groups often work better",
+                "Use <strong>Chat Buddy</strong> to screen potential participants before accepting"
+              ]}
+            />
+          </div>
+        </div>
       </div>
+      
+      <Footer />
     </div>
   );
 }

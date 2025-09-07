@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Lightbulb, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -10,39 +10,52 @@ interface TipsBoxProps {
   defaultCollapsed?: boolean;
 }
 
-export function TipsBox({ title, tips, className = "", defaultCollapsed = false }: TipsBoxProps) {
+export function TipsBox({ title, tips, className = "", defaultCollapsed = true }: TipsBoxProps) {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
 
   return (
-    <Card className={`bg-brand-subtle border-brand/20 ${className}`} data-testid="tips-box">
-      <CardHeader className="pb-3">
+    <Card className={`bg-gradient-to-br from-emerald-50 to-blue-50 border-2 border-emerald-200 shadow-lg hover:shadow-xl transition-all duration-300 ${className}`} data-testid="tips-box">
+      <CardHeader 
+        className="pb-3 cursor-pointer hover:bg-white/40 transition-colors duration-200 rounded-t-lg"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+      >
         <div className="flex items-center justify-between">
-          <CardTitle className="caption font-semibold text-brand flex items-center gap-2">
-            <HelpCircle className="h-4 w-4" />
+          <CardTitle className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent flex items-center gap-3">
+            <div className="relative">
+              <Lightbulb className="h-6 w-6 text-emerald-500" />
+              <Sparkles className="h-3 w-3 text-yellow-400 absolute -top-1 -right-1 animate-pulse" />
+            </div>
             {title}
           </CardTitle>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="h-8 w-8 p-0 text-brand hover:bg-brand/10 rounded-lg"
+            className="h-10 w-10 p-0 rounded-full bg-emerald-100 hover:bg-emerald-200 border-2 border-emerald-300 hover:scale-110 transition-all duration-200"
             data-testid="tips-toggle"
           >
-            {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+            {isCollapsed ? 
+              <ChevronDown className="h-5 w-5 text-emerald-600" /> : 
+              <ChevronUp className="h-5 w-5 text-emerald-600" />
+            }
           </Button>
         </div>
+        <p className="text-sm text-emerald-700 opacity-80 mt-1">Click to {isCollapsed ? 'reveal' : 'hide'} helpful tips!</p>
       </CardHeader>
       
       {!isCollapsed && (
-        <CardContent className="pt-0">
-          <ul className="space-y-3" data-testid="tips-list">
-            {tips.map((tip, index) => (
-              <li key={index} className="caption text-text-secondary flex items-start gap-3">
-                <span className="text-brand font-medium text-sm">•</span>
-                <span dangerouslySetInnerHTML={{ __html: tip }} />
-              </li>
-            ))}
-          </ul>
+        <CardContent className="pt-0 animate-in slide-in-from-top-2 duration-300">
+          <div className="bg-white/70 rounded-lg p-4 backdrop-blur-sm">
+            <ul className="space-y-4" data-testid="tips-list">
+              {tips.map((tip, index) => (
+                <li key={index} className="flex items-start gap-3 text-gray-700">
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-r from-emerald-400 to-blue-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-white text-xs font-bold">{index + 1}</span>
+                  </div>
+                  <span className="text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: tip }} />
+                </li>
+              ))}
+            </ul>
+          </div>
         </CardContent>
       )}
     </Card>

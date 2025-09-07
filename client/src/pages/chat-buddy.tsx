@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { TipsBox } from '@/components/TipsBox';
+import Footer from '@/components/Footer';
 import { 
   MessageSquare, 
   Send, 
@@ -575,6 +577,25 @@ export default function ChatBuddy() {
           </div>
         </div>
       </div>
+
+      {/* Tips Section */}
+      <div className="mt-16 mb-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <TipsBox
+            title="💬 Chat Buddy Safety & Tips"
+            tips={[
+              "Your <strong>contact info stays private</strong> until you choose to share it",
+              "Use the platform chat first to get to know potential travel companions", 
+              "Only share personal details when you feel <strong>comfortable and safe</strong>",
+              "Report any <strong>inappropriate messages</strong> using the report feature",
+              "Ask questions about the trip, meeting points, and group dynamics",
+              "Trust your instincts - if something feels off, don't hesitate to block users"
+            ]}
+          />
+        </div>
+      </div>
+      
+      <Footer />
     </div>
   );
 }

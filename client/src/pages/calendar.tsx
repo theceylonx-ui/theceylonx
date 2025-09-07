@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarPlus } from "lucide-react";
 import { Link } from "wouter";
+import { TipsBox } from "@/components/TipsBox";
 
 export default function CalendarPage() {
 
@@ -43,22 +44,19 @@ export default function CalendarPage() {
           {/* Main Calendar */}
           <EnhancedEventCalendar />
           
-          {/* Help Text */}
-          <div className="mt-8 text-center">
-            <Card className="bg-emerald-50 border-emerald-200">
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-emerald-900 mb-2">How to Use Your Calendar</h3>
-                <div className="text-sm text-emerald-800 space-y-1">
-                  <p>• <strong>Filter toggles:</strong> Use "All Trips", "Free Trips", "Pinned", "Interested", or "My Trips" to filter what you see</p>
-                  <p>• <strong>Bold dates:</strong> Calendar dates appear bold with green count badges when trips are available</p>
-                  <p>• <strong>Free Trips filter:</strong> Shows only trips with no cost (marked with 💚 Free Trip badge)</p>
-                  <p>• <strong>Click any date:</strong> View all trips for that specific day in the day preview panel</p>
-                  <p>• <strong>View Details button:</strong> Click to see full trip information, comments, and join options</p>
-                  <p>• <strong>Keyboard navigation:</strong> Use arrow keys to navigate dates, Enter to toggle day panel</p>
-                  <p>• <strong>Trip status icons:</strong> ⭐ Interested, 📌 Pinned, 👤 Your Trip, 💚 Free Trip</p>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Tips Section */}
+          <div className="mt-16">
+            <TipsBox
+              title="📅 Master Your Travel Calendar"
+              tips={[
+                "Use <strong>filter toggles</strong> to view All Trips, Free Trips, Pinned, or My Trips", 
+                "Look for <strong>bold dates with green badges</strong> - they show trip counts",
+                "Click any <strong>date</strong> to see all available trips in the preview panel",
+                "Use <strong>keyboard arrows</strong> to navigate dates quickly, Enter to toggle panel",
+                "Pin interesting trips with <strong>📌</strong> to easily find them later",
+                "Free trips show <strong>💚 Free Trip</strong> badge - perfect for budget travel"
+              ]}
+            />
           </div>
         </div>
       </div>
