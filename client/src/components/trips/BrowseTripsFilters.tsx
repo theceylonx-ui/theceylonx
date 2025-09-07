@@ -191,14 +191,31 @@ export default function BrowseTripsFilters({
                       ? { from: new Date(filters.startDate), to: new Date(filters.endDate) }
                       : undefined
                   }
-                  onSelect={(range: any) => {
+                  onSelect={(range) => {
+                    if (!range) {
+                      setMany({
+                        startDate: null,
+                        endDate: null,
+                      });
+                      return;
+                    }
+                    
+                    // Handle date range selection
+                    const from = range.from;
+                    const to = range.to;
+                    
                     setMany({
-                      startDate: range?.from ? range.from.toISOString().slice(0,10) : null,
-                      endDate: range?.to ? range.to.toISOString().slice(0,10) : null,
+                      startDate: from ? from.toISOString().slice(0,10) : null,
+                      endDate: to ? to.toISOString().slice(0,10) : null,
                     });
                   }}
                   numberOfMonths={2}
                   initialFocus
+                  disabled={(date) => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    return date < today;
+                  }}
                 />
               </PopoverContent>
             </Popover>
