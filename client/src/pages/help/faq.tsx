@@ -130,9 +130,9 @@ export default function HelpFAQPage() {
     {
       id: "contacting-organizers",
       question: "How do I contact trip organizers?",
-      answer: "Click the 'Contact' button on any trip details page. This opens WhatsApp for phone numbers or your email app for email addresses. You can also use our built-in chat system or leave public comments on trip posts. All organizers must provide verified contact information.",
+      answer: "Use our built-in Chat Buddy system to message trip organizers privately and securely. Phone numbers and email addresses are kept private - organizers can choose to share their contact details with you directly through the chat system once you've established communication. You can also leave public comments on trip posts to ask general questions.",
       category: "Communication",
-      keywords: ["contact", "organizer", "whatsapp", "email", "phone", "communicate"],
+      keywords: ["contact", "organizer", "chat", "private", "secure", "communicate"],
       icon: <Phone className="h-5 w-5 text-ceylon-blue" />
     },
     {
