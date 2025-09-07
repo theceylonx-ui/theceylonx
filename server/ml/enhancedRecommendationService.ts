@@ -727,27 +727,21 @@ export class EnhancedRecommendationService {
         updatedAt: trips.updatedAt,
         isDeleted: trips.isDeleted,
         deletedAt: trips.deletedAt,
-        organizer: {
-          id: users.id,
-          email: users.email,
-          phone: users.phone,
-          name: users.name,
-          image: users.image,
-          provider: users.provider,
-          firstName: users.firstName,
-          lastName: users.lastName,
-          username: users.username,
-          profileImageUrl: users.profileImageUrl,
-          phoneNumber: users.phoneNumber,
-          bio: users.bio,
-          googleId: users.googleId,
-          facebookId: users.facebookId,
-          microsoftId: users.microsoftId,
-          appleId: users.appleId,
-          emailVerified: users.emailVerified,
-          createdAt: users.createdAt,
-          updatedAt: users.updatedAt,
-        }
+        // Flatten organizer fields to avoid nested object issues
+        organizerEmail: users.email,
+        organizerPhone: users.phone,
+        organizerName: users.name,
+        organizerImage: users.image,
+        organizerProvider: users.provider,
+        organizerFirstName: users.firstName,
+        organizerLastName: users.lastName,
+        organizerUsername: users.username,
+        organizerProfileImageUrl: users.profileImageUrl,
+        organizerPhoneNumber: users.phoneNumber,
+        organizerBio: users.bio,
+        organizerEmailVerified: users.emailVerified,
+        organizerCreatedAt: users.createdAt,
+        organizerUpdatedAt: users.updatedAt
       })
       .from(trips)
       .innerJoin(users, eq(trips.organizerId, users.id))
@@ -806,27 +800,21 @@ export class EnhancedRecommendationService {
           updatedAt: trips.updatedAt,
           isDeleted: trips.isDeleted,
           deletedAt: trips.deletedAt,
-          organizer: {
-            id: users.id,
-            email: users.email,
-            phone: users.phone,
-            name: users.name,
-            image: users.image,
-            provider: users.provider,
-            firstName: users.firstName,
-            lastName: users.lastName,
-            username: users.username,
-            profileImageUrl: users.profileImageUrl,
-            phoneNumber: users.phoneNumber,
-            bio: users.bio,
-            googleId: users.googleId,
-            facebookId: users.facebookId,
-            microsoftId: users.microsoftId,
-            appleId: users.appleId,
-            emailVerified: users.emailVerified,
-            createdAt: users.createdAt,
-            updatedAt: users.updatedAt,
-          }
+          // Flatten organizer fields to avoid nested object issues
+          organizerEmail: users.email,
+          organizerPhone: users.phone,
+          organizerName: users.name,
+          organizerImage: users.image,
+          organizerProvider: users.provider,
+          organizerFirstName: users.firstName,
+          organizerLastName: users.lastName,
+          organizerUsername: users.username,
+          organizerProfileImageUrl: users.profileImageUrl,
+          organizerPhoneNumber: users.phoneNumber,
+          organizerBio: users.bio,
+          organizerEmailVerified: users.emailVerified,
+          organizerCreatedAt: users.createdAt,
+          organizerUpdatedAt: users.updatedAt
         })
         .from(trips)
         .innerJoin(users, eq(trips.organizerId, users.id))
@@ -838,7 +826,57 @@ export class EnhancedRecommendationService {
         ));
     }
 
-    return await finalQuery.limit(100); // Get more candidates for better filtering
+    const results = await finalQuery.limit(100); // Get more candidates for better filtering
+    
+    // Transform flattened results back to nested structure
+    return results.map((row: any) => ({
+      id: row.id,
+      title: row.title,
+      description: row.description,
+      fromLocation: row.fromLocation,
+      toLocation: row.toLocation,
+      date: row.date,
+      time: row.time,
+      seatsAvailable: row.seatsAvailable,
+      price: row.price,
+      region: row.region,
+      contactInfo: row.contactInfo,
+      notes: row.notes,
+      organizerId: row.organizerId,
+      status: row.status,
+      tags: row.tags,
+      priceMin: row.priceMin,
+      priceMax: row.priceMax,
+      duration: row.duration,
+      difficulty: row.difficulty,
+      buddyFriendly: row.buddyFriendly,
+      seasonality: row.seasonality,
+      safetyFlags: row.safetyFlags,
+      viewCount: row.viewCount,
+      bookingCount: row.bookingCount,
+      freshBoost: row.freshBoost,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      isDeleted: row.isDeleted,
+      deletedAt: row.deletedAt,
+      organizer: {
+        id: row.organizerId,
+        email: row.organizerEmail,
+        phone: row.organizerPhone,
+        name: row.organizerName,
+        image: row.organizerImage,
+        provider: row.organizerProvider,
+        firstName: row.organizerFirstName,
+        lastName: row.organizerLastName,
+        username: row.organizerUsername,
+        profileImageUrl: row.organizerProfileImageUrl,
+        phoneNumber: row.organizerPhoneNumber,
+        bio: row.organizerBio,
+        emailVerified: row.organizerEmailVerified,
+        createdAt: row.organizerCreatedAt,
+        updatedAt: row.organizerUpdatedAt
+      }
+    }));
   }
 
   // Build comprehensive user profile
