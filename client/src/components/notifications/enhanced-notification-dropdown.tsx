@@ -30,11 +30,9 @@ export function EnhancedNotificationDropdown() {
     enabled: isOpen,
   });
 
-  // Debug: Log raw notification data to see what's missing
-  console.log("🚨 RAW NOTIFICATIONS:", notifications);
-  if (notifications.length > 0) {
-    console.log("🚨 FIRST NOTIFICATION FIELDS:", Object.keys(notifications[0]));
-    console.log("🚨 FIRST NOTIFICATION DATA:", notifications[0]);
+  // Log success when notifications load with data
+  if (notifications.length > 0 && notifications[0].title) {
+    console.log("✅ Notifications loaded successfully with title and message!");
   }
 
   // Fetch unread count
