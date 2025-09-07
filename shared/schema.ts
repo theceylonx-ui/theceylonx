@@ -21,7 +21,7 @@ import { z } from "zod";
 export const tripStatusEnum = pgEnum('trip_status', ['active', 'full', 'completed', 'cancelled', 'inactive', 'deleted', 'under_review']);
 export const saveTypeEnum = pgEnum('save_type', ['pinned', 'interested']);
 export const notificationTypeEnum = pgEnum('notification_type', ['trip_updated', 'trip_removed', 'save_removed']);
-export const difficultyEnum = pgEnum('difficulty', ['easy', 'moderate', 'challenging']);
+// Difficulty enum removed - using varchar instead
 export const userRoleEnum = pgEnum('user_role', ['user', 'moderator', 'admin', 'superadmin']);
 export const reportStatusEnum = pgEnum('report_status', ['open', 'investigating', 'resolved', 'dismissed']);
 export const reportContextEnum = pgEnum('report_context', ['trip', 'user', 'chat_message']);
