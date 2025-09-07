@@ -2534,7 +2534,7 @@ export class DatabaseStorage implements IStorage {
       .from(chatMessages)
       .leftJoin(users, eq(chatMessages.senderId, users.id))
       .where(eq(chatMessages.threadId, threadId))
-      .orderBy(desc(chatMessages.createdAt))
+      .orderBy(asc(chatMessages.createdAt)) // 🔥 CEYLONX CHALLENGE FIX: WhatsApp-style chronological order 🔥
       .limit(options.limit);
 
     if (options.cursor) {
