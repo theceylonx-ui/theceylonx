@@ -67,11 +67,17 @@ export function NotificationDropdown() {
   });
 
   const handleNotificationClick = (notification: Notification) => {
+    console.log('Notification clicked:', notification);
     if (!notification.isRead) {
       markAsReadMutation.mutate(notification.id);
     }
-    if (notification.actionUrl) {
-      window.location.href = notification.actionUrl;
+    // Try primary action URL first, then fallback to actionUrl
+    const targetUrl = notification.primaryActionUrl || notification.actionUrl;
+    if (targetUrl) {
+      console.log('Navigating to:', targetUrl);
+      window.location.href = targetUrl;
+    } else {
+      console.log('No action URL found for notification:', notification);
     }
   };
 
@@ -153,8 +159,8 @@ export function NotificationDropdown() {
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`group relative flex items-start gap-3 p-3 hover:bg-muted cursor-pointer ${
-                    !notification.isRead ? "bg-blue-50 dark:bg-blue-950/30" : ""
+                  className={`group relative flex items-start gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors ${
+                    !notification.isRead ? "bg-blue-50 dark:bg-blue-950/30 border-l-4 border-blue-500" : ""
                   }`}
                   onClick={() => handleNotificationClick(notification)}
                   data-testid={`notification-${notification.id}`}
@@ -166,10 +172,10 @@ export function NotificationDropdown() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="text-sm font-medium leading-tight">
+                        <p className="text-sm font-medium leading-tight text-gray-900 dark:text-gray-100">
                           {notification.title}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                        <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
                           {notification.message}
                         </p>
                       </div>
@@ -179,7 +185,7 @@ export function NotificationDropdown() {
                       )}
                     </div>
                     
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                       {formatDistanceToNow(new Date(notification.createdAt || new Date()), { addSuffix: true })}
                     </p>
                     
