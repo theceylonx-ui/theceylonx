@@ -117,10 +117,12 @@ export function EnhancedRecommendedTrips() {
   // Reset recommendations mutation
   const resetRecommendationsMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', '/api/recommendations/reset');
+      return apiRequest('POST', '/api/user/personalization/reset');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/recommendations/enhanced'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/personalization'] });
+      refetch(); // Also trigger a fresh fetch
     },
   });
 
@@ -507,10 +509,19 @@ export function EnhancedRecommendedTrips() {
               Try Fresh Finds or update your Travel Style Settings for better recommendations.
             </p>
             <div className="flex gap-2 justify-center">
-              <Button variant="outline" onClick={() => refetch()}>
-                Try Fresh Finds
+              <Button 
+                variant="outline" 
+                onClick={() => resetRecommendationsMutation.mutate()}
+                disabled={resetRecommendationsMutation.isPending}
+                data-testid="button-try-fresh-finds"
+              >
+                {resetRecommendationsMutation.isPending ? 'Loading...' : 'Try Fresh Finds'}
               </Button>
-              <Button variant="outline" onClick={() => window.location.href = '/profile'}>
+              <Button 
+                variant="outline" 
+                onClick={() => setLocation('/me?tab=preferences')}
+                data-testid="button-travel-style-settings"
+              >
                 Travel Style Settings
               </Button>
             </div>
