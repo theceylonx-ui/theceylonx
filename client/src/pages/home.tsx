@@ -53,7 +53,7 @@ export default function Home() {
               className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 text-sm font-semibold shadow-lg border-0 hover:from-green-600 hover:to-emerald-700 transition-all duration-200" 
               data-testid="free-badge"
             >
-              🎉 100% Free to Use - No Hidden Fees
+              Enjoy every feature, at zero cost.
             </Badge>
           </div>
           
