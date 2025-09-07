@@ -199,7 +199,7 @@ export function EnhancedNotificationDropdown() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
-        className="w-96" 
+        className="w-96 bg-ui-surface border-ui-line shadow-[0_1px_3px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.4)]" 
         align="end"
         data-testid="dropdown-notifications"
       >
@@ -269,9 +269,9 @@ export function EnhancedNotificationDropdown() {
                   {filteredNotifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className={`group relative flex items-start gap-3 p-3 border-l-4 hover:bg-gray-100 cursor-pointer ${
+                      className={`group relative flex items-start gap-3 p-4 border-l-4 hover:bg-ui-surface/80 cursor-pointer transition-colors duration-200 ${
                         getPriorityColor(notification.priority as NotificationPriority)
-                      } ${!notification.isRead ? "font-medium" : ""}`}
+                      } ${!notification.isRead ? "bg-ui-surface/50" : ""}`}
                       onClick={() => handleNotificationClick(notification)}
                       data-testid={`notification-${notification.id}`}
                     >
@@ -282,7 +282,7 @@ export function EnhancedNotificationDropdown() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
-                            <p className="text-sm leading-tight font-medium" style={{ color: '#1a1a1a' }}>
+                            <p className="text-sm leading-tight font-medium text-text-primary">
                               {notification.title}
                               {notification.priority === "critical" && (
                                 <Badge variant="destructive" className="ml-2 text-xs">
@@ -290,7 +290,7 @@ export function EnhancedNotificationDropdown() {
                                 </Badge>
                               )}
                             </p>
-                            <p className="text-xs mt-1 line-clamp-2" style={{ color: '#4a4a4a' }}>
+                            <p className="text-xs mt-1 line-clamp-2 text-text-muted">
                               {notification.message}
                             </p>
                           </div>
@@ -301,10 +301,10 @@ export function EnhancedNotificationDropdown() {
                         </div>
                         
                         <div className="flex items-center justify-between mt-2">
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-text-muted">
                             {formatDistanceToNow(new Date(notification.createdAt || new Date()), { addSuffix: true })}
                           </p>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs border-ui-line text-text-muted">
                             {getCategoryLabel(notification.category as NotificationCategory)}
                           </Badge>
                         </div>
