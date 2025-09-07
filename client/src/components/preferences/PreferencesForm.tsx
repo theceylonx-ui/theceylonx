@@ -11,6 +11,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 import { X, Plus, Save, RotateCcw, Sparkles } from "lucide-react";
 
 // Client-side validation schema matching server requirements
@@ -99,6 +100,7 @@ const PREFERENCE_LABELS = {
 export function PreferencesForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const [isOptimistic, setIsOptimistic] = useState(false);
 
   // Fetch taxonomy options
@@ -171,8 +173,13 @@ export function PreferencesForm() {
       
       toast({
         title: "Preferences saved",
-        description: "Your travel preferences have been updated successfully.",
+        description: "Your travel preferences have been updated successfully. Redirecting to recommendations...",
       });
+
+      // Redirect to home page to see personalized recommendations after a brief delay
+      setTimeout(() => {
+        setLocation('/');
+      }, 1500);
     },
     onError: async (error, variables, context) => {
       // Rollback optimistic update
@@ -202,8 +209,13 @@ export function PreferencesForm() {
           
           toast({
             title: "Preferences saved",
-            description: "Your travel preferences have been updated successfully.",
+            description: "Your travel preferences have been updated successfully. Redirecting to recommendations...",
           });
+
+          // Redirect to home page to see personalized recommendations after a brief delay
+          setTimeout(() => {
+            setLocation('/');
+          }, 1500);
           
           return; // Exit early on successful retry
         } catch (retryError) {
