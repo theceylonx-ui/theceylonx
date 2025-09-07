@@ -1,6 +1,8 @@
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import logoImage from "@assets/5_1756417819316.png";
+import { Facebook, Instagram, Twitter, Youtube } from "lucide-react";
+import { SiTiktok } from "react-icons/si";
 
 export default function Footer() {
   const { data: popularDestinations = [] } = useQuery<Array<{ destination: string; count: number }>>({
@@ -78,8 +80,33 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-gray-700 mt-8 pt-8 text-center">
-          <p className="text-gray-300">© 2025 Ceylon Expand. All rights reserved. Made with ❤️ for the tourists visiting Sri Lanka.</p>
+        {/* Social Media Section */}
+        <div className="border-t border-gray-700 mt-8 pt-8">
+          <div className="text-center mb-6">
+            <p className="text-gray-400 text-sm mb-4">Follow us @theceylonx</p>
+            <div className="flex justify-center items-center space-x-6">
+              <div className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group">
+                <Facebook className="h-5 w-5 text-gray-300 group-hover:text-blue-400" />
+              </div>
+              <div className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group">
+                <Instagram className="h-5 w-5 text-gray-300 group-hover:text-pink-400" />
+              </div>
+              <div className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group">
+                <Twitter className="h-5 w-5 text-gray-300 group-hover:text-blue-400" />
+              </div>
+              <div className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group">
+                <SiTiktok className="h-5 w-5 text-gray-300 group-hover:text-red-400" />
+              </div>
+              <div className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group">
+                <Youtube className="h-5 w-5 text-gray-300 group-hover:text-red-500" />
+              </div>
+            </div>
+          </div>
+          
+          {/* Copyright */}
+          <div className="text-center">
+            <p className="text-gray-300">© 2025 Ceylon Expand. All rights reserved. Made with ❤️ for the tourists visiting Sri Lanka.</p>
+          </div>
         </div>
       </div>
     </footer>
