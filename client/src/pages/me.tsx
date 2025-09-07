@@ -1305,147 +1305,50 @@ function UserActivity() {
 
 // Security Settings Component
 function SecuritySettings({ profile }: any) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Security Settings</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-4">
-          <div>
-            <h3 className="font-medium">Account Information</h3>
-            <div className="mt-2 space-y-2 text-sm">
-              <p><strong>Email:</strong> {profile.email}</p>
-              <p><strong>Provider:</strong> {profile.provider || 'Email'}</p>
-              <p><strong>Email Verified:</strong> {profile.emailVerified ? '✅ Verified' : '❌ Not verified'}</p>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-medium">Login Methods</h3>
-            <div className="mt-2 space-y-2">
-              {profile.googleId && (
-                <Badge variant="secondary">Google Connected</Badge>
-              )}
-              {profile.facebookId && (
-                <Badge variant="secondary">Facebook Connected</Badge>
-              )}
-              {profile.microsoftId && (
-                <Badge variant="secondary">Microsoft Connected</Badge>
-              )}
-              {profile.appleId && (
-                <Badge variant="secondary">Apple Connected</Badge>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-medium">Account Actions</h3>
-            <div className="mt-2 space-y-2">
-              <Button variant="outline" onClick={() => window.location.href = '/user/delete'}>
-                Delete Account
-              </Button>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Privacy Settings Component
-function PrivacySettings({ privacy, onUpdate }: any) {
   const { toast } = useToast();
-  const [settings, setSettings] = useState({
-    visibility: privacy?.visibility ?? 'public',
-    showOnline: privacy?.showOnline ?? true,
-    showJoinedTrips: privacy?.showJoinedTrips ?? true,
-    cityVisibility: privacy?.cityVisibility ?? 'show'
-  });
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSave = async () => {
-    setIsLoading(true);
-    try {
-      const response = await apiRequest('PATCH', '/api/me/privacy', settings);
-      if (response.ok) {
-        toast({
-          title: "Privacy Updated",
-          description: "Your privacy settings have been saved.",
-        });
-        onUpdate();
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update privacy settings.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className="space-y-6">
-      {/* Privacy Settings */}
+      {/* Account Security */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Lock className="w-6 h-6" />
-            Privacy Settings
+            <Shield className="w-6 h-6" />
+            Security Settings
           </CardTitle>
           <p className="text-muted-foreground">
-            Control who can see your profile information and activity.
+            Manage your account security and authentication methods.
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div>
-            <Label>Profile Visibility</Label>
-            <select
-              value={settings.visibility}
-              onChange={(e) => setSettings({...settings, visibility: e.target.value})}
-              className="w-full mt-2 p-2 border rounded"
-            >
-              <option value="public">Public - Everyone can see</option>
-              <option value="private">Private</option>
-            </select>
-          </div>
-
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label>Show Online Status</Label>
-              <input
-                type="checkbox"
-                checked={settings.showOnline}
-                onChange={(e) => setSettings({...settings, showOnline: e.target.checked})}
-              />
+            <div>
+              <h3 className="font-medium">Account Information</h3>
+              <div className="mt-2 space-y-2 text-sm">
+                <p><strong>Email:</strong> {profile.email}</p>
+                <p><strong>Provider:</strong> {profile.provider || 'Email'}</p>
+                <p><strong>Email Verified:</strong> {profile.emailVerified ? '✅ Verified' : '❌ Not verified'}</p>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <Label>Show Joined Trips</Label>
-              <input
-                type="checkbox"
-                checked={settings.showJoinedTrips}
-                onChange={(e) => setSettings({...settings, showJoinedTrips: e.target.checked})}
-              />
+
+            <div>
+              <h3 className="font-medium">Login Methods</h3>
+              <div className="mt-2 space-y-2">
+                {profile.googleId && (
+                  <Badge variant="secondary">Google Connected</Badge>
+                )}
+                {profile.facebookId && (
+                  <Badge variant="secondary">Facebook Connected</Badge>
+                )}
+                {profile.microsoftId && (
+                  <Badge variant="secondary">Microsoft Connected</Badge>
+                )}
+                {profile.appleId && (
+                  <Badge variant="secondary">Apple Connected</Badge>
+                )}
+              </div>
             </div>
           </div>
-
-          <div>
-            <Label>City Visibility</Label>
-            <select
-              value={settings.cityVisibility}
-              onChange={(e) => setSettings({...settings, cityVisibility: e.target.value})}
-              className="w-full mt-2 p-2 border rounded"
-            >
-              <option value="show">Show my city</option>
-              <option value="hide">Hide my city</option>
-            </select>
-          </div>
-
-          <Button onClick={handleSave} disabled={isLoading}>
-            {isLoading ? "Saving..." : "Save Settings"}
-          </Button>
         </CardContent>
       </Card>
 
@@ -1568,5 +1471,101 @@ function PrivacySettings({ privacy, onUpdate }: any) {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// Privacy Settings Component
+function PrivacySettings({ privacy, onUpdate }: any) {
+  const { toast } = useToast();
+  const [settings, setSettings] = useState({
+    visibility: privacy?.visibility ?? 'public',
+    showOnline: privacy?.showOnline ?? true,
+    showJoinedTrips: privacy?.showJoinedTrips ?? true,
+    cityVisibility: privacy?.cityVisibility ?? 'show'
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSave = async () => {
+    setIsLoading(true);
+    try {
+      const response = await apiRequest('PATCH', '/api/me/privacy', settings);
+      if (response.ok) {
+        toast({
+          title: "Privacy Updated",
+          description: "Your privacy settings have been saved.",
+        });
+        onUpdate();
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update privacy settings.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Eye className="w-6 h-6" />
+          Privacy Settings
+        </CardTitle>
+        <p className="text-muted-foreground">
+          Control who can see your profile information and activity.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div>
+          <Label>Profile Visibility</Label>
+          <select
+            value={settings.visibility}
+            onChange={(e) => setSettings({...settings, visibility: e.target.value})}
+            className="w-full mt-2 p-2 border rounded"
+          >
+            <option value="public">Public - Everyone can see</option>
+            <option value="private">Private</option>
+          </select>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label>Show Online Status</Label>
+            <input
+              type="checkbox"
+              checked={settings.showOnline}
+              onChange={(e) => setSettings({...settings, showOnline: e.target.checked})}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label>Show Joined Trips</Label>
+            <input
+              type="checkbox"
+              checked={settings.showJoinedTrips}
+              onChange={(e) => setSettings({...settings, showJoinedTrips: e.target.checked})}
+            />
+          </div>
+        </div>
+
+        <div>
+          <Label>City Visibility</Label>
+          <select
+            value={settings.cityVisibility}
+            onChange={(e) => setSettings({...settings, cityVisibility: e.target.value})}
+            className="w-full mt-2 p-2 border rounded"
+          >
+            <option value="show">Show my city</option>
+            <option value="hide">Hide my city</option>
+          </select>
+        </div>
+
+        <Button onClick={handleSave} disabled={isLoading}>
+          {isLoading ? "Saving..." : "Save Settings"}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
