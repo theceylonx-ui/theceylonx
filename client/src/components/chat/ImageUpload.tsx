@@ -80,9 +80,16 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
   // Send image message mutation
   const sendImageMessageMutation = useMutation({
     mutationFn: async ({ attachmentUrl, ephemeral }: { attachmentUrl: string; ephemeral: boolean }) => {
+      // 🔥 CEYLONX CHALLENGE FIX: Ensure attachmentId is valid 🔥
+      console.log("🔥 Sending image message with attachmentUrl:", attachmentUrl);
+      
+      if (!attachmentUrl || attachmentUrl.trim() === '') {
+        throw new Error('Invalid attachment URL');
+      }
+      
       return apiRequest("POST", `/api/chat/threads/${threadId}/messages`, {
-        text: null,
-        attachmentId: attachmentUrl, // Using URL as attachment ID for now
+        text: undefined, // Don't send null, use undefined
+        attachmentId: attachmentUrl,
         ephemeral,
       });
     },

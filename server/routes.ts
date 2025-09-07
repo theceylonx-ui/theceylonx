@@ -4036,6 +4036,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Message text or attachment is required' });
       }
 
+      // 🔥 CEYLONX DEBUG: Log request data 🔥
+      console.log("🔥 Message API Request:", { text, attachmentId, ephemeral, threadId, userId });
+
       // Create message
       const message = await storage.createChatMessage({
         threadId,
