@@ -178,10 +178,10 @@ export function NotificationDropdown() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
-                        <p className="text-sm font-medium leading-tight text-black dark:text-white" style={{ color: '#000' }}>
+                        <p className="text-sm font-medium leading-tight" style={{ color: '#000000 !important', fontWeight: 'bold' }}>
                           {notification.title || 'No title'}
                         </p>
-                        <p className="text-xs text-gray-700 dark:text-gray-200 mt-1 line-clamp-2" style={{ color: '#333' }}>
+                        <p className="text-xs mt-1" style={{ color: '#444444 !important', lineHeight: '1.4' }}>
                           {notification.message || 'No message'}
                         </p>
                       </div>
