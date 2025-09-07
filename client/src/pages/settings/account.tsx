@@ -154,7 +154,7 @@ export default function AccountSettingsPage() {
     );
   }
 
-  const profileUrl = `/profile/${user.id}`;
+  const profileUrl = `/profile/${user.username || user.id}`;
 
   return (
     <div className="min-h-screen bg-gray-50">

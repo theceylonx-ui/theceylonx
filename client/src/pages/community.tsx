@@ -734,7 +734,7 @@ export default function CommunityPage() {
                           <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
                             <div className="flex items-center">
                               <User className="w-4 h-4 mr-1" />
-                              {question.isAnonymous ? 'Anonymous' : (question.user?.firstName || 'Anonymous')}
+                              {question.isAnonymous ? 'Anonymous' : (question.user?.displayName || 'Anonymous')}
                             </div>
                             <div className="flex items-center">
                               <Calendar className="w-4 h-4 mr-1" />

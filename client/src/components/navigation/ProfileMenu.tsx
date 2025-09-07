@@ -69,7 +69,7 @@ export default function ProfileMenu({ className }: ProfileMenuProps) {
     return null;
   }
 
-  const profileUrl = `/profile/${user.id}`;
+  const profileUrl = `/profile/${user.username || user.id}`;
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={handleMenuOpen}>

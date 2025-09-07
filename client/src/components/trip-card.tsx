@@ -503,7 +503,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
           <div className="border-t border-ui-line mt-6 pt-4 space-y-4">
             {/* Row 1: Organizer Info */}
             <div className="flex items-center" data-testid={`trip-organizer-${trip.id}`}>
-              <Link href={`/profile/${trip.organizerId}`} className="hover:opacity-80 transition-opacity">
+              <Link href={`/profile/${trip.organizer?.username || trip.organizerId}`} className="hover:opacity-80 transition-opacity">
                 <UserDisplay 
                   user={trip.organizer}
                   avatarSize="lg"

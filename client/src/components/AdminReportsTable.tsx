@@ -59,7 +59,7 @@ export function AdminReportsTable() {
       setSelectedReport({
         ...report,
         tripTitle: trip.title,
-        organizerName: `${trip.organizer?.firstName || ''} ${trip.organizer?.lastName || ''}`.trim() || 'Unknown',
+        organizerName: trip.organizer?.displayName || 'Unknown',
       });
       setChatModalOpen(true);
     } catch (error) {

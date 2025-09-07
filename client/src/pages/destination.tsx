@@ -189,7 +189,7 @@ export default function DestinationPage() {
                         
                         <div className="flex items-center justify-between">
                           <div className="text-sm text-gray-500">
-                            by {trip.organizer?.firstName} {trip.organizer?.lastName}
+                            by {trip.organizer?.displayName}
                           </div>
                           <Link href={`/trips/${trip.id}`}>
                             <Button size="sm">
@@ -273,7 +273,7 @@ export default function DestinationPage() {
                           
                           <div className="flex items-center justify-between text-sm text-gray-500">
                             <div className="flex items-center space-x-4">
-                              <span>{question.user?.firstName || 'Anonymous'}</span>
+                              <span>{question.user?.displayName || 'Anonymous'}</span>
                               <span>{formatDistanceToNow(new Date(question.createdAt || new Date()), { addSuffix: true })}</span>
                             </div>
                             <div className="flex items-center space-x-2">

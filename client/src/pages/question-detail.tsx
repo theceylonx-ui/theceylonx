@@ -330,7 +330,7 @@ export default function QuestionDetailPage() {
                 <div className="flex items-center space-x-4 text-sm text-gray-500">
                   <div className="flex items-center">
                     <User className="w-4 h-4 mr-1" />
-                    {question.user?.firstName || 'Anonymous'}
+                    {question.user?.displayName || 'Anonymous'}
                   </div>
                   <div className="flex items-center">
                     <Calendar className="w-4 h-4 mr-1" />
@@ -590,7 +590,7 @@ export default function QuestionDetailPage() {
                       <div className="flex items-center space-x-3 text-sm text-gray-500">
                         <div className="flex items-center">
                           <User className="w-4 h-4 mr-1" />
-                          {answer.user?.firstName || 'Anonymous'}
+                          {answer.user?.displayName || 'Anonymous'}
                         </div>
                         <div className="flex items-center">
                           <Calendar className="w-4 h-4 mr-1" />
