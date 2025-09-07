@@ -1,7 +1,7 @@
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, AlertTriangle, Phone, MapPin, Heart, Users } from "lucide-react";
+import { Shield, AlertTriangle, Phone, MapPin, Heart, Users, MessageCircle, Camera, Calendar, UserPlus } from "lucide-react";
 
 export default function SafetyGuidelines() {
   return (
@@ -34,6 +34,8 @@ export default function SafetyGuidelines() {
                   <li>• Verify the trip organizer's identity and profile completeness</li>
                   <li>• Read trip details carefully and ask questions if unclear</li>
                   <li>• Check the organizer's ratings and reviews from previous trips</li>
+                  <li>• Use our Chat Buddy system to communicate before meeting</li>
+                  <li>• Review trip photos and verify authenticity</li>
                   <li>• Share your travel plans with trusted friends or family</li>
                   <li>• Trust your instincts - if something feels off, don't join</li>
                 </ul>
@@ -107,6 +109,95 @@ export default function SafetyGuidelines() {
                   <li>• Tourist Hotline: 1912</li>
                   <li>• Know the location of nearest hospitals</li>
                   <li>• Keep emergency contacts readily available</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <MessageCircle className="w-6 h-6 text-ceylon-blue mr-3" />
+                Chat Buddy & Communication Safety
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Using Chat Buddy Safely:</h4>
+                <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                  <li>• Your contact information is kept private by default</li>
+                  <li>• Only share personal details when you feel comfortable</li>
+                  <li>• Use the in-platform messaging for initial conversations</li>
+                  <li>• Report any inappropriate messages immediately</li>
+                  <li>• Block users who make you uncomfortable</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Photo Sharing Guidelines:</h4>
+                <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                  <li>• Only share photos relevant to your trip</li>
+                  <li>• Avoid sharing photos with personal information visible</li>
+                  <li>• Be cautious about location data in shared images</li>
+                  <li>• Respect privacy of other travelers in photos</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Calendar className="w-6 h-6 text-ceylon-green mr-3" />
+                Trip Planning & Calendar Safety
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Using Calendar Features:</h4>
+                <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                  <li>• Keep your travel schedule private until you join a trip</li>
+                  <li>• Use calendar filters to find verified organizers</li>
+                  <li>• Check trip status and updates regularly</li>
+                  <li>• Confirm trip details 24 hours before departure</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Pinned & Interested Trips:</h4>
+                <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                  <li>• Pin trips only from trusted organizers</li>
+                  <li>• Review pinned trips regularly for updates</li>
+                  <li>• Use interest notifications to stay informed</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <UserPlus className="w-6 h-6 text-ceylon-green mr-3" />
+                Community & Q&A Safety
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">CeylonX Tribes Safety:</h4>
+                <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                  <li>• Verify information from community posts independently</li>
+                  <li>• Report misleading or dangerous advice</li>
+                  <li>• Follow community guidelines when posting</li>
+                  <li>• Respect other members' privacy and opinions</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Information Sharing:</h4>
+                <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                  <li>• Don't share personal contact details publicly</li>
+                  <li>• Use our private messaging for sensitive information</li>
+                  <li>• Be cautious of unsolicited advice or offers</li>
                 </ul>
               </div>
             </CardContent>

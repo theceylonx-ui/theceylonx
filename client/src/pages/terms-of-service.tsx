@@ -15,7 +15,7 @@ export default function TermsOfService() {
             Terms of Service
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400">
-            Last updated: August 2025
+            Last updated: September 2025
           </p>
         </div>
 
@@ -30,8 +30,9 @@ export default function TermsOfService() {
                 If you do not agree to abide by the above, please do not use this service.
               </p>
               <p className="text-gray-600 dark:text-gray-300">
-                Ceylon Expand is a platform that connects travelers for shared trips and experiences in Sri Lanka. 
-                We facilitate connections between users but do not directly provide travel services.
+                Ceylon Expand is a comprehensive travel platform that connects travelers for shared trips and experiences in Sri Lanka. 
+                We facilitate connections between users through trip sharing, Chat Buddy messaging, community Q&A forums (CeylonX Tribes), 
+                calendar features, photo sharing capabilities, and content sharing but do not directly provide travel services.
               </p>
             </CardContent>
           </Card>
@@ -92,7 +93,88 @@ export default function TermsOfService() {
 
           <Card>
             <CardHeader>
-              <CardTitle>4. Community Guidelines</CardTitle>
+              <CardTitle>4. Chat Buddy and Messaging</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Chat Buddy Features:</h4>
+                <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                  <li>• Contact information remains private by default</li>
+                  <li>• Users may choose to share contact details at their discretion</li>
+                  <li>• All messages are subject to community guidelines</li>
+                  <li>• Report inappropriate messaging through the platform</li>
+                  <li>• Block users who make you uncomfortable</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Photo Sharing:</h4>
+                <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                  <li>• Upload and share trip-related photos responsibly</li>
+                  <li>• Respect privacy of other travelers in shared images</li>
+                  <li>• No inappropriate, offensive, or misleading photos</li>
+                  <li>• You retain ownership of your uploaded content</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>5. Calendar and Trip Management</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Calendar Features:</h4>
+                <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                  <li>• Filter and search trips based on dates and preferences</li>
+                  <li>• Pin and track trips of interest</li>
+                  <li>• Receive notifications for trip updates</li>
+                  <li>• Calendar data is used to improve recommendations</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Trip Status Management:</h4>
+                <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                  <li>• Track trip status (active, completed, cancelled)</li>
+                  <li>• Update trip availability and participant limits</li>
+                  <li>• Manage interested and confirmed participants</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>6. CeylonX Tribes and Community Q&A</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Community Participation:</h4>
+                <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                  <li>• Ask and answer travel-related questions</li>
+                  <li>• Share knowledge and experiences responsibly</li>
+                  <li>• Vote on helpful answers to build community trust</li>
+                  <li>• Follow topic-specific guidelines</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Content Quality:</h4>
+                <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                  <li>• Provide accurate and helpful information</li>
+                  <li>• Cite sources when sharing factual information</li>
+                  <li>• Respect different opinions and experiences</li>
+                  <li>• Report misinformation or harmful advice</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>7. Community Guidelines</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -102,7 +184,9 @@ export default function TermsOfService() {
                   <li>• Harassment, discrimination, or inappropriate behavior toward other users</li>
                   <li>• Spam, promotional content, or commercial solicitation</li>
                   <li>• Attempting to circumvent platform fees or direct payment requests</li>
-                  <li>• Sharing personal contact information in public trip posts</li>
+                  <li>• Sharing personal contact information in public posts (use Chat Buddy instead)</li>
+                  <li>• Uploading inappropriate or misleading photos</li>
+                  <li>• Providing false information in community Q&A</li>
                   <li>• Creating fake reviews or manipulating the rating system</li>
                 </ul>
               </div>
@@ -119,7 +203,7 @@ export default function TermsOfService() {
 
           <Card>
             <CardHeader>
-              <CardTitle>5. Payment and Fees</CardTitle>
+              <CardTitle>8. Payment and Fees</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-600 dark:text-gray-300">
@@ -140,7 +224,7 @@ export default function TermsOfService() {
 
           <Card>
             <CardHeader>
-              <CardTitle>6. Limitation of Liability</CardTitle>
+              <CardTitle>9. Limitation of Liability</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg">
@@ -163,7 +247,7 @@ export default function TermsOfService() {
 
           <Card>
             <CardHeader>
-              <CardTitle>7. Privacy and Data Protection</CardTitle>
+              <CardTitle>10. Privacy and Data Protection</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-600 dark:text-gray-300">
@@ -176,7 +260,7 @@ export default function TermsOfService() {
 
           <Card>
             <CardHeader>
-              <CardTitle>8. Changes to Terms</CardTitle>
+              <CardTitle>11. Changes to Terms</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-600 dark:text-gray-300">
@@ -189,7 +273,7 @@ export default function TermsOfService() {
 
           <Card>
             <CardHeader>
-              <CardTitle>9. Contact Information</CardTitle>
+              <CardTitle>12. Contact Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-600 dark:text-gray-300">

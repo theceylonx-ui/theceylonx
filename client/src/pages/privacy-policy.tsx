@@ -15,7 +15,7 @@ export default function PrivacyPolicy() {
             Privacy Policy
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400">
-            Last updated: August 2025
+            Last updated: September 2025
           </p>
         </div>
 
@@ -65,7 +65,12 @@ export default function PrivacyPolicy() {
                   <li>• Trips you join or express interest in</li>
                   <li>• Comments and messages you post</li>
                   <li>• Ratings and reviews you give and receive</li>
-                  <li>• Community questions and answers you post</li>
+                  <li>• Community questions and answers you post in CeylonX Tribes</li>
+                  <li>• Chat Buddy messages and communication preferences</li>
+                  <li>• Photos you upload and share with trips</li>
+                  <li>• Calendar filters and search preferences</li>
+                  <li>• Pinned trips and interest notifications</li>
+                  <li>• Upvotes and downvotes on community content</li>
                 </ul>
               </div>
               
@@ -94,7 +99,11 @@ export default function PrivacyPolicy() {
                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
                   <li>• Enable you to create and manage your account</li>
                   <li>• Facilitate trip posting and participation</li>
-                  <li>• Enable communication between travelers</li>
+                  <li>• Enable communication between travelers through Chat Buddy</li>
+                  <li>• Provide secure photo sharing and storage</li>
+                  <li>• Deliver calendar features and trip filtering</li>
+                  <li>• Power CeylonX Tribes community Q&A features</li>
+                  <li>• Send relevant notifications and updates</li>
                   <li>• Process ratings and reviews</li>
                   <li>• Provide customer support and respond to inquiries</li>
                 </ul>
@@ -115,6 +124,9 @@ export default function PrivacyPolicy() {
                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
                   <li>• Analyze usage patterns to improve our features</li>
                   <li>• Develop new tools and services for travelers</li>
+                  <li>• Improve recommendation algorithms using your preferences</li>
+                  <li>• Enhance calendar and filtering capabilities</li>
+                  <li>• Refine Chat Buddy matching and communication features</li>
                   <li>• Optimize platform performance and user experience</li>
                   <li>• Conduct research on travel trends in Sri Lanka</li>
                 </ul>
