@@ -45,8 +45,8 @@ app.use(rateLimit({
 }));
 
 // JSON body size limit
-app.use(express.json({ limit: '2mb' }));
-app.use(express.urlencoded({ extended: false, limit: '2mb' }));
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ extended: false, limit: '20mb' }));
 
 app.use((req, res, next) => {
   const start = Date.now();
