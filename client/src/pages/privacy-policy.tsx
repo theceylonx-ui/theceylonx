@@ -138,6 +138,47 @@ export default function PrivacyPolicy() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <UserCheck className="w-6 h-6 text-ceylon-green mr-3" />
+                Chat Buddy Privacy & Photo Sharing
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Contact Information Privacy:</h4>
+                <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                  <li>• Your phone number and email remain private by default</li>
+                  <li>• Only you can choose when to share contact details</li>
+                  <li>• Contact sharing is logged for safety purposes</li>
+                  <li>• You can revoke shared contact information anytime</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Photo Storage and Sharing:</h4>
+                <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                  <li>• Photos are stored securely using encrypted cloud storage</li>
+                  <li>• Only trip-related photos should be uploaded</li>
+                  <li>• Photo metadata (location, timestamp) may be processed</li>
+                  <li>• You retain full ownership of your uploaded photos</li>
+                  <li>• Photos can be deleted from your account at any time</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Message Privacy:</h4>
+                <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                  <li>• Chat Buddy messages are private between participants</li>
+                  <li>• Messages are encrypted in transit and at rest</li>
+                  <li>• Reported messages may be reviewed for safety</li>
+                  <li>• Message history is retained for account safety</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <UserCheck className="w-6 h-6 text-ceylon-green mr-3" />
                 Information Sharing and Disclosure
               </CardTitle>
             </CardHeader>

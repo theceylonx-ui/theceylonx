@@ -113,7 +113,12 @@ export default function ContactUs() {
                         <SelectItem value="safety">Safety Concern</SelectItem>
                         <SelectItem value="account">Account Issues</SelectItem>
                         <SelectItem value="trip">Trip Related</SelectItem>
-                        <SelectItem value="community">Community Guidelines</SelectItem>
+                        <SelectItem value="chat-buddy">Chat Buddy & Messaging</SelectItem>
+                        <SelectItem value="photos">Photo Upload Issues</SelectItem>
+                        <SelectItem value="calendar">Calendar & Filters</SelectItem>
+                        <SelectItem value="community">CeylonX Tribes & Q&A</SelectItem>
+                        <SelectItem value="notifications">Notifications</SelectItem>
+                        <SelectItem value="privacy">Privacy & Data</SelectItem>
                         <SelectItem value="feedback">Feedback & Suggestions</SelectItem>
                         <SelectItem value="business">Business Inquiries</SelectItem>
                       </SelectContent>
@@ -233,23 +238,30 @@ export default function ContactUs() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-1">How do I report a user?</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-1">How does Chat Buddy work?</h4>
                   <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Use the report button on trip posts or user profiles to flag concerning behavior.
+                    Chat Buddy keeps your contact info private - only share when you're comfortable.
                   </p>
                 </div>
                 
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-1">Can I change my trip details?</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-1">Can I upload photos to trips?</h4>
                   <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Yes, you can edit your trip details from your dashboard until the trip starts.
+                    Yes, you can securely upload and share trip-related photos with other travelers.
                   </p>
                 </div>
                 
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-1">How do payments work?</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-1">How do calendar filters work?</h4>
                   <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Payments are arranged directly between trip organizers and participants.
+                    Use calendar to filter trips by date, save preferences, and get personalized recommendations.
+                  </p>
+                </div>
+                
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-1">What is CeylonX Tribes?</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Our community Q&A where you can ask questions and share travel knowledge about Sri Lanka.
                   </p>
                 </div>
                 
