@@ -30,7 +30,12 @@ export function EnhancedNotificationDropdown() {
     enabled: isOpen,
   });
 
-  // Clean: Notifications loaded successfully
+  // Debug: Log raw notification data to see what's missing
+  console.log("🚨 RAW NOTIFICATIONS:", notifications);
+  if (notifications.length > 0) {
+    console.log("🚨 FIRST NOTIFICATION FIELDS:", Object.keys(notifications[0]));
+    console.log("🚨 FIRST NOTIFICATION DATA:", notifications[0]);
+  }
 
   // Fetch unread count
   const { data: unreadCountData } = useQuery<{ count: number }>({
@@ -297,7 +302,7 @@ export function EnhancedNotificationDropdown() {
                               lineHeight: '1.3 !important',
                               fontFamily: 'system-ui, -apple-system, sans-serif !important'
                             }}>
-                              HARDCODED TEST: {notification.title || "No title"}
+                              {notification.title}
                               {notification.priority === "critical" && (
                                 <Badge variant="destructive" className="ml-2 text-xs">
                                   Urgent
@@ -318,7 +323,7 @@ export function EnhancedNotificationDropdown() {
                               marginTop: '4px !important',
                               fontFamily: 'system-ui, -apple-system, sans-serif !important'
                             }}>
-                              HARDCODED MSG: {notification.message || "No message"}
+                              {notification.message}
                             </p>
                           </div>
                           
