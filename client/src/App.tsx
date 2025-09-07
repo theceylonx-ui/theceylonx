@@ -11,7 +11,6 @@ import Home from "@/pages/home";
 import BrowseTrips from "@/pages/browse-trips";
 import PostTrip from "@/pages/post-trip";
 import TripDetails from "@/pages/trip-details";
-import UserDashboard from "@/pages/user-dashboard";
 import FAQ from "@/pages/faq";
 import Community from "@/pages/community";
 import CommunityNew from "@/pages/community-new";
@@ -103,7 +102,7 @@ function Router() {
             <Route path="/trips/new" component={() => { setLocation("/post"); return null; }} />
             <Route path="/post-trip" component={PostTrip} />
             <Route path="/trips/:id" component={TripDetails} />
-            <Route path="/dashboard" component={UserDashboard} />
+            <Route path="/dashboard" component={() => { setLocation("/me"); return null; }} />
             <Route path="/community" component={CommunityNew} />
             <Route path="/question/:id" component={QuestionDetail} />
             <Route path="/calendar" component={CalendarPage} />
