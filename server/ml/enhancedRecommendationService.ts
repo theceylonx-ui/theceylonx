@@ -1085,9 +1085,61 @@ export class EnhancedRecommendationService {
 
   // Generate trending trips (public endpoint, no user-specific data)  
   async getTrendingTrips(limit: number = 10): Promise<TripRecommendation[]> {
-    // Temporary simple fallback - return empty array to prevent UI breaking
-    // TODO: Debug and fix the storage/Drizzle issues later
-    return [];
+    try {
+      // Use exact same pattern as working /api/trips endpoint
+      const { storage } = await import('../storage');
+      const searchResult = await storage.searchTrips({
+        limit: limit * 2 // Get more trips for better scoring
+      });
+      
+      // searchTrips returns { trips: Trip[], pagination: {...} }
+      const activeTrips = Array.isArray(searchResult) ? searchResult : (searchResult?.trips || []);
+      console.log('searchResult type:', typeof searchResult);
+      console.log('activeTrips type:', typeof activeTrips, 'isArray:', Array.isArray(activeTrips), 'length:', activeTrips?.length);
+
+      if (!Array.isArray(activeTrips)) {
+        console.error('activeTrips is not an array:', activeTrips);
+        return [];
+      }
+
+      // Simple scoring based on freshness and regional diversity  
+      const scoredTrips = activeTrips.map((trip: any) => {
+        console.log('Processing trip:', trip.id);
+        const freshnessScore = trip.createdAt ? this.calculateFreshnessScore(trip) : 0.5;
+        const regionalDiversityScore = trip.region ? this.calculateRegionalDiversityScore(trip) : 0.5;
+        
+        const totalScore = freshnessScore * 0.6 + regionalDiversityScore * 0.4;
+
+        return {
+          trip: {
+            ...trip,
+            organizer: trip.organizer || {
+              id: trip.organizerId,
+              email: null,
+              firstName: null,
+              lastName: null,
+              profileImageUrl: null
+            }
+          },
+          score: totalScore,
+          reasons: ['Trending destination'],
+          features: null,
+          seasonalityScore: 0.5,
+          safetyScore: 1.0,
+          noveltyScore: regionalDiversityScore,
+          diversityScore: regionalDiversityScore,
+        };
+      });
+
+      // Sort by score and return top results
+      return scoredTrips
+        .sort((a, b) => b.score - a.score)
+        .slice(0, limit);
+        
+    } catch (error) {
+      console.error("Error in getTrendingTrips:", error);
+      return [];
+    }
   }
 }
 
