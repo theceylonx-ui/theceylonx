@@ -82,11 +82,23 @@ export function EnhancedNotificationDropdown() {
   });
 
   const handleNotificationClick = (notification: Notification) => {
+    console.log('Enhanced Notification clicked:', {
+      id: notification.id,
+      title: notification.title,
+      message: notification.message,
+      actionUrl: notification.actionUrl,
+      primaryActionUrl: notification.primaryActionUrl
+    });
     if (!notification.isRead) {
       markAsReadMutation.mutate(notification.id);
     }
-    if (notification.actionUrl) {
-      window.location.href = notification.actionUrl;
+    // Try primary action URL first, then fallback to actionUrl
+    const targetUrl = notification.primaryActionUrl || notification.actionUrl;
+    if (targetUrl) {
+      console.log('Navigating to:', targetUrl);
+      window.location.href = targetUrl;
+    } else {
+      console.log('No action URL found for notification:', notification);
     }
   };
 
@@ -270,7 +282,7 @@ export function EnhancedNotificationDropdown() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <p className="text-sm leading-tight">
+                            <p className="text-sm leading-tight" style={{ color: '#000000 !important', fontWeight: 'bold' }}>
                               {notification.title}
                               {notification.priority === "critical" && (
                                 <Badge variant="destructive" className="ml-2 text-xs">
@@ -278,7 +290,7 @@ export function EnhancedNotificationDropdown() {
                                 </Badge>
                               )}
                             </p>
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            <p className="text-xs mt-1 line-clamp-2" style={{ color: '#444444 !important', lineHeight: '1.4' }}>
                               {notification.message}
                             </p>
                           </div>
