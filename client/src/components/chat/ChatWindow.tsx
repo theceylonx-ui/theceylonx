@@ -31,6 +31,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface ChatMessage {
   id: string;
@@ -353,6 +360,7 @@ interface MessageBubbleProps {
 
 function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
   const [showReportDialog, setShowReportDialog] = useState(false);
+  const [showReportConfirm, setShowReportConfirm] = useState(false);
   const [imageViewed, setImageViewed] = useState(false);
 
   // Handle contact share messages
@@ -467,7 +475,7 @@ function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onReport('inappropriate')}>
+                    <DropdownMenuItem onClick={() => setShowReportConfirm(true)}>
                       <AlertTriangle className="w-4 h-4 mr-2" />
                       Report
                     </DropdownMenuItem>
@@ -478,6 +486,43 @@ function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
           </Card>
         </div>
       </div>
+
+      {/* Report Confirmation Dialog */}
+      <Dialog open={showReportConfirm} onOpenChange={setShowReportConfirm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>⚠️ Report Message</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to report this message for inappropriate content? 
+              This action will notify the administrators and may result in chat restrictions.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-sm text-gray-600 dark:text-gray-400 italic">
+              "{message.text?.substring(0, 100)}{message.text?.length > 100 ? '...' : ''}"
+            </p>
+          </div>
+
+          <div className="flex gap-3 justify-end">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowReportConfirm(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => {
+                onReport('inappropriate');
+                setShowReportConfirm(false);
+              }}
+            >
+              🚨 Report Message
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     );
   }
 
@@ -518,7 +563,7 @@ function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onReport('inappropriate')}>
+                  <DropdownMenuItem onClick={() => setShowReportConfirm(true)}>
                     <AlertTriangle className="w-4 h-4 mr-2" />
                     Report
                   </DropdownMenuItem>
@@ -528,6 +573,43 @@ function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
           </div>
         </div>
       </div>
+
+      {/* Report Confirmation Dialog */}
+      <Dialog open={showReportConfirm} onOpenChange={setShowReportConfirm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>⚠️ Report Message</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to report this message for inappropriate content? 
+              This action will notify the administrators and may result in chat restrictions.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-sm text-gray-600 dark:text-gray-400 italic">
+              "{message.text?.substring(0, 100)}{message.text?.length > 100 ? '...' : ''}"
+            </p>
+          </div>
+
+          <div className="flex gap-3 justify-end">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowReportConfirm(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => {
+                onReport('inappropriate');
+                setShowReportConfirm(false);
+              }}
+            >
+              🚨 Report Message
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
