@@ -108,8 +108,11 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
     },
     onSuccess: () => {
       toast({
-        title: "Image sent!",
-        description: isEphemeral ? "Ephemeral image sent (one-time view)" : "Image sent successfully",
+        title: "📸 Image sent successfully!",
+        description: isEphemeral 
+          ? "🔒 Ephemeral image sent (disappears after viewing)" 
+          : "📌 Image saved permanently in chat",
+        duration: 3000,
       });
       
       // Reset state
@@ -127,9 +130,10 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
     },
     onError: (error) => {
       toast({
-        title: "Failed to send image",
-        description: "Image uploaded but failed to send message",
+        title: "❌ Failed to send image",
+        description: "Image uploaded but failed to send message. Please try again.",
         variant: "destructive",
+        duration: 4000,
       });
     },
   });
