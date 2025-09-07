@@ -660,9 +660,7 @@ export const userPreferences = pgTable("user_preferences", {
   
   // Optimistic concurrency control
   version: integer("version").default(1).notNull(),
-  
-  // Timestamps
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
   // Ensure budget constraints are logical
   budgetCheck: sql`CHECK (budget_min IS NULL OR budget_max IS NULL OR budget_min <= budget_max)`,
@@ -1497,7 +1495,6 @@ export type AnswerWithUserEnhanced = Answer & {
 };
 
 // ML recommendation types
-export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
 
 // Admin system schemas and types
 export const insertRoleSchema = createInsertSchema(roles).omit({
@@ -1554,12 +1551,10 @@ export type UserPersonalization = typeof userPersonalization.$inferSelect;
 export type PinnedTrip = typeof pinnedTrips.$inferSelect;
 export type InsertPinnedTrip = typeof pinnedTrips.$inferInsert;
 
-// Contact sharing types
-export type ContactShare = typeof contactShares.$inferSelect;
-export type InsertContactShare = typeof contactShares.$inferInsert;
+// Contact sharing types (deprecated - table removed)
 
 // Enhanced message types with contact card support
-export type MessageWithContactCard = Message & {
+export type MessageWithContactCard = ChatMessage & {
   author?: User;
   canViewContactDetails?: boolean;
 };
