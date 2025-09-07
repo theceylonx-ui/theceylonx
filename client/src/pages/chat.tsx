@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRoute } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
@@ -8,15 +9,21 @@ import { ChatTips } from "@/components/chat/ChatTips";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare } from "lucide-react";
 
-interface ChatPageProps {
-  params?: { threadId?: string };
-}
-
-export default function ChatPage({ params }: ChatPageProps) {
+export default function ChatPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
+  
+  // 🔥 CEYLONX CHALLENGE FIX: Proper URL parameter extraction 🔥
+  const [match, params] = useRoute("/chat/:threadId");
+  const threadIdFromUrl = params?.threadId;
+  
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(
-    params?.threadId || null
+    threadIdFromUrl || null
   );
+
+  // Update selectedThreadId when URL changes
+  useEffect(() => {
+    setSelectedThreadId(threadIdFromUrl || null);
+  }, [threadIdFromUrl]);
 
   if (isLoading) {
     return (
@@ -97,7 +104,7 @@ export default function ChatPage({ params }: ChatPageProps) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Chat Threads List */}
             <div className={selectedThreadId ? "hidden lg:block" : ""}>
-              <ChatThreadsList />
+              <ChatThreadsList onThreadSelect={setSelectedThreadId} />
             </div>
 
             {/* Chat Window */}

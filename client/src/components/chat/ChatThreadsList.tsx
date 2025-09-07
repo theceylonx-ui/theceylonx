@@ -33,10 +33,20 @@ interface ChatThread {
   unreadCount: number;
 }
 
-export function ChatThreadsList() {
+interface ChatThreadsListProps {
+  onThreadSelect?: (threadId: string) => void;
+}
+
+export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
   const { data: threads, isLoading, error } = useQuery<ChatThread[]>({
     queryKey: ["/api/threads"],
   });
+
+  // 🔥 DEBUG: Log click events 🔥
+  const handleThreadClick = (threadId: string) => {
+    console.log("🔥 CEYLONX DEBUG - Thread clicked:", threadId);
+    onThreadSelect?.(threadId);
+  };
 
   if (isLoading) {
     return (
@@ -88,7 +98,11 @@ export function ChatThreadsList() {
       
       <div className="space-y-3">
         {threads.map((thread) => (
-          <Link key={thread.id} href={`/chat/${thread.id}`}>
+          <Link 
+            key={thread.id} 
+            href={`/chat/${thread.id}`}
+            onClick={() => handleThreadClick(thread.id)}
+          >
             <Card 
               className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
               data-testid={`chat-thread-${thread.id}`}
