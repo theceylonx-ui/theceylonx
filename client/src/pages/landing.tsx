@@ -16,14 +16,6 @@ export default function Landing() {
     window.location.href = '/auth/signin';
   };
 
-  const handleBrowseTrips = () => {
-    window.location.href = '/browse-trips';
-  };
-
-  const handlePostTrip = () => {
-    window.location.href = '/post';
-  };
-
   return (
     <div className="min-h-screen bg-ui-bg">
       {/* Navigation Header */}
