@@ -94,12 +94,18 @@ export function PreferencesCompletionBanner({ onDismiss, className }: Preference
             </div>
             
             <div className="flex items-center gap-2">
-              <Link href="/me?tab=preferences">
-                <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white" data-testid="button-complete-preferences">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Complete Setup
-                </Button>
-              </Link>
+              <Button 
+                size="sm" 
+                className="bg-orange-500 hover:bg-orange-600 text-white" 
+                data-testid="button-complete-preferences"
+                onClick={() => {
+                  console.log('🔍 Complete Setup clicked - navigating to /me?tab=preferences');
+                  window.location.href = '/me?tab=preferences';
+                }}
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Complete Setup
+              </Button>
               
               {completionPercentage > 0 && (
                 <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">

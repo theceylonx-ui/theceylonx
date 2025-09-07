@@ -94,7 +94,14 @@ export default function ProfilePage() {
     const tabParam = urlParams.get('tab');
     // Valid tabs: overview, profile, preferences, activity, security, privacy
     const validTabs = ['overview', 'profile', 'preferences', 'activity', 'security', 'privacy'];
-    return validTabs.includes(tabParam) ? tabParam : 'overview';
+    const selectedTab = validTabs.includes(tabParam) ? tabParam : 'overview';
+    console.log('🔍 Tab selection from URL:', {
+      search: window.location.search,
+      tabParam,
+      selectedTab,
+      allValidTabs: validTabs
+    });
+    return selectedTab;
   };
   
   const [activeTab, setActiveTab] = useState(() => getTabFromUrl());
