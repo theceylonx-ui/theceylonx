@@ -27,8 +27,7 @@ export const ALL_PERMS: PermKey[] = Object.entries(PERMS).flatMap(([domain, acti
   actions.map(action => `${domain}.${action}` as PermKey)
 );
 
-// Export the type explicitly for external usage
-export type { PermKey };
+// PermKey type is already exported above
 
 // Permission categories for UI grouping
 export const PERMISSION_CATEGORIES = {
