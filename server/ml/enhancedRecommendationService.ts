@@ -15,7 +15,6 @@ import type {
   User, 
   UserInteraction, 
   TripFeatures,
-  // UserPersonalization, // Consolidated into users table
   KpiEvent 
 } from "@shared/schema";
 
@@ -25,7 +24,7 @@ interface UserProfile {
   interactions: UserInteraction[];
   ratings: number;
   averageRating: number;
-  personalization: UserPersonalization | null;
+  personalization: any | null;
   isNewUser: boolean;
 }
 
@@ -272,72 +271,41 @@ export class EnhancedRecommendationService {
     };
   }
 
-  // Enhanced Sri Lankan seasonality scoring based on current date and regions
+  // Simplified seasonality scoring without database dependencies
   private calculateSeasonalityScore(trip: Trip, currentDate: Date): number {
-    if (!trip.seasonality || trip.seasonality.length === 0) return 0.5; // Neutral if no data
-
     const currentMonth = currentDate.getMonth() + 1; // 1-12
     
-    // Sri Lankan regional seasons (more accurate):
-    // South & West coasts: Dec-Mar peak (dry), Apr-Nov off-season
-    // East & North coasts: Jul-Aug peak (dry), Dec-Mar off-season  
-    // Hill Country: Dec-Mar & Jul-Aug good, Apr-May & Oct-Nov rainy
-    // Cultural sites: Year-round but best Dec-Mar
-    
+    // Simplified regional scoring based on general weather patterns
     const isSouthWestPeak = currentMonth >= 12 || currentMonth <= 3; // Dec-Mar
     const isEastNorthPeak = currentMonth >= 7 && currentMonth <= 8;  // Jul-Aug
-    const isHillCountryGood = isSouthWestPeak || isEastNorthPeak;
-    const isFestivalSeason = currentMonth === 12 || currentMonth === 1 || currentMonth === 4; // Dec-Jan & April
-
+    
     // Regional-specific scoring
     if (trip.region === 'Southern Province' || trip.region === 'Western Province') {
-      if (trip.seasonality.includes('dry_season') && isSouthWestPeak) return 1.0;
-      if (trip.seasonality.includes('wet_season') && !isSouthWestPeak) return 0.9;
-      if (trip.seasonality.includes('dry_season') && !isSouthWestPeak) return 0.4;
+      return isSouthWestPeak ? 0.9 : 0.6;
     }
     
     if (trip.region === 'Eastern Province' || trip.region === 'Northern Province') {
-      if (trip.seasonality.includes('dry_season') && isEastNorthPeak) return 1.0;
-      if (trip.seasonality.includes('wet_season') && !isEastNorthPeak) return 0.9;
-      if (trip.seasonality.includes('dry_season') && !isEastNorthPeak) return 0.4;
+      return isEastNorthPeak ? 0.9 : 0.6;
     }
     
     if (trip.region === 'Central Province' || trip.region === 'Uva Province') {
-      if (trip.seasonality.includes('year_round') && isHillCountryGood) return 1.0;
-      if (trip.seasonality.includes('dry_season') && isHillCountryGood) return 1.0;
-      if (trip.seasonality.includes('wet_season') && !isHillCountryGood) return 0.9;
+      return (isSouthWestPeak || isEastNorthPeak) ? 0.8 : 0.6;
     }
 
-    // Festival and cultural boost
-    if (trip.seasonality.includes('festival_season') && isFestivalSeason) return 1.0;
-    if (trip.seasonality.includes('year_round')) return 0.8;
-
-    return 0.5;
+    return 0.7; // Default good seasonality score
   }
 
-  // Safety scoring based on current conditions
+  // Simplified safety scoring without database dependencies
   private calculateSafetyScore(trip: Trip, currentDate: Date): number {
-    if (!trip.safetyFlags || trip.safetyFlags.length === 0) return 1.0; // Safe if no flags
-
     let safetyScore = 1.0;
     const currentMonth = currentDate.getMonth() + 1;
     
-    // Penalize weather-dependent activities during monsoon (May-September)
-    if (trip.safetyFlags.includes('weather_dependent') && currentMonth >= 5 && currentMonth <= 9) {
-      safetyScore *= 0.4;
+    // Basic seasonal safety considerations
+    if (currentMonth >= 5 && currentMonth <= 9) {
+      safetyScore *= 0.8; // Slightly lower safety during monsoon
     }
     
-    // Road conditions warning during heavy rain periods
-    if (trip.safetyFlags.includes('road_conditions') && currentMonth >= 5 && currentMonth <= 9) {
-      safetyScore *= 0.6;
-    }
-    
-    // Equipment required reduces accessibility
-    if (trip.safetyFlags.includes('equipment_required')) {
-      safetyScore *= 0.8;
-    }
-
-    return Math.max(safetyScore, 0.1); // Minimum score
+    return Math.max(safetyScore, 0.7); // Good minimum safety score
   }
 
   // Novelty scoring to avoid showing same trips repeatedly
@@ -721,17 +689,10 @@ export class EnhancedRecommendationService {
         price: trips.price,
         region: trips.region,
         contactInfo: trips.contactInfo,
-        notes: trips.notes,
         organizerId: trips.organizerId,
         status: trips.status,
-        tags: trips.tags,
         priceMin: trips.priceMin,
         priceMax: trips.priceMax,
-        duration: trips.duration,
-        difficulty: trips.difficulty,
-        buddyFriendly: trips.buddyFriendly,
-        seasonality: trips.seasonality,
-        safetyFlags: trips.safetyFlags,
         createdAt: trips.createdAt,
         updatedAt: trips.updatedAt,
         isDeleted: trips.isDeleted,
@@ -790,17 +751,10 @@ export class EnhancedRecommendationService {
           price: trips.price,
           region: trips.region,
           contactInfo: trips.contactInfo,
-          notes: trips.notes,
           organizerId: trips.organizerId,
           status: trips.status,
-          tags: trips.tags,
           priceMin: trips.priceMin,
           priceMax: trips.priceMax,
-          duration: trips.duration,
-          difficulty: trips.difficulty,
-          buddyFriendly: trips.buddyFriendly,
-          seasonality: trips.seasonality,
-          safetyFlags: trips.safetyFlags,
           createdAt: trips.createdAt,
           updatedAt: trips.updatedAt,
           isDeleted: trips.isDeleted,
@@ -846,17 +800,10 @@ export class EnhancedRecommendationService {
       price: row.price,
       region: row.region,
       contactInfo: row.contactInfo,
-      notes: row.notes,
       organizerId: row.organizerId,
       status: row.status,
-      tags: row.tags,
       priceMin: row.priceMin,
       priceMax: row.priceMax,
-      duration: row.duration,
-      difficulty: row.difficulty,
-      buddyFriendly: row.buddyFriendly,
-      seasonality: row.seasonality,
-      safetyFlags: row.safetyFlags,
       viewCount: row.viewCount,
       bookingCount: row.bookingCount,
       freshBoost: row.freshBoost,
@@ -992,8 +939,8 @@ export class EnhancedRecommendationService {
       viewCount,
       totalBookings: bookingCount,
       popularityScore: popularityScore.toString(),
-      tags: tripData.tags || [],
-      difficulty: tripData.difficulty,
+      tags: [],
+      difficulty: 'moderate',
       season: this.getCurrentSeason(),
     }).onConflictDoUpdate({
       target: tripFeatures.tripId,
@@ -1206,8 +1153,6 @@ export class EnhancedRecommendationService {
         bookingCount: 0,
         freshBoost: '1.0',
         tags: [],
-        seasonality: [],
-        safetyFlags: [],
         organizer: {
           id: row.organizerId,
           email: row.organizerEmail,
