@@ -843,16 +843,13 @@ export class EnhancedRecommendationService {
 
   // Build comprehensive user profile
   private async buildUserProfile(userId: string): Promise<UserProfile> {
-    // Get user preferences - handle missing columns gracefully
+    // Get user preferences using storage method
     let preferences = null;
     try {
-      const [prefs] = await db
-        .select()
-        .from(userPreferences)
-        .where(eq(userPreferences.userId, userId));
-      preferences = prefs;
+      const storage = (await import("../storage")).storage;
+      preferences = await storage.getUserPreferences(userId);
     } catch (error) {
-      console.error("Error getting user preferences (likely missing columns):", error);
+      console.error("Error getting user preferences:", error);
       preferences = null;
     }
 
@@ -866,11 +863,15 @@ export class EnhancedRecommendationService {
       ))
       .orderBy(desc(userInteractions.createdAt));
 
-    // Get personalization settings
-    const [personalization] = await db
-      .select()
-      .from(userPersonalization)
-      .where(eq(userPersonalization.userId, userId));
+    // Get personalization settings using storage method
+    let personalization = null;
+    try {
+      const storage = (await import("../storage")).storage;
+      personalization = await storage.getUserPersonalization(userId);
+    } catch (error) {
+      console.error("Error getting user personalization:", error);
+      personalization = null;
+    }
 
     // Calculate if user is new (less than 5 interactions)
     const isNewUser = interactions.length < 5;

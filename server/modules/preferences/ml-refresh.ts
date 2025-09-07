@@ -47,13 +47,13 @@ export class MLRefreshService {
    */
   private async invalidatePersonalizationCache(userId: string): Promise<void> {
     try {
-      // Update personalization record to trigger refresh
+      // Update user record to trigger refresh (personalization is now in users table)
       await db
-        .update(userPersonalization)
+        .update(users)
         .set({
           updatedAt: new Date()
         })
-        .where(eq(userPersonalization.userId, userId));
+        .where(eq(users.id, userId));
         
       console.log(`🗄️ Personalization cache invalidated for user: ${userId}`);
       
@@ -118,19 +118,13 @@ export class MLRefreshService {
       // Generate preference vector from user preferences
       const preferenceVector = this.generatePreferenceVector(preferences);
       
-      // Update or create user personalization record with new vector
+      // Update user record (personalization is now in users table)
       await db
-        .insert(userPersonalization)
-        .values({
-          userId,
+        .update(users)
+        .set({
           updatedAt: new Date()
         })
-        .onConflictDoUpdate({
-          target: userPersonalization.userId,
-          set: {
-            updatedAt: new Date()
-          }
-        });
+        .where(eq(users.id, userId));
         
       console.log(`🔢 Preference vector updated for user: ${userId}`);
       
