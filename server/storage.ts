@@ -1589,22 +1589,6 @@ export class DatabaseStorage implements IStorage {
     return newNotification;
   }
 
-  async getUserNotifications(userId: string, limit: number = 50): Promise<Notification[]> {
-    const userNotifications = await db
-      .select()
-      .from(notifications)
-      .where(eq(notifications.userId, userId))
-      .orderBy(desc(notifications.createdAt))
-      .limit(limit);
-    return userNotifications;
-  }
-
-  async markNotificationAsRead(id: string): Promise<void> {
-    await db
-      .update(notifications)
-      .set({ isRead: true })
-      .where(eq(notifications.id, id));
-  }
 
   async markAllNotificationsAsRead(userId: string): Promise<void> {
     await db
