@@ -119,6 +119,7 @@ export default function ProfilePage() {
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
+      console.log('🔍 Auth redirect triggered - user not authenticated');
       setLocation("/");
     }
   }, [user, authLoading, setLocation]);
