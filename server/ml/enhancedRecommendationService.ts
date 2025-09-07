@@ -1,12 +1,12 @@
 import { db } from "../db";
 import { 
-  userPreferences,
+  // userPreferences, // Consolidated into users table
   userInteractions, 
   tripFeatures, 
   trips, 
   ratings, 
   users,
-  userPersonalization,
+  // userPersonalization, // Consolidated into users table
   kpiEvents
 } from "@shared/schema";
 import { eq, desc, and, or, sql, asc, inArray, ne, not, gte } from "drizzle-orm";
@@ -15,7 +15,7 @@ import type {
   User, 
   UserInteraction, 
   TripFeatures,
-  UserPersonalization,
+  // UserPersonalization, // Consolidated into users table
   KpiEvent 
 } from "@shared/schema";
 

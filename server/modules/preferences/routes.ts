@@ -3,9 +3,9 @@ import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db } from "../../db";
 import { 
-  userPreferences, 
+  // userPreferences, // Consolidated into users table 
   preferenceEvents,
-  type InsertUserPreferences,
+  // type InsertUserPreferences, // Consolidated into users table
   type PreferenceEvent
 } from "../../../shared/schema";
 

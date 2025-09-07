@@ -11,11 +11,11 @@ import {
   answers,
   questionUpvotes,
   answerUpvotes,
-  userPreferences,
+  // userPreferences, // Consolidated into users table
   userInteractions,
   tripFeatures,
   kpiEvents,
-  userPersonalization,
+  // userPersonalization, // Consolidated into users table
   notifications,
   tripViews,
   authSessions,
@@ -52,7 +52,7 @@ import {
   type AnswerWithUser,
   type InsertVote,
   type Vote,
-  type InsertUserPreferences,
+  // type InsertUserPreferences, // Consolidated into users table
   type UserPreferences,
   type InsertUserInteraction,
   type UserInteraction,
@@ -505,20 +505,15 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(trips)
       .where(and(
-        eq(trips.isDeleted, false),
-        or(
-          isNull(trips.imageUrl),
-          eq(trips.imageUrl, '')
-        )
+        eq(trips.isDeleted, false)
+        // imageUrl moved to trip_stats table
       ));
     return result;
   }
 
   async updateTripImage(tripId: string, imageUrl: string): Promise<void> {
-    await db
-      .update(trips)
-      .set({ imageUrl, updatedAt: new Date() })
-      .where(eq(trips.id, tripId));
+    // TODO: Update trip_stats table instead of trips
+    console.warn("updateTripImage temporarily disabled - imageUrl moved to trip_stats table");
   }
 
   async getUserTrips(userId: string): Promise<TripWithOrganizer[]> {
@@ -634,9 +629,31 @@ export class DatabaseStorage implements IStorage {
       .from(trips)
       .where(and(...conditions));
 
-    // Get paginated results
+    // Get paginated results (only select existing columns)
     const query = db
-      .select()
+      .select({
+        trips: {
+          id: trips.id,
+          title: trips.title,
+          fromLocation: trips.fromLocation,
+          toLocation: trips.toLocation,
+          date: trips.date,
+          time: trips.time,
+          seatsAvailable: trips.seatsAvailable,
+          price: trips.price,
+          region: trips.region,
+          contactInfo: trips.contactInfo,
+          organizerId: trips.organizerId,
+          status: trips.status,
+          priceMin: trips.priceMin,
+          priceMax: trips.priceMax,
+          createdAt: trips.createdAt,
+          updatedAt: trips.updatedAt,
+          isDeleted: trips.isDeleted,
+          deletedAt: trips.deletedAt,
+        },
+        users
+      })
       .from(trips)
       .leftJoin(users, eq(trips.organizerId, users.id))
       .where(and(...conditions))

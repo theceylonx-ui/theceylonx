@@ -1,10 +1,10 @@
 import { eq } from "drizzle-orm";
 import { db } from "../../db";
 import { 
-  userPersonalization, 
+  // userPersonalization, // Consolidated into users table 
   userInteractions,
   kpiEvents,
-  type UserPreferences 
+  // type UserPreferences // Consolidated into users table 
 } from "../../../shared/schema";
 
 /**

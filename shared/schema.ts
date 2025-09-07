@@ -158,7 +158,7 @@ export const phoneOtps = pgTable("phone_otps", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Trips table
+// Optimized trips table (core data only)
 export const trips = pgTable("trips", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   title: varchar("title").notNull(),
@@ -170,51 +170,57 @@ export const trips = pgTable("trips", {
   price: decimal("price", { precision: 10, scale: 2 }),
   region: varchar("region").notNull(),
   contactInfo: varchar("contact_info").notNull(),
-  notes: text("notes"),
   organizerId: varchar("organizer_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   status: varchar("status").default("active"),
   
-  // Optional enhanced fields for better recommendations
-  tags: jsonb("tags"), // JSONB for GIN index support
-  priceMin: decimal("price_min", { precision: 10, scale: 2 }), // Optional: minimum price range
-  priceMax: decimal("price_max", { precision: 10, scale: 2 }), // Optional: maximum price range
-  duration: varchar("duration"), // Optional: duration like '1 day', '2-3 days', '1 week'
-  difficulty: varchar("difficulty"),
-  buddyFriendly: boolean("buddy_friendly").default(false), // Optional: suitable for solo travelers
-  
-  // Seasonality and safety
-  seasonality: text("seasonality").array(), // Optional: ['dry_season', 'wet_season', 'year_round']
-  safetyFlags: text("safety_flags").array(), // Optional: ['weather_dependent', 'road_conditions', 'equipment_required']
-  
-  // Exposure and ranking metrics
-  viewCount: integer("view_count").default(0),
-  bookingCount: integer("booking_count").default(0),
-  freshBoost: decimal("fresh_boost", { precision: 3, scale: 2 }).default('1.0'), // New listing boost that decays
-  
-  // Category-based image system
-  category: tripCategoryEnum("category").default("unknown"),
-  imageUrl: text("image_url"),
-  imageProvider: text("image_provider").default("curated"),
-  imageAttribution: jsonb("image_attribution"),
-  imageFetchedAt: timestamp("image_fetched_at"),
+  // Pricing variants
+  priceMin: decimal("price_min", { precision: 10, scale: 2 }),
+  priceMax: decimal("price_max", { precision: 10, scale: 2 }),
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   isDeleted: boolean("is_deleted").default(false),
   deletedAt: timestamp("deleted_at"),
 }, (table) => [
-  // Performance indexes for hot paths
+  // Performance indexes for core fields only
   index("trips_region_date_idx").on(table.region, table.date),
   index("trips_status_idx").on(table.status),
-  index("trips_tags_gin_idx").using("gin", table.tags),
   index("trips_organizer_idx").on(table.organizerId),
-  // Calendar-specific indexes for efficient date range queries
   index("trips_date_idx").on(table.date),
   index("trips_seats_idx").on(table.seatsAvailable),
   index("trips_status_seats_idx").on(table.status, table.seatsAvailable),
-  // Category-based image system indexes
-  index("trips_category_idx").on(table.category),
 ]);
+
+// Trip metadata table (moved from trips for better performance)
+export const tripMetadata = pgTable("trip_metadata", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  tripId: varchar("trip_id").notNull().unique().references(() => trips.id, { onDelete: 'cascade' }),
+  tags: text("tags").array().default(sql`'{}'::text[]`),
+  duration: varchar("duration"),
+  difficulty: varchar("difficulty"),
+  buddyFriendly: boolean("buddy_friendly").default(false),
+  seasonality: text("seasonality").array().default(sql`'{}'::text[]`),
+  safetyFlags: text("safety_flags").array().default(sql`'{}'::text[]`),
+  category: varchar("category"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Trip statistics table (moved from trips for better performance)
+export const tripStats = pgTable("trip_stats", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  tripId: varchar("trip_id").notNull().unique().references(() => trips.id, { onDelete: 'cascade' }),
+  viewCount: integer("view_count").default(0),
+  bookingCount: integer("booking_count").default(0),
+  freshBoost: decimal("fresh_boost", { precision: 3, scale: 2 }).default('1.0'),
+  imageUrl: varchar("image_url"),
+  imageProvider: text("image_provider").default("curated"),
+  imageAttribution: jsonb("image_attribution").default(sql`'{}'::jsonb`),
+  imageFetchedAt: timestamp("image_fetched_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
 
 // tripDrafts table removed - feature not implemented yet
 
@@ -604,28 +610,7 @@ export const answerUpvotes = pgTable("answer_upvotes", {
 
 // Follows table removed - feature not implemented yet
 
-// User preferences table - single source of truth for travel preferences
-export const userPreferences = pgTable("user_preferences", {
-  userId: varchar("user_id").primaryKey(), // Exactly one row per user
-  
-  // Taxonomy-validated arrays (deduped, sorted, controlled values)
-  vibe: text("vibe").array().default(sql`'{}'::text[]`), 
-  companions: text("companions").array().default(sql`'{}'::text[]`),
-  interests: text("interests").array().default(sql`'{}'::text[]`),
-  months: text("months").array().default(sql`'{}'::text[]`), // ['jan', 'feb', etc.]
-  regions: text("regions").array().default(sql`'{}'::text[]`), // Optional Sri Lankan regions
-  
-  // Budget constraints
-  budgetMin: integer("budget_min"),
-  budgetMax: integer("budget_max"),
-  
-  // Optimistic concurrency control
-  version: integer("version").default(1).notNull(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => ({
-  // Ensure budget constraints are logical
-  budgetCheck: sql`CHECK (budget_min IS NULL OR budget_max IS NULL OR budget_min <= budget_max)`,
-}));
+// User preferences consolidated into users table
 
 // Preference events audit table for tracking changes and ML signals
 export const preferenceEvents = pgTable("preference_events", {
@@ -676,15 +661,7 @@ export const kpiEvents = pgTable("kpi_events", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// User personalization settings
-export const userPersonalization = pgTable("user_personalization", {
-  userId: varchar("user_id").primaryKey(),
-  isPaused: boolean("is_paused").default(false), // User can pause personalization
-  resetAt: timestamp("reset_at"), // When user last reset recommendations
-  abTestGroup: varchar("ab_test_group").default('personalized'), // 'baseline' | 'personalized'
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+// User personalization settings consolidated into users table
 
 // User notifications settings for redesigned profile system
 export const userNotifications = pgTable("user_notifications", {
@@ -956,12 +933,7 @@ export const answerUpvotesRelations = relations(answerUpvotes, ({ one }) => ({
 }));
 
 // ML recommendation relations
-export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
-  user: one(users, {
-    fields: [userPreferences.userId],
-    references: [users.id],
-  }),
-}));
+// User preferences relations removed - data consolidated into users table
 
 export const userInteractionsRelations = relations(userInteractions, ({ one }) => ({
   user: one(users, {
@@ -1156,11 +1128,7 @@ export const insertAdminChatMessageSchema = createInsertSchema(adminChatMessages
   createdAt: true,
 });
 
-// Preferences schemas
-export const insertUserPreferencesSchema = createInsertSchema(userPreferences).omit({
-  version: true, // Server manages version
-  updatedAt: true, // Server manages timestamp
-});
+// Preferences schemas (consolidated into users table)
 
 export const insertPreferenceEventSchema = createInsertSchema(preferenceEvents).omit({
   id: true,
@@ -1231,10 +1199,7 @@ export const insertKpiEventSchema = createInsertSchema(kpiEvents).omit({
   createdAt: true,
 });
 
-export const insertUserPersonalizationSchema = createInsertSchema(userPersonalization).omit({
-  createdAt: true,
-  updatedAt: true,
-});
+// User personalization schema (consolidated into users table)
 
 export const insertUserTripFlagsSchema = createInsertSchema(userTripFlags).omit({
   id: true,
@@ -1461,15 +1426,14 @@ export type AdminPermissionsList = PermKey[];
 export type UserWithRole = User & {
   role?: Role;
 };
-export type UserPreferences = typeof userPreferences.$inferSelect;
+// UserPreferences type removed - data consolidated into users table
 export type InsertUserInteraction = z.infer<typeof insertUserInteractionSchema>;
 export type UserInteraction = typeof userInteractions.$inferSelect;
 export type InsertTripFeatures = z.infer<typeof insertTripFeaturesSchema>;
 export type TripFeatures = typeof tripFeatures.$inferSelect;
 export type InsertKpiEvent = z.infer<typeof insertKpiEventSchema>;
 export type KpiEvent = typeof kpiEvents.$inferSelect;
-export type InsertUserPersonalization = z.infer<typeof insertUserPersonalizationSchema>;
-export type UserPersonalization = typeof userPersonalization.$inferSelect;
+// UserPersonalization types removed - data consolidated into users table
 
 // Pinned trips types
 export type PinnedTrip = typeof pinnedTrips.$inferSelect;
