@@ -22,7 +22,8 @@ import { createBackToTripsLink, createLoginRedirectUrl } from "@/utils/searchPar
 import { BackLink } from "@/components/common/BackLink";
 import { TripDateRangePicker } from "@/components/trips/TripDateRangePicker";
 import { useTripsStore } from "@/store/tripsStore";
-import type { TripWithNormalizedOrganizer, CommentWithUser, TripInterestRequest } from "@shared/schema";
+import type { CommentWithUser, TripInterestRequest } from "@shared/schema";
+import type { TripWithOrganizer } from "@shared/types/api";
 import { EditContentDialog } from "@/components/EditContentDialog";
 import { TripEditDialog } from "@/components/TripEditDialog";
 import { ActionsMenu } from "@/components/ActionsMenu";
@@ -62,7 +63,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
     }
   }, [user, id, trackInteraction]);
 
-  const { data: trip, isLoading: tripLoading } = useQuery<TripWithNormalizedOrganizer>({
+  const { data: trip, isLoading: tripLoading } = useQuery<TripWithOrganizer>({
     queryKey: ["/api/trips", id],
     queryFn: async () => {
       const response = await fetch(`/api/trips/${id}`);
@@ -98,11 +99,34 @@ export default function TripDetails({ params }: TripDetailsProps) {
     console.log("Trip Details Debug:", {
       isAuthenticated,
       userId: user?.id,
-      tripOrganizerId: trip?.organizerId,
-      userIsOrganizer: user?.id === trip?.organizerId,
+      tripOrganizerId: trip?.organizer?.id,
+      userIsOrganizer: user?.id === trip?.organizer?.id,
       existingInterestRequest: !!existingInterestRequest
     });
   }, [isAuthenticated, user, trip, existingInterestRequest]);
+
+  const getTripImage = () => {
+    if (!trip) return '/assets/5_1756417819316.png';
+    
+    // Priority 1: Use user-uploaded images from mediaUrls
+    if (trip.mediaUrls && trip.mediaUrls.length > 0) {
+      const coverIndex = trip.coverImageIndex || 0;
+      const coverImageUrl = trip.mediaUrls[Math.min(coverIndex, trip.mediaUrls.length - 1)];
+      return coverImageUrl;
+    }
+    
+    // Priority 2: Use database imageUrl (fallback or external image)
+    if (trip.imageUrl) {
+      // If it's a local asset path, ensure it works in both dev and production
+      if (trip.imageUrl.startsWith('/assets/')) {
+        return trip.imageUrl;
+      }
+      return trip.imageUrl;
+    }
+    
+    // Priority 3: Ceylon Expand logo as fallback
+    return '/assets/5_1756417819316.png';
+  };
 
   const deleteCommentMutation = useMutation({
     mutationFn: async (commentId: string) => {
@@ -310,7 +334,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
   const canDeleteComment = (comment: CommentWithUser) => {
     if (!user) return false;
     // User can delete their own comment or trip owner can delete any comment
-    return comment.userId === user.id || (trip && trip.organizerId === user.id);
+    return comment.userId === user.id || (trip && trip.organizer?.id === user.id);
   };
 
   const canEditComment = (comment: CommentWithUser) => {
@@ -358,31 +382,8 @@ export default function TripDetails({ params }: TripDetailsProps) {
 
   const handleContact = () => {
     if (!trip || !isAuthenticated) return;
-    if (trip.contactInfo.includes("@")) {
-      window.open(`mailto:${trip.contactInfo}`, "_blank");
-    } else {
-      // Normalize phone number for WhatsApp
-      let phoneNumber = trip.contactInfo.replace(/\D/g, "");
-      
-      // If number starts with 0, it's likely a local number
-      if (phoneNumber.startsWith('0')) {
-        // For Sri Lankan numbers (typical length after removing 0 is 9)
-        if (phoneNumber.length === 10) {
-          phoneNumber = '94' + phoneNumber.substring(1);
-        }
-        // For other countries, user should include country code manually
-        // We'll just remove the leading 0 and let them specify
-        else {
-          phoneNumber = phoneNumber.substring(1);
-        }
-      }
-      
-      // If number is very short (less than 10 digits), likely missing country code
-      // But we won't assume - user should provide complete international number
-      
-      console.log(`Opening WhatsApp for number: ${phoneNumber}`);
-      window.open(`https://wa.me/${phoneNumber}`, "_blank");
-    }
+    // Contact is handled through chat system - redirect to chat
+    window.location.href = `/chat-buddy?tripId=${trip.id}`;
   };
 
   const handleSendInterest = () => {
@@ -467,7 +468,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
               </div>
               <div className="flex gap-2">
                 {/* Owner Controls */}
-                {user && user.id === trip.organizerId && (
+                {user && user.id === trip.organizer?.id && (
                   <>
                     <Button
                       variant="outline"
@@ -534,15 +535,76 @@ export default function TripDetails({ params }: TripDetailsProps) {
 
             {/* Trip Image */}
             <div className="mt-6">
-              <img 
-                src={trip.imageUrl || `https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=300`}
-                alt={`${trip.title} - ${trip.region} Sri Lanka`}
-                className="w-full h-64 object-cover rounded-lg"
-                loading="lazy"
-                onError={(e) => {
-                  e.currentTarget.src = 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=300';
-                }}
-              />
+              {getTripImage() === '/assets/5_1756417819316.png' && !trip.mediaUrls?.length && !trip.imageUrl ? (
+                // Beautiful Ceylon Expand fallback design
+                <div className="w-full h-64 bg-gradient-to-br from-ceylon-green via-ceylon-blue to-purple-600 flex flex-col items-center justify-center relative overflow-hidden rounded-lg">
+                  {/* Background pattern */}
+                  <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-4 left-4 w-8 h-8 border-2 border-white rounded-full"></div>
+                    <div className="absolute top-12 right-8 w-4 h-4 border border-white rounded-full"></div>
+                    <div className="absolute bottom-8 left-12 w-6 h-6 border border-white rounded-full"></div>
+                    <div className="absolute bottom-4 right-4 w-3 h-3 bg-white rounded-full opacity-50"></div>
+                    <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-white rounded-full opacity-30"></div>
+                    <div className="absolute top-1/3 right-1/3 w-5 h-5 border border-white rounded-full opacity-20"></div>
+                  </div>
+                  
+                  {/* Tribe icon */}
+                  <div className="text-white mb-3">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" className="drop-shadow-sm">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                      <circle cx="18" cy="8" r="2"/>
+                      <circle cx="6" cy="8" r="2"/>
+                      <path d="M18 10c-1.33 0-2.67.33-3.33 1H15v2h1.67c.66-.67 2-.33 3.33-1v-2z"/>
+                      <path d="M6 10v2c1.33.67 2.67.33 3.33 1H11v-2H9.33C8.67 10.33 7.33 10 6 10z"/>
+                    </svg>
+                  </div>
+                  
+                  {/* Ceylon Expand text */}
+                  <div className="text-center text-white">
+                    <div className="text-xl font-bold tracking-wide drop-shadow-sm">Ceylon Expand</div>
+                    <div className="text-sm opacity-90 mt-1">Travel Together</div>
+                  </div>
+                </div>
+              ) : (
+                <img 
+                  src={getTripImage()}
+                  alt={`${trip.title} - ${trip.region} Sri Lanka`}
+                  className="w-full h-64 object-cover rounded-lg"
+                  loading="lazy"
+                  onError={(e) => {
+                    // Replace with beautiful Ceylon Expand fallback
+                    const target = e.currentTarget;
+                    const container = target.parentElement;
+                    if (container) {
+                      container.innerHTML = `
+                        <div class="w-full h-64 bg-gradient-to-br from-ceylon-green via-ceylon-blue to-purple-600 flex flex-col items-center justify-center relative overflow-hidden rounded-lg">
+                          <div class="absolute inset-0 opacity-10">
+                            <div class="absolute top-4 left-4 w-8 h-8 border-2 border-white rounded-full"></div>
+                            <div class="absolute top-12 right-8 w-4 h-4 border border-white rounded-full"></div>
+                            <div class="absolute bottom-8 left-12 w-6 h-6 border border-white rounded-full"></div>
+                            <div class="absolute bottom-4 right-4 w-3 h-3 bg-white rounded-full opacity-50"></div>
+                            <div class="absolute top-1/2 left-1/4 w-2 h-2 bg-white rounded-full opacity-30"></div>
+                            <div class="absolute top-1/3 right-1/3 w-5 h-5 border border-white rounded-full opacity-20"></div>
+                          </div>
+                          <div class="text-white mb-3">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" class="drop-shadow-sm">
+                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                              <circle cx="18" cy="8" r="2"/>
+                              <circle cx="6" cy="8" r="2"/>
+                              <path d="M18 10c-1.33 0-2.67.33-3.33 1H15v2h1.67c.66-.67 2-.33 3.33-1v-2z"/>
+                              <path d="M6 10v2c1.33.67 2.67.33 3.33 1H11v-2H9.33C8.67 10.33 7.33 10 6 10z"/>
+                            </svg>
+                          </div>
+                          <div class="text-center text-white">
+                            <div class="text-xl font-bold tracking-wide drop-shadow-sm">Ceylon Expand</div>
+                            <div class="text-sm opacity-90 mt-1">Travel Together</div>
+                          </div>
+                        </div>
+                      `;
+                    }
+                  }}
+                />
+              )}
             </div>
 
             {/* Trip Details Grid */}
@@ -649,7 +711,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
 
                   {/* Clean Interest Request System */}
                   {isAuthenticated ? (
-                    user && user.id !== trip.organizerId ? (
+                    user && user.id !== trip.organizer?.id ? (
                       <Button 
                         onClick={handleSendInterest}
                         disabled={!!existingInterestRequest || sendInterestMutation.isPending}
@@ -676,7 +738,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
                           </>
                         )}
                       </Button>
-                    ) : user?.id === trip.organizerId ? (
+                    ) : user?.id === trip.organizer?.id ? (
                       <div className="w-full text-center text-sm text-gray-600 p-3 bg-blue-50 rounded-md border border-blue-200">
                         You are the organizer of this trip
                       </div>
