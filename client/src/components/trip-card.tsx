@@ -254,7 +254,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
     }
     
     // Check if user is trip owner - show friendly message and do nothing
-    if (user.id === trip.organizerId) {
+    if (user.id === trip.organizer.id) {
       toast({
         title: 'This is your own trip',
         description: 'You cannot pin trips you organize',
@@ -290,7 +290,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
     }
     
     // Check if user is trip owner - show friendly message and do nothing
-    if (user.id === trip.organizerId) {
+    if (user.id === trip.organizer.id) {
       toast({
         title: 'This is your own trip',
         description: 'You cannot mark interest on trips you organize',
@@ -320,7 +320,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
   };
 
   // Check if current user is the trip organizer
-  const isOwner = user && user.id === trip.organizerId;
+  const isOwner = user && user.id === trip.organizer.id;
 
   const getRegionColor = (region: string) => {
     const colors: Record<string, string> = {
@@ -503,7 +503,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
           <div className="border-t border-ui-line mt-6 pt-4 space-y-4">
             {/* Row 1: Organizer Info */}
             <div className="flex items-center" data-testid={`trip-organizer-${trip.id}`}>
-              <Link href={`/profile/${trip.organizer?.username || trip.organizerId}`} className="hover:opacity-80 transition-opacity">
+              <Link href={`/profile/${trip.organizer?.username || trip.organizer?.id}`} className="hover:opacity-80 transition-opacity">
                 <UserDisplay 
                   user={trip.organizer}
                   avatarSize="lg"
