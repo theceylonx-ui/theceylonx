@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { 
-  User, 
+  LayoutDashboard, 
   MessageSquare, 
   Users, 
   HelpCircle, 
-  Settings,
   LogOut 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -119,15 +118,15 @@ export default function ProfileMenu({ className }: ProfileMenuProps) {
         
         <DropdownMenuSeparator />
 
-        {/* 1. My Profile */}
+        {/* 1. Dashboard */}
         <Link href={profileUrl}>
           <DropdownMenuItem 
             className="cursor-pointer" 
-            data-testid="profile-menu-my-profile"
-            onClick={() => handleMenuItemClick('MyProfile')}
+            data-testid="profile-menu-dashboard"
+            onClick={() => handleMenuItemClick('Dashboard')}
           >
-            <User className="mr-2 h-4 w-4" />
-            My Profile
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            Dashboard
           </DropdownMenuItem>
         </Link>
 
@@ -166,19 +165,6 @@ export default function ProfileMenu({ className }: ProfileMenuProps) {
             Help – FAQ
           </DropdownMenuItem>
         </Link>
-
-        {/* 5. Travel Settings */}
-        <DropdownMenuItem 
-          className="cursor-pointer" 
-          data-testid="profile-menu-settings"
-          onClick={() => {
-            handleMenuItemClick('TravelSettings');
-            setLocation('/me?tab=preferences');
-          }}
-        >
-          <Settings className="mr-2 h-4 w-4" />
-          Travel Settings
-        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 

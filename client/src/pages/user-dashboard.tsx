@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Check, X, RefreshCw, User as UserIcon, Heart, Clock, MessageSquare, Edit, Trash2, Shield, AlertTriangle, Eye } from "lucide-react";
+import { Check, X, RefreshCw, User as UserIcon, Heart, Clock, MessageSquare, Edit, Trash2, Shield, AlertTriangle, Eye, Lock, Download, UserX } from "lucide-react";
 import { generateRandomProfilePicture, getDisplayName, getInitials, type AvatarStyle, AVATAR_STYLES } from "@/lib/profileUtils";
 import { AvatarSelector } from "@/components/avatar-selector";
 import type { User, TripWithOrganizer, QuestionWithDetails } from "@shared/schema";
@@ -438,7 +438,7 @@ export default function UserDashboard() {
         <PreferencesCompletionBanner className="mb-6" />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'} bg-gray-100`}>
+          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-6' : 'grid-cols-5'} bg-gray-100`}>
             <TabsTrigger value="my-trips" data-testid="tab-my-trips">Posted by Me</TabsTrigger>
             <TabsTrigger value="interest-requests" data-testid="tab-interest-requests">Interest Requests</TabsTrigger>
             <TabsTrigger value="history" data-testid="tab-history">
@@ -446,6 +446,10 @@ export default function UserDashboard() {
               History
             </TabsTrigger>
             <TabsTrigger value="profile" data-testid="tab-profile">Profile</TabsTrigger>
+            <TabsTrigger value="privacy" data-testid="tab-privacy">
+              <Lock className="w-4 h-4 mr-1" />
+              Privacy
+            </TabsTrigger>
             {isAdmin && (
               <TabsTrigger value="admin" data-testid="tab-admin" className="text-red-600 font-medium">
                 <Shield className="w-4 h-4 mr-1" />
@@ -812,6 +816,143 @@ export default function UserDashboard() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Privacy Tab */}
+          <TabsContent value="privacy">
+            <div className="space-y-6">
+              {/* Privacy Header */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Lock className="w-6 h-6" />
+                    Privacy & Data
+                  </CardTitle>
+                  <p className="text-muted-foreground">
+                    Manage your privacy settings and account data.
+                  </p>
+                </CardHeader>
+              </Card>
+
+              {/* Download Data Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Download className="w-5 h-5 text-blue-500" />
+                    Download Your Data
+                  </CardTitle>
+                  <p className="text-muted-foreground">
+                    Download a complete copy of your personal data including profile information, trip history, messages, and preferences.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    onClick={async () => {
+                      try {
+                        const response = await apiRequest("GET", "/api/user/download-data");
+                        const blob = new Blob([JSON.stringify(response, null, 2)], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `ceylon-expand-data-${new Date().toISOString().split('T')[0]}.json`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        toast({
+                          title: "Data Downloaded",
+                          description: "Your data has been downloaded successfully.",
+                        });
+                      } catch (error) {
+                        toast({
+                          title: "Download Failed",
+                          description: "Failed to download your data. Please try again.",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    data-testid="button-download-data"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download My Data
+                  </Button>
+                  <p className="text-sm text-gray-500 mt-2">
+                    This will download all your data in JSON format. The download may take a few moments to prepare.
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Account Deletion Section */}
+              <Card className="border-red-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-red-700">
+                    <UserX className="w-5 h-5" />
+                    Delete Account
+                  </CardTitle>
+                  <p className="text-red-600">
+                    Permanently delete your account and all associated data. This action cannot be undone.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                    <h4 className="font-semibold text-red-800 mb-2">⚠️ Warning</h4>
+                    <ul className="text-sm text-red-700 space-y-1">
+                      <li>• All your trips will be permanently deleted</li>
+                      <li>• Your chat history will be removed</li>
+                      <li>• Your profile and preferences will be lost</li>
+                      <li>• This action cannot be reversed</li>
+                    </ul>
+                  </div>
+                  <Button
+                    onClick={async () => {
+                      const confirmDelete = window.confirm(
+                        "Are you sure you want to delete your account? This action cannot be undone. Type 'DELETE' in the next prompt to confirm."
+                      );
+                      if (!confirmDelete) return;
+                      
+                      const confirmation = window.prompt(
+                        "To confirm account deletion, please type 'DELETE' (all caps):"
+                      );
+                      if (confirmation !== 'DELETE') {
+                        toast({
+                          title: "Deletion Cancelled",
+                          description: "Account deletion was cancelled.",
+                        });
+                        return;
+                      }
+
+                      try {
+                        await apiRequest("DELETE", "/api/user/delete");
+                        toast({
+                          title: "Account Deleted",
+                          description: "Your account has been permanently deleted.",
+                        });
+                        // Redirect to home page after deletion
+                        setTimeout(() => {
+                          window.location.href = "/";
+                        }, 2000);
+                      } catch (error) {
+                        toast({
+                          title: "Deletion Failed",
+                          description: "Failed to delete your account. Please try again.",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    variant="destructive"
+                    className="bg-red-600 hover:bg-red-700"
+                    data-testid="button-delete-account"
+                  >
+                    <UserX className="w-4 h-4 mr-2" />
+                    Delete Account
+                  </Button>
+                  <p className="text-sm text-gray-500 mt-2">
+                    This will permanently delete your account and all data. You will be asked to confirm this action.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Admin Tab */}
