@@ -35,7 +35,7 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
   // Get upload URL mutation
   const getUploadUrlMutation = useMutation({
     mutationFn: async (): Promise<{ uploadUrl: string }> => {
-      const response = await fetch('/api/chat/upload-url', {
+      const response = await fetch('/api/chat/image-upload-url', {
         method: 'POST',
         credentials: 'include',
         headers: {

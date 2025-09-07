@@ -4012,7 +4012,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Image Upload URL Generation for Chat
-  app.post('/api/chat/upload-url', unifiedAuthGuard, async (req: any, res) => {
+  app.post('/api/chat/image-upload-url', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       
