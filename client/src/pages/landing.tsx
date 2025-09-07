@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import Footer from "@/components/Footer";
 import { Link } from "wouter";
 import { UserPlus, MapPin, Handshake, PiggyBank, Users, Compass, Heart, Shield, Flag, Star, UserCheck, Route } from "lucide-react";
@@ -77,9 +78,20 @@ export default function Landing() {
         ></div>
         
         <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center text-white">
-          <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-6 mt-4 drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }} data-testid="hero-title">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 mt-4 drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }} data-testid="hero-title">
             Travel Together.<br />Share the Journey.
           </h1>
+          
+          {/* Free to Use Badge */}
+          <div className="mb-6 flex justify-center">
+            <Badge 
+              className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 text-sm font-semibold shadow-lg border-0 hover:from-green-600 hover:to-emerald-700 transition-all duration-200" 
+              data-testid="free-badge"
+            >
+              Create your account — enjoy every feature, at zero cost.
+            </Badge>
+          </div>
+          
           <p className="text-lg sm:text-xl md:text-2xl mb-8 max-w-3xl mx-auto px-4 drop-shadow-lg" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8), 0px 0px 2px rgba(0,0,0,0.6)' }} data-testid="hero-subtitle">
             Find rides, buddies, and unique experiences across Sri Lanka. Post your trip or join one today.
           </p>
