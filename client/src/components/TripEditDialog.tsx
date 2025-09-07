@@ -65,7 +65,16 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
       const compressionOptions = getOptimalCompressionSettings(file);
       const result = await compressImage(file, compressionOptions);
       
-      // Automatically remove existing image when uploading new one
+      // Create a proper file from the compressed data for upload
+      const response = await fetch(result.compressedFile);
+      const blob = await response.blob();
+      const compressedFile = new File([blob], file.name, {
+        type: file.type,
+        lastModified: Date.now()
+      });
+      
+      // For now, use the compressed data URL directly
+      // TODO: Implement proper user image upload endpoint
       setNewUploadedImage(result.compressedFile);
       setSelectedImage(""); // Clear existing selected image
       
@@ -120,15 +129,15 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
       
       // Handle image updates
       if (newUploadedImage) {
-        // New image uploaded - use it and clear any existing image
+        // New image uploaded - use it as the main image
         updateData.mediaUrls = [newUploadedImage];
         updateData.coverImageIndex = 0;
-        updateData.selectedCategoryImage = ""; // Clear existing image
+        updateData.selectedCategoryImage = ""; // Clear category image
       } else if (selectedImage) {
         // Keep existing selected image
         updateData.selectedCategoryImage = selectedImage;
       } else {
-        // No image selected - clear both
+        // No image selected - use default based on category
         updateData.selectedCategoryImage = "";
         updateData.mediaUrls = [];
       }
@@ -372,7 +381,10 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setSelectedImage("")}
+                    onClick={() => {
+                      setSelectedImage("");
+                      setNewUploadedImage(null);
+                    }}
                     className="text-red-600 hover:text-red-700"
                   >
                     Remove
