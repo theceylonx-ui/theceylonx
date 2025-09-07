@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import type { TripWithOrganizer } from "@shared/schema";
-import { MapPin, Calendar, Users, DollarSign, Camera } from "lucide-react";
+import { MapPin, Calendar, Users, DollarSign, Camera, Upload, Zap } from "lucide-react";
+import { compressImage, getOptimalCompressionSettings, formatFileSize } from "@/lib/imageCompression";
 
 interface TripEditDialogProps {
   isOpen: boolean;
@@ -23,15 +24,14 @@ interface CategoryOption {
   label: string;
 }
 
-interface ImageOption {
-  url: string;
-  description?: string;
-}
 
 export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedImage, setSelectedImage] = useState(trip.imageUrl || "");
+  const [isUploading, setIsUploading] = useState(false);
+  const [newUploadedImage, setNewUploadedImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     title: trip.title,
@@ -45,6 +45,44 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
     category: trip.category || "roadtrip",
     notes: trip.notes || "",
   });
+
+  // Handle image upload
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const compressionOptions = getOptimalCompressionSettings(file);
+      const result = await compressImage(file, compressionOptions);
+      
+      setNewUploadedImage(result.compressedFile);
+      setSelectedImage(result.compressedFile);
+      
+      toast({
+        title: "Image uploaded!",
+        description: `Image compressed by ${result.compressionRatio.toFixed(0)}% (${formatFileSize(result.originalSize)} → ${formatFileSize(result.compressedSize)})`,
+      });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -62,6 +100,7 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
         notes: trip.notes || "",
       });
       setSelectedImage(trip.imageUrl || "");
+      setNewUploadedImage(null);
     }
   }, [isOpen, trip]);
 
@@ -74,10 +113,18 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
 
   const updateTripMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest("PATCH", `/api/trips/${trip.id}`, {
+      const updateData = {
         ...data,
         selectedCategoryImage: selectedImage,
-      });
+      };
+      
+      // If there's a new uploaded image, include it in mediaUrls
+      if (newUploadedImage) {
+        updateData.mediaUrls = [newUploadedImage];
+        updateData.coverImageIndex = 0;
+      }
+      
+      return await apiRequest("PATCH", `/api/trips/${trip.id}`, updateData);
     },
     onSuccess: () => {
       toast({
@@ -325,26 +372,53 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
               )}
               
               {/* New upload option */}
-              <div className="flex items-center space-x-3 p-3 border rounded-lg border-dashed hover:border-ceylon-green">
-                <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
+              <div className="flex items-center space-x-3 p-3 border rounded-lg border-dashed hover:border-ceylon-green cursor-pointer"
+                   onClick={() => fileInputRef.current?.click()}>
+                {newUploadedImage ? (
+                  <img 
+                    src={newUploadedImage} 
+                    alt="New uploaded image" 
+                    className="w-16 h-16 object-cover rounded"
+                  />
+                ) : isUploading ? (
+                  <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                    <Zap className="w-8 h-8 text-green-500 animate-pulse" />
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                    <Upload className="w-8 h-8 text-gray-400" />
+                  </div>
+                )}
                 <div className="flex-1">
-                  <p className="text-sm font-medium">Upload New Image</p>
-                  <p className="text-xs text-gray-500">Add a custom image for this trip</p>
+                  <p className="text-sm font-medium">
+                    {newUploadedImage ? "New Image Selected" : isUploading ? "Compressing..." : "Upload New Image"}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {isUploading ? "Optimizing for best quality" : "Click to select an image file"}
+                  </p>
                 </div>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled
-                  className="text-gray-400"
+                  disabled={isUploading}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
                 >
-                  Coming Soon
+                  {isUploading ? "Processing..." : newUploadedImage ? "Change" : "Browse"}
                 </Button>
               </div>
+              
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
             </div>
           </div>
 
