@@ -42,6 +42,25 @@ export const preferenceEventEnum = pgEnum('preference_event', ['created', 'updat
 // Join status enum (exists in database)
 export const joinStatusEnum = pgEnum('join_status', ['pending', 'accepted', 'declined', 'cancelled']);
 
+// Thread users table (exists in database)
+export const threadUsers = pgTable("thread_users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  threadId: varchar("thread_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  joinedAt: timestamp("joined_at").defaultNow(),
+  unreadCount: integer("unread_count").default(0),
+  lastReadAt: timestamp("last_read_at"),
+});
+
+// Messages table (exists in database) 
+export const messages = pgTable("messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  threadId: varchar("thread_id").notNull(),
+  authorId: varchar("author_id").notNull(),
+  body: text("body").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Session storage table for Replit Auth
 export const sessions = pgTable(
   "sessions",
@@ -73,6 +92,10 @@ export const users = pgTable("users", {
   appleId: varchar("apple_id"),
   roleId: varchar("role_id"), // References roles table
   emailVerified: boolean("email_verified").default(false),
+  // Additional auth fields that exist in database
+  authProvider: varchar("auth_provider").default("email"),
+  password: varchar("password"),
+  providerId: varchar("provider_id"),
   // New profile fields for redesigned system
   displayName: text("display_name"),
   location: text("location"),
