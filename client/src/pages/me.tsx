@@ -1088,7 +1088,7 @@ function SavedTrips() {
                 <p className="text-sm text-gray-400 mt-1">
                   Pin trips you want to join or mark them as interested to keep track.
                 </p>
-                <Button className="mt-4" onClick={() => window.location.href = '/browse-trips'}>
+                <Button className="mt-4" onClick={() => setLocation('/browse-trips')}>
                   Browse Trips
                 </Button>
               </div>
@@ -1108,7 +1108,7 @@ function SavedTrips() {
                 <p className="text-sm text-gray-400 mt-1">
                   Pin trips you're committed to joining.
                 </p>
-                <Button className="mt-4" onClick={() => window.location.href = '/browse-trips'}>
+                <Button className="mt-4" onClick={() => setLocation('/browse-trips')}>
                   Browse Trips to Pin
                 </Button>
               </div>
@@ -1278,7 +1278,7 @@ function UserActivity() {
             ) : (
               <div className="text-center py-8">
                 <p className="text-gray-500">No trips posted yet.</p>
-                <Button className="mt-4" onClick={() => window.location.href = '/post'}>
+                <Button className="mt-4" onClick={() => setLocation('/post')}>
                   Post Your First Trip
                 </Button>
               </div>

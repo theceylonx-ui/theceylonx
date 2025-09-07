@@ -123,7 +123,7 @@ export function UserHistoryTab() {
             <p className="text-gray-500 mb-4">
               Your trip actions like pins and interests will appear here
             </p>
-            <Link href="/trips">
+            <Link href="/browse-trips">
               <Button>Browse Trips</Button>
             </Link>
           </div>

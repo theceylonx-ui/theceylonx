@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -38,6 +38,7 @@ interface ChatThreadsListProps {
 }
 
 export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
+  const [, setLocation] = useLocation();
   const { data: threads, isLoading, error } = useQuery<ChatThread[]>({
     queryKey: ["/api/threads"],
   });
@@ -81,7 +82,7 @@ export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
         type="chat"
         primaryAction={{
           label: "Browse Trips",
-          onClick: () => window.location.href = '/browse-trips'
+          onClick: () => setLocation('/browse-trips')
         }}
       />
     );

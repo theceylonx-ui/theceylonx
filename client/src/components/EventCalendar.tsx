@@ -35,11 +35,11 @@ const viewLabels: Record<ViewType, string> = {
 };
 
 const emptyStateConfig: Record<ViewType, { message: string; ctaText: string; ctaLink: string }> = {
-  all: { message: 'No events for this date.', ctaText: 'Browse Trips', ctaLink: '/trips' },
-  pinned: { message: 'No pinned trips for this date.', ctaText: 'Browse Trips', ctaLink: '/trips' },
-  interested: { message: 'No interested trips for this date.', ctaText: 'Browse Trips', ctaLink: '/trips' },
-  mine: { message: 'No trips you created for this date.', ctaText: 'Post a Trip', ctaLink: '/post-trip' },
-  free: { message: 'No free trips for this date.', ctaText: 'Post a Trip', ctaLink: '/post-trip' }
+  all: { message: 'No events for this date.', ctaText: 'Browse Trips', ctaLink: '/browse-trips' },
+  pinned: { message: 'No pinned trips for this date.', ctaText: 'Browse Trips', ctaLink: '/browse-trips' },
+  interested: { message: 'No interested trips for this date.', ctaText: 'Browse Trips', ctaLink: '/browse-trips' },
+  mine: { message: 'No trips you created for this date.', ctaText: 'Post a Trip', ctaLink: '/post' },
+  free: { message: 'No free trips for this date.', ctaText: 'Post a Trip', ctaLink: '/post' }
 };
 
 interface EventCalendarProps {
