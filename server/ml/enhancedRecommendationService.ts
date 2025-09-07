@@ -358,7 +358,7 @@ export class EnhancedRecommendationService {
     for (const recommendation of sortedTrips) {
       const trip = recommendation.trip;
       const region = trip.region;
-      const primaryTag = trip.tags?.[0];
+      const primaryTag = 'adventure'; // Default primary tag
 
       // Check region diversity
       if ((regionCounts[region] || 0) >= maxPerRegion) continue;
@@ -499,8 +499,8 @@ export class EnhancedRecommendationService {
       factors++;
     }
 
-    // Vibe preferences (trip mood/atmosphere)
-    if (preferences.vibe && preferences.vibe.length > 0 && trip.tags) {
+    // Vibe preferences (trip mood/atmosphere) - using text matching
+    if (preferences.vibe && preferences.vibe.length > 0) {
       // Map vibe to common trip tags
       const vibeTagMap: Record<string, string[]> = {
         'relaxed': ['wellness', 'beach', 'spa', 'retreat'],
@@ -513,10 +513,11 @@ export class EnhancedRecommendationService {
       };
       
       let vibeMatch = false;
-      const tripTags = Array.isArray(trip.tags) ? trip.tags : [];
+      // Use trip text content for vibe matching
+      const tripText = `${trip.title} ${trip.fromLocation} ${trip.toLocation} ${trip.region}`.toLowerCase();
       for (const vibeType of preferences.vibe) {
         const relevantTags = vibeTagMap[vibeType] || [];
-        if (tripTags.some((tag: string) => relevantTags.includes(tag))) {
+        if (relevantTags.some((tag: string) => tripText.includes(tag.toLowerCase()))) {
           vibeMatch = true;
           break;
         }
@@ -525,8 +526,8 @@ export class EnhancedRecommendationService {
       factors++;
     }
 
-    // Interest preferences
-    if (preferences.interests && preferences.interests.length > 0 && trip.tags) {
+    // Interest preferences using text content
+    if (preferences.interests && preferences.interests.length > 0) {
       // Direct mapping between interests and trip tags
       const interestTagMap: Record<string, string[]> = {
         'hiking': ['hiking', 'trekking', 'walking'],
@@ -544,10 +545,11 @@ export class EnhancedRecommendationService {
       };
       
       let interestMatch = false;
-      const tripTags = Array.isArray(trip.tags) ? trip.tags : [];
+      // Use trip text content for interest matching
+      const tripText = `${trip.title} ${trip.fromLocation} ${trip.toLocation} ${trip.region}`.toLowerCase();
       for (const interest of preferences.interests) {
         const relevantTags = interestTagMap[interest] || [interest];
-        if (tripTags.some((tag: string) => relevantTags.includes(tag))) {
+        if (relevantTags.some((tag: string) => tripText.includes(tag.toLowerCase()))) {
           interestMatch = true;
           break;
         }
@@ -567,12 +569,8 @@ export class EnhancedRecommendationService {
       const preferredMonthNums = preferences.months.map((m: string) => monthMap[m as keyof typeof monthMap]);
       const seasonalMatch = preferredMonthNums.includes(currentMonth);
       
-      // Also consider trip seasonality if available
-      let tripSeasonalMatch = false;
-      if (trip.seasonality && Array.isArray(trip.seasonality) && trip.seasonality.length > 0) {
-        const currentSeason = (currentMonth >= 12 || currentMonth <= 3) ? 'dry_season' : 'wet_season';
-        tripSeasonalMatch = trip.seasonality.includes(currentSeason) || trip.seasonality.includes('year_round');
-      }
+      // Simplified seasonal matching without database dependencies
+      let tripSeasonalMatch = true; // Always allow trips regardless of season
       
       score += (seasonalMatch || tripSeasonalMatch) ? 1 : 0.6;
       factors++;
@@ -590,10 +588,11 @@ export class EnhancedRecommendationService {
       };
       
       let companionMatch = false;
-      const tripTags = Array.isArray(trip.tags) ? trip.tags : [];
+      // Use trip text content for companion matching
+      const tripText = `${trip.title} ${trip.fromLocation} ${trip.toLocation} ${trip.region}`.toLowerCase();
       for (const companion of preferences.companions) {
         const relevantTags = companionTagMap[companion] || [];
-        if (tripTags.some((tag: string) => relevantTags.includes(tag))) {
+        if (relevantTags.some((tag: string) => tripText.includes(tag.toLowerCase()))) {
           companionMatch = true;
           break;
         }
@@ -1054,17 +1053,19 @@ export class EnhancedRecommendationService {
       badges.push('✨ New this week');
     }
 
-    // 4. Special Sri Lankan experiences
-    if (trip.tags?.includes('safari')) {
+    // 4. Special Sri Lankan experiences using text content
+    const tripText = `${trip.title} ${trip.fromLocation} ${trip.toLocation} ${trip.region}`.toLowerCase();
+    
+    if (tripText.includes('safari') || tripText.includes('wildlife') || tripText.includes('yala')) {
       badges.push('🐆 Great for safaris now');
     }
-    if (trip.tags?.includes('ayurveda') || trip.tags?.includes('wellness')) {
+    if (tripText.includes('ayurveda') || tripText.includes('wellness') || tripText.includes('spa')) {
       badges.push('🧘 Ayurveda & Wellness retreat');
     }
-    if (trip.tags?.includes('tea') || trip.tags?.includes('train')) {
+    if (tripText.includes('tea') || tripText.includes('train') || tripText.includes('ella') || tripText.includes('kandy')) {
       badges.push('🚂 Tea & Train views');
     }
-    if (trip.tags?.includes('cultural') || trip.tags?.includes('temple')) {
+    if (tripText.includes('cultural') || tripText.includes('temple') || tripText.includes('heritage')) {
       badges.push('🛕 Cultural heritage experience');
     }
 
