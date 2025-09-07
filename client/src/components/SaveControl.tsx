@@ -43,7 +43,8 @@ export function SaveControl({ tripId, variant = 'default', className = '' }: Sav
   // Save trip mutation
   const saveMutation = useMutation({
     mutationFn: async (saveType: 'pinned' | 'interested'): Promise<SaveResponse> => {
-      return apiRequest('POST', `/api/trips/${tripId}/save`, { saveType });
+      const response = await apiRequest('POST', `/api/trips/${tripId}/save`, { saveType });
+      return await response.json();
     },
     onMutate: async (saveType) => {
       // Optimistic update
@@ -79,7 +80,7 @@ export function SaveControl({ tripId, variant = 'default', className = '' }: Sav
   // Remove save mutation
   const removeMutation = useMutation({
     mutationFn: async (): Promise<void> => {
-      return apiRequest('DELETE', `/api/trips/${tripId}/save`, {});
+      await apiRequest('DELETE', `/api/trips/${tripId}/save`, {});
     },
     onMutate: async () => {
       // Optimistic update
