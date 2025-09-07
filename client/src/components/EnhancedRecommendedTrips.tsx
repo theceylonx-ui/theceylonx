@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -103,9 +103,22 @@ export function EnhancedRecommendedTrips() {
     },
   });
 
-  // KPI tracking mutation
+  // Throttled KPI tracking - limit to essential events only
+  const [kpiThrottle, setKpiThrottle] = useState(new Set<string>());
   const trackKpiMutation = useMutation({
     mutationFn: async (data: { eventType: string; tripId?: string; abTestGroup: string; sessionId: string; eventData?: any }) => {
+      const throttleKey = `${data.eventType}_${data.tripId || 'global'}`;
+      if (kpiThrottle.has(throttleKey)) return;
+      
+      setKpiThrottle(prev => new Set([...prev, throttleKey]));
+      setTimeout(() => {
+        setKpiThrottle(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(throttleKey);
+          return newSet;
+        });
+      }, 5000); // 5 second throttle
+      
       return apiRequest('POST', '/api/kpi/events', data);
     },
   });
@@ -133,33 +146,41 @@ export function EnhancedRecommendedTrips() {
     },
   });
 
-  // Convert trending trips to enhanced recommendation format for display
-  const fallbackRecommendations: EnhancedRecommendation[] = trendingTrips.map((trendingItem: any) => ({
-    trip: trendingItem.trip,
-    score: trendingItem.score || 0.8,
-    noveltyScore: 1.0,
-    seasonalityScore: 1.0,
-    reasons: ['Popular with travelers', 'Trending destination'],
-    features: ['trending', 'popular']
-  }));
+  // Memoize fallback recommendations to prevent unnecessary re-computation
+  const fallbackRecommendations = useMemo(() => 
+    trendingTrips.map((trendingItem: any) => ({
+      trip: trendingItem.trip,
+      score: trendingItem.score || 0.8,
+      noveltyScore: 1.0,
+      seasonalityScore: 1.0,
+      reasons: ['Popular with travelers', 'Trending destination'],
+      features: ['trending', 'popular']
+    })), [trendingTrips]
+  );
 
   // Use enhanced recommendations if available, otherwise use trending trips as fallback
-  const displayRecommendations = recommendations.length > 0 ? recommendations : fallbackRecommendations;
+  const displayRecommendations = useMemo(() => 
+    recommendations.length > 0 ? recommendations : fallbackRecommendations,
+    [recommendations, fallbackRecommendations]
+  );
 
-  // Track top 5 view event when recommendations load
+  // Track top 5 view event when recommendations load (throttled)
+  const [hasTrackedTopFive, setHasTrackedTopFive] = useState(false);
+  
   useEffect(() => {
-    if (displayRecommendations.length >= 5 && !isLoading && !trendingLoading) {
-      const topFiveIds = displayRecommendations.slice(0, 5).map((r: EnhancedRecommendation) => r.trip.id);
+    if (displayRecommendations.length >= 3 && !isLoading && !trendingLoading && !hasTrackedTopFive) {
+      const topThreeIds = displayRecommendations.slice(0, 3).map((r: EnhancedRecommendation) => r.trip.id);
       trackKpiMutation.mutate({
-        eventType: 'ctr_top5',
+        eventType: 'ctr_top3',
         abTestGroup,
         sessionId,
-        eventData: { tripIds: topFiveIds }
+        eventData: { tripIds: topThreeIds }
       });
+      setHasTrackedTopFive(true);
     }
-  }, [displayRecommendations, isLoading, trendingLoading, abTestGroup, sessionId]);
+  }, [displayRecommendations, isLoading, trendingLoading, hasTrackedTopFive, abTestGroup, sessionId]);
 
-  const handleTripView = (tripId: string) => {
+  const handleTripView = useCallback((tripId: string) => {
     if (!viewedTrips.has(tripId)) {
       setViewedTrips(prev => new Set([...Array.from(prev), tripId]));
       
@@ -170,9 +191,10 @@ export function EnhancedRecommendedTrips() {
         abTestGroup,
       });
     }
-  };
+  }, [viewedTrips, trackInteractionMutation, sessionId, abTestGroup]);
 
-  const handleTripClick = (tripId: string) => {
+  const handleTripClick = useCallback((tripId: string) => {
+    // Only track interaction, remove redundant KPI tracking
     trackInteractionMutation.mutate({
       tripId,
       interactionType: 'click',
@@ -180,18 +202,11 @@ export function EnhancedRecommendedTrips() {
       abTestGroup,
     });
 
-    trackKpiMutation.mutate({
-      eventType: 'trip_click',
-      tripId,
-      abTestGroup,
-      sessionId,
-    });
-
     // Navigate to trip details page
     setLocation(`/trips/${tripId}`);
-  };
+  }, [trackInteractionMutation, sessionId, abTestGroup, setLocation]);
 
-  const handleBookmark = (tripId: string, e: React.MouseEvent) => {
+  const handleBookmark = useCallback((tripId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     trackInteractionMutation.mutate({
       tripId,
@@ -200,9 +215,9 @@ export function EnhancedRecommendedTrips() {
       abTestGroup,
     });
     toast({ title: "Trip bookmarked!" });
-  };
+  }, [trackInteractionMutation, sessionId, abTestGroup, toast]);
 
-  const handleShare = (tripId: string, e: React.MouseEvent) => {
+  const handleShare = useCallback((tripId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     trackInteractionMutation.mutate({
       tripId,
@@ -211,9 +226,9 @@ export function EnhancedRecommendedTrips() {
       abTestGroup,
     });
     toast({ title: "Share link copied!" });
-  };
+  }, [trackInteractionMutation, sessionId, abTestGroup, toast]);
 
-  const handleNotInterested = (tripId: string, e: React.MouseEvent) => {
+  const handleNotInterested = useCallback((tripId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     trackInteractionMutation.mutate({
       tripId,
@@ -222,7 +237,7 @@ export function EnhancedRecommendedTrips() {
       abTestGroup,
     });
     toast({ title: "Feedback recorded. We'll show fewer similar trips." });
-  };
+  }, [trackInteractionMutation, sessionId, abTestGroup, toast]);
 
   const handleTogglePersonalization = async () => {
     const newState = !personalizationSettings?.isPaused;
@@ -419,7 +434,6 @@ export function EnhancedRecommendedTrips() {
               className={`group cursor-pointer transition-all duration-200 hover:shadow-lg border rounded-xl ${
                 isViewed ? 'ring-1 ring-blue-200 bg-blue-50/30' : 'hover:shadow-md'
               }`}
-              onMouseEnter={() => handleTripView(trip.id)}
               onClick={() => handleTripClick(trip.id)}
               data-testid={`enhanced-trip-card-${trip.id}`}
             >
