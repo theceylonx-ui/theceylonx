@@ -236,8 +236,13 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
         category: 'unknown', // Default category
         difficulty: 'easy', // Default difficulty
         status: 'active',
-        images: formData.mediaUrls || [] // Include uploaded images
+        mediaUrls: formData.mediaUrls || [], // Send as mediaUrls to match server schema
+        coverImageIndex: formData.coverImageIndex || 0,
+        mediaMetadata: formData.mediaMetadata || []
       };
+
+      console.log('📤 Sending trip data with mediaUrls:', tripData.mediaUrls?.length || 0, 'items');
+      console.log('📤 MediaUrls preview:', tripData.mediaUrls?.map((url: string) => url.substring(0, 50) + '...') || []);
       
       // Create the trip via API
       const response = await fetch('/api/trips', {
