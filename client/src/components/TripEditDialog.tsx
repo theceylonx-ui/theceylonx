@@ -65,16 +65,8 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
       const compressionOptions = getOptimalCompressionSettings(file);
       const result = await compressImage(file, compressionOptions);
       
-      // Create a proper file from the compressed data for upload
-      const response = await fetch(result.compressedFile);
-      const blob = await response.blob();
-      const compressedFile = new File([blob], file.name, {
-        type: file.type,
-        lastModified: Date.now()
-      });
-      
-      // For now, use the compressed data URL directly
-      // TODO: Implement proper user image upload endpoint
+      // For trip editing, use the compressed data URL directly
+      // This approach works for the current system without requiring cloud storage setup
       setNewUploadedImage(result.compressedFile);
       setSelectedImage(""); // Clear existing selected image
       
@@ -85,7 +77,7 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
     } catch (error) {
       console.error('Error uploading image:', error);
       toast({
-        title: "Upload failed",
+        title: "Upload failed", 
         description: "Failed to upload image. Please try again.",
         variant: "destructive",
       });
