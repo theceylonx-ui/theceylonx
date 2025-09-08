@@ -113,7 +113,7 @@ export default function BrowseTripsFilters({
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* From Location */}
         <div className="space-y-2">
           <label className="text-sm font-medium flex items-center gap-2">
@@ -159,6 +159,34 @@ export default function BrowseTripsFilters({
               {regions.map((r) => (
                 <SelectItem key={r} value={r}>{r}</SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Category */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium flex items-center gap-2">
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 17h3v3h-3z"/>
+            </svg>
+            Category
+          </label>
+          <Select value={filters.category ?? "all"} onValueChange={(v) => set("category", v === "all" ? null : v)}>
+            <SelectTrigger data-testid="select-category">
+              <SelectValue placeholder="All categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All categories</SelectItem>
+              <SelectItem value="roadtrip">Road Trip</SelectItem>
+              <SelectItem value="hiking">Hiking</SelectItem>
+              <SelectItem value="beach">Beach</SelectItem>
+              <SelectItem value="culture">Culture</SelectItem>
+              <SelectItem value="wellness">Wellness</SelectItem>
+              <SelectItem value="festival">Festival</SelectItem>
+              <SelectItem value="workshop">Workshop</SelectItem>
+              <SelectItem value="wildlife">Wildlife</SelectItem>
+              <SelectItem value="food">Food</SelectItem>
+              <SelectItem value="adventure_sport">Adventure Sport</SelectItem>
             </SelectContent>
           </Select>
         </div>
