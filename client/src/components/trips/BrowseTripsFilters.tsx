@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import "react-day-picker/dist/style.css";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -188,11 +189,16 @@ export default function BrowseTripsFilters({
                   mode="range"
                   selected={
                     filters.startDate && filters.endDate
-                      ? { from: new Date(filters.startDate), to: new Date(filters.endDate) }
-                      : undefined
+                      ? { 
+                          from: new Date(filters.startDate + 'T00:00:00'), 
+                          to: new Date(filters.endDate + 'T00:00:00') 
+                        }
+                      : filters.startDate 
+                        ? { from: new Date(filters.startDate + 'T00:00:00'), to: undefined }
+                        : undefined
                   }
                   onSelect={(range) => {
-                    if (!range) {
+                    if (!range || typeof range !== 'object') {
                       setMany({
                         startDate: null,
                         endDate: null,
@@ -200,10 +206,11 @@ export default function BrowseTripsFilters({
                       return;
                     }
                     
-                    // Handle date range selection
-                    const from = range.from;
-                    const to = range.to;
+                    // Handle date range selection - react-day-picker v8 format
+                    const from = 'from' in range ? range.from : range;
+                    const to = 'to' in range ? range.to : undefined;
                     
+                    // Always update both dates, even if only one is selected
                     setMany({
                       startDate: from ? from.toISOString().slice(0,10) : null,
                       endDate: to ? to.toISOString().slice(0,10) : null,
