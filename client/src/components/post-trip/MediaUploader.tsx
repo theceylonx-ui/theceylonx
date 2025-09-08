@@ -104,16 +104,23 @@ export function MediaUploader({
         } catch (error) {
           console.error('Error compressing image:', error);
           // Fallback to original file if compression fails
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const newItem: MediaItem = {
-              url: e.target?.result as string,
-              alt: '',
-              caption: ''
+          await new Promise<void>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const newItem: MediaItem = {
+                url: e.target?.result as string,
+                alt: '',
+                caption: ''
+              };
+              compressedItems.push(newItem);
+              resolve();
             };
-            compressedItems.push(newItem);
-          };
-          reader.readAsDataURL(file);
+            reader.onerror = () => {
+              console.error('Error reading file:', file.name);
+              resolve(); // Still resolve to continue with other files
+            };
+            reader.readAsDataURL(file);
+          });
         }
       }
       
