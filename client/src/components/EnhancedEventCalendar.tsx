@@ -274,7 +274,27 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
   
   // Get day events with proper error handling and caching
   const { data: dayResponse, isLoading: isDayLoading, error: dayError } = useQuery<CalendarResponse>({
-    queryKey: ['/api/calendar/day', debouncedState.selectedDate, buildFiltersString(debouncedState.filters), debouncedState.region || '', debouncedState.tags.join(',')],
+    queryKey: ['calendar-day', debouncedState.selectedDate, buildFiltersString(debouncedState.filters), debouncedState.region || '', debouncedState.tags.join(',')],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.set('date', debouncedState.selectedDate);
+      
+      const filtersString = buildFiltersString(debouncedState.filters);
+      if (filtersString) params.set('filters', filtersString);
+      
+      if (debouncedState.region) params.set('region', debouncedState.region);
+      if (debouncedState.tags.length > 0) params.set('tags', debouncedState.tags.join(','));
+      
+      const response = await fetch(`/api/calendar/day?${params.toString()}`, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
+    },
     enabled: true,
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
     retry: (failureCount, error) => {
@@ -289,7 +309,27 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
   // Get monthly day counts for calendar display with better caching
   const currentMonth = format(new Date(calendarState.selectedDate + 'T00:00:00'), 'yyyy-MM')
   const { data: monthCounts } = useQuery<DayCountsResponse>({
-    queryKey: ['/api/calendar/month', currentMonth, buildFiltersString(debouncedState.filters), debouncedState.region || '', debouncedState.tags.join(',')],
+    queryKey: ['calendar-month', currentMonth, buildFiltersString(debouncedState.filters), debouncedState.region || '', debouncedState.tags.join(',')],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.set('month', currentMonth);
+      
+      const filtersString = buildFiltersString(debouncedState.filters);
+      if (filtersString) params.set('filters', filtersString);
+      
+      if (debouncedState.region) params.set('region', debouncedState.region);
+      if (debouncedState.tags.length > 0) params.set('tags', debouncedState.tags.join(','));
+      
+      const response = await fetch(`/api/calendar/month?${params.toString()}`, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
+    },
     enabled: true,
     staleTime: 5 * 60 * 1000, // Cache monthly data for 5 minutes
     retry: false
