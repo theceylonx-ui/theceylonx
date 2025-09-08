@@ -241,8 +241,6 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
         mediaMetadata: formData.mediaMetadata || []
       };
 
-      console.log('📤 Sending trip data with mediaUrls:', tripData.mediaUrls?.length || 0, 'items');
-      console.log('📤 MediaUrls preview:', tripData.mediaUrls?.map((url: string) => url.substring(0, 50) + '...') || []);
       
       // Create the trip via API
       const response = await fetch('/api/trips', {
