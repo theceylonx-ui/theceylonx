@@ -313,6 +313,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
     queryFn: async () => {
       const params = new URLSearchParams();
       params.set('month', currentMonth);
+      params.set('summary', 'true'); // Request day counts format
       
       const filtersString = buildFiltersString(debouncedState.filters);
       if (filtersString) params.set('filters', filtersString);
