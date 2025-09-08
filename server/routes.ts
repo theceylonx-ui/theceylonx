@@ -303,47 +303,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Migrate existing trips to category-based images
+  // Legacy endpoint - no longer needed since we removed Sri Lanka images
   app.post('/api/trips/migrate-to-categories', unifiedAuthGuard, async (req, res) => {
-    try {
-      const { pickDefaultFromChoices, getSafeCategory } = await import('./services/imageSelectorService');
-      
-      // Get all trips that need category-based images
-      const trips = await storage.getAllTrips();
-      let updateCount = 0;
-      
-      for (const trip of trips) {
-        if (!trip.imageProvider || trip.imageProvider !== 'curated') {
-          const safeCategory = getSafeCategory(trip.category);
-          const seed = `${trip.title}-${trip.organizerId}`;
-          const imageSelection = pickDefaultFromChoices(safeCategory, seed);
-          
-          await storage.updateTrip(trip.id, {
-            category: safeCategory,
-            ...imageSelection
-          });
-          updateCount++;
-        }
-      }
-      
-      console.log(`Migrated ${updateCount} trips to category-based images`);
-      res.json({ message: `Successfully migrated ${updateCount} trips to category-based images` });
-    } catch (error) {
-      console.error("Error during category migration:", error);
-      res.status(500).json({ message: "Failed to migrate trips" });
-    }
+    res.json({ message: "Migration not needed - using Ceylon Expand logo for default images" });
   });
 
-  // Category and image management routes
+  // Category management routes
   app.get('/api/categories', async (req, res) => {
     try {
-      const { CATEGORY_LABELS, TRIP_CATEGORIES } = await import('./services/categoryImageMap');
-      res.json({
-        categories: TRIP_CATEGORIES.map(cat => ({
-          value: cat,
-          label: CATEGORY_LABELS[cat]
-        }))
-      });
+      const categories = [
+        { value: 'roadtrip', label: 'Road Trip' },
+        { value: 'hiking', label: 'Hiking & Trekking' },
+        { value: 'beach', label: 'Beach & Coastal' },
+        { value: 'culture', label: 'Cultural Experience' },
+        { value: 'wellness', label: 'Wellness & Spa' },
+        { value: 'festival', label: 'Festival & Events' },
+        { value: 'workshop', label: 'Workshop & Learning' },
+        { value: 'wildlife', label: 'Wildlife Safari' },
+        { value: 'food', label: 'Food & Culinary' },
+        { value: 'adventure_sport', label: 'Adventure Sports' },
+        { value: 'unknown', label: 'Other' }
+      ];
+      res.json({ categories });
     } catch (error) {
       console.error("Error fetching categories:", error);
       res.status(500).json({ message: "Failed to fetch categories" });
@@ -351,16 +332,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get('/api/categories/:category/images', async (req, res) => {
-    try {
-      const { getCuratedChoices } = await import('./services/imageSelectorService');
-      const { category } = req.params;
-      
-      const choices = getCuratedChoices(category as any);
-      res.json({ images: choices });
-    } catch (error) {
-      console.error("Error fetching category images:", error);
-      res.status(500).json({ message: "Failed to fetch category images" });
-    }
+    // No longer providing category-specific images - users upload their own or get Ceylon Expand logo
+    res.json({ images: [] });
   });
 
   // Trip routes
@@ -404,7 +377,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Using Ceylon Expand logo as fallback image");
       }
       
-      const safeCategory = await import('./services/imageSelectorService').then(({ getSafeCategory }) => getSafeCategory(tripData.category));
+      // Use the category as-is, no need for validation since we removed Sri Lanka images
+      // The category might come from the original clientData if not in tripData
+      const safeCategory = (tripData as any).category || req.body.category || 'unknown';
       
       // Merge image data with trip data
       const tripWithImage = {
@@ -577,45 +552,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { selectedCategoryImage, ...updateData } = req.body;
       let finalUpdateData = { ...updateData };
       
-      // Handle category-based image selection
-      if (updateData.category || selectedCategoryImage) {
-        const { 
-          isAllowedCategoryImage, 
-          getSafeCategory, 
-          pickDefaultFromChoices,
-          getImageAttribution 
-        } = await import('./services/imageSelectorService');
-        
-        const newCategory = getSafeCategory(updateData.category || trip.category);
-        
-        if (selectedCategoryImage) {
-          // Validate the selected image is allowed for this category
-          if (!isAllowedCategoryImage(newCategory, selectedCategoryImage)) {
-            return res.status(400).json({ 
-              message: "Selected image is not valid for this category" 
-            });
-          }
-          
-          // Apply the selected image
-          finalUpdateData = {
-            ...finalUpdateData,
-            category: newCategory,
-            imageUrl: selectedCategoryImage,
-            imageProvider: 'curated',
-            imageAttribution: getImageAttribution(newCategory, selectedCategoryImage),
-            imageFetchedAt: new Date()
-          };
-        } else if (updateData.category && updateData.category !== trip.category) {
-          // Category changed but no specific image selected - auto-pick default
-          const seed = `${trip.title}-${trip.organizerId}`;
-          const imageSelection = pickDefaultFromChoices(newCategory, seed);
-          
-          finalUpdateData = {
-            ...finalUpdateData,
-            category: newCategory,
-            ...imageSelection
-          };
-        }
+      // No longer handling category-based image selection - users upload their own images or get Ceylon Expand logo
+      if (updateData.category) {
+        // Just update the category without changing images
+        finalUpdateData.category = updateData.category;
       }
       
       const updatedTrip = await storage.updateTrip(tripId, finalUpdateData);
