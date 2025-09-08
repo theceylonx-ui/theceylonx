@@ -457,13 +457,13 @@ export default function TripCard({ trip, badges }: TripCardProps) {
             
             {/* Category badge */}
             <div className="flex flex-wrap gap-2 mb-2">
-              {(trip as any).category && (trip as any).category !== 'unknown' && (
+              {trip.category && trip.category !== 'unknown' && (
                 <Badge 
                   variant="outline" 
                   className="text-xs text-ceylon-blue border-ceylon-blue/30 bg-ceylon-blue/5"
                   data-testid={`trip-category-${trip.id}`}
                 >
-                  {(trip as any).category.charAt(0).toUpperCase() + (trip as any).category.slice(1)}
+                  {trip.category.charAt(0).toUpperCase() + trip.category.slice(1)}
                 </Badge>
               )}
               
