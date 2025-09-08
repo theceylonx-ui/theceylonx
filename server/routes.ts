@@ -374,6 +374,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const tripData = insertTripSchema.parse({ ...clientData, organizerId: userId });
       console.log("Trip data validated successfully:", tripData);
+      console.log("MediaUrls in validated data:", tripData.mediaUrls?.length || 0, "items");
       
       let finalImageData;
       
