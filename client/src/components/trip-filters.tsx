@@ -10,6 +10,7 @@ interface TripFiltersProps {
     to: string;
     date: string;
     region: string;
+    category: string;
     minPrice: string;
     maxPrice: string;
     search: string;
@@ -33,6 +34,7 @@ export default function TripFilters({ filters, onFiltersChange }: TripFiltersPro
       to: "",
       date: "",
       region: "",
+      category: "",
       minPrice: "",
       maxPrice: "",
       search: "",
@@ -128,8 +130,8 @@ export default function TripFilters({ filters, onFiltersChange }: TripFiltersPro
             </div>
           </div>
 
-          {/* Region and Price Filters */}
-          <div className="grid md:grid-cols-3 gap-4">
+          {/* Region, Category and Price Filters */}
+          <div className="grid md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Region</label>
               <Select value={filters.region || "all"} onValueChange={(value) => updateFilter("region", value)}>
@@ -147,6 +149,28 @@ export default function TripFilters({ filters, onFiltersChange }: TripFiltersPro
                   <SelectItem value="north-central">North Central Province</SelectItem>
                   <SelectItem value="sabaragamuwa">Sabaragamuwa Province</SelectItem>
                   <SelectItem value="uva">Uva Province</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <Select value={filters.category || "all"} onValueChange={(value) => updateFilter("category", value)}>
+                <SelectTrigger data-testid="select-category">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All categories</SelectItem>
+                  <SelectItem value="roadtrip">Road Trip</SelectItem>
+                  <SelectItem value="hiking">Hiking</SelectItem>
+                  <SelectItem value="beach">Beach</SelectItem>
+                  <SelectItem value="culture">Culture</SelectItem>
+                  <SelectItem value="wellness">Wellness</SelectItem>
+                  <SelectItem value="festival">Festival</SelectItem>
+                  <SelectItem value="workshop">Workshop</SelectItem>
+                  <SelectItem value="wildlife">Wildlife</SelectItem>
+                  <SelectItem value="food">Food</SelectItem>
+                  <SelectItem value="adventure_sport">Adventure Sport</SelectItem>
                 </SelectContent>
               </Select>
             </div>

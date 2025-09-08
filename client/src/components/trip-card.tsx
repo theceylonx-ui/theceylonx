@@ -455,25 +455,38 @@ export default function TripCard({ trip, badges }: TripCardProps) {
               {trip.title}
             </h3>
             
-            {/* Display badges if available */}
-            {badges && badges.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-2" data-testid={`trip-badges-${trip.id}`}>
-                {badges.slice(0, 2).map((badge, index) => (
-                  <Badge 
-                    key={index} 
-                    variant="secondary" 
-                    className="text-xs bg-brand-subtle text-brand border-brand/20"
-                  >
-                    {badge}
-                  </Badge>
-                ))}
-                {badges.length > 2 && (
-                  <Badge variant="outline" className="text-xs text-text-muted border-ui-line">
-                    +{badges.length - 2} more
-                  </Badge>
-                )}
-              </div>
-            )}
+            {/* Category badge */}
+            <div className="flex flex-wrap gap-2 mb-2">
+              {(trip as any).category && (trip as any).category !== 'unknown' && (
+                <Badge 
+                  variant="outline" 
+                  className="text-xs text-ceylon-blue border-ceylon-blue/30 bg-ceylon-blue/5"
+                  data-testid={`trip-category-${trip.id}`}
+                >
+                  {(trip as any).category.charAt(0).toUpperCase() + (trip as any).category.slice(1)}
+                </Badge>
+              )}
+              
+              {/* Display other badges if available */}
+              {badges && badges.length > 0 && (
+                <>
+                  {badges.slice(0, 2).map((badge, index) => (
+                    <Badge 
+                      key={index} 
+                      variant="secondary" 
+                      className="text-xs bg-brand-subtle text-brand border-brand/20"
+                    >
+                      {badge}
+                    </Badge>
+                  ))}
+                  {badges.length > 2 && (
+                    <Badge variant="outline" className="text-xs text-text-muted border-ui-line">
+                      +{badges.length - 2} more
+                    </Badge>
+                  )}
+                </>
+              )}
+            </div>
           </div>
           
           <div className="space-y-2 sm:space-y-3 mb-4 text-gray-600 text-xs sm:text-sm">
