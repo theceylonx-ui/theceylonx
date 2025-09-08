@@ -368,11 +368,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       console.log("Creating trip with data:", { ...req.body, organizerId: userId });
+      console.log("Raw mediaUrls from request:", req.body.mediaUrls?.length || 0, "items");
+      console.log("Raw mediaUrls data:", req.body.mediaUrls?.map((url: string) => url.substring(0, 50) + '...') || []);
       
       // Extract image fields - use mediaUrls from form
       const { imageUrl, imageProvider, imageAttribution, imageFetchedAt, selectedCategoryImage, images, ...clientData } = req.body;
       
-      const tripData = insertTripSchema.parse({ ...clientData, organizerId: userId });
+      const inputData = { ...clientData, organizerId: userId };
+      console.log("Input data mediaUrls:", inputData.mediaUrls?.length || 0, "items");
+      const tripData = insertTripSchema.parse(inputData);
       console.log("Trip data validated successfully:", tripData);
       console.log("MediaUrls in validated data:", tripData.mediaUrls?.length || 0, "items");
       
