@@ -560,6 +560,7 @@ export class DatabaseStorage implements IStorage {
     startDate?: string;
     endDate?: string;
     region?: string;
+    category?: string;
     minPrice?: number;
     maxPrice?: number;
     search?: string;
@@ -594,6 +595,10 @@ export class DatabaseStorage implements IStorage {
     
     if (filters.region) {
       conditions.push(eq(trips.region, filters.region));
+    }
+    
+    if (filters.category) {
+      conditions.push(eq(trips.category, filters.category));
     }
     
     if (filters.minPrice) {
@@ -634,6 +639,7 @@ export class DatabaseStorage implements IStorage {
           seatsAvailable: trips.seatsAvailable,
           price: trips.price,
           region: trips.region,
+          category: trips.category,
           contactInfo: trips.contactInfo,
           organizerId: trips.organizerId,
           status: trips.status,

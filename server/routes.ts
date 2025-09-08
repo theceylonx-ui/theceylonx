@@ -442,6 +442,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startDate: req.query.startDate as string,
         endDate: req.query.endDate as string,
         region: req.query.region as string,
+        category: req.query.category as string,
         minPrice: req.query.minPrice ? Number(req.query.minPrice) : undefined,
         maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
         search: req.query.search as string,
