@@ -127,20 +127,18 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
         ...data,
       };
       
-      // Handle image updates
+      // Handle image updates properly
       if (newUploadedImage) {
         // New image uploaded - use it as the main image
         updateData.mediaUrls = [newUploadedImage];
         updateData.coverImageIndex = 0;
-        updateData.selectedCategoryImage = ""; // Clear category image
-      } else if (selectedImage) {
-        // Keep existing selected image
-        updateData.selectedCategoryImage = selectedImage;
-      } else {
-        // No image selected - use default based on category
-        updateData.selectedCategoryImage = "";
+      } else if (!selectedImage && !newUploadedImage) {
+        // Image was removed - clear both fields
         updateData.mediaUrls = [];
+        updateData.coverImageIndex = 0;
+        updateData.imageUrl = null;
       }
+      // If selectedImage exists, keep the existing image (no changes needed)
       
       return await apiRequest("PATCH", `/api/trips/${trip.id}`, updateData);
     },
@@ -365,18 +363,44 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
           <div className="space-y-3">
             <Label>Trip Image</Label>
             <div className="space-y-3">
-              {/* Remove existing image option */}
-              {trip.imageUrl && (
-                <div className="flex items-center space-x-3 p-3 border rounded-lg">
-                  <img 
-                    src={trip.imageUrl} 
-                    alt="Current trip image" 
-                    className="w-16 h-16 object-cover rounded"
-                  />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Current Image</p>
-                    <p className="text-xs text-gray-500">Currently used for this trip</p>
-                  </div>
+              {/* Current trip images */}
+              {((trip.mediaUrls && trip.mediaUrls.length > 0) || trip.imageUrl) && !newUploadedImage && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700">Current Images</p>
+                  
+                  {/* Show user-uploaded mediaUrls */}
+                  {trip.mediaUrls && trip.mediaUrls.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      {trip.mediaUrls.map((url, index) => (
+                        <div key={index} className="relative">
+                          <img 
+                            src={url} 
+                            alt={`Trip image ${index + 1}`} 
+                            className="w-full h-20 object-cover rounded border"
+                          />
+                          {index === (trip.coverImageIndex || 0) && (
+                            <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1 rounded">
+                              Cover
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : trip.imageUrl && (
+                    // Fallback to trip.imageUrl if no mediaUrls
+                    <div className="flex items-center space-x-3 p-3 border rounded-lg">
+                      <img 
+                        src={trip.imageUrl} 
+                        alt="Current trip image" 
+                        className="w-16 h-16 object-cover rounded"
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Current Image</p>
+                        <p className="text-xs text-gray-500">Currently used for this trip</p>
+                      </div>
+                    </div>
+                  )}
+                  
                   <Button
                     type="button"
                     variant="outline"
@@ -385,9 +409,9 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
                       setSelectedImage("");
                       setNewUploadedImage(null);
                     }}
-                    className="text-red-600 hover:text-red-700"
+                    className="text-red-600 hover:text-red-700 w-full"
                   >
-                    Remove
+                    Remove All Images
                   </Button>
                 </div>
               )}
