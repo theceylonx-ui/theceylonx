@@ -169,6 +169,7 @@ export const trips = pgTable("trips", {
   seatsAvailable: integer("seats_available").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }),
   region: varchar("region").notNull(),
+  category: tripCategoryEnum("category").default("unknown"),
   contactInfo: varchar("contact_info").notNull(),
   organizerId: varchar("organizer_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   status: varchar("status").default("active"),
