@@ -12,6 +12,8 @@ export function StepMedia({ form }: StepMediaProps) {
   const coverImageIndex = form.watch("coverImageIndex") || 0;
   
   const handleMediaChange = (items: { url: string; alt?: string; caption?: string }[]) => {
+    console.log('📷 StepMedia: Media changed', { itemCount: items.length });
+    console.log('📷 StepMedia: URLs being set:', items.map(item => item.url.substring(0, 50) + '...'));
     form.setValue("mediaUrls", items.map(item => item.url));
     form.setValue("mediaMetadata", items);
   };

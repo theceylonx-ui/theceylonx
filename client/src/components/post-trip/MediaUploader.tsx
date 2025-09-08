@@ -66,6 +66,8 @@ export function MediaUploader({
   }, []);
   
   const handleFiles = useCallback(async (files: File[]) => {
+    console.log('📷 MediaUploader: Starting file upload process', { fileCount: files.length, currentItems: value.length });
+    
     if (value.length + files.length > maxFiles) {
       alert(`Maximum ${maxFiles} files allowed`);
       return;
@@ -78,7 +80,10 @@ export function MediaUploader({
     try {
       const compressedItems: MediaItem[] = [];
       
-      for (const file of files) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        console.log(`📷 Processing file ${i + 1}/${files.length}:`, file.name, `(${(file.size / 1024).toFixed(1)}KB)`);
+        
         if (!file.type.startsWith('image/')) {
           alert('Only image files are allowed');
           continue;
@@ -87,9 +92,15 @@ export function MediaUploader({
         try {
           // Get optimal compression settings based on file size
           const compressionOptions = getOptimalCompressionSettings(file);
+          console.log('📷 Compression settings:', compressionOptions);
           
           // Compress the image
           const result = await compressImage(file, compressionOptions);
+          console.log('📷 Compression result:', { 
+            originalSize: result.originalSize, 
+            compressedSize: result.compressedSize, 
+            ratio: result.compressionRatio.toFixed(1) + '%' 
+          });
           
           totalOriginalSize += result.originalSize;
           totalCompressedSize += result.compressedSize;
@@ -101,8 +112,9 @@ export function MediaUploader({
           };
           
           compressedItems.push(newItem);
+          console.log('📷 Added compressed item:', newItem.url.substring(0, 50) + '...');
         } catch (error) {
-          console.error('Error compressing image:', error);
+          console.error('❌ Error compressing image:', error);
           // Fallback to original file if compression fails
           await new Promise<void>((resolve) => {
             const reader = new FileReader();
@@ -113,16 +125,19 @@ export function MediaUploader({
                 caption: ''
               };
               compressedItems.push(newItem);
+              console.log('📷 Added fallback item:', newItem.url.substring(0, 50) + '...');
               resolve();
             };
             reader.onerror = () => {
-              console.error('Error reading file:', file.name);
+              console.error('❌ Error reading file:', file.name);
               resolve(); // Still resolve to continue with other files
             };
             reader.readAsDataURL(file);
           });
         }
       }
+      
+      console.log('📷 Final compressed items:', compressedItems.length);
       
       // Update compression stats
       if (totalOriginalSize > 0) {
@@ -135,7 +150,9 @@ export function MediaUploader({
       }
       
       // Add compressed items to the current value
-      onChange([...value, ...compressedItems]);
+      const newValue = [...value, ...compressedItems];
+      console.log('📷 Calling onChange with new value:', newValue.length, 'items');
+      onChange(newValue);
     } finally {
       setIsCompressing(false);
     }
