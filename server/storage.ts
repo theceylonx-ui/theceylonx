@@ -557,6 +557,8 @@ export class DatabaseStorage implements IStorage {
     from?: string;
     to?: string;
     date?: string;
+    startDate?: string;
+    endDate?: string;
     region?: string;
     minPrice?: number;
     maxPrice?: number;
@@ -576,6 +578,18 @@ export class DatabaseStorage implements IStorage {
     
     if (filters.date) {
       conditions.push(gte(trips.date, new Date(filters.date)));
+    }
+    
+    // Handle date range filtering
+    if (filters.startDate) {
+      conditions.push(gte(trips.date, new Date(filters.startDate)));
+    }
+    
+    if (filters.endDate) {
+      // Add one day to endDate to include trips on the end date
+      const endDate = new Date(filters.endDate);
+      endDate.setHours(23, 59, 59, 999);
+      conditions.push(lte(trips.date, endDate));
     }
     
     if (filters.region) {
