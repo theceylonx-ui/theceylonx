@@ -115,24 +115,7 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
 
   const updateTripMutation = useMutation({
     mutationFn: async (data: any) => {
-      const updateData = {
-        ...data,
-      };
-      
-      // Handle image updates properly
-      if (newUploadedImage) {
-        // New image uploaded - use it as the main image
-        updateData.mediaUrls = [newUploadedImage];
-        updateData.coverImageIndex = 0;
-      } else if (!selectedImage && !newUploadedImage) {
-        // Image was removed - clear both fields
-        updateData.mediaUrls = [];
-        updateData.coverImageIndex = 0;
-        updateData.imageUrl = null;
-      }
-      // If selectedImage exists, keep the existing image (no changes needed)
-      
-      return await apiRequest("PATCH", `/api/trips/${trip.id}`, updateData);
+      return await apiRequest("PATCH", `/api/trips/${trip.id}`, data);
     },
     onSuccess: () => {
       toast({
@@ -186,6 +169,20 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
     if (formData.date !== currentDate) {
       updatedData.date = formData.date;
     }
+    
+    // Handle image updates properly
+    if (newUploadedImage) {
+      // New image uploaded - use it as the main image
+      updatedData.mediaUrls = [newUploadedImage];
+      updatedData.coverImageIndex = 0;
+      updatedData.imageUrl = newUploadedImage; // Also set imageUrl for backward compatibility
+    } else if (!selectedImage && !newUploadedImage) {
+      // Image was removed - clear both fields
+      updatedData.mediaUrls = [];
+      updatedData.coverImageIndex = 0;
+      updatedData.imageUrl = null;
+    }
+    // If selectedImage exists but no newUploadedImage, keep existing image (no changes needed)
     
     updateTripMutation.mutate(updatedData);
   };
@@ -356,7 +353,7 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
             <Label>Trip Image</Label>
             <div className="space-y-3">
               {/* Current trip images */}
-              {((trip.mediaUrls && trip.mediaUrls.length > 0) || trip.imageUrl) && !newUploadedImage && (
+              {((trip.mediaUrls && trip.mediaUrls.length > 0) || trip.imageUrl) && !newUploadedImage && selectedImage && (
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700">Current Images</p>
                   
