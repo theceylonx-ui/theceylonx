@@ -14,7 +14,7 @@ async function getAuthenticatedUser(req: any): Promise<UnifiedUser | null> {
     const { getClerkUser } = await import('./auth/clerk');
     const clerkUser = getClerkUser(req);
     if (clerkUser) {
-      console.log('✅ Clerk user found:', clerkUser.id);
+      // Clerk user authenticated
       return {
         id: clerkUser.id,
         email: clerkUser.email,
@@ -32,7 +32,7 @@ async function getAuthenticatedUser(req: any): Promise<UnifiedUser | null> {
     const jwtUser = await getCurrentUser(req);
     
     if (jwtUser) {
-      console.log('✅ JWT user found:', jwtUser.id);
+      // JWT user authenticated
       return {
         id: jwtUser.id,
         email: jwtUser.email,
@@ -43,11 +43,11 @@ async function getAuthenticatedUser(req: any): Promise<UnifiedUser | null> {
     }
     
     // Fallback to Replit Auth
-    console.log('🔍 Trying Replit Auth fallback, isAuthenticated:', typeof req.isAuthenticated);
+    // Trying Replit Auth fallback
     if (req.isAuthenticated && req.isAuthenticated()) {
       const user = req.user as any;
       if ((user as any)?.claims?.sub) {
-        console.log('✅ Replit user found:', user.claims.sub);
+        // Replit user authenticated
         return {
           id: user.claims.sub,
           email: user.claims.email,
@@ -57,7 +57,7 @@ async function getAuthenticatedUser(req: any): Promise<UnifiedUser | null> {
         };
       }
     }
-    console.log('❌ No authentication method worked');
+    // No authentication method worked
     
     return null;
   } catch (error) {
