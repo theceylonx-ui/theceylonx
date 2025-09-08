@@ -83,7 +83,7 @@ const getInitialState = (): CalendarState => {
     selectedDate: params.get('date') || localStorage.getItem('calendar_date') || format(todayInColombo, 'yyyy-MM-dd'),
     view: (params.get('view') as any) || (localStorage.getItem('calendar_view') as any) || 'month',
     filters: {
-      all: params.get('filters')?.includes('all') || localStorage.getItem('calendar_filters_all') === 'true' || true,
+      all: params.get('filters')?.includes('all') || localStorage.getItem('calendar_filters_all') === 'true' || false,
       pinned: params.get('filters')?.includes('pinned') || localStorage.getItem('calendar_filters_pinned') === 'true' || false,
       interested: params.get('filters')?.includes('interested') || localStorage.getItem('calendar_filters_interested') === 'true' || false,
       my: params.get('filters')?.includes('my') || localStorage.getItem('calendar_filters_my') === 'true' || false,

@@ -3201,7 +3201,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Helper function to format event data
       const formatTripEvent = (trip: any, isPinned: boolean, isInterested: boolean) => {
         const isMyTrip = trip.organizerId === userId;
-        const isFree = !trip.price || trip.price === 0;
+        const numPrice = trip.price ? parseFloat(trip.price) : 0;
+        const isFree = !trip.price || numPrice === 0 || isNaN(numPrice);
         const icons = generateEventIcons(trip, isMyTrip, isPinned, isInterested, isFree);
         
         return {
@@ -3398,7 +3399,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (requestedFilters.length === 1 && requestedFilters[0] === 'truly_free') {
         const freeTrips = filteredTrips.filter(trip => {
           const price = trip.price;
-          const isFree = !price || price === null || price === 'null' || price === 'NaN' || price === '0' || price === 0 || isNaN(parseFloat(price));
+          const numPrice = price ? parseFloat(price) : 0;
+          const isFree = !price || price === null || price === 'null' || price === 'NaN' || numPrice === 0 || isNaN(numPrice);
           return trip.status === 'active' && trip.seatsAvailable > 0 && isFree;
         });
         const total = freeTrips.length;
@@ -3451,7 +3453,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               return userId ? trip.organizerId === userId : false;
             case 'truly_free':
               const price = trip.price;
-              const isFree = !price || price === null || price === 'null' || price === 'NaN' || price === '0' || price === 0 || isNaN(parseFloat(price));
+              const numPrice = price ? parseFloat(price) : 0;
+              const isFree = !price || price === null || price === 'null' || price === 'NaN' || numPrice === 0 || isNaN(numPrice);
               return trip.status === 'active' && trip.seatsAvailable > 0 && isFree;
             default:
               return true; // Unknown filters are ignored
@@ -3592,7 +3595,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 return userId ? trip.organizerId === userId : false;
               case 'truly_free':
                 const price = trip.price;
-                const isFree = !price || price === null || price === 'null' || price === 'NaN' || price === '0' || price === 0 || isNaN(parseFloat(price));
+                const numPrice = price ? parseFloat(price) : 0;
+                const isFree = !price || price === null || price === 'null' || price === 'NaN' || numPrice === 0 || isNaN(numPrice);
                 return trip.status === 'active' && trip.seatsAvailable > 0 && isFree;
               default:
                 return true;
