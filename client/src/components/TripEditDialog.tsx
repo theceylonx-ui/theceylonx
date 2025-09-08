@@ -46,10 +46,12 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
     notes: (trip as any).notes || "",
   });
 
-  // Handle image upload
+  // Handle image upload with fallback for reliability
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    console.log('Starting image upload for file:', file.name, file.type, file.size);
 
     if (!file.type.startsWith('image/')) {
       toast({
@@ -61,12 +63,13 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
     }
 
     setIsUploading(true);
+    
     try {
+      // Try compression first
+      console.log('Attempting image compression...');
       const compressionOptions = getOptimalCompressionSettings(file);
       const result = await compressImage(file, compressionOptions);
       
-      // For trip editing, use the compressed data URL directly
-      // This approach works for the current system without requiring cloud storage setup
       setNewUploadedImage(result.compressedFile);
       setSelectedImage(""); // Clear existing selected image
       
@@ -74,13 +77,39 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
         title: "Image uploaded!",
         description: `Image compressed by ${result.compressionRatio.toFixed(0)}% (${formatFileSize(result.originalSize)} → ${formatFileSize(result.compressedSize)})`,
       });
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      toast({
-        title: "Upload failed", 
-        description: "Failed to upload image. Please try again.",
-        variant: "destructive",
-      });
+    } catch (compressionError) {
+      console.warn('Compression failed, falling back to direct upload:', compressionError);
+      
+      try {
+        // Fallback: convert to data URL directly without compression
+        const reader = new FileReader();
+        await new Promise<void>((resolve, reject) => {
+          reader.onload = (e) => {
+            const result = e.target?.result as string;
+            if (result) {
+              setNewUploadedImage(result);
+              setSelectedImage(""); // Clear existing selected image
+              
+              toast({
+                title: "Image uploaded!",
+                description: `Image uploaded successfully (${formatFileSize(file.size)})`,
+              });
+              resolve();
+            } else {
+              reject(new Error('Failed to read file'));
+            }
+          };
+          reader.onerror = () => reject(new Error('File reading failed'));
+          reader.readAsDataURL(file);
+        });
+      } catch (fallbackError) {
+        console.error('Both compression and fallback failed:', fallbackError);
+        toast({
+          title: "Upload failed", 
+          description: "Failed to upload image. Please try a different image.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsUploading(false);
     }
