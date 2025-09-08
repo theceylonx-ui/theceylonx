@@ -45,6 +45,7 @@ export default function BrowseTrips() {
       if (filters.from) params.set('from', filters.from);
       if (filters.to) params.set('to', filters.to);
       if (filters.region) params.set('region', filters.region);
+      if (filters.category) params.set('category', filters.category);
       if (filters.startDate) params.set('startDate', filters.startDate);
       if (filters.endDate) params.set('endDate', filters.endDate);
       if (filters.maxPrice) params.set('maxPrice', filters.maxPrice.toString());

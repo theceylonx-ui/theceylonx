@@ -3,6 +3,7 @@ export type TripsFilters = {
   from: string | null;       // city code or name
   to: string | null;         // city code or name
   region: string | null;     // e.g., "Central", "North", ...
+  category: string | null;   // trip category
   startDate: string | null;  // ISO date (yyyy-mm-dd)
   endDate: string | null;    // ISO date (yyyy-mm-dd)
   maxPrice: number | null;   // maximum price in LKR (0 = show all)

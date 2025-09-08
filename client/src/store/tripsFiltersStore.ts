@@ -7,6 +7,7 @@ const DEFAULTS: TripsFilters = {
   from: null,
   to: null,
   region: null,
+  category: null,
   startDate: null,
   endDate: null,
   maxPrice: null,
