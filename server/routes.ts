@@ -20,10 +20,7 @@ async function getAuthenticatedUser(req: any): Promise<UnifiedUser | null> {
         email: clerkUser.email,
         name: clerkUser.name,
         provider: 'clerk',
-        firstName: clerkUser.firstName,
-        lastName: clerkUser.lastName,
-        username: clerkUser.username,
-        profileImageUrl: clerkUser.profileImageUrl
+        // Additional properties for Clerk integration (not in UnifiedUser interface)
       };
     }
     
@@ -104,10 +101,8 @@ import {
   insertTopicSchema,
   insertQuestionSchema,
   insertAnswerSchema,
-  insertVoteSchema,
-  insertUserPreferencesSchema,
   insertUserInteractionSchema,
-  insertMessageSchema,
+  insertChatMessageSchema,
   travelStyleSettingsSchema,
   type TravelStyleSettings
 } from "@shared/schema";
@@ -217,7 +212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       const { username, phoneNumber, bio, profileImageUrl } = req.body;
       
-      console.log("Profile update request:", { userId, username, phoneNumber: phoneNumber ? "***" : null, bio: bio ? bio.substring(0, 50) : null });
+      // Profile update request received
       
       // Check if username is already taken by another user
       if (username && username.trim()) {
@@ -235,11 +230,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         bio: bio?.trim() || undefined,
       };
       
-      console.log("Updating user with data:", { ...updateData, phoneNumber: updateData.phoneNumber ? "***" : null });
+      // Updating user profile data
       
       const updatedUser = await storage.updateUser(userId, updateData);
       
-      console.log("Profile update successful for user:", userId);
+      // Profile update completed successfully
       res.json(updatedUser);
     } catch (error) {
       console.error("Error updating user profile:", error);
@@ -263,12 +258,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/user/delete', unifiedAuthGuard, async (req, res) => {
     try {
       const userId = req.user!.id;
-      console.log("User deletion request for user:", userId);
+      // User deletion request received
       
       // Perform comprehensive user data deletion
       await storage.deleteUser(userId);
       
-      console.log("User deletion completed for user:", userId);
+      // User deletion completed
       res.json({ message: "User account and all associated data has been permanently deleted" });
     } catch (error) {
       console.error("Error deleting user:", error);
@@ -429,11 +424,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const userId = (req as any).user.id;
         tripsWithFlags = await Promise.all(
           result.trips.map(async (trip) => {
-            const flags = await storage.getUserTripFlags(userId, trip.id);
+            // Trip flags functionality temporarily disabled  
             return { 
               ...trip, 
-              isPinned: flags?.pinned ?? false,
-              isInterested: flags?.interested ?? false
+              isPinned: false,
+              isInterested: false
             };
           })
         );
@@ -2267,11 +2262,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Get user's trips, comments, ratings, and other data
-      const [trips, comments, ratings, preferences] = await Promise.all([
+      // Get user's trips, ratings, and preferences
+      const [trips, ratings, preferences] = await Promise.all([
         storage.getUserTrips(userId),
-        storage.getUserComments(userId),
-        storage.getUserRatings(userId),
+        storage.getUserRatings(userId), 
         storage.getUserPreferences(userId)
       ]);
       
@@ -2356,7 +2350,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = travelStyleSettingsSchema.parse(req.body);
       
       // Update preferences using the new format
-      const preferences = await storage.updateTravelStyleSettings(userId, validatedData);
+      // Travel style settings update temporarily using updateUserPreferences
+      const preferences = await storage.updateUserPreferences(userId, validatedData);
       
       res.json(preferences);
     } catch (error) {
