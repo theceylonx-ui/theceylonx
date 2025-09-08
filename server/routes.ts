@@ -8,7 +8,7 @@ import { clerkHealth } from "./routes/clerkHealth";
 
 // Unified auth helper function
 async function getAuthenticatedUser(req: any): Promise<UnifiedUser | null> {
-  console.log('🔍 /api/auth/me called - checking auth methods');
+  // Checking authentication methods
   try {
     // First try Clerk authentication
     const { getClerkUser } = await import('./auth/clerk');
@@ -340,13 +340,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/trips', unifiedAuthGuard, async (req, res) => {
     try {
       const userId = req.user!.id;
-      console.log("Creating trip with data:", { ...req.body, organizerId: userId });
-      
       // Extract image fields - use mediaUrls from form
       const { imageUrl, imageProvider, imageAttribution, imageFetchedAt, selectedCategoryImage, images, ...clientData } = req.body;
       
       const tripData = insertTripSchema.parse({ ...clientData, organizerId: userId });
-      console.log("Trip data validated successfully:", tripData);
       
       let finalImageData;
       
@@ -363,7 +360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           mediaUrls: tripData.mediaUrls,
           coverImageIndex: coverIndex
         };
-        console.log(`Using user-uploaded image (${coverIndex + 1}/${tripData.mediaUrls.length}):`, coverImageUrl);
+        // Using user-uploaded image as cover
       } else {
         // Priority 2: Use Ceylon Expand logo as fallback
         finalImageData = {
@@ -374,7 +371,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           mediaUrls: [],
           coverImageIndex: 0
         };
-        console.log("Using Ceylon Expand logo as fallback image");
+        // Using Ceylon Expand logo as fallback
       }
       
       // Use the category as-is, no need for validation since we removed Sri Lanka images
@@ -388,8 +385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...finalImageData
       };
       
-      console.log("Final image assigned:", finalImageData.imageUrl);
-      console.log("MediaUrls stored:", finalImageData.mediaUrls);
+      // Image assignment completed
       
       const trip = await storage.createTrip(tripWithImage);
       res.json(trip);

@@ -1653,48 +1653,80 @@ export class DatabaseStorage implements IStorage {
 
     const threads: (ChatThread & { lastMessage?: ChatMessage, unreadCount: number, otherUser?: User, trip?: Trip })[] = [];
     
-    for (const { chat_participant_state: participantState, chat_threads: thread } of threadUserResult) {
-      if (!thread) continue;
-      
-      // Get trip information if thread is associated with a trip
-      let trip: Trip | undefined;
-      if (thread.tripId) {
-        const [tripResult] = await db
-          .select()
-          .from(trips)
-          .where(eq(trips.id, thread.tripId));
-        trip = tripResult;
-      }
-      
-      // Get last message
-      const [lastMessage] = await db
-        .select()
-        .from(chatMessages)
-        .where(eq(chatMessages.threadId, thread.id))
-        .orderBy(desc(chatMessages.createdAt))
-        .limit(1);
+    // Extract thread and trip IDs for batch queries
+    const validThreads = threadUserResult.filter(r => r.chat_threads).map(r => ({ 
+      participantState: r.chat_participant_state!, 
+      thread: r.chat_threads! 
+    }));
+    
+    if (validThreads.length === 0) return [];
 
-      // Get other user in thread
-      const otherUsers = await db
+    const threadIds = validThreads.map(vt => vt.thread.id);
+    const tripIds = validThreads.map(vt => vt.thread.tripId).filter(Boolean);
+
+    // Batch fetch all trips
+    const tripsMap = new Map<string, Trip>();
+    if (tripIds.length > 0) {
+      const allTrips = await db
         .select()
+        .from(trips)
+        .where(sql`${trips.id} = ANY(${sql.raw(`ARRAY[${tripIds.map(id => `'${id}'`).join(',')}]`)})`);
+      allTrips.forEach(trip => tripsMap.set(trip.id, trip));
+    }
+
+    // Batch fetch last messages using window function
+    const lastMessagesMap = new Map<string, ChatMessage>();
+    if (threadIds.length > 0) {
+      const lastMessages = await db
+        .select({
+          message: chatMessages,
+          threadId: chatMessages.threadId,
+        })
+        .from(
+          db
+            .select({
+              ...chatMessages,
+              rn: sql<number>`ROW_NUMBER() OVER (PARTITION BY ${chatMessages.threadId} ORDER BY ${chatMessages.createdAt} DESC)`.as('rn')
+            })
+            .from(chatMessages)
+            .where(sql`${chatMessages.threadId} = ANY(${sql.raw(`ARRAY[${threadIds.map(id => `'${id}'`).join(',')}]`)})`)
+            .as('ranked_messages')
+        )
+        .where(sql`rn = 1`);
+      
+      lastMessages.forEach(lm => lastMessagesMap.set(lm.threadId, lm.message));
+    }
+
+    // Batch fetch other users
+    const otherUsersMap = new Map<string, User>();
+    if (threadIds.length > 0) {
+      const otherUsers = await db
+        .select({
+          user: users,
+          threadId: chatParticipantState.threadId
+        })
         .from(chatParticipantState)
         .leftJoin(users, eq(chatParticipantState.userId, users.id))
         .where(and(
-          eq(chatParticipantState.threadId, thread.id),
+          sql`${chatParticipantState.threadId} = ANY(${sql.raw(`ARRAY[${threadIds.map(id => `'${id}'`).join(',')}]`)})`,
           sql`${chatParticipantState.userId} != ${userId}`
         ));
       
-      const otherUser = otherUsers[0]?.users || undefined;
+      otherUsers.forEach(ou => {
+        if (ou.user) {
+          otherUsersMap.set(ou.threadId, ou.user);
+        }
+      });
+    }
 
-      // Get unread count from participant state
-      const unreadCount = participantState?.unreadCount || 0;
-
+    // Assemble results efficiently
+    for (const { participantState, thread } of validThreads) {
       threads.push({
         ...thread,
-        lastMessage,
-        unreadCount,
-        otherUser,
-        trip
+        lastMessage: lastMessagesMap.get(thread.id),
+        unreadCount: participantState?.unreadCount || 0,
+        otherUser: otherUsersMap.get(thread.id),
+        trip: thread.tripId ? tripsMap.get(thread.tripId) : undefined
       });
     }
 
