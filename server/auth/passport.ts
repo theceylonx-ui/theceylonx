@@ -15,11 +15,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     ? 'http://localhost:5000/api/auth/google/callback'
     : 'https://www.theceylonx.com/api/auth/google/callback';
     
-  console.log('🔧 Google OAuth callback URL configured:', {
-    NODE_ENV: process.env.NODE_ENV,
-    isDevelopment,
-    googleCallbackURL
-  });
+  // Google OAuth callback configured
     
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
