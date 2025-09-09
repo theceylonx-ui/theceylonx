@@ -19,14 +19,21 @@ import { motion } from "framer-motion";
 import { Search, MapPin, Globe, Calendar as CalendarIcon, DollarSign, X } from "lucide-react";
 
 type Props = {
-  regions?: string[];        // provide from server
+  regions?: Array<{value: string; label: string}>;        // provide from server
   locations?: string[];      // provide from server
 };
 
-// Sri Lankan regions for the dropdown
+// Sri Lankan regions for the dropdown - mapped to match backend values
 const DEFAULT_REGIONS = [
-  "Western", "Central", "Southern", "Northern", "Eastern", 
-  "North Western", "North Central", "Uva", "Sabaragamuwa"
+  { value: "western", label: "Western Province" },
+  { value: "central", label: "Central Province" },
+  { value: "southern", label: "Southern Province" },
+  { value: "northern", label: "Northern Province" },
+  { value: "eastern", label: "Eastern Province" },
+  { value: "north_western", label: "North Western Province" },
+  { value: "north_central", label: "North Central Province" },
+  { value: "uva", label: "Uva Province" },
+  { value: "sabaragamuwa", label: "Sabaragamuwa Province" }
 ];
 
 // Popular Sri Lankan destinations
@@ -157,7 +164,9 @@ export default function BrowseTripsFilters({
             <SelectContent>
               <SelectItem value="all">All regions</SelectItem>
               {regions.map((r) => (
-                <SelectItem key={r} value={r}>{r}</SelectItem>
+                <SelectItem key={typeof r === 'string' ? r : r.value} value={typeof r === 'string' ? r.toLowerCase() : r.value}>
+                  {typeof r === 'string' ? r : r.label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
