@@ -251,6 +251,7 @@ export interface IStorage {
   
   // Chat thread operations
   createChatThread(thread: InsertChatThread): Promise<ChatThread>;
+  isThreadOrganizer(userId: string, threadId: string): Promise<boolean>;
   getChatThread(id: string): Promise<ChatThread | undefined>;
   getUserChatThreads(userId: string): Promise<(ChatThread & { lastMessage?: ChatMessage, unreadCount: number, otherUser?: User, trip?: Trip })[]>;
   addUserToThread(userId: string, threadId: string): Promise<void>;
@@ -588,7 +589,7 @@ export class DatabaseStorage implements IStorage {
         acceptedAnswerId: null, // Default value
         isDeleted: false, // Default value
         deletedAt: null, // Default value
-        user: { id: userId, firstName: 'Test', lastName: 'User', displayName: null, profileImageUrl: null },
+        user: normalizeUserForUI({ id: userId, firstName: 'Test', lastName: 'User', displayName: null, profileImageUrl: null, username: null, email: null, provider: null, createdAt: null, updatedAt: null } as any) as any,
         topic: { id: question.topicId || '', name: 'General', slug: 'general', description: null, createdAt: new Date() },
         answers: [],
       }));
@@ -643,7 +644,7 @@ export class DatabaseStorage implements IStorage {
     }
     
     if (filters.category) {
-      conditions.push(eq(trips.category, filters.category));
+      conditions.push(eq(trips.category, filters.category as any));
     }
     
     if (filters.minPrice) {
@@ -724,6 +725,9 @@ export class DatabaseStorage implements IStorage {
       return {
         ...redactedTrip,
         organizer: redactedOrganizer,
+        organizerPhone: null,
+        organizerEmail: null, 
+        organizerCountryCode: null,
       };
     });
     
@@ -748,7 +752,7 @@ export class DatabaseStorage implements IStorage {
     
     return result.map(({ comments: comment, users: user }) => ({
       ...comment,
-      user: user!,
+      user: normalizeUserForUI(user!) as any,
     }));
   }
 
@@ -783,7 +787,7 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(users, eq(comments.userId, users.id))
       .where(and(eq(comments.id, id), eq(comments.isDeleted, false)));
     
-    return comment || null;
+    return comment ? { ...comment, user: normalizeUserForUI(comment.user as any) as any } : null;
   }
 
   async deleteComment(id: string): Promise<void> {
@@ -1713,11 +1717,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllSiteSettings(category?: string): Promise<SiteSetting[]> {
-    let query = db.select().from(siteSettings);
     if (category) {
-      query = query.where(eq(siteSettings.category, category));
+      return await db.select().from(siteSettings).where(eq(siteSettings.category, category));
     }
-    return await query;
+    return await db.select().from(siteSettings);
   }
 
   async deleteSiteSetting(key: string): Promise<void> {
@@ -1739,6 +1742,22 @@ export class DatabaseStorage implements IStorage {
       .from(chatThreads)
       .where(eq(chatThreads.id, id));
     return thread;
+  }
+
+  async isThreadOrganizer(userId: string, threadId: string): Promise<boolean> {
+    const [thread] = await db
+      .select()
+      .from(chatThreads)
+      .where(eq(chatThreads.id, threadId));
+    
+    if (!thread || !thread.tripId) return false;
+    
+    const [trip] = await db
+      .select()
+      .from(trips)
+      .where(eq(trips.id, thread.tripId));
+    
+    return trip?.organizerId === userId;
   }
 
   async getUserChatThreads(userId: string): Promise<(ChatThread & { lastMessage?: ChatMessage, unreadCount: number, otherUser?: User, trip?: Trip })[]> {
@@ -1794,8 +1813,7 @@ export class DatabaseStorage implements IStorage {
             text: row.text,
             kind: row.kind as any,
             meta: row.meta,
-            createdAt: new Date(row.created_at),
-            updatedAt: new Date(row.updated_at)
+            createdAt: new Date(row.created_at)
           });
         });
       }
@@ -2097,9 +2115,9 @@ export class DatabaseStorage implements IStorage {
       console.log('👥 Adding users:', { organizerId, userId: requestData.userId });
       
       // Add both organizer and requester as participants
-      await this.addUserToThread({ threadId: chatThreadId, userId: organizerId });
+      await this.addUserToThread(organizerId, chatThreadId);
       console.log('✅ Organizer added to thread');
-      await this.addUserToThread({ threadId: chatThreadId, userId: requestData.userId });
+      await this.addUserToThread(requestData.userId, chatThreadId);
       console.log('✅ Requester added to thread');
       
       console.log('✅ Chat thread created with participants:', chatThreadId);
@@ -2601,12 +2619,31 @@ export class DatabaseStorage implements IStorage {
       .limit(options.limit);
 
     if (options.cursor) {
-      query = query.where(
-        and(
-          eq(chatMessages.threadId, threadId),
-          sql`${chatMessages.createdAt} < ${new Date(options.cursor)}`
+      return await db
+        .select({
+          message: chatMessages,
+          sender: {
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            username: users.username,
+            profileImageUrl: users.profileImageUrl
+          }
+        })
+        .from(chatMessages)
+        .leftJoin(users, eq(chatMessages.senderId, users.id))
+        .where(
+          and(
+            eq(chatMessages.threadId, threadId),
+            sql`${chatMessages.createdAt} < ${new Date(options.cursor)}`
+          )
         )
-      );
+        .orderBy(asc(chatMessages.createdAt))
+        .limit(options.limit)
+        .then(results => results.map(({ message, sender }) => ({
+          ...message,
+          sender
+        })));
     }
 
     const results = await query;

@@ -50,6 +50,10 @@ export const tripWithOrganizerSchema = z.object({
   tags: z.array(z.string()).default([]),
   viewCount: z.number().default(0),
   bookingCount: z.number().default(0),
+  // Contact fields for organizer
+  organizerPhone: z.string().nullable().optional(),
+  organizerEmail: z.string().nullable().optional(),
+  organizerCountryCode: z.string().nullable().optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
