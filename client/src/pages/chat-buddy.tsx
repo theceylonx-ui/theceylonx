@@ -69,12 +69,14 @@ function ChatThreadsListView() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800">
         <Navigation />
-        {/* Chat Buddy Header with vibrant theme */}
-        <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 shadow-lg shadow-emerald-500/20">
-          <div className="max-w-7xl mx-auto px-6 py-8">
-            <div className="text-center">
-              <h1 className="text-4xl font-bold text-white mb-2">💬 Chat Buddy</h1>
-              <p className="text-emerald-100 text-lg">Connect with fellow travelers and trip organizers</p>
+        {/* Chat Buddy Header with beautiful gradient like CeylonX Tribes */}
+        <div className="py-8">
+          <div className="max-w-6xl mx-auto p-6">
+            <div className="bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 rounded-2xl shadow-lg p-8 mb-8">
+              <div className="text-center">
+                <h1 className="text-4xl font-bold text-white mb-2">💬 Chat Buddy</h1>
+                <p className="text-white/90 text-lg">Connect with fellow travelers and trip organizers</p>
+              </div>
             </div>
           </div>
         </div>
@@ -90,33 +92,20 @@ function ChatThreadsListView() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800">
       <Navigation />
-      {/* Chat Buddy Header with vibrant theme */}
-      <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 shadow-lg shadow-emerald-500/20">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-white mb-2">💬 Chat Buddy</h1>
-            <p className="text-emerald-100 text-lg">Connect with fellow travelers and trip organizers</p>
-          </div>
-        </div>
-      </div>
-      
       <div className="py-8">
         <div className="max-w-6xl mx-auto p-6">
-          {/* Tips Section */}
-          <TipsBox
-            title="How to use Chat Buddy" 
-            className="mb-8"
-            tips={[
-              "💬 View all your trip conversations in one place",
-              "📱 Share contact details with trip participants when you're the organizer", 
-              "📸 Send photos and messages to coordinate trip details",
-              "🔔 Get notifications when you receive new messages",
-              "⭐ Chat history is preserved even if trips are modified"
-            ]}
-          />
+          {/* Chat Buddy Header with beautiful gradient like CeylonX Tribes */}
+          <div className="bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 rounded-2xl shadow-lg p-8 mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-4xl font-bold text-white mb-2">💬 Chat Buddy</h1>
+                <p className="text-white/90 text-lg">Connect with fellow travelers and trip organizers</p>
+              </div>
+            </div>
+          </div>
 
           {/* Chat Interface */}
-          <div className="grid lg:grid-cols-3 gap-6 h-[600px]">
+          <div className="grid lg:grid-cols-3 gap-6 h-[600px] mb-8">
             {/* Threads List */}
             <div className="lg:col-span-1 h-full overflow-y-auto">
               <ChatThreadsList />
@@ -146,6 +135,18 @@ function ChatThreadsListView() {
               )}
             </div>
           </div>
+          
+          {/* Tips Section - Moved to bottom */}
+          <TipsBox
+            title="How to use Chat Buddy" 
+            tips={[
+              "💬 View all your trip conversations in one place",
+              "📱 Share contact details with trip participants when you're the organizer", 
+              "📸 Send photos and messages to coordinate trip details",
+              "🔔 Get notifications when you receive new messages",
+              "⭐ Chat history is preserved even if trips are modified"
+            ]}
+          />
         </div>
       </div>
     </div>
