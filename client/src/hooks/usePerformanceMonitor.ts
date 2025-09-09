@@ -56,7 +56,7 @@ export const usePerformanceMonitor = () => {
     if (cacheStats) {
       setMetrics(prev => ({
         ...prev,
-        cacheHitRate: cacheStats.hitRatePercent || 0,
+        cacheHitRate: (cacheStats as any).hitRatePercent || 0,
       }));
     }
   }, [cacheStats]);

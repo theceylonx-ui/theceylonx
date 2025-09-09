@@ -86,17 +86,17 @@ export const PerformanceMonitor = () => {
             </Badge>
           </div>
           
-          {cacheStats && (
+          {cacheStats ? (
             <div className="flex items-center space-x-2">
               <span className="text-xs">Server Cache</span>
               <Badge variant="outline" className="text-xs">
                 {(cacheStats as any).size || 0} items
               </Badge>
             </div>
-          )}
+          ) : null}
         </div>
         
-        {cacheStats && (
+        {cacheStats ? (
           <div className="pt-2 border-t text-xs text-gray-600">
             <div className="flex justify-between">
               <span>Cache Performance:</span>
@@ -107,7 +107,7 @@ export const PerformanceMonitor = () => {
               <span>{(cacheStats as any).hits || 0}/{(cacheStats as any).misses || 0}</span>
             </div>
           </div>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );

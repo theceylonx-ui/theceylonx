@@ -113,6 +113,9 @@ import { errorTracker } from "./utils/errorTracking";
 import { normalizeUserForUI, normalizeUsersForUI, trackUserNormalizationFallback } from "./utils/userNormalization";
 import type { NormalizedUser } from "./utils/userNormalization";
 import { cache, CACHE_TTL } from "./cache/cacheService";
+import { healthCheck, readinessCheck, livenessCheck } from "./health/healthCheck";
+import { errorTrackingMiddleware } from "./monitoring/errorTracking";
+import { productionSecurityMiddleware, cacheHeadersMiddleware, productionErrorHandler, requestLoggingMiddleware } from "./middleware/production";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // CORS and cookie middleware - strict origin validation
@@ -146,6 +149,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     credentials: true
   }));
   app.use(cookieParser());
+  
+  // 🚀 PHASE 4: Production health check endpoints (before auth)
+  app.get('/health', healthCheck);
+  app.get('/health/ready', readinessCheck);
+  app.get('/health/live', livenessCheck);
   
   // Setup Replit Auth first
   await setupAuth(app);
@@ -4518,6 +4526,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch user profile" });
     }
   });
+
+  // 🚀 PHASE 4: Production error handling (after all routes)
+  app.use(errorTrackingMiddleware);
+  app.use(productionErrorHandler);
 
   const httpServer = createServer(app);
   return httpServer;
