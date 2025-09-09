@@ -15,6 +15,7 @@ interface DestinationSelectProps {
   placeholder?: string;
   error?: string;
   className?: string;
+  required?: boolean;
 }
 
 const SRI_LANKA_REGIONS = [
@@ -55,7 +56,8 @@ export function DestinationSelect({
   label, 
   placeholder = "Search or type location...",
   error,
-  className 
+  className,
+  required = false
 }: DestinationSelectProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -94,7 +96,7 @@ export function DestinationSelect({
   return (
     <div className={className}>
       <Label htmlFor="destination-input" className="text-sm font-medium mb-2 block">
-        {label}
+        {label} {required && <span className="text-red-500">*</span>}
       </Label>
       
       {/* Toggle between input and dropdown modes */}

@@ -36,7 +36,7 @@ export function StepBasics({ form }: StepBasicsProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel className="flex items-center gap-2">
-                Trip Title
+                Trip Title <span className="text-red-500">*</span>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
@@ -66,7 +66,7 @@ export function StepBasics({ form }: StepBasicsProps) {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>Description <span className="text-red-500">*</span></FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="Describe your trip in detail. Include highlights, what makes it special, and what participants can expect..."

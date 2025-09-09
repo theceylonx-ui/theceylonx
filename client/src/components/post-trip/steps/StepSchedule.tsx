@@ -60,6 +60,7 @@ export function StepSchedule({ form }: StepScheduleProps) {
                 label="Departure Location"
                 placeholder="Where does the trip start?"
                 error={form.formState.errors.fromLocation?.message}
+                required={true}
                 data-testid="from-location-select"
               />
             </FormItem>
@@ -79,6 +80,7 @@ export function StepSchedule({ form }: StepScheduleProps) {
                 label="Destination"
                 placeholder="Where are you going?"
                 error={form.formState.errors.toLocation?.message}
+                required={true}
                 data-testid="to-location-select"
               />
             </FormItem>
@@ -91,7 +93,7 @@ export function StepSchedule({ form }: StepScheduleProps) {
           name="region"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Region</FormLabel>
+              <FormLabel>Region <span className="text-red-500">*</span></FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger data-testid="region-select">
@@ -124,7 +126,7 @@ export function StepSchedule({ form }: StepScheduleProps) {
               <FormItem>
                 <FormLabel className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  Trip Date
+                  Trip Date <span className="text-red-500">*</span>
                 </FormLabel>
                 <FormControl>
                   <Input
@@ -148,7 +150,7 @@ export function StepSchedule({ form }: StepScheduleProps) {
               <FormItem>
                 <FormLabel className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
-                  Departure Time
+                  Departure Time <span className="text-red-500">*</span>
                 </FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>

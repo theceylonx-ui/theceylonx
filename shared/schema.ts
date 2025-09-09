@@ -185,7 +185,10 @@ export const trips = pgTable("trips", {
   price: decimal("price", { precision: 10, scale: 2 }),
   region: varchar("region").notNull(),
   category: tripCategoryEnum("category").default("unknown"),
-  contactInfo: varchar("contact_info").notNull(),
+  contactInfo: varchar("contact_info"), // Legacy field - kept for backward compatibility
+  organizerPhone: varchar("organizer_phone"),
+  organizerEmail: varchar("organizer_email"), 
+  organizerCountryCode: varchar("organizer_country_code").default("+94"), // Default to Sri Lanka
   organizerId: varchar("organizer_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   status: varchar("status").default("active"),
   
@@ -1537,7 +1540,12 @@ export const TripSchema = z.object({
   // Step 6: Safety & Terms
   safetyFlags: z.array(z.string()).optional(),
   termsAccepted: z.boolean().refine((val) => val === true, "You must accept the terms and conditions"),
-  contactInfo: z.string().min(1, "Contact information is required"),
+  // Legacy contact field - kept for backward compatibility
+  contactInfo: z.string().optional(),
+  // New separate contact fields with validation requiring at least phone OR email
+  organizerPhone: z.string().min(9, "Phone number must be 9 digits").max(9, "Phone number must be 9 digits").optional(),
+  organizerEmail: z.string().email("Valid email required").optional(),
+  organizerCountryCode: z.string().default("+94"),
   notes: z.string().max(500, "Notes must be less than 500 characters").optional(),
   
   // Additional fields
@@ -1553,6 +1561,16 @@ export const TripSchema = z.object({
 }, {
   message: "Minimum price must be less than or equal to maximum price",
   path: ["priceMax"]
+}).refine((data) => {
+  // Custom validation: require at least phone OR email contact information
+  const hasPhone = data.organizerPhone && data.organizerPhone.length >= 9;
+  const hasEmail = data.organizerEmail && data.organizerEmail.length > 0;
+  const hasLegacyContact = data.contactInfo && data.contactInfo.length > 0;
+  
+  return hasPhone || hasEmail || hasLegacyContact;
+}, {
+  message: "Please provide either a phone number or email address for contact",
+  path: ["organizerPhone"]
 });
 
 // Step-by-step validation schemas (base schemas without refinements)
@@ -1593,7 +1611,12 @@ const BaseTripSchema = z.object({
   // Step 6: Safety & Terms
   safetyFlags: z.array(z.string()).optional(),
   termsAccepted: z.boolean().refine((val) => val === true, "You must accept the terms and conditions"),
-  contactInfo: z.string().min(1, "Contact information is required"),
+  // Legacy contact field - kept for backward compatibility
+  contactInfo: z.string().optional(),
+  // New separate contact fields with validation requiring at least phone OR email
+  organizerPhone: z.string().min(9, "Phone number must be 9 digits").max(9, "Phone number must be 9 digits").optional(),
+  organizerEmail: z.string().email("Valid email required").optional(),
+  organizerCountryCode: z.string().default("+94"),
   notes: z.string().max(500, "Notes must be less than 500 characters").optional(),
   
   // Additional fields
@@ -1607,7 +1630,7 @@ export const Step2Schema = BaseTripSchema.pick({ fromLocation: true, toLocation:
 export const Step3Schema = BaseTripSchema.pick({ price: true, priceMin: true, priceMax: true });
 export const Step4Schema = BaseTripSchema.pick({ seatsAvailable: true, buddyFriendly: true });
 export const Step5Schema = BaseTripSchema.pick({ mediaUrls: true, coverImageIndex: true, mediaMetadata: true });
-export const Step6Schema = BaseTripSchema.pick({ safetyFlags: true, termsAccepted: true, contactInfo: true, notes: true });
+export const Step6Schema = BaseTripSchema.pick({ safetyFlags: true, termsAccepted: true, contactInfo: true, organizerPhone: true, organizerEmail: true, organizerCountryCode: true, notes: true });
 
 export type TripFormData = z.infer<typeof TripSchema>;
 export type Step1Data = z.infer<typeof Step1Schema>;
