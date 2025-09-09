@@ -328,6 +328,13 @@ export interface IStorage {
   
   // Verification badge operations
   updateUserVerificationBadges(userId: string): Promise<string[]>;
+  
+  // Missing methods for regression fix
+  upsertUserPreferences(userId: string, preferences: any): Promise<any>;
+  getContactSharesForAdmin(): Promise<any[]>;
+  createContactShare(share: any): Promise<any>;
+  getRecentContactShares(): Promise<any[]>;
+  createAuditLog(log: any): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3071,6 +3078,30 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId));
 
     return badges;
+  }
+  // Missing methods for regression fix
+  async upsertUserPreferences(userId: string, preferences: any): Promise<any> {
+    return this.updateUserPreferences(userId, preferences);
+  }
+  
+  async getContactSharesForAdmin(): Promise<any[]> {
+    // Placeholder implementation for deprecated feature
+    return [];
+  }
+  
+  async createContactShare(share: any): Promise<any> {
+    // Placeholder implementation for deprecated feature
+    return null;
+  }
+  
+  async getRecentContactShares(): Promise<any[]> {
+    // Placeholder implementation for deprecated feature
+    return [];
+  }
+  
+  async createAuditLog(log: any): Promise<any> {
+    // Placeholder implementation - in production this would be properly implemented
+    return null;
   }
 }
 
