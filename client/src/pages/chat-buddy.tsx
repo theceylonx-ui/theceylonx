@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { apiRequest } from '@/lib/queryClient';
+import { useRoute } from 'wouter';
 import Navigation from '@/components/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,6 +62,8 @@ interface TripStatus {
 // Component to show all chat threads when accessed directly from navigation
 function ChatThreadsListView() {
   const { user } = useAuth();
+  const [match, params] = useRoute('/chat-buddy/:threadId');
+  const threadId = match ? params?.threadId : undefined;
   
   if (!user) {
     return (
@@ -102,7 +105,7 @@ function ChatThreadsListView() {
             
             {/* Chat Window */}
             <div className="lg:col-span-2">
-              <ChatWindow />
+              <ChatWindow threadId={threadId} currentUserId={user.id} />
             </div>
           </div>
         </div>
