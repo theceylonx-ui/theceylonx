@@ -69,6 +69,15 @@ function ChatThreadsListView() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800">
         <Navigation />
+        {/* Chat Buddy Header with vibrant theme */}
+        <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 shadow-lg shadow-emerald-500/20">
+          <div className="max-w-7xl mx-auto px-6 py-8">
+            <div className="text-center">
+              <h1 className="text-4xl font-bold text-white mb-2">💬 Chat Buddy</h1>
+              <p className="text-emerald-100 text-lg">Connect with fellow travelers and trip organizers</p>
+            </div>
+          </div>
+        </div>
         <div className="pt-20 pb-10">
           <div className="max-w-4xl mx-auto p-6">
             <div className="text-center">Please sign in to access your chats.</div>
@@ -81,31 +90,55 @@ function ChatThreadsListView() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800">
       <Navigation />
-      <div className="pt-20 pb-10">
-        <div className="max-w-6xl mx-auto p-6">
-          {/* Header */}
-          <div className="mb-8">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 text-center">
-              <MessageSquare className="h-12 w-12 mx-auto mb-4 text-green-500" />
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                💬 Chat Buddy
-              </h1>
-              <p className="text-gray-600 dark:text-gray-300">
-                Connect with fellow travelers and trip organizers
-              </p>
-            </div>
+      {/* Chat Buddy Header with vibrant theme */}
+      <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 shadow-lg shadow-emerald-500/20">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-white mb-2">💬 Chat Buddy</h1>
+            <p className="text-emerald-100 text-lg">Connect with fellow travelers and trip organizers</p>
           </div>
+        </div>
+      </div>
+      
+      <div className="py-8">
+        <div className="max-w-6xl mx-auto p-6">
+          {/* Tips Section */}
+          <TipsBox
+            title="How to use Chat Buddy" 
+            className="mb-8"
+            tips={[
+              "💬 View all your trip conversations in one place",
+              "📱 Share contact details with trip participants when you're the organizer", 
+              "📸 Send photos and messages to coordinate trip details",
+              "🔔 Get notifications when you receive new messages",
+              "⭐ Chat history is preserved even if trips are modified"
+            ]}
+          />
 
           {/* Chat Interface */}
-          <div className="grid lg:grid-cols-3 gap-6">
+          <div className="grid lg:grid-cols-3 gap-6 h-[600px]">
             {/* Threads List */}
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 h-full overflow-y-auto">
               <ChatThreadsList />
             </div>
             
             {/* Chat Window */}
-            <div className="lg:col-span-2">
-              <ChatWindow threadId={threadId} currentUserId={user?.id} />
+            <div className="lg:col-span-2 h-full">
+              {threadId ? (
+                <ChatWindow 
+                  threadId={threadId} 
+                  currentUserId={user?.id} 
+                  onBack={() => window.history.pushState({}, '', '/chat-buddy')}
+                />
+              ) : (
+                <Card className="h-full flex items-center justify-center">
+                  <div className="text-center text-gray-500">
+                    <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                    <p className="text-lg font-medium mb-2">Select a chat to start messaging</p>
+                    <p className="text-sm">Choose a conversation from the list to begin chatting</p>
+                  </div>
+                </Card>
+              )}
             </div>
           </div>
         </div>
