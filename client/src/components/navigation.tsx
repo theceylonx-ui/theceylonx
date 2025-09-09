@@ -83,10 +83,10 @@ export default function Navigation() {
               </Link>
             )}
             {user && (
-              <Link href="/chat">
+              <Link href="/chat-buddy">
                 <span 
                   className={`transition-all duration-200 cursor-pointer flex items-center gap-2 relative px-4 py-2 rounded-lg ${
-                    isActive('/chat') || location.startsWith('/chat/') 
+                    isActive('/chat-buddy') || location.startsWith('/chat-buddy/') 
                       ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' 
                       : 'text-emerald-100 hover:text-white hover:bg-white/10'
                   }`}
@@ -184,10 +184,10 @@ export default function Navigation() {
                 </Link>
               )}
               {user && (
-                <Link href="/chat">
+                <Link href="/chat-buddy">
                   <div 
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                      isActive('/chat') || location.startsWith('/chat/') 
+                      isActive('/chat-buddy') || location.startsWith('/chat-buddy/') 
                         ? 'bg-white/20 text-white font-semibold' 
                         : 'text-emerald-100 hover:bg-white/10 hover:text-white'
                     }`}

@@ -131,7 +131,7 @@ export default function ProfileMenu({ className }: ProfileMenuProps) {
         </Link>
 
         {/* 2. Chatbuddy */}
-        <Link href="/chat/threads">
+        <Link href="/chat-buddy">
           <DropdownMenuItem 
             className="cursor-pointer" 
             data-testid="profile-menu-chatbuddy"
