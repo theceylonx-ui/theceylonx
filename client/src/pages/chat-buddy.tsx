@@ -128,7 +128,12 @@ function ChatThreadsListView() {
                 <ChatWindow 
                   threadId={threadId} 
                   currentUserId={user?.id} 
-                  onBack={() => window.history.pushState({}, '', '/chat-buddy')}
+                  onBack={() => {
+                    // Clear the URL parameter to deselect the chat
+                    window.history.replaceState({}, '', '/chat-buddy');
+                    // Trigger a location change event to update the UI
+                    window.dispatchEvent(new PopStateEvent('popstate'));
+                  }}
                 />
               ) : (
                 <Card className="h-full flex items-center justify-center">

@@ -278,7 +278,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
 
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="h-full flex flex-col max-h-[600px]">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center space-x-3">
@@ -382,8 +382,8 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
             </Dialog>
         )}
       
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      {/* Messages - Fixed height with scroll */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[400px] min-h-[300px]">
         {messagesLoading ? (
           <div className="text-center py-4">
             <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
