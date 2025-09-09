@@ -509,6 +509,16 @@ function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
     const isEphemeral = message.meta?.ephemeral;
     const attachmentUrl = message.meta?.attachmentId;
     const consumed = imageViewed && isEphemeral;
+    
+    // 🔍 DEBUG: Log image rendering logic
+    console.log('🖼️ IMAGE MESSAGE:', {
+      messageId: message.id,
+      isEphemeral,
+      attachmentUrl,
+      imageViewed,
+      consumed,
+      messageCreatedAt: message.createdAt
+    });
 
     return (
       <>
