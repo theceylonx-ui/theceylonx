@@ -26,7 +26,7 @@ export function StepCapacity({ form }: StepCapacityProps) {
             <FormItem>
               <FormLabel className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                Available Seats
+                Available Seats <span className="text-red-500">*</span>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
