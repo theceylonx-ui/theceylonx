@@ -244,6 +244,12 @@ export const trips = pgTable("trips", {
   index("trips_date_idx").on(table.date),
   index("trips_seats_idx").on(table.seatsAvailable),
   index("trips_status_seats_idx").on(table.status, table.seatsAvailable),
+  // 🚀 PHASE 3 PERFORMANCE: Critical search optimization indexes
+  index("trips_search_core_idx").on(table.status, table.isDeleted, table.date), // Core search filter
+  index("trips_location_search_idx").on(table.fromLocation, table.toLocation), // Location search
+  index("trips_category_idx").on(table.category), // Category filtering
+  index("trips_price_range_idx").on(table.price), // Price filtering
+  index("trips_active_listing_idx").on(table.status, table.isDeleted, table.region, table.date), // Full active listing optimization
 ]);
 
 // Trip metadata table (moved from trips for better performance)
@@ -406,6 +412,9 @@ export const chatMessages = pgTable("chat_messages", {
 }, (table) => ({
   threadIdCreatedAtIdx: index("chat_messages_thread_id_created_at_idx").on(table.threadId, table.createdAt),
   senderIdIdx: index("chat_messages_sender_id_idx").on(table.senderId),
+  // 🚀 PHASE 3 PERFORMANCE: Chat optimization indexes
+  threadIdKindIdx: index("chat_messages_thread_kind_idx").on(table.threadId, table.kind), // Message type filtering
+  createdAtIdx: index("chat_messages_created_at_idx").on(table.createdAt), // Chronological ordering
 }));
 
 // Chat Attachments table - supports ephemeral media with one-time viewing
