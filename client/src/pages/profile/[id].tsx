@@ -251,6 +251,12 @@ export default function UserProfilePage() {
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-3">
+                <Link href={`/users/${profile.id}/trips`}>
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                    <MapPin className="h-4 w-4 mr-2" />
+                    View Trips
+                  </Button>
+                </Link>
                 <FollowButton userId={profile.id} />
                 <ReportButton userId={profile.id} username={profile.username || profile.displayName} />
               </div>

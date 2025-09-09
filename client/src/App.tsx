@@ -36,6 +36,7 @@ import ChatBuddy from "@/pages/chat-buddy";
 import AdminReportsPage from "@/pages/admin-reports";
 import ClerkSmoke from "@/auth/ClerkSmoke";
 import UserProfilePage from "@/pages/profile/[id]";
+import UserTripsPage from "@/pages/users/[id]/trips";
 import HelpFAQPage from "@/pages/help/faq";
 import AccountSettingsPage from "@/pages/settings/account";
 import MeRedirect from "@/pages/me-redirect";
@@ -122,6 +123,7 @@ function Router() {
             {/* Profile Routes */}
             <Route path="/me" component={MeRedirect} />
             <Route path="/profile/:id" component={UserProfilePage} />
+            <Route path="/users/:id/trips" component={UserTripsPage} />
             
             {/* Chat Routes */}
 
