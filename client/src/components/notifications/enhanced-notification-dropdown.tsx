@@ -268,7 +268,7 @@ export function EnhancedNotificationDropdown() {
                       data-testid={`notification-${notification.id}`}
                     >
                       <div className="text-lg flex-shrink-0 mt-0.5">
-                        {getNotificationIcon(notification.type)}
+                        {getNotificationIcon(notification.type || '')}
                       </div>
                       
                       <div className="flex-1 min-w-0">
@@ -310,7 +310,9 @@ export function EnhancedNotificationDropdown() {
                                 className="bg-ceylon-green hover:bg-ceylon-green/90 text-white text-xs px-3 py-1"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  window.location.href = notification.primaryActionUrl;
+                                  if (notification.primaryActionUrl) {
+                                    window.location.href = notification.primaryActionUrl;
+                                  }
                                 }}
                                 data-testid={`button-primary-action-${notification.id}`}
                               >
@@ -324,7 +326,9 @@ export function EnhancedNotificationDropdown() {
                                 className="text-ceylon-blue border-ceylon-blue hover:bg-ceylon-blue hover:text-white text-xs px-3 py-1"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  window.location.href = notification.secondaryActionUrl;
+                                  if (notification.secondaryActionUrl) {
+                                    window.location.href = notification.secondaryActionUrl;
+                                  }
                                 }}
                                 data-testid={`button-secondary-action-${notification.id}`}
                               >
