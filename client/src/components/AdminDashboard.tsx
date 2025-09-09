@@ -168,8 +168,8 @@ export default function AdminDashboard() {
   const events = analytics?.events || [];
 
   // Calculate CTR and engagement metrics
-  const ctrEvents = Object.entries(eventsByType).find(([type]) => type === 'ctr_top5')?.[1] || 0;
-  const clickEvents = Object.entries(eventsByType).find(([type]) => type === 'trip_click')?.[1] || 0;
+  const ctrEvents = Number(Object.entries(eventsByType).find(([type]) => type === 'ctr_top5')?.[1]) || 0;
+  const clickEvents = Number(Object.entries(eventsByType).find(([type]) => type === 'trip_click')?.[1]) || 0;
   const ctrRate = ctrEvents > 0 ? ((clickEvents / ctrEvents) * 100).toFixed(2) : '0.00';
 
   const personalizedEvents = eventsByABTest.personalized || 0;
@@ -342,7 +342,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {events.slice(0, 8).map((event, index) => {
+                  {events.slice(0, 8).map((event: any, index: number) => {
                     const IconComponent = eventTypeIcons[event.eventType as keyof typeof eventTypeIcons] || Activity;
                     
                     return (
@@ -378,7 +378,7 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {events.map((event, index) => (
+                {events.map((event: any, index: number) => (
                   <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center gap-3">
                       <Badge variant="outline" className="capitalize">
@@ -465,7 +465,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="text-2xl font-bold text-blue-600">
                       {personalizedEvents > 0 ? 
-                        ((Object.entries(eventsByType).find(([type]) => type === 'trip_click')?.[1] || 0) / personalizedEvents * 100).toFixed(1) : 
+                        ((Number(Object.entries(eventsByType).find(([type]) => type === 'trip_click')?.[1]) || 0) / personalizedEvents * 100).toFixed(1) : 
                         '0.0'
                       }%
                     </div>
@@ -478,7 +478,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="text-2xl font-bold text-gray-600">
                       {baselineEvents > 0 ? 
-                        ((Object.entries(eventsByType).find(([type]) => type === 'trip_click')?.[1] || 0) / baselineEvents * 100).toFixed(1) : 
+                        ((Number(Object.entries(eventsByType).find(([type]) => type === 'trip_click')?.[1]) || 0) / baselineEvents * 100).toFixed(1) : 
                         '0.0'
                       }%
                     </div>
