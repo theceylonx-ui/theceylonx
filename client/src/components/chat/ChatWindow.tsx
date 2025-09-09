@@ -142,6 +142,13 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
     new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
 
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current && messages.length > 0) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages.length]); // Trigger when messages count changes
+
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (data: { text: string; attachmentId?: string; ephemeral?: boolean }) => {
@@ -383,7 +390,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
         )}
       
       {/* Messages - Fixed height with scroll */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[400px] min-h-[300px]">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[400px] min-h-[300px]" style={{ scrollBehavior: 'smooth' }}>
         {messagesLoading ? (
           <div className="text-center py-4">
             <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
