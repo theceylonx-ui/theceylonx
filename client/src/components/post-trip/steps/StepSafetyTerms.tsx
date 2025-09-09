@@ -6,26 +6,91 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SafetyChecklist } from "../SafetyChecklist";
 import type { TripFormData } from "@shared/schema";
 import { Phone, Mail, Globe } from "lucide-react";
+import { useState } from "react";
 
 interface StepSafetyTermsProps {
   form: UseFormReturn<TripFormData>;
 }
 
-// Common country codes for South Asian and international users
+// Comprehensive country codes - major countries plus custom option
 const COUNTRY_CODES = [
   { code: "+94", label: "+94 🇱🇰 Sri Lanka", flag: "🇱🇰" },
   { code: "+91", label: "+91 🇮🇳 India", flag: "🇮🇳" },
   { code: "+92", label: "+92 🇵🇰 Pakistan", flag: "🇵🇰" },
   { code: "+880", label: "+880 🇧🇩 Bangladesh", flag: "🇧🇩" },
-  { code: "+44", label: "+44 🇬🇧 United Kingdom", flag: "🇬🇧" },
   { code: "+1", label: "+1 🇺🇸 United States", flag: "🇺🇸" },
+  { code: "+1", label: "+1 🇨🇦 Canada", flag: "🇨🇦" },
+  { code: "+44", label: "+44 🇬🇧 United Kingdom", flag: "🇬🇧" },
   { code: "+61", label: "+61 🇦🇺 Australia", flag: "🇦🇺" },
-  { code: "+971", label: "+971 🇦🇪 UAE", flag: "🇦🇪" },
+  { code: "+49", label: "+49 🇩🇪 Germany", flag: "🇩🇪" },
+  { code: "+33", label: "+33 🇫🇷 France", flag: "🇫🇷" },
+  { code: "+39", label: "+39 🇮🇹 Italy", flag: "🇮🇹" },
+  { code: "+34", label: "+34 🇪🇸 Spain", flag: "🇪🇸" },
+  { code: "+31", label: "+31 🇳🇱 Netherlands", flag: "🇳🇱" },
+  { code: "+46", label: "+46 🇸🇪 Sweden", flag: "🇸🇪" },
+  { code: "+47", label: "+47 🇳🇴 Norway", flag: "🇳🇴" },
+  { code: "+45", label: "+45 🇩🇰 Denmark", flag: "🇩🇰" },
+  { code: "+41", label: "+41 🇨🇭 Switzerland", flag: "🇨🇭" },
+  { code: "+43", label: "+43 🇦🇹 Austria", flag: "🇦🇹" },
+  { code: "+32", label: "+32 🇧🇪 Belgium", flag: "🇧🇪" },
+  { code: "+351", label: "+351 🇵🇹 Portugal", flag: "🇵🇹" },
+  { code: "+353", label: "+353 🇮🇪 Ireland", flag: "🇮🇪" },
+  { code: "+81", label: "+81 🇯🇵 Japan", flag: "🇯🇵" },
+  { code: "+82", label: "+82 🇰🇷 South Korea", flag: "🇰🇷" },
+  { code: "+86", label: "+86 🇨🇳 China", flag: "🇨🇳" },
+  { code: "+852", label: "+852 🇭🇰 Hong Kong", flag: "🇭🇰" },
+  { code: "+886", label: "+886 🇹🇼 Taiwan", flag: "🇹🇼" },
   { code: "+65", label: "+65 🇸🇬 Singapore", flag: "🇸🇬" },
   { code: "+60", label: "+60 🇲🇾 Malaysia", flag: "🇲🇾" },
+  { code: "+66", label: "+66 🇹🇭 Thailand", flag: "🇹🇭" },
+  { code: "+84", label: "+84 🇻🇳 Vietnam", flag: "🇻🇳" },
+  { code: "+62", label: "+62 🇮🇩 Indonesia", flag: "🇮🇩" },
+  { code: "+63", label: "+63 🇵🇭 Philippines", flag: "🇵🇭" },
+  { code: "+971", label: "+971 🇦🇪 UAE", flag: "🇦🇪" },
+  { code: "+966", label: "+966 🇸🇦 Saudi Arabia", flag: "🇸🇦" },
+  { code: "+974", label: "+974 🇶🇦 Qatar", flag: "🇶🇦" },
+  { code: "+965", label: "+965 🇰🇼 Kuwait", flag: "🇰🇼" },
+  { code: "+973", label: "+973 🇧🇭 Bahrain", flag: "🇧🇭" },
+  { code: "+968", label: "+968 🇴🇲 Oman", flag: "🇴🇲" },
+  { code: "+90", label: "+90 🇹🇷 Turkey", flag: "🇹🇷" },
+  { code: "+7", label: "+7 🇷🇺 Russia", flag: "🇷🇺" },
+  { code: "+64", label: "+64 🇳🇿 New Zealand", flag: "🇳🇿" },
+  { code: "+27", label: "+27 🇿🇦 South Africa", flag: "🇿🇦" },
+  { code: "+234", label: "+234 🇳🇬 Nigeria", flag: "🇳🇬" },
+  { code: "+254", label: "+254 🇰🇪 Kenya", flag: "🇰🇪" },
+  { code: "+20", label: "+20 🇪🇬 Egypt", flag: "🇪🇬" },
+  { code: "+212", label: "+212 🇲🇦 Morocco", flag: "🇲🇦" },
+  { code: "+55", label: "+55 🇧🇷 Brazil", flag: "🇧🇷" },
+  { code: "+52", label: "+52 🇲🇽 Mexico", flag: "🇲🇽" },
+  { code: "+54", label: "+54 🇦🇷 Argentina", flag: "🇦🇷" },
+  { code: "+56", label: "+56 🇨🇱 Chile", flag: "🇨🇱" },
+  { code: "+57", label: "+57 🇨🇴 Colombia", flag: "🇨🇴" },
+  { code: "+51", label: "+51 🇵🇪 Peru", flag: "🇵🇪" },
+  { code: "custom", label: "🌍 Other Country (Enter Code)", flag: "🌍" },
 ];
 
 export function StepSafetyTerms({ form }: StepSafetyTermsProps) {
+  const [isCustomCountryCode, setIsCustomCountryCode] = useState(false);
+  const [customCountryCode, setCustomCountryCode] = useState("");
+  
+  const handleCountryCodeChange = (value: string) => {
+    if (value === "custom") {
+      setIsCustomCountryCode(true);
+      // Don't set form value yet - wait for custom input
+    } else {
+      setIsCustomCountryCode(false);
+      setCustomCountryCode("");
+      form.setValue("organizerCountryCode", value);
+    }
+  };
+  
+  const handleCustomCodeChange = (value: string) => {
+    setCustomCountryCode(value);
+    // Set form value with + prefix if not already present
+    const code = value.startsWith("+") ? value : `+${value}`;
+    form.setValue("organizerCountryCode", code);
+  };
+  
   return (
     <div className="space-y-6">
       {/* Contact Information Section */}
@@ -49,20 +114,48 @@ export function StepSafetyTerms({ form }: StepSafetyTermsProps) {
                   Country Code
                 </FormLabel>
                 <FormControl>
-                  <Select value={field.value} onValueChange={field.onChange} data-testid="country-code-select">
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="Select country code" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COUNTRY_CODES.map((country) => (
-                        <SelectItem key={country.code} value={country.code}>
-                          {country.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {!isCustomCountryCode ? (
+                    <Select value={field.value || "+94"} onValueChange={handleCountryCodeChange} data-testid="country-code-select">
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="Select country code" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {COUNTRY_CODES.map((country) => (
+                          <SelectItem key={country.code} value={country.code}>
+                            {country.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Enter country code (e.g. +977)"
+                        value={customCountryCode}
+                        onChange={(e) => handleCustomCodeChange(e.target.value)}
+                        className="w-48"
+                        data-testid="custom-country-code-input"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCustomCountryCode(false);
+                          setCustomCountryCode("");
+                          form.setValue("organizerCountryCode", "+94");
+                        }}
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        ← Back to country list
+                      </button>
+                    </div>
+                  )}
                 </FormControl>
                 <FormMessage />
+                {isCustomCountryCode && (
+                  <p className="text-xs text-gray-500">
+                    Enter your country code with + (e.g. +977 for Nepal, +975 for Bhutan)
+                  </p>
+                )}
               </FormItem>
             )}
           />
