@@ -116,6 +116,7 @@ import { cache, CACHE_TTL } from "./cache/cacheService";
 import { healthCheck, readinessCheck, livenessCheck } from "./health/healthCheck";
 import { errorTrackingMiddleware } from "./monitoring/errorTracking";
 import { productionSecurityMiddleware, cacheHeadersMiddleware, productionErrorHandler, requestLoggingMiddleware } from "./middleware/production";
+import { seoRouter } from "./routes/seo";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // CORS and cookie middleware - strict origin validation
@@ -163,6 +164,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Clerk health routes
   app.use(clerkHealth);
+  
+  // 🚀 PHASE 4: SEO routes (sitemap, robots.txt, structured data)
+  app.use(seoRouter);
 
   // 🚀 PHASE 3 PERFORMANCE: Cached site settings endpoint for unauthenticated access
   app.get('/api/site-settings/:key', async (req, res) => {

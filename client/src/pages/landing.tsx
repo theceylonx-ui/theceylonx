@@ -7,6 +7,7 @@ import { Link } from "wouter";
 import { UserPlus, MapPin, Handshake, PiggyBank, Users, Compass, Heart, Shield, Flag, Star, UserCheck, Route } from "lucide-react";
 import logoImage from "@assets/5_1756417819316.png";
 import defaultBackgroundImage from "@assets/2_1757396354796.png";
+import { SEO, SEOConfigs } from "@/components/SEO";
 
 export default function Landing() {
   // Fetch dynamic background image setting
@@ -30,7 +31,13 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-ui-bg">
+    <>
+      <SEO 
+        {...SEOConfigs.home}
+        ogUrl={typeof window !== 'undefined' ? window.location.href : 'https://www.theceylonx.com'}
+        ogImage={backgroundImage}
+      />
+      <div className="min-h-screen bg-ui-bg">
       {/* Navigation Header */}
       <nav className="bg-ui-bg shadow-sm sticky top-0 z-50 border-b border-ui-line">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -243,6 +250,7 @@ export default function Landing() {
         </div>
       </section>
       <Footer />
-    </div>
+      </div>
+    </>
   );
 }
