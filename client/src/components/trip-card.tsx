@@ -14,7 +14,7 @@ import { EditContentDialog } from "@/components/EditContentDialog";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { SaveControl } from "@/components/SaveControl";
 import { createTripDetailLink } from "@/utils/searchParams";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 interface TripCardProps {
   trip: TripWithOrganizer & { isPinned?: boolean; isInterested?: boolean };
@@ -244,7 +244,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
     },
   });
 
-  const handlePin = (e: React.MouseEvent) => {
+  const handlePin = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -278,9 +278,9 @@ export default function TripCard({ trip, badges }: TripCardProps) {
     } else {
       pinMutation.mutate(!trip.isPinned);
     }
-  };
+  }, [user, trip.organizer.id, trip.isPinned, trip.isInterested, toast, interestMutation, pinMutation]);
 
-  const handleInterest = (e: React.MouseEvent) => {
+  const handleInterest = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -299,25 +299,25 @@ export default function TripCard({ trip, badges }: TripCardProps) {
     }
     
     interestMutation.mutate(!trip.isInterested);
-  };
+  }, [user, trip.organizer.id, trip.isInterested, toast, interestMutation]);
 
   // Removed handleContact function as View button now uses Link navigation
 
-  const handleEditTrip = () => {
+  const handleEditTrip = useCallback(() => {
     setShowEditDialog(true);
-  };
+  }, []);
 
-  const handleDeleteTrip = () => {
+  const handleDeleteTrip = useCallback(() => {
     setShowDeleteDialog(true);
-  };
+  }, []);
 
-  const handleSaveEdit = (content: any) => {
+  const handleSaveEdit = useCallback((content: any) => {
     editTripMutation.mutate(content);
-  };
+  }, [editTripMutation]);
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = useCallback(() => {
     deleteTripMutation.mutate();
-  };
+  }, [deleteTripMutation]);
 
   // Check if current user is the trip organizer
   const isOwner = user && user.id === trip.organizer.id;

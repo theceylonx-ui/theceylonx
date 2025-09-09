@@ -1773,26 +1773,32 @@ export class DatabaseStorage implements IStorage {
       allTrips.forEach(trip => tripsMap.set(trip.id, trip));
     }
 
-    // Batch fetch last messages using simpler query
+    // Optimized: Get last message per thread using window function
     const lastMessagesMap = new Map<string, ChatMessage>();
     if (threadIds.length > 0) {
-      // Get last message for each thread by fetching all and sorting in app
-      const allMessages = await db
-        .select()
-        .from(chatMessages)
-        .where(sql`${chatMessages.threadId} = ANY(${sql.raw(`ARRAY[${threadIds.map(id => `'${id}'`).join(',')}]`)})`)
-        .orderBy(desc(chatMessages.createdAt));
+      const lastMessagesQuery = sql`
+        SELECT DISTINCT ON (thread_id) 
+          id, thread_id, sender_id, text, kind, meta, created_at, updated_at
+        FROM chat_messages 
+        WHERE thread_id = ANY(${sql.raw(`ARRAY[${threadIds.map(id => `'${id}'`).join(',')}]`)})
+        ORDER BY thread_id, created_at DESC
+      `;
       
-      // Group by thread and take the first (most recent) message for each thread
-      const threadLastMessages = new Map<string, ChatMessage>();
-      for (const message of allMessages) {
-        if (!threadLastMessages.has(message.threadId)) {
-          threadLastMessages.set(message.threadId, message);
-        }
+      const lastMessages = await db.execute(lastMessagesQuery) as any;
+      if (lastMessages.rows) {
+        lastMessages.rows.forEach((row: any) => {
+          lastMessagesMap.set(row.thread_id, {
+            id: row.id,
+            threadId: row.thread_id,
+            senderId: row.sender_id,
+            text: row.text,
+            kind: row.kind as any,
+            meta: row.meta,
+            createdAt: new Date(row.created_at),
+            updatedAt: new Date(row.updated_at)
+          });
+        });
       }
-      threadLastMessages.forEach((message, threadId) => {
-        lastMessagesMap.set(threadId, message);
-      });
     }
 
     // Batch fetch other users

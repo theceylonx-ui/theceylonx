@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Bell, MoreVertical, Trash2, Check, CheckCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -83,7 +83,7 @@ export function EnhancedNotificationDropdown() {
     },
   });
 
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = useCallback((notification: Notification) => {
     if (!notification.isRead) {
       markAsReadMutation.mutate(notification.id);
     }
@@ -92,7 +92,7 @@ export function EnhancedNotificationDropdown() {
     if (targetUrl) {
       window.location.href = targetUrl;
     }
-  };
+  }, [markAsReadMutation]);
 
   const getNotificationIcon = (type: string) => {
     const icons: Record<string, string> = {
