@@ -2208,7 +2208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/me/profile', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { displayName, username, bio, location, languages, links, profileImageUrl } = req.body;
+      const { displayName, username, email, bio, location, languages, links, profileImageUrl } = req.body;
       
       // Check username uniqueness if provided
       if (username && username.trim()) {
@@ -2221,6 +2221,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updateData = {
         displayName: displayName?.trim() || null,
         username: username?.trim() || null,
+        email: email?.trim() || null,
         bio: bio?.trim() || null,
         location: location?.trim() || null,
         languages: languages || null,
