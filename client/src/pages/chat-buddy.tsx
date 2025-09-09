@@ -124,7 +124,7 @@ export default function ChatBuddy() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Get tripId from URL params
+  // Get tripId from URL params  
   const urlParams = new URLSearchParams(window.location.search);
   const tripId = urlParams.get('tripId');
 

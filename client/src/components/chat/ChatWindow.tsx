@@ -206,8 +206,10 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   };
 
   const handleImageUploaded = (result: any) => {
+    console.log('🖼️ Image uploaded:', { threadId, result });
     const uploadUrl = result.successful[0]?.uploadURL;
     if (uploadUrl) {
+      console.log('📤 Sending image message with threadId:', threadId);
       sendMessageMutation.mutate({
         text: "",
         attachmentId: uploadUrl,
