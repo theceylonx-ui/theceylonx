@@ -92,10 +92,6 @@ interface ChatWindowProps {
 }
 
 export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps) {
-  // Ensure threadId is available for image uploads
-  if (!threadId) {
-    console.warn('⚠️ ChatWindow: threadId is undefined, image uploads may fail');
-  }
   // Show placeholder when no thread is selected
   if (!threadId) {
     return (
@@ -144,13 +140,16 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (data: { text: string; attachmentId?: string; ephemeral?: boolean }) => {
-      return apiRequest("POST", `/api/chat/threads/${threadId}/messages`, {
+      // Get threadId with fallback to URL path
+      const currentThreadId = threadId || window.location.pathname.split('/chat-buddy/')[1];
+      return apiRequest("POST", `/api/chat/threads/${currentThreadId}/messages`, {
         ...data
       });
     },
     onSuccess: () => {
       setMessageText("");
-      queryClient.invalidateQueries({ queryKey: [`/api/chat/threads/${threadId}/messages`] });
+      const currentThreadId = threadId || window.location.pathname.split('/chat-buddy/')[1];
+      queryClient.invalidateQueries({ queryKey: [`/api/chat/threads/${currentThreadId}/messages`] });
       scrollToBottom();
     },
     onError: (error) => {
@@ -211,23 +210,28 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
 
   const handleImageUploaded = (result: any) => {
     const uploadUrl = result.successful[0]?.uploadURL;
-    if (uploadUrl && threadId) {
-      sendMessageMutation.mutate({
-        text: "",
-        attachmentId: uploadUrl,
-        ephemeral: false,
-      });
+    if (uploadUrl) {
+      // Get threadId from the current URL if not available as prop
+      const currentThreadId = threadId || window.location.pathname.split('/chat-buddy/')[1];
       
-      toast({
-        title: "Image sent!",
-        description: "Your image has been shared successfully.",
-      });
-    } else if (!threadId) {
-      toast({
-        title: "Upload failed",
-        description: "Unable to send image. Please refresh and try again.",
-        variant: "destructive",
-      });
+      if (currentThreadId) {
+        sendMessageMutation.mutate({
+          text: "",
+          attachmentId: uploadUrl,
+          ephemeral: false,
+        });
+        
+        toast({
+          title: "Image sent!",
+          description: "Your image has been shared successfully.",
+        });
+      } else {
+        toast({
+          title: "Upload failed", 
+          description: "Unable to send image. Please refresh and try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
