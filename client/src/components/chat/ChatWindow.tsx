@@ -220,8 +220,8 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
     reportMessageMutation.mutate({ messageId, reason });
   };
 
-  const isOrganizer = threadData?.thread?.trip?.organizer?.id === currentUserId;
-  const canShareContact = isOrganizer && (threadData?.thread?.trip?.organizer?.phone || threadData?.thread?.trip?.organizer?.email);
+  const isOrganizer = threadData?.trip?.organizer?.id === currentUserId;
+  const canShareContact = isOrganizer && (threadData?.trip?.organizer?.phone || threadData?.trip?.organizer?.email);
 
   if (threadLoading) {
     return (
@@ -234,7 +234,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
     );
   }
 
-  if (!threadData?.thread) {
+  if (!threadData) {
     return (
       <Card className="h-full flex items-center justify-center">
         <div className="text-center text-gray-500">
@@ -248,7 +248,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   }
 
   // Check if trip is deleted or unavailable
-  if (!threadData.thread.trip) {
+  if (!threadData.trip) {
     return (
       <Card className="h-full flex items-center justify-center">
         <div className="text-center text-gray-500">
@@ -265,8 +265,8 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   }
 
   // Check if trip is inactive/cancelled
-  const tripStatus = threadData.thread.trip.status;
-  const isTripUnavailable = ['deleted', 'cancelled', 'inactive'].includes(tripStatus);
+  const tripStatus = threadData?.trip?.status;
+  const isTripUnavailable = tripStatus && ['deleted', 'cancelled', 'inactive'].includes(tripStatus);
 
   return (
     <Card className="h-full flex flex-col">
