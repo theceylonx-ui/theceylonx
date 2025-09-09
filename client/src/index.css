@@ -198,4 +198,43 @@
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
+
+  /* 🚀 PHASE 3 PERFORMANCE: Mobile performance optimizations */
+  @media (max-width: 768px) {
+    /* Optimize touch interactions */
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Smooth scroll on mobile */
+    * {
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Prevent zoom on inputs */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    textarea,
+    select {
+      font-size: 16px;
+    }
+    
+    /* Optimize image rendering on mobile */
+    img {
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+    }
+  }
+
+  /* Hardware acceleration for animations */
+  .animate-spin,
+  .transition-all,
+  .transition-colors,
+  .transition-transform {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000;
+  }
 }

@@ -3,44 +3,50 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-// import { ClerkProvider } from "@clerk/clerk-react";
+import { Suspense, lazy, startTransition } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import NotFound from "@/pages/not-found";
-import Landing from "@/pages/landing";
-import Home from "@/pages/home";
-import BrowseTrips from "@/pages/browse-trips";
-import PostTrip from "@/pages/post-trip";
-import TripDetails from "@/pages/trip-details";
-import FAQ from "@/pages/faq";
-import Community from "@/pages/community";
-import CommunityNew from "@/pages/community-new";
-import QuestionDetail from "@/pages/question-detail";
-import SafetyGuidelines from "@/pages/safety-guidelines";
-import TermsOfService from "@/pages/terms-of-service";
-import PrivacyPolicy from "@/pages/privacy-policy";
-import ContactUs from "@/pages/contact-us";
-import SignInRequired from "@/pages/signin-required";
-import AuthSignInPage from "@/pages/auth-signin";
-import AuthMagicPage from "@/pages/auth-magic";
-import AuthCallbackPage from "@/pages/auth-callback";
-import DestinationPage from "@/pages/destination";
-// import AdminDashboardPage from "@/pages/admin-dashboard";
-import AdminOverviewPage from "@/pages/admin/index";
-// import ReportTripPage from "@/pages/report-trip";
-import ChatDemoPage from "@/pages/chat-demo";
-import UserDeletion from "@/pages/user-deletion";
-import CalendarPage from "@/pages/calendar";
-import TravelStyleSettings from "@/pages/travel-style-settings";
-import ProfilePage from "@/pages/me";
-import ChatBuddy from "@/pages/chat-buddy";
-// import AdminReportsPage from "@/pages/admin-reports";
-import ClerkSmoke from "@/auth/ClerkSmoke";
-import UserProfilePage from "@/pages/profile/[id]";
-import UserTripsPage from "@/pages/users/[id]/trips";
-import HelpFAQPage from "@/pages/help/faq";
-import AccountSettingsPage from "@/pages/settings/account";
-import MeRedirect from "@/pages/me-redirect";
-import TripRequestsPage from "@/pages/trip-requests";
+
+// 🚀 PHASE 3 PERFORMANCE: Lazy load all components for better initial load time
+const NotFound = lazy(() => import("@/pages/not-found"));
+const Landing = lazy(() => import("@/pages/landing"));
+const Home = lazy(() => import("@/pages/home"));
+const BrowseTrips = lazy(() => import("@/pages/browse-trips"));
+const PostTrip = lazy(() => import("@/pages/post-trip"));
+const TripDetails = lazy(() => import("@/pages/trip-details"));
+const CommunityNew = lazy(() => import("@/pages/community-new"));
+const QuestionDetail = lazy(() => import("@/pages/question-detail"));
+const SafetyGuidelines = lazy(() => import("@/pages/safety-guidelines"));
+const TermsOfService = lazy(() => import("@/pages/terms-of-service"));
+const PrivacyPolicy = lazy(() => import("@/pages/privacy-policy"));
+const ContactUs = lazy(() => import("@/pages/contact-us"));
+const SignInRequired = lazy(() => import("@/pages/signin-required"));
+const AuthSignInPage = lazy(() => import("@/pages/auth-signin"));
+const AuthMagicPage = lazy(() => import("@/pages/auth-magic"));
+const AuthCallbackPage = lazy(() => import("@/pages/auth-callback"));
+const DestinationPage = lazy(() => import("@/pages/destination"));
+const ChatDemoPage = lazy(() => import("@/pages/chat-demo"));
+const UserDeletion = lazy(() => import("@/pages/user-deletion"));
+const CalendarPage = lazy(() => import("@/pages/calendar"));
+const TravelStyleSettings = lazy(() => import("@/pages/travel-style-settings"));
+const ProfilePage = lazy(() => import("@/pages/me"));
+const ChatBuddy = lazy(() => import("@/pages/chat-buddy"));
+const ClerkSmoke = lazy(() => import("@/auth/ClerkSmoke"));
+const UserProfilePage = lazy(() => import("@/pages/profile/[id]"));
+const UserTripsPage = lazy(() => import("@/pages/users/[id]/trips"));
+const HelpFAQPage = lazy(() => import("@/pages/help/faq"));
+const AccountSettingsPage = lazy(() => import("@/pages/settings/account"));
+const MeRedirect = lazy(() => import("@/pages/me-redirect"));
+const TripRequestsPage = lazy(() => import("@/pages/trip-requests"));
+
+// Performance loading component
+const PageLoader = () => (
+  <div className="min-h-screen bg-gradient-to-br from-ceylon-green/10 to-ceylon-orange/10 flex items-center justify-center">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ceylon-green mx-auto"></div>
+      <p className="mt-2 text-gray-600">Loading page...</p>
+    </div>
+  </div>
+);
 // Clerk components temporarily disabled
 // import ClerkSignInPage from "@/pages/clerk-sign-in";
 // import ClerkSignUpPage from "@/pages/clerk-sign-up";
@@ -61,107 +67,91 @@ function Router() {
     );
   }
 
+  // Wrap routing in startTransition for better Suspense handling
+  const handleRoute = (Component: any) => {
+    return (props: any) => {
+      return (
+        <Suspense fallback={<PageLoader />}>
+          <Component {...props} />
+        </Suspense>
+      );
+    };
+  };
+
   return (
-    <>
-      <Switch>
-        {!isAuthenticated ? (
-          <>
-            <Route path="/" component={Landing} />
-            <Route path="/browse-trips" component={BrowseTrips} />
-            <Route path="/trips" component={BrowseTrips} />
-            <Route path="/trips/new" component={() => { setLocation("/post"); return null; }} />
-            <Route path="/trips/:id" component={TripDetails} />
-            <Route path="/community" component={CommunityNew} />
-            <Route path="/question/:id" component={QuestionDetail} />
-            <Route path="/calendar" component={CalendarPage} />
-            <Route path="/safety-guidelines" component={SafetyGuidelines} />
-            <Route path="/terms-of-service" component={TermsOfService} />
-            <Route path="/privacy-policy" component={PrivacyPolicy} />
-            <Route path="/contact-us" component={ContactUs} />
-            <Route path="/faq" component={HelpFAQPage} />
-            <Route path="/help/faq" component={HelpFAQPage} />
-            <Route path="/auth/signin" component={AuthSignInPage} />
-            <Route path="/auth/magic" component={AuthMagicPage} />
-            <Route path="/auth/callback" component={AuthCallbackPage} />
-            <Route path="/auth-test" component={ClerkSmoke} />
-            {/* Clerk routes temporarily disabled */}
-            <Route path="/destination/:city" component={DestinationPage} />
-
-
-
-            <Route path="/chat-demo" component={ChatDemoPage} />
-            <Route path="/user/delete" component={UserDeletion} />
-            <Route path="/post" component={SignInRequired} />
-            <Route path="/dashboard" component={SignInRequired} />
-          </>
-        ) : (
-          <>
-            <Route path="/" component={Home} />
-            <Route path="/browse-trips" component={BrowseTrips} />
-            <Route path="/post" component={PostTrip} />
-            <Route path="/trips" component={BrowseTrips} />
-            <Route path="/trips/new" component={() => { setLocation("/post"); return null; }} />
-            <Route path="/post-trip" component={PostTrip} />
-            <Route path="/trips/:id" component={TripDetails} />
-            <Route path="/trips/:id/requests" component={TripRequestsPage} />
-            <Route path="/dashboard" component={() => { setLocation("/me"); return null; }} />
-            <Route path="/community" component={CommunityNew} />
-            <Route path="/question/:id" component={QuestionDetail} />
-            <Route path="/calendar" component={CalendarPage} />
-            <Route path="/safety-guidelines" component={SafetyGuidelines} />
-            <Route path="/terms-of-service" component={TermsOfService} />
-            <Route path="/privacy-policy" component={PrivacyPolicy} />
-            <Route path="/contact-us" component={ContactUs} />
-            <Route path="/faq" component={HelpFAQPage} />
-            <Route path="/help/faq" component={HelpFAQPage} />
-            <Route path="/auth/signin" component={AuthSignInPage} />
-            {/* Clerk routes temporarily disabled */}
-            <Route path="/destination/:city" component={DestinationPage} />
-
-            <Route path="/travel-style-settings" component={TravelStyleSettings} />
-            
-            {/* Profile Routes */}
-            <Route path="/me" component={MeRedirect} />
-            <Route path="/profile/:id" component={UserProfilePage} />
-            <Route path="/users/:id/trips" component={UserTripsPage} />
-            
-            {/* Chat Routes */}
-
-
-            <Route path="/chat-demo" component={ChatDemoPage} />
-            <Route path="/chat-buddy" component={ChatBuddy} />
-            <Route path="/chat-buddy/:threadId" component={ChatBuddy} />
-            
-            {/* Help & Settings */}
-            <Route path="/help/faq" component={HelpFAQPage} />
-            <Route path="/settings/account" component={AccountSettingsPage} />
-            <Route path="/user/delete" component={UserDeletion} />
-            {/* Enhanced Admin Routes - Temporarily disabled */}
-            {/* <Route path="/admin" component={AdminOverviewPage} />
-            <Route path="/admin/dashboard" component={AdminOverviewPage} />
-            <Route path="/admin/roles" component={() => import("@/pages/admin/roles").then(m => m.default)} />
-            <Route path="/admin/moderation" component={() => import("@/pages/admin/moderation").then(m => m.default)} />
-            <Route path="/admin/ai-moderation" component={() => import("@/pages/admin/ai-moderation").then(m => m.default)} />
-            <Route path="/admin/mobile-admin" component={() => import("@/pages/admin/mobile-admin").then(m => m.default)} />
-            <Route path="/admin/audit-logs" component={() => import("@/pages/admin/audit-logs").then(m => m.default)} />
-            <Route path="/admin/api-docs" component={() => import("@/pages/admin/api-docs").then(m => m.default)} />
-            <Route path="/admin/settings" component={() => import("@/components/admin/AdminSettings").then(m => m.default)} /> */}
-            
-            {/* Legacy Admin Routes - Disabled for now to focus on user dashboard */}
-            {/* <Route path="/admin-dashboard" component={AdminDashboardPage} />
-            <Route path="/admin/reports" component={AdminReportsPage} />
-            <Route path="/report-trip/:id" component={ReportTripPage} /> */}
-          </>
-        )}
-        
-        {/* Auth callback route - available for both authenticated and unauthenticated users */}
-        <Route path="/auth/callback" component={AuthCallbackPage} />
-        
-        <Route component={NotFound} />
-      </Switch>
+    <Switch>
+      {!isAuthenticated ? (
+        <>
+          <Route path="/" component={handleRoute(Landing)} />
+          <Route path="/browse-trips" component={handleRoute(BrowseTrips)} />
+          <Route path="/trips" component={handleRoute(BrowseTrips)} />
+          <Route path="/trips/new" component={() => { startTransition(() => setLocation("/post")); return null; }} />
+          <Route path="/trips/:id" component={handleRoute(TripDetails)} />
+          <Route path="/community" component={handleRoute(CommunityNew)} />
+          <Route path="/question/:id" component={handleRoute(QuestionDetail)} />
+          <Route path="/calendar" component={handleRoute(CalendarPage)} />
+          <Route path="/safety-guidelines" component={handleRoute(SafetyGuidelines)} />
+          <Route path="/terms-of-service" component={handleRoute(TermsOfService)} />
+          <Route path="/privacy-policy" component={handleRoute(PrivacyPolicy)} />
+          <Route path="/contact-us" component={handleRoute(ContactUs)} />
+          <Route path="/faq" component={handleRoute(HelpFAQPage)} />
+          <Route path="/help/faq" component={handleRoute(HelpFAQPage)} />
+          <Route path="/auth/signin" component={handleRoute(AuthSignInPage)} />
+          <Route path="/auth/magic" component={handleRoute(AuthMagicPage)} />
+          <Route path="/auth/callback" component={handleRoute(AuthCallbackPage)} />
+          <Route path="/auth-test" component={handleRoute(ClerkSmoke)} />
+          <Route path="/destination/:city" component={handleRoute(DestinationPage)} />
+          <Route path="/chat-demo" component={handleRoute(ChatDemoPage)} />
+          <Route path="/user/delete" component={handleRoute(UserDeletion)} />
+          <Route path="/post" component={handleRoute(SignInRequired)} />
+          <Route path="/dashboard" component={handleRoute(SignInRequired)} />
+        </>
+      ) : (
+        <>
+          <Route path="/" component={handleRoute(Home)} />
+          <Route path="/browse-trips" component={handleRoute(BrowseTrips)} />
+          <Route path="/post" component={handleRoute(PostTrip)} />
+          <Route path="/trips" component={handleRoute(BrowseTrips)} />
+          <Route path="/trips/new" component={() => { startTransition(() => setLocation("/post")); return null; }} />
+          <Route path="/post-trip" component={handleRoute(PostTrip)} />
+          <Route path="/trips/:id" component={handleRoute(TripDetails)} />
+          <Route path="/trips/:id/requests" component={handleRoute(TripRequestsPage)} />
+          <Route path="/dashboard" component={() => { startTransition(() => setLocation("/me")); return null; }} />
+          <Route path="/community" component={handleRoute(CommunityNew)} />
+          <Route path="/question/:id" component={handleRoute(QuestionDetail)} />
+          <Route path="/calendar" component={handleRoute(CalendarPage)} />
+          <Route path="/safety-guidelines" component={handleRoute(SafetyGuidelines)} />
+          <Route path="/terms-of-service" component={handleRoute(TermsOfService)} />
+          <Route path="/privacy-policy" component={handleRoute(PrivacyPolicy)} />
+          <Route path="/contact-us" component={handleRoute(ContactUs)} />
+          <Route path="/faq" component={handleRoute(HelpFAQPage)} />
+          <Route path="/help/faq" component={handleRoute(HelpFAQPage)} />
+          <Route path="/auth/signin" component={handleRoute(AuthSignInPage)} />
+          <Route path="/destination/:city" component={handleRoute(DestinationPage)} />
+          <Route path="/travel-style-settings" component={handleRoute(TravelStyleSettings)} />
+          
+          {/* Profile Routes */}
+          <Route path="/me" component={handleRoute(MeRedirect)} />
+          <Route path="/profile/:id" component={handleRoute(UserProfilePage)} />
+          <Route path="/users/:id/trips" component={handleRoute(UserTripsPage)} />
+          
+          {/* Chat Routes */}
+          <Route path="/chat-demo" component={handleRoute(ChatDemoPage)} />
+          <Route path="/chat-buddy" component={handleRoute(ChatBuddy)} />
+          <Route path="/chat-buddy/:threadId" component={handleRoute(ChatBuddy)} />
+          
+          {/* Help & Settings */}
+          <Route path="/help/faq" component={handleRoute(HelpFAQPage)} />
+          <Route path="/settings/account" component={handleRoute(AccountSettingsPage)} />
+          <Route path="/user/delete" component={handleRoute(UserDeletion)} />
+        </>
+      )}
       
-      {/* Show floating action menu only for authenticated users */}
-    </>
+      {/* Auth callback route - available for both authenticated and unauthenticated users */}
+      <Route path="/auth/callback" component={handleRoute(AuthCallbackPage)} />
+      
+      <Route component={handleRoute(NotFound)} />
+    </Switch>
   );
 }
 
