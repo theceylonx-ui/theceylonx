@@ -268,16 +268,6 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   const tripStatus = threadData?.trip?.status;
   const isTripUnavailable = tripStatus && ['deleted', 'cancelled', 'inactive'].includes(tripStatus);
 
-  // Debug logging to fix message sending issue
-  console.log('🔍 ChatWindow Debug:', {
-    threadDataStatus: threadData?.status,
-    threadDataThreadStatus: threadData?.thread?.status, // Check nested structure
-    tripStatus,
-    isTripUnavailable,
-    canSendMessages: threadData?.status === 'open' && !isTripUnavailable,
-    threadDataKeys: threadData ? Object.keys(threadData) : 'no threadData',
-    fullThreadData: threadData // Show complete structure
-  });
 
   return (
     <Card className="h-full flex flex-col">
