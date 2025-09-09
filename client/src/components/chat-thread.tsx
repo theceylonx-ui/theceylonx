@@ -294,7 +294,7 @@ export function ChatThread({ threadId, userId, onBack }: ChatThreadProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={shareContactMutation.isPending || isRateLimited}
+                    disabled={shareContactMutation.isPending || !!isRateLimited}
                     data-testid="button-share-contact"
                   >
                     <Share2 className="w-4 h-4 mr-1" />
@@ -379,9 +379,9 @@ export function ChatThread({ threadId, userId, onBack }: ChatThreadProps) {
           ) : (
             <>
               {messages.map((message) => {
-                const isOwn = message.authorId === userId;
+                const isOwn = message.senderId === userId;
                 const author = message.author;
-                const authorName = author.displayName || "Unknown";
+                const authorName = getDisplayName(author.firstName, author.lastName, author.username) || "Unknown";
 
                 return (
                   <div

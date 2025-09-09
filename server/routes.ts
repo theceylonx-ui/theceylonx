@@ -3035,7 +3035,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create message
       const newMessage = await storage.createMessage({
         threadId: chatThread.id,
-        authorId: currentUserId,
+        senderId: currentUserId,
         body: message.trim()
       });
 
