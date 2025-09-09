@@ -13,6 +13,21 @@ interface VerificationBadgesProps {
 }
 
 const badgeConfig = {
+  // Current working badges
+  email_verified: {
+    icon: Mail,
+    label: "Email Verified",
+    description: "Email address has been verified",
+    color: "bg-green-100 text-green-800 border-green-200"
+  },
+  community_leader: {
+    icon: Star,
+    label: "Community Leader", 
+    description: "Active in Q&A community with helpful answers",
+    color: "bg-yellow-100 text-yellow-800 border-yellow-200"
+  },
+  
+  // Legacy badge names (for backward compatibility)
   email: {
     icon: Mail,
     label: "Email Verified",

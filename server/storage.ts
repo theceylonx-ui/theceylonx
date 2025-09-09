@@ -317,6 +317,9 @@ export interface IStorage {
   unfollowUser(followerId: string, followingId: string): Promise<void>;
   getUserFollowers(userId: string): Promise<UserFollow[]>;
   getUserFollowing(userId: string): Promise<UserFollow[]>;
+  
+  // Verification badge operations
+  updateUserVerificationBadges(userId: string): Promise<string[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2968,6 +2971,45 @@ export class DatabaseStorage implements IStorage {
 
   async getUserFollowing(userId: string): Promise<UserFollow[]> {
     return db.select().from(userFollows).where(eq(userFollows.followerId, userId));
+  }
+
+  // Update user verification badges based on activity
+  async updateUserVerificationBadges(userId: string): Promise<string[]> {
+    const user = await this.getUser(userId);
+    if (!user) return [];
+
+    const badges: string[] = [];
+    
+    // Email Verified Badge - if user has an email address
+    if (user.email && user.email.includes('@')) {
+      badges.push('email_verified');
+    }
+
+    // Community Leader Badge - based on Q&A activity
+    try {
+      // Get user's question count
+      const questions = await this.getUserQuestions(userId);
+      const questionCount = questions.length;
+
+      // If user has asked 3+ questions, they get community leader badge
+      if (questionCount >= 3) {
+        badges.push('community_leader');
+      }
+    } catch (error) {
+      console.log('Error calculating community leader badge:', error);
+    }
+
+    // Update user's verification badges in database
+    await db.update(users)
+      .set({ 
+        verificationBadges: badges,
+        isVerifiedUser: badges.length > 0,
+        verificationLevel: badges.length,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
+
+    return badges;
   }
 }
 

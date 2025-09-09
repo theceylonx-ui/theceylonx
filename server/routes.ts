@@ -4344,6 +4344,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update verification badges for a user
+  app.post('/api/users/:userId/update-badges', unifiedAuthGuard, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const requesterId = req.user!.id;
+      
+      // Only allow users to update their own badges (for now)
+      if (userId !== requesterId) {
+        return res.status(403).json({ message: "Can only update your own verification badges" });
+      }
+      
+      const badges = await storage.updateUserVerificationBadges(userId);
+      
+      res.json({
+        badges,
+        isVerifiedUser: badges.length > 0,
+        verificationLevel: badges.length,
+        message: "Verification badges updated successfully"
+      });
+    } catch (error) {
+      console.error("Error updating verification badges:", error);
+      res.status(500).json({ message: "Failed to update verification badges" });
+    }
+  });
+
   // Get user's trips
   app.get('/api/users/:userId/trips', unifiedAuthGuard, async (req, res) => {
     try {
