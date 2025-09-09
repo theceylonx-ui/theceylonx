@@ -380,7 +380,6 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
                 </div>
               </DialogContent>
             </Dialog>
-          </div>
         )}
       </div>
 
