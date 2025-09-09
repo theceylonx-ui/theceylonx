@@ -99,7 +99,7 @@ export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
         {threads.map((thread) => (
           <Link 
             key={thread.id} 
-            href={`/chat/${thread.id}`}
+            href={`/chat-buddy/${thread.id}`}
             onClick={() => handleThreadClick(thread.id)}
           >
             <Card 
