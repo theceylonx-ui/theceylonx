@@ -224,6 +224,20 @@ export default function ProfilePage() {
                       Member since {new Date(profile.createdAt).toLocaleDateString()}
                     </div>
                   </div>
+                  
+                  {/* Follower/Following Stats */}
+                  <div className="flex items-center gap-4 mt-3">
+                    <div className="flex items-center bg-white/15 px-4 py-2 rounded-full backdrop-blur-sm">
+                      <Users className="h-4 w-4 mr-2 text-blue-300" />
+                      <span className="font-semibold text-white mr-1">{followStats?.followersCount || 0}</span>
+                      <span className="text-white/80">followers</span>
+                    </div>
+                    <div className="flex items-center bg-white/15 px-4 py-2 rounded-full backdrop-blur-sm">
+                      <Heart className="h-4 w-4 mr-2 text-pink-300" />
+                      <span className="font-semibold text-white mr-1">{followStats?.followingCount || 0}</span>
+                      <span className="text-white/80">following</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
