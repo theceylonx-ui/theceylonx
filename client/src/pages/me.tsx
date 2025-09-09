@@ -132,6 +132,18 @@ export default function ProfilePage() {
     enabled: !!user,
   });
 
+  // Fetch follow stats for current user
+  const { data: followStats = { followersCount: 0, followingCount: 0 } } = useQuery({
+    queryKey: [`/api/users/${user?.id}/follow-stats`],
+    queryFn: async () => {
+      if (!user?.id) return { followersCount: 0, followingCount: 0 };
+      const response = await fetch(`/api/users/${user.id}/follow-stats`);
+      if (!response.ok) return { followersCount: 0, followingCount: 0 };
+      return response.json();
+    },
+    enabled: !!user?.id,
+  });
+
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

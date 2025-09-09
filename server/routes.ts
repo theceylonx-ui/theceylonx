@@ -4251,6 +4251,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user follow stats (followers and following counts)
+  app.get('/api/users/:userId/follow-stats', unifiedAuthGuard, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      
+      const followers = await storage.getUserFollowers(userId);
+      const following = await storage.getUserFollowing(userId);
+      
+      res.json({
+        followersCount: followers.length,
+        followingCount: following.length
+      });
+    } catch (error) {
+      console.error("Error getting follow stats:", error);
+      res.status(500).json({ message: "Failed to get follow stats" });
+    }
+  });
+
   // User follow/unfollow system
   app.get('/api/users/:userId/following-status', unifiedAuthGuard, async (req, res) => {
     try {

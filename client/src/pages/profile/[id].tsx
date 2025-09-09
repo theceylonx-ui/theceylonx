@@ -83,6 +83,16 @@ export default function UserProfilePage() {
     },
   });
 
+  // Fetch follow stats
+  const { data: followStats } = useQuery({
+    queryKey: [`/api/users/${userId}/follow-stats`],
+    queryFn: async () => {
+      const response = await fetch(`/api/users/${userId}/follow-stats`);
+      if (!response.ok) return { followersCount: 0, followingCount: 0 };
+      return response.json();
+    },
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -226,21 +236,29 @@ export default function UserProfilePage() {
                   <span>Member since {memberSince}</span>
                 </div>
 
-                {/* Travel Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-4 pt-4">
                   <div className="text-center">
                     <div className="font-bold text-lg text-gray-900">{profile.tripsOrganized || 0}</div>
-                    <div className="text-sm text-gray-600">Trips Organized</div>
+                    <div className="text-sm text-gray-600">Trips</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-bold text-lg text-blue-600">{followStats?.followersCount || 0}</div>
+                    <div className="text-sm text-gray-600">Followers</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-bold text-lg text-blue-600">{followStats?.followingCount || 0}</div>
+                    <div className="text-sm text-gray-600">Following</div>
                   </div>
                   <div className="text-center">
                     <div className="font-bold text-lg text-gray-900">{profile.tripsJoined || 0}</div>
-                    <div className="text-sm text-gray-600">Trips Joined</div>
+                    <div className="text-sm text-gray-600">Joined</div>
                   </div>
                   <div className="text-center">
                     <div className="font-bold text-lg text-gray-900">
                       {profile.totalRating ? profile.totalRating.toFixed(1) : '—'}
                     </div>
-                    <div className="text-sm text-gray-600">Average Rating</div>
+                    <div className="text-sm text-gray-600">Rating</div>
                   </div>
                   <div className="text-center">
                     <div className="font-bold text-lg text-gray-900">{profile.reviewCount || 0}</div>
