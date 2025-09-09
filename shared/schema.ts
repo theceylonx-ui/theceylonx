@@ -20,7 +20,18 @@ import { z } from "zod";
 // PostgreSQL Enums for data integrity
 // tripStatusEnum removed - using varchar instead
 export const saveTypeEnum = pgEnum('save_type', ['pinned', 'interested']);
-export const notificationTypeEnum = pgEnum('notification_type', ['trip_updated', 'trip_removed', 'save_removed']);
+export const notificationTypeEnum = pgEnum('notification_type', [
+  // Trip participation
+  'trip_interest_request', 'trip_join_request', 'interest_accepted', 'interest_declined',
+  // Trip updates
+  'trip_updated', 'trip_removed', 'trip_commented', 'trip_viewed',
+  // Legacy saved trip notifications  
+  'save_removed',
+  // Social
+  'new_follower', 'trip_liked',
+  // System
+  'weather_alert', 'system_update'
+]);
 // Difficulty enum removed - using varchar instead
 // userRoleEnum removed - using varchar instead
 // reportStatusEnum removed - using varchar instead
