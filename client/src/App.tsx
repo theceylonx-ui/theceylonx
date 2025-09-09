@@ -142,6 +142,7 @@ function Router() {
             <Route path="/admin/mobile-admin" component={() => import("@/pages/admin/mobile-admin").then(m => m.default)} />
             <Route path="/admin/audit-logs" component={() => import("@/pages/admin/audit-logs").then(m => m.default)} />
             <Route path="/admin/api-docs" component={() => import("@/pages/admin/api-docs").then(m => m.default)} />
+            <Route path="/admin/settings" component={() => import("@/components/admin/AdminSettings").then(m => m.default)} />
             
             {/* Legacy Admin Routes */}
             <Route path="/admin-dashboard" component={AdminDashboardPage} />
