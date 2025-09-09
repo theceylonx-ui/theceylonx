@@ -112,6 +112,7 @@ import { z } from "zod";
 import { errorTracker } from "./utils/errorTracking";
 import { normalizeUserForUI, normalizeUsersForUI, trackUserNormalizationFallback } from "./utils/userNormalization";
 import type { NormalizedUser } from "./utils/userNormalization";
+import { cache, CACHE_TTL } from "./cache/cacheService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // CORS and cookie middleware - strict origin validation
@@ -155,11 +156,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Clerk health routes
   app.use(clerkHealth);
 
-  // Public site settings endpoint for unauthenticated access
+  // 🚀 PHASE 3 PERFORMANCE: Cached site settings endpoint for unauthenticated access
   app.get('/api/site-settings/:key', async (req, res) => {
     try {
       const { key } = req.params;
-      const setting = await storage.getSiteSetting(key);
+      const cacheKey = `site-setting:${key}`;
+      
+      // Use intelligent caching for site settings
+      const setting = await cache.getOrSet(
+        cacheKey,
+        () => storage.getSiteSetting(key),
+        CACHE_TTL.SITE_SETTINGS
+      );
+      
       if (setting) {
         res.json(setting);
       } else {
@@ -2075,15 +2084,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Popular destinations endpoint
+  // 🚀 PHASE 3 PERFORMANCE: Cached popular destinations endpoint  
   app.get('/api/popular-destinations', async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 5;
-      const destinations = await storage.getPopularDestinations(limit);
+      const cacheKey = `popular-destinations:${limit}`;
+      
+      // Use smart caching with getOrSet
+      const destinations = await cache.getOrSet(
+        cacheKey,
+        () => storage.getPopularDestinations(limit),
+        CACHE_TTL.POPULAR_DESTINATIONS
+      );
+      
       res.json(destinations);
     } catch (error) {
       console.error("Error fetching popular destinations:", error);
       res.status(500).json({ message: "Failed to fetch popular destinations" });
+    }
+  });
+
+  // 🚀 PHASE 3 PERFORMANCE: Cache performance monitoring endpoint
+  app.get('/api/performance/cache-stats', async (req, res) => {
+    try {
+      const stats = cache.getStats();
+      res.json({
+        ...stats,
+        hitRatePercent: Math.round(stats.hitRate * 100),
+        performance: stats.hitRate > 0.7 ? 'excellent' : stats.hitRate > 0.5 ? 'good' : 'needs_improvement'
+      });
+    } catch (error) {
+      console.error("Error fetching cache stats:", error);
+      res.status(500).json({ message: "Failed to fetch cache statistics" });
     }
   });
 
