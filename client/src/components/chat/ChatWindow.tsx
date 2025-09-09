@@ -279,13 +279,13 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
           
           <div>
             <h3 className="font-semibold text-lg">
-              {threadData.thread.trip.title}
+              {threadData.trip?.title || 'Trip Chat'}
               {isTripUnavailable && (
                 <span className="ml-2 text-red-500 text-sm">[{tripStatus.toUpperCase()}]</span>
               )}
             </h3>
             <p className="text-sm text-gray-500">
-              {threadData.thread.trip.fromLocation} → {threadData.thread.trip.toLocation}
+              {threadData.trip?.fromLocation || 'Location'} → {threadData.trip?.toLocation || 'Destination'}
               {isTripUnavailable && (
                 <span className="ml-2 text-red-500">• Trip no longer active</span>
               )}
@@ -320,11 +320,11 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
                 </DialogHeader>
                 
                 <div className="space-y-4">
-                  {threadData.thread.trip.organizer.phone && (
+                  {threadData.trip?.organizer?.phone && (
                     <div className="flex items-center justify-between p-3 border rounded">
                       <div className="flex items-center space-x-2">
                         <Phone className="w-4 h-4" />
-                        <span>{threadData.thread.trip.organizer.phone}</span>
+                        <span>{threadData.trip.organizer.phone}</span>
                       </div>
                       <Button 
                         size="sm" 
@@ -336,11 +336,11 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
                     </div>
                   )}
                   
-                  {threadData.thread.trip.organizer.email && (
+                  {threadData.trip?.organizer?.email && (
                     <div className="flex items-center justify-between p-3 border rounded">
                       <div className="flex items-center space-x-2">
                         <Mail className="w-4 h-4" />
-                        <span>{threadData.thread.trip.organizer.email}</span>
+                        <span>{threadData.trip.organizer.email}</span>
                       </div>
                       <Button 
                         size="sm" 
@@ -352,7 +352,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
                     </div>
                   )}
 
-                  {threadData.thread.trip.organizer.phone && threadData.thread.trip.organizer.email && (
+                  {threadData.trip?.organizer?.phone && threadData.trip?.organizer?.email && (
                     <div className="pt-2 border-t">
                       <Button 
                         className="w-full" 
@@ -403,7 +403,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
       </div>
 
       {/* Input Area */}
-      {threadData.thread.status === 'active' && !isTripUnavailable ? (
+      {threadData.status === 'open' && !isTripUnavailable ? (
         <>
           <Separator />
           <form onSubmit={handleSendMessage} className="p-4">
@@ -448,7 +448,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
               <p className="text-sm mt-1">No new messages can be sent for inactive trips.</p>
             </div>
           ) : (
-            <p>This chat is {threadData.thread.status}. No new messages can be sent.</p>
+            <p>This chat is {threadData.status}. No new messages can be sent.</p>
           )}
         </div>
       )}
