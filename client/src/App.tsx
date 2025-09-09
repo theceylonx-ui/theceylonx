@@ -147,10 +147,10 @@ function Router() {
             <Route path="/admin/api-docs" component={() => import("@/pages/admin/api-docs").then(m => m.default)} />
             <Route path="/admin/settings" component={() => import("@/components/admin/AdminSettings").then(m => m.default)} />
             
-            {/* Legacy Admin Routes */}
-            <Route path="/admin-dashboard" component={AdminDashboardPage} />
+            {/* Legacy Admin Routes - Disabled for now to focus on user dashboard */}
+            {/* <Route path="/admin-dashboard" component={AdminDashboardPage} />
             <Route path="/admin/reports" component={AdminReportsPage} />
-            <Route path="/report-trip/:id" component={ReportTripPage} />
+            <Route path="/report-trip/:id" component={ReportTripPage} /> */}
           </>
         )}
         
