@@ -122,10 +122,7 @@ export default function AdminDashboard() {
   // Update user role mutation
   const updateUserRoleMutation = useMutation({
     mutationFn: async ({ userId, roleId }: { userId: string; roleId: string }) => {
-      await apiRequest(`/api/admin/users/${userId}/role`, {
-        method: 'PUT',
-        body: { roleId },
-      });
+      await apiRequest('PUT', `/api/admin/users/${userId}/role`, { roleId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
@@ -143,10 +140,7 @@ export default function AdminDashboard() {
   // Create role mutation
   const createRoleMutation = useMutation({
     mutationFn: async (roleData: { name: string; permissions: any }) => {
-      return await apiRequest('/api/admin/roles', {
-        method: 'POST',
-        body: roleData,
-      });
+      return await apiRequest('POST', '/api/admin/roles', roleData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/roles'] });
