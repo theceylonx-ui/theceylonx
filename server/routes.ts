@@ -299,11 +299,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // This endpoint is for OAuth providers to request user deletion
       // In a production environment, you might want to add additional verification
-      console.log("Deletion request via OAuth provider for user:", userId);
       
       await storage.deleteUser(userId);
       
-      console.log("User deletion completed via OAuth provider for user:", userId);
       res.json({ 
         message: "User data deletion completed successfully",
         status: "deleted",
@@ -403,7 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(trip);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error("Trip validation errors:", error.errors);
+        // Validation errors logged for debugging
         return res.status(400).json({ message: "Invalid trip data", errors: error.errors });
       }
       console.error("Error creating trip:", error);
@@ -1086,7 +1084,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Notification temporarily disabled due to database schema issue
       // TODO: Re-enable after database migration is complete
-      console.log(`Comment created successfully on trip ${tripId} by user ${userId}`);
+      // Comment created successfully
       
       res.json(comment);
     } catch (error) {
@@ -1226,7 +1224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Notification temporarily disabled due to database schema issue
       // TODO: Re-enable after database migration is complete
-      console.log(`Report created successfully for trip ${report.tripId} by user ${reporterId}`);
+      // Report created successfully
       
       res.json(report);
     } catch (error) {
@@ -2278,7 +2276,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/me/privacy', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      console.log('🔍 Getting privacy settings for userId:', userId);
       
       const privacy = await storage.getUserPrivacy(userId);
       console.log('✅ Privacy settings retrieved:', privacy);
@@ -2296,7 +2293,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const { visibility, dmPolicy, showOnline, showJoinedTrips, cityVisibility } = req.body;
       
-      console.log('🔄 Updating privacy settings for userId:', userId);
       console.log('📝 Privacy settings:', { visibility, dmPolicy, showOnline, showJoinedTrips, cityVisibility });
 
       // Update privacy settings in database
@@ -4119,8 +4115,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Message text or attachment is required' });
       }
 
-      // 🔥 CEYLONX DEBUG: Log request data 🔥
-      console.log("🔥 Message API Request:", { text, attachmentId, ephemeral, threadId, userId });
 
       // Create message
       const message = await storage.createChatMessage({
