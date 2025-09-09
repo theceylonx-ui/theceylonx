@@ -2333,7 +2333,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await sendVerificationCode(email);
       
       console.log('✅ Verification email sent successfully');
-      res.json({ message: "Verification code sent to your email" });
+      
+      // In development mode, also include the code in response for easier testing
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      const hasSmtpCredentials = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS;
+      
+      if (isDevelopment && !hasSmtpCredentials) {
+        res.json({ 
+          message: "Verification code sent to your email", 
+          developmentMode: true,
+          note: "Check server logs for the verification code (development mode)"
+        });
+      } else {
+        res.json({ message: "Verification code sent to your email" });
+      }
     } catch (error) {
       console.error("❌ Error sending verification code:", error);
       res.status(500).json({ message: "Failed to send verification code" });

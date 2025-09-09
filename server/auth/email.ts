@@ -48,6 +48,20 @@ export async function sendVerificationCode(email: string): Promise<string> {
     expiresAt,
   });
 
+  // Check if we're in development mode or missing SMTP credentials
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const hasSmtpCredentials = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS;
+
+  if (isDevelopment && !hasSmtpCredentials) {
+    // Development mode: Just log the code instead of sending email
+    console.log('🔍 DEVELOPMENT MODE - Email Verification Code:');
+    console.log('📧 Email:', email);
+    console.log('🔐 Verification Code:', code);
+    console.log('⏰ Expires in 10 minutes');
+    console.log('💡 In production, this would be sent via email');
+    return code;
+  }
+
   // Email template for verification code
   const emailContent = {
     from: EMAIL_FROM,
@@ -86,7 +100,7 @@ export async function sendVerificationCode(email: string): Promise<string> {
     `,
   };
 
-  // Send email
+  // Send email in production
   try {
     await transporter.sendMail(emailContent);
     return code; // Return for testing purposes (remove in production)
