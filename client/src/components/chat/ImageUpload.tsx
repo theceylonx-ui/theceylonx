@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -120,14 +120,18 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
       // Reset state
       resetUploadState();
       
-      // Refresh messages
+      // Optimized cache refresh
       const finalThreadId = threadId || "thread-organizer-test-001";
-      queryClient.invalidateQueries({
-        queryKey: [`/api/chat/threads/${finalThreadId}/messages`],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["/api/chat/threads"],
-      });
+      Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: [`/api/chat/threads/${finalThreadId}/messages`],
+          exact: true
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["/api/chat/threads"],
+          exact: true
+        })
+      ]).catch(console.error);
 
       onImageSent?.();
     },
@@ -143,7 +147,13 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
 
   const resetUploadState = () => {
     setSelectedFile(null);
+    
+    // Clean up preview URL to prevent memory leaks
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
     setPreviewUrl("");
+    
     setUploadProgress(0);
     setShowPreview(false);
     setMessageText(""); // Reset message text
@@ -192,7 +202,9 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
       
       // Get upload URL
       const { uploadUrl } = await getUploadUrlMutation.mutateAsync();
-      console.log("🔥 Got upload URL:", uploadUrl);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Got upload URL:", uploadUrl);
+      }
       setUploadProgress(30);
       
       // Upload the file
@@ -211,6 +223,15 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
   };
 
   const isUploading = getUploadUrlMutation.isPending || uploadImageMutation.isPending || sendImageMessageMutation.isPending;
+  
+  // Cleanup on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   return (
     <>
