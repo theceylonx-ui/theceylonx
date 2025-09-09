@@ -550,7 +550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if user is the organizer or admin
       const trip = await storage.getTrip(tripId);
-      const isAdmin = req.user?.role === 'admin';
+      const isAdmin = (req.user as any)?.role === 'admin';
       if (!trip || (trip.organizerId !== userId && !isAdmin)) {
         return res.status(403).json({ message: "Not authorized to update this trip" });
       }
@@ -2774,10 +2774,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const threadId = req.params.threadId;
-      const { body } = req.body;
+      const { text } = req.body;
 
-      if (!body || body.trim().length === 0) {
-        return res.status(400).json({ message: "Message body is required" });
+      if (!text || text.trim().length === 0) {
+        return res.status(400).json({ message: "Message text is required" });
       }
 
       // Verify user is in the thread
@@ -2790,7 +2790,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const message = await storage.createMessage({
         threadId,
         senderId: userId,
-        body: body.trim()
+        text: text.trim()
       });
 
       // Get other users in thread for notifications
@@ -2806,7 +2806,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           category: "social",
           priority: "normal",
           title: "New Message",
-          message: `${currentUser?.firstName || 'Someone'}: ${body.substring(0, 60)}${body.length > 60 ? '...' : ''}`,
+          message: `${currentUser?.firstName || 'Someone'}: ${text.substring(0, 60)}${text.length > 60 ? '...' : ''}`,
           threadId: threadId,
           relatedUserId: userId,
           actionUrl: `/chat/${threadId}`,
@@ -2891,7 +2891,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const message = await storage.createMessage({
         threadId,
         senderId: userId,
-        body: `📞 Contact shared:\\n${normalizedContact.phoneNumber ? `WhatsApp: ${normalizedContact.phoneNumber}` : ''}${normalizedContact.email ? `\\nEmail: ${normalizedContact.email}` : ''}`,
+        text: `📞 Contact shared:\\n${normalizedContact.phoneNumber ? `WhatsApp: ${normalizedContact.phoneNumber}` : ''}${normalizedContact.email ? `\\nEmail: ${normalizedContact.email}` : ''}`,
         type: "CONTACT_SHARE",
         payload: {
           contactShareId: contactShare.id,
