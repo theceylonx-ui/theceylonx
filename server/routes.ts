@@ -119,6 +119,7 @@ import { productionSecurityMiddleware, cacheHeadersMiddleware, productionErrorHa
 import { seoRouter } from "./routes/seo";
 import { apiRateLimit, authRateLimit, uploadRateLimit, searchRateLimit, chatRateLimit, tripCreationRateLimit } from "./middleware/rateLimiting";
 import { validateInput, sanitizeTextContent } from "./middleware/inputValidation";
+import { logger, log } from "./utils/logger";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // CORS and cookie middleware - strict origin validation
