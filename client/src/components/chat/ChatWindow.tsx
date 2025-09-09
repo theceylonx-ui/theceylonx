@@ -414,7 +414,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
       </div>
 
       {/* Input Area */}
-      {threadData.status === 'open' && !isTripUnavailable ? (
+      {(threadData.status === 'open' || threadData.thread?.status === 'open') && !isTripUnavailable ? (
         <>
           <Separator />
           <form onSubmit={handleSendMessage} className="p-4">
@@ -459,7 +459,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
               <p className="text-sm mt-1">No new messages can be sent for inactive trips.</p>
             </div>
           ) : (
-            <p>This chat is {threadData.status}. No new messages can be sent.</p>
+            <p>This chat is {threadData.status || threadData.thread?.status}. No new messages can be sent.</p>
           )}
         </div>
       )}
