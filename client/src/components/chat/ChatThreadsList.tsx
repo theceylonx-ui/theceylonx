@@ -39,11 +39,16 @@ interface ChatThreadsListProps {
 
 export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
   const [, setLocation] = useLocation();
-  const { data: threads, isLoading, error } = useQuery<ChatThread[]>({
+  const { data: threadsData, isLoading, error } = useQuery<ChatThread[]>({
     queryKey: ["/api/threads"],
-    refetchInterval: 10000, // Refresh every 10 seconds to show new chats
+    refetchInterval: 5000, // Refresh every 5 seconds for faster updates
     staleTime: 0, // Always fetch fresh data
   });
+
+  // Sort threads by updatedAt (WhatsApp style - newest conversations first)
+  const threads = threadsData ? [...threadsData].sort((a, b) => 
+    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  ) : [];
 
   const handleThreadClick = (threadId: string) => {
     onThreadSelect?.(threadId);
@@ -51,53 +56,60 @@ export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <Card key={i} className="p-4 animate-pulse">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-              <div className="flex-1 space-y-2">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+      <div className="h-full overflow-y-auto">
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className="p-4 animate-pulse">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                </div>
               </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <Card className="p-6 text-center">
-        <MessageCircle className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-        <p className="text-gray-600 dark:text-gray-400">Failed to load chat threads</p>
-      </Card>
+      <div className="h-full overflow-y-auto">
+        <Card className="p-6 text-center">
+          <MessageCircle className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">Failed to load chat threads</p>
+        </Card>
+      </div>
     );
   }
 
   if (!threads || threads.length === 0) {
     return (
-      <EmptyState 
-        type="chat"
-        primaryAction={{
-          label: "Browse Trips",
-          onClick: () => setLocation('/browse-trips')
-        }}
-      />
+      <div className="h-full overflow-y-auto">
+        <EmptyState 
+          type="chat"
+          primaryAction={{
+            label: "Browse Trips",
+            onClick: () => setLocation('/browse-trips')
+          }}
+        />
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="h-full flex flex-col">
+      <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <h2 className="text-xl font-semibold">Your Chats</h2>
         <Badge variant="secondary">
           {threads.length} conversation{threads.length !== 1 ? 's' : ''}
         </Badge>
       </div>
       
-      <div className="space-y-3">
+      {/* Scrollable chat list - WhatsApp style */}
+      <div className="flex-1 overflow-y-auto space-y-3 pr-2">
         {threads.map((thread) => (
           <Link 
             key={thread.id} 
