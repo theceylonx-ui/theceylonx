@@ -147,6 +147,12 @@ export default function ProfilePage() {
     enabled: !!user?.id,
   });
 
+  // Fetch privacy settings
+  const { data: privacySettings = {}, refetch: refetchPrivacy } = useQuery({
+    queryKey: ["/api/me/privacy"],
+    enabled: !!user,
+  });
+
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -355,7 +361,7 @@ export default function ProfilePage() {
 
           {/* Privacy Tab */}
           <TabsContent value="privacy" className="space-y-6">
-            <PrivacySettings privacy={privacy} onUpdate={refetch} />
+            <PrivacySettings privacy={privacySettings} onUpdate={refetchPrivacy} />
           </TabsContent>
         </Tabs>
       </div>
