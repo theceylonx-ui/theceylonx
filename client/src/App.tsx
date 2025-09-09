@@ -126,6 +126,7 @@ function Router() {
 
             <Route path="/chat-demo" component={ChatDemoPage} />
             <Route path="/chat-buddy" component={ChatBuddy} />
+            <Route path="/chat-buddy/:threadId" component={ChatBuddy} />
             
             {/* Help & Settings */}
             <Route path="/help/faq" component={HelpFAQPage} />
