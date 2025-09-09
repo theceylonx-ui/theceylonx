@@ -1819,6 +1819,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async isUserInThread(threadId: string, userId: string): Promise<boolean> {
+    console.log(`🔍 isUserInThread check - threadId: ${threadId}, userId: ${userId}`);
+    
     const [result] = await db
       .select()
       .from(threadUsers)
@@ -1826,6 +1828,10 @@ export class DatabaseStorage implements IStorage {
         eq(threadUsers.threadId, threadId),
         eq(threadUsers.userId, userId)
       ));
+    
+    console.log(`🔍 isUserInThread result:`, result);
+    console.log(`🔍 isUserInThread boolean result: ${!!result}`);
+    
     return !!result;
   }
 
