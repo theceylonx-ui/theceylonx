@@ -90,6 +90,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, ilike, desc, asc, gte, lte, count, sql, isNull, ne } from "drizzle-orm";
+import { normalizeUserForUI } from "./utils/userNormalization";
 
 // Contact redaction utilities
 export function redactContact<T extends { contactInfo?: string | null; whatsapp?: string | null; email?: string | null; phone?: string | null }>(userOrTrip: T): T & { contactRedacted?: boolean } {
@@ -1028,8 +1029,12 @@ export class DatabaseStorage implements IStorage {
         // Apply anonymity logic: mask PII if isAnonymous is true
         const maskedQuestion = this.applyAnonymityToQuestion(question);
         
+        // Normalize user data
+        const normalizedUser = normalizeUserForUI(maskedQuestion.user);
+        
         return {
           ...maskedQuestion,
+          user: normalizedUser,
           answers,
         };
       })
@@ -1134,8 +1139,12 @@ export class DatabaseStorage implements IStorage {
     // Apply anonymity logic to the question
     const maskedQuestion = this.applyAnonymityToQuestion(question);
     
+    // Normalize user data
+    const normalizedUser = normalizeUserForUI(maskedQuestion.user);
+    
     return {
       ...maskedQuestion,
+      user: normalizedUser,
       answers,
     } as QuestionWithDetails;
   }
@@ -1257,7 +1266,15 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(answers.score));
     
     // For now, answers are not anonymous, but apply the logic for future extensibility
-    const maskedAnswers = answersData.map(answer => this.applyAnonymityToAnswer(answer));
+    const maskedAnswers = answersData.map(answer => {
+      const maskedAnswer = this.applyAnonymityToAnswer(answer);
+      // Normalize user data
+      const normalizedUser = normalizeUserForUI(maskedAnswer.user);
+      return {
+        ...maskedAnswer,
+        user: normalizedUser,
+      };
+    });
     
     return maskedAnswers as AnswerWithUser[];
   }
