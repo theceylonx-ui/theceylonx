@@ -1254,6 +1254,14 @@ function UserActivity() {
                         >
                           👁️ View Details
                         </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => window.location.href = `/trips/${trip.id}/requests`}
+                          data-testid={`button-view-requests-${trip.id}`}
+                        >
+                          📥 Requests
+                        </Button>
                       </div>
                     </div>
                     

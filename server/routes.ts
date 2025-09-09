@@ -908,6 +908,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get interest requests for a specific trip (for organizer)
+  app.get('/api/trips/:tripId/interest-requests', unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { tripId } = req.params;
+      
+      // Verify user is the trip organizer
+      const trip = await storage.getTripById(tripId);
+      if (!trip) {
+        return res.status(404).json({ message: "Trip not found" });
+      }
+      
+      if (trip.organizerId !== userId) {
+        return res.status(403).json({ message: "Not authorized to view requests for this trip" });
+      }
+      
+      const requests = await storage.getTripInterestRequests(tripId);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching trip interest requests:", error);
+      res.status(500).json({ message: "Failed to fetch trip interest requests" });
+    }
+  });
+
   // Update interest request status (accept/reject)
   app.put('/api/interest-requests/:requestId', isAuthenticated, async (req, res) => {
     try {

@@ -39,6 +39,7 @@ import UserProfilePage from "@/pages/profile/[id]";
 import HelpFAQPage from "@/pages/help/faq";
 import AccountSettingsPage from "@/pages/settings/account";
 import MeRedirect from "@/pages/me-redirect";
+import TripRequestsPage from "@/pages/trip-requests";
 // Clerk components temporarily disabled
 // import ClerkSignInPage from "@/pages/clerk-sign-in";
 // import ClerkSignUpPage from "@/pages/clerk-sign-up";
@@ -101,6 +102,7 @@ function Router() {
             <Route path="/trips/new" component={() => { setLocation("/post"); return null; }} />
             <Route path="/post-trip" component={PostTrip} />
             <Route path="/trips/:id" component={TripDetails} />
+            <Route path="/trips/:id/requests" component={TripRequestsPage} />
             <Route path="/dashboard" component={() => { setLocation("/me"); return null; }} />
             <Route path="/community" component={CommunityNew} />
             <Route path="/question/:id" component={QuestionDetail} />
