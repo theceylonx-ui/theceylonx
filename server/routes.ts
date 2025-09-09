@@ -661,8 +661,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await storage.removeSavedTrip(userId, tripId);
       
-      // Create notification about save removal
-      await storage.createSaveNotification(userId, tripId, 'save_removed');
+      // Create notification about save removal using unified system
+      await storage.createNotification({
+        userId,
+        tripId,
+        type: 'save_removed',
+        category: 'trips',
+        priority: 'normal',
+        title: 'Trip Save Removed',
+        message: 'Your saved trip has been removed from your list.',
+        actionUrl: `/trips/${tripId}`,
+        payload: {}
+      });
       
       res.status(204).send(); // No content - idempotent success
     } catch (error) {
@@ -3816,25 +3826,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/notifications/mark-read', unifiedAuthGuard, async (req, res) => {
-    try {
-      const { ids } = req.body;
-      
-      if (!Array.isArray(ids) || ids.length === 0) {
-        return res.status(400).json({ message: 'Invalid notification IDs' });
-      }
-
-      // Mark notifications as read
-      for (const id of ids) {
-        await storage.markNotificationAsRead(id);
-      }
-
-      res.status(204).send();
-    } catch (error) {
-      console.error('Error marking notifications as read:', error);
-      res.status(500).json({ message: 'Failed to mark notifications as read' });
-    }
-  });
 
   // Admin endpoints for system monitoring (placeholder - would need proper admin auth)
   app.get('/api/admin/errors', unifiedAuthGuard, async (req, res) => {
