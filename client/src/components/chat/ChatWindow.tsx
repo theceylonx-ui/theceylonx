@@ -540,13 +540,13 @@ function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
                   <p className="text-xs">No longer available</p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-0">
                   {attachmentUrl && (
-                    <div className="relative">
+                    <div className="relative mb-3">
                       <img
                         src={attachmentUrl}
                         alt="Shared image"
-                        className="max-w-full h-auto rounded cursor-pointer"
+                        className="max-w-full h-auto rounded-lg cursor-pointer"
                         onClick={() => {
                           if (isEphemeral) {
                             setImageViewed(true);
@@ -564,7 +564,9 @@ function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
                     </div>
                   )}
                   {message.text && (
-                    <p className="text-sm">{message.text}</p>
+                    <div className={`text-sm leading-relaxed ${attachmentUrl ? 'mt-2' : ''}`}>
+                      {message.text}
+                    </div>
                   )}
                 </div>
               )}
