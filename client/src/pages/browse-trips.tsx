@@ -320,22 +320,6 @@ export default function BrowseTrips() {
           </div>
         )}
 
-        {/* Tips Section */}
-        {!isLoading && trips.length > 0 && (
-          <div className="mt-16">
-            <TipsBox 
-              title="Travel Tips for Sri Lanka"
-              tips={[
-                "Book accommodations in advance during peak season (December to March)",
-                "Pack light, breathable clothing and comfortable walking shoes",
-                "Try local cuisine like rice and curry, hoppers, and kottu roti",
-                "Respect local customs when visiting temples (cover shoulders and legs)",
-                "Use sunscreen and stay hydrated in tropical weather"
-              ]}
-              defaultCollapsed={true}
-            />
-          </div>
-        )}
       </div>
       
       {/* Tips Section */}
