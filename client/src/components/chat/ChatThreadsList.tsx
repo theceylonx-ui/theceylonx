@@ -41,6 +41,8 @@ export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
   const [, setLocation] = useLocation();
   const { data: threads, isLoading, error } = useQuery<ChatThread[]>({
     queryKey: ["/api/threads"],
+    refetchInterval: 10000, // Refresh every 10 seconds to show new chats
+    staleTime: 0, // Always fetch fresh data
   });
 
   const handleThreadClick = (threadId: string) => {
