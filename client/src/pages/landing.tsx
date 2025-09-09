@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import { Link } from "wouter";
 import { UserPlus, MapPin, Handshake, PiggyBank, Users, Compass, Heart, Shield, Flag, Star, UserCheck, Route } from "lucide-react";
 import logoImage from "@assets/5_1756417819316.png";
-import backgroundImage from "@assets/11_1756417976014.png";
+import backgroundImage from "@assets/2_1757396354796.png";
 
 export default function Landing() {
   const handleLogin = () => {
