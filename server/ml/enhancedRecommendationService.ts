@@ -1104,13 +1104,8 @@ export class EnhancedRecommendationService {
         return {
           trip: {
             ...trip,
-            organizer: trip.organizer || {
-              id: trip.organizerId,
-              email: null,
-              firstName: null,
-              lastName: null,
-              profileImageUrl: null
-            }
+            // Keep the already normalized organizer data from storage.searchTrips
+            organizer: trip.organizer
           },
           score: totalScore,
           reasons: ['Trending destination'],
