@@ -127,7 +127,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
     refetchInterval: 5000,
     enabled: !!finalThreadId,
     staleTime: 0, // Always consider data stale
-    cacheTime: 0, // Don't cache at all
+    gcTime: 0, // Don't cache at all
   });
 
   // Fetch messages
@@ -138,7 +138,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   });
 
   // Sort messages chronologically like WhatsApp (oldest to newest)
-  const messages = (messagesData?.messages || []).sort((a: ChatMessage, b: ChatMessage) => 
+  const messages = ((messagesData as any)?.messages || []).sort((a: ChatMessage, b: ChatMessage) => 
     new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
 
@@ -235,8 +235,8 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
     reportMessageMutation.mutate({ messageId, reason });
   };
 
-  const isOrganizer = threadData?.trip?.organizer?.id === currentUserId;
-  const canShareContact = isOrganizer && (threadData?.trip?.organizer?.phone || threadData?.trip?.organizer?.email);
+  const isOrganizer = (threadData as any)?.trip?.organizer?.id === currentUserId;
+  const canShareContact = isOrganizer && ((threadData as any)?.trip?.organizer?.phone || (threadData as any)?.trip?.organizer?.email);
 
   if (threadLoading) {
     return (
@@ -263,7 +263,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   }
 
   // Check if trip is deleted or unavailable
-  if (!threadData.trip) {
+  if (!(threadData as any).trip) {
     return (
       <Card className="h-full flex items-center justify-center">
         <div className="text-center text-gray-500">
