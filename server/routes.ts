@@ -960,7 +960,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create notification for the requester
       await storage.createNotification({
         userId: updatedRequest.userId,
-        type: status === 'accepted' ? 'interest_accepted' : 'interest_rejected',
+        type: status === 'accepted' ? 'interest_accepted' : 'interest_declined',
         category: 'trips',
         priority: 'high',
         title: status === 'accepted' ? 'Interest Request Accepted!' : 'Interest Request Update',

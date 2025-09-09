@@ -30,12 +30,16 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   // Social
   'new_follower', 'trip_liked',
   // System
-  'weather_alert', 'system_update'
+  'weather_alert', 'system_update',
+  // Q&A Community
+  'question_answered', 'answer_accepted', 'question_voted', 'answer_voted',
+  // Chat & Communication
+  'chat_message', 'contact_shared', 'chat_opened', 'chat_closed'
 ]);
 // Difficulty enum removed - using varchar instead
 // userRoleEnum removed - using varchar instead
 // reportStatusEnum removed - using varchar instead
-export const reportContextEnum = pgEnum('report_context', ['trip', 'user', 'chat_message']);
+export const reportContextEnum = pgEnum('report_context', ['trip', 'user', 'chat_message', 'user_profile']);
 // notificationPriorityEnum removed - using varchar instead
 // messageTypeEnum removed - using varchar instead
 export const chatThreadStatusEnum = pgEnum('chat_thread_status', ['open', 'locked', 'closed']);

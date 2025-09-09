@@ -14,6 +14,18 @@ export const normalizedUserSchema = z.object({
 
 export type NormalizedUser = z.infer<typeof normalizedUserSchema>;
 
+// Comment with normalized user (declared first to avoid circular dependency)
+export const commentWithUserSchema = z.object({
+  id: z.string(),
+  content: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  user: normalizedUserSchema,
+  isDeleted: z.boolean().default(false),
+});
+
+export type CommentWithUser = z.infer<typeof commentWithUserSchema>;
+
 // Trip with normalized organizer
 export const tripWithOrganizerSchema = z.object({
   id: z.string(),
@@ -33,6 +45,9 @@ export const tripWithOrganizerSchema = z.object({
   mediaUrls: z.array(z.string()).default([]),
   coverImageIndex: z.number().default(0),
   organizer: normalizedUserSchema,
+  // Trip metadata
+  comments: z.array(commentWithUserSchema).default([]),
+  tags: z.array(z.string()).default([]),
   viewCount: z.number().default(0),
   bookingCount: z.number().default(0),
   createdAt: z.date(),
@@ -40,18 +55,6 @@ export const tripWithOrganizerSchema = z.object({
 });
 
 export type TripWithOrganizer = z.infer<typeof tripWithOrganizerSchema>;
-
-// Comment with normalized user
-export const commentWithUserSchema = z.object({
-  id: z.string(),
-  content: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-  user: normalizedUserSchema,
-  isDeleted: z.boolean().default(false),
-});
-
-export type CommentWithUser = z.infer<typeof commentWithUserSchema>;
 
 // Question with normalized user
 export const questionWithUserSchema = z.object({
