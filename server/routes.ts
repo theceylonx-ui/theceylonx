@@ -2315,6 +2315,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Email verification endpoints
+  app.post('/api/auth/send-verification', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { email } = req.body;
+      
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ message: "Valid email is required" });
+      }
+
+      console.log('📧 Sending verification code to:', email);
+      
+      // Import sendVerificationCode function  
+      const { sendVerificationCode } = await import('./auth/email');
+      
+      await sendVerificationCode(email);
+      
+      console.log('✅ Verification email sent successfully');
+      res.json({ message: "Verification code sent to your email" });
+    } catch (error) {
+      console.error("❌ Error sending verification code:", error);
+      res.status(500).json({ message: "Failed to send verification code" });
+    }
+  });
+
+  app.post('/api/auth/verify-email', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { email, code } = req.body;
+      
+      if (!email || !code) {
+        return res.status(400).json({ message: "Email and verification code are required" });
+      }
+
+      console.log('🔍 Verifying email code for:', email);
+      
+      // Import verifyEmailCode function
+      const { verifyEmailCode } = await import('./auth/email');
+      
+      const isValid = await verifyEmailCode(email, code);
+      
+      if (isValid) {
+        console.log('✅ Email verification successful');
+        
+        // Update user's email if different
+        if (req.user.email !== email) {
+          await storage.updateUser(userId, { email });
+        }
+        
+        res.json({ 
+          success: true, 
+          message: "Email verified successfully!",
+          verified: true 
+        });
+      } else {
+        console.log('❌ Email verification failed');
+        res.status(400).json({ 
+          success: false, 
+          message: "Invalid or expired verification code" 
+        });
+      }
+    } catch (error) {
+      console.error("❌ Error verifying email code:", error);
+      res.status(500).json({ message: "Failed to verify email" });
+    }
+  });
+
   // Get user activity (questions)
   app.get('/api/me/activity/questions', unifiedAuthGuard, async (req: any, res) => {
     try {
