@@ -155,6 +155,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Clerk health routes
   app.use(clerkHealth);
 
+  // Public site settings endpoint for unauthenticated access
+  app.get('/api/site-settings/:key', async (req, res) => {
+    try {
+      const { key } = req.params;
+      const setting = await storage.getSiteSetting(key);
+      if (setting) {
+        res.json(setting);
+      } else {
+        res.status(404).json({ message: 'Setting not found' });
+      }
+    } catch (error) {
+      console.error('❌ Public site settings error:', error);
+      res.status(500).json({ message: 'Failed to load setting' });
+    }
+  });
+
   // Initialize admin system and setup admin routes
   const { adminService } = await import('./services/adminService');
   const { setupSuperadmin } = await import('./middleware/adminAuth');

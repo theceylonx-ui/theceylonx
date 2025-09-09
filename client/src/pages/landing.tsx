@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -5,9 +6,21 @@ import Footer from "@/components/Footer";
 import { Link } from "wouter";
 import { UserPlus, MapPin, Handshake, PiggyBank, Users, Compass, Heart, Shield, Flag, Star, UserCheck, Route } from "lucide-react";
 import logoImage from "@assets/5_1756417819316.png";
-import backgroundImage from "@assets/2_1757396354796.png";
+import defaultBackgroundImage from "@assets/2_1757396354796.png";
 
 export default function Landing() {
+  // Fetch dynamic background image setting
+  const { data: backgroundSetting } = useQuery({
+    queryKey: ['/api/site-settings/landing_background_image'],
+    queryFn: () => fetch('/api/site-settings/landing_background_image').then(res => 
+      res.ok ? res.json() : null
+    ).catch(() => null),
+    retry: false, // Don't retry on failure
+    refetchOnWindowFocus: false,
+  });
+
+  const backgroundImage = backgroundSetting?.value || defaultBackgroundImage;
+
   const handleLogin = () => {
     window.location.href = '/auth/signin';
   };
