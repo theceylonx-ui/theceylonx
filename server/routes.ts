@@ -3908,6 +3908,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const threadId = req.params.id;
+      
+      // 🔥 FORCE NO CACHING - Cache busting headers
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
 
       // Get thread details
       const thread = await storage.getChatThread(threadId);
@@ -3923,6 +3930,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get trip info for context (include userId for proper organizer data)
       const trip = await storage.getTrip(thread.tripId, userId);
       
+      // 🔥 FORCE LOGGING to see if this code runs
+      console.log('🔥 CHAT API CALLED - FRESH REQUEST!', {
+        threadId,
+        userId,
+        tripId: thread.tripId,
+        organizerData: trip?.organizer,
+        timestamp: new Date().toISOString()
+      });
+      
       res.json({ 
         thread, 
         trip: trip ? {
@@ -3937,7 +3953,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         _debug: {
           organizerContactAvailable: !!(trip?.organizer?.phone || trip?.organizer?.email),
           organizerPhone: trip?.organizer?.phone,
-          organizerEmail: trip?.organizer?.email
+          organizerEmail: trip?.organizer?.email,
+          timestamp: Date.now() // Force different response each time
         }
       });
     } catch (error) {

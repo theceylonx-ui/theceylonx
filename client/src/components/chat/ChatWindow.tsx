@@ -121,11 +121,13 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   // Apply consistent threadId fallback for ALL operations
   const finalThreadId = threadId || "thread-organizer-test-001";
 
-  // Fetch thread data
+  // Fetch thread data (FORCE FRESH - NO CACHE)
   const { data: threadData, isLoading: threadLoading } = useQuery({
-    queryKey: [`/api/chat/threads/${finalThreadId}`],
+    queryKey: [`/api/chat/threads/${finalThreadId}`, Date.now()], // Add timestamp to force fresh
     refetchInterval: 5000,
     enabled: !!finalThreadId,
+    staleTime: 0, // Always consider data stale
+    cacheTime: 0, // Don't cache at all
   });
 
   // Fetch messages
