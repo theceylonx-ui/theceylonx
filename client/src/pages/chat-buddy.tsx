@@ -26,10 +26,10 @@ import {
 
 interface User {
   id: string;
-  firstName?: string;
-  lastName?: string;
+  displayName: string;
   username?: string;
-  profileImageUrl?: string;
+  avatarUrl?: string;
+  initials: string;
   email?: string;
 }
 
@@ -407,14 +407,14 @@ export default function ChatBuddy() {
                           }`}
                         >
                           <Avatar className="h-10 w-10">
-                            <AvatarImage src={chatUser.profileImageUrl} />
+                            <AvatarImage src={chatUser.avatarUrl} />
                             <AvatarFallback>
-                              {(chatUser.firstName?.[0] || chatUser.username?.[0] || '?').toUpperCase()}
+                              {chatUser.initials || '?'}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium truncate">
-                              {chatUser.firstName || chatUser.username || 'Anonymous'}
+                              {chatUser.displayName || 'Anonymous'}
                             </p>
                             <p className="text-sm text-muted-foreground truncate">
                               Tap to chat
@@ -458,15 +458,20 @@ export default function ChatBuddy() {
                   <CardHeader className="border-b">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={chatUsers?.find(u => u.id === selectedUserId)?.profileImageUrl} />
+                        <AvatarImage src={chatUsers?.find(u => u.id === selectedUserId)?.avatarUrl} />
                         <AvatarFallback>
-                          {(chatUsers?.find(u => u.id === selectedUserId)?.firstName?.[0] || '?').toUpperCase()}
+                          {chatUsers?.find(u => u.id === selectedUserId)?.initials || '?'}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium">
-                          {chatUsers?.find(u => u.id === selectedUserId)?.firstName || 'Anonymous'}
+                          {chatUsers?.find(u => u.id === selectedUserId)?.displayName || 'Anonymous'}
                         </p>
+                        {tripData && (
+                          <p className="text-xs text-muted-foreground">
+                            About: {tripData.title}
+                          </p>
+                        )}
                         {isTyping && (
                           <p className="text-xs text-muted-foreground">Typing...</p>
                         )}

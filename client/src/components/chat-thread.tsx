@@ -381,7 +381,7 @@ export function ChatThread({ threadId, userId, onBack }: ChatThreadProps) {
               {messages.map((message) => {
                 const isOwn = message.authorId === userId;
                 const author = message.author;
-                const authorName = author.firstName || author.username || "Unknown";
+                const authorName = author.displayName || "Unknown";
 
                 return (
                   <div

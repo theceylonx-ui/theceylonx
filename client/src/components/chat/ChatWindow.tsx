@@ -618,11 +618,11 @@ function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
               <Avatar className="w-6 h-6">
                 <AvatarImage src={message.sender.profileImageUrl} />
                 <AvatarFallback className="text-xs">
-                  {message.sender.firstName?.[0] || message.sender.username?.[0] || "U"}
+                  {message.sender.initials || "U"}
                 </AvatarFallback>
               </Avatar>
               <span className="text-xs text-gray-500">
-                {message.sender.firstName} {message.sender.lastName}
+                {message.sender.displayName}
               </span>
             </div>
           )}

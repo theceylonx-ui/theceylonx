@@ -113,11 +113,11 @@ export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
                 <div className="relative">
                   <Avatar className="w-12 h-12">
                     <AvatarImage 
-                      src={thread.otherUser?.profileImageUrl} 
-                      alt={thread.otherUser?.firstName || "User"} 
+                      src={thread.otherUser?.avatarUrl} 
+                      alt={thread.otherUser?.displayName || "User"} 
                     />
                     <AvatarFallback>
-                      {thread.otherUser?.firstName?.[0] || thread.otherUser?.username?.[0] || "U"}
+                      {thread.otherUser?.initials || "U"}
                     </AvatarFallback>
                   </Avatar>
                   {thread.unreadCount > 0 && (
@@ -134,7 +134,7 @@ export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <p className="font-medium text-sm truncate">
-                      {thread.otherUser?.firstName} {thread.otherUser?.lastName}
+                      {thread.otherUser?.displayName}
                       {thread.otherUser?.username && (
                         <span className="text-gray-500 ml-1">@{thread.otherUser.username}</span>
                       )}
