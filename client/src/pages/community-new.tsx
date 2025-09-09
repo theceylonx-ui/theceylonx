@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import type { QuestionWithDetails, Topic, User as UserType } from "@shared/schema";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
@@ -25,7 +25,8 @@ export default function CommunityPage() {
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const [, setLocation] = useLocation();
 
   // Queries
   const { data: topicsData = [], isLoading: topicsLoading } = useQuery<Topic[]>({
@@ -142,7 +143,11 @@ export default function CommunityPage() {
               
               {/* Ask Question Button in Header */}
               <div className="hidden md:block">
-                <AskQuestionDialog>
+                <AskQuestionDialog
+                  topics={topics}
+                  isAuthenticated={isAuthenticated}
+                  onSignInRequired={() => setLocation('/auth/signin')}
+                >
                   <Button 
                     size="lg" 
                     className="bg-white/20 text-white hover:bg-white/30 border-white/30 font-semibold px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200" 
@@ -159,7 +164,11 @@ export default function CommunityPage() {
 
         {/* Mobile Ask Question Button */}
         <div className="mb-8 flex justify-center md:hidden">
-          <AskQuestionDialog>
+          <AskQuestionDialog
+            topics={topics}
+            isAuthenticated={isAuthenticated}
+            onSignInRequired={() => setLocation('/auth/signin')}
+          >
             <Button size="lg" className="bg-brand text-white hover:bg-brand-hover font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" data-testid="button-ask-question-mobile">
               <Plus className="w-6 h-6 mr-3" />
               Ask Question
@@ -317,7 +326,11 @@ export default function CommunityPage() {
                     Clear Filters
                   </Button>
                 )}
-                <AskQuestionDialog>
+                <AskQuestionDialog
+                  topics={topics}
+                  isAuthenticated={isAuthenticated}
+                  onSignInRequired={() => setLocation('/auth/signin')}
+                >
                   <Button>
                     <Plus className="mr-2 h-4 w-4" />
                     Ask First Question
