@@ -27,6 +27,7 @@ import {
   chatParticipantState,
   userTripFlags,
   threadUsers,
+  auditLogs,
   type User,
   type UpsertUser,
   type InsertTrip,
@@ -79,7 +80,6 @@ import {
   type SaveNotification,
   adminChatThreads,
   adminChatMessages,
-  auditLogs,
   type AdminChatThread,
   type InsertAdminChatThread,
   type AdminChatThreadWithDetails,
@@ -366,17 +366,14 @@ export class DatabaseStorage implements IStorage {
     // Delete notifications
     await db.delete(notifications).where(eq(notifications.userId, id));
     
-    // Delete user personalization
-    await db.delete(userPersonalization).where(eq(userPersonalization.userId, id));
-    
     // Delete user interactions
     await db.delete(userInteractions).where(eq(userInteractions.userId, id));
     
-    // Delete user preferences
-    await db.delete(userPreferences).where(eq(userPreferences.userId, id));
+    // Delete question upvotes
+    await db.delete(questionUpvotes).where(eq(questionUpvotes.userId, id));
     
-    // Delete votes
-    await db.delete(votes).where(eq(votes.userId, id));
+    // Delete answer upvotes  
+    await db.delete(answerUpvotes).where(eq(answerUpvotes.userId, id));
     
     // Delete answers
     await db.delete(answers).where(eq(answers.userId, id));
@@ -1900,7 +1897,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(chatMessages.createdAt))
       .limit(limit);
     
-    return result.map(({ chatMessages: msg, users: user }) => ({
+    return result.map(({ chat_messages: msg, users: user }) => ({
       ...msg,
       author: user!
     }));
@@ -2374,50 +2371,7 @@ export class DatabaseStorage implements IStorage {
 
   // Contact sharing feature deprecated - removed from Ceylon Expand
 
-  // Admin/moderation methods for contact sharing oversight
-  async getContactSharesForAdmin(filters?: {
-    threadId?: string;
-    userId?: string;
-    startDate?: Date;
-    endDate?: Date;
-    limit?: number;
-  }): Promise<(ContactShare & { user: User, threadDetails?: any })[]> {
-    const conditions = [];
-    
-    if (filters?.threadId) {
-      conditions.push(eq(contactShares.threadId, filters.threadId));
-    }
-    
-    if (filters?.userId) {
-      conditions.push(eq(contactShares.sharedBy, filters.userId));
-    }
-    
-    if (filters?.startDate) {
-      conditions.push(gte(contactShares.sharedAt, filters.startDate));
-    }
-    
-    if (filters?.endDate) {
-      conditions.push(lte(contactShares.sharedAt, filters.endDate));
-    }
-
-    const query = db
-      .select()
-      .from(contactShares)
-      .leftJoin(users, eq(contactShares.sharedBy, users.id))
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(desc(contactShares.sharedAt));
-      
-    if (filters?.limit) {
-      query.limit(filters.limit);
-    }
-
-    const result = await query;
-    
-    return result.map(({ contact_shares: share, users: user }) => ({
-      ...share,
-      user: user!
-    }));
-  }
+  // Contact sharing feature deprecated - method removed
 
   async getAuditLogs(filters?: {
     action?: string;
@@ -2425,7 +2379,7 @@ export class DatabaseStorage implements IStorage {
     startDate?: Date;
     endDate?: Date;
     limit?: number;
-  }): Promise<AuditLog[]> {
+  }): Promise<any[]> {
     const conditions = [];
     
     if (filters?.action) {
