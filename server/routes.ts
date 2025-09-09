@@ -4157,12 +4157,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create contact share message
       const contactData = {};
-      if (fields.includes('phone') && trip.contactInfo) {
-        contactData.phone = trip.contactInfo;
-      }
-      if (fields.includes('email') && trip.organizerId) {
+      if (trip.organizerId) {
         const organizer = await storage.getUser(trip.organizerId);
-        if (organizer?.email) {
+        if (fields.includes('phone') && organizer?.phoneNumber) {
+          contactData.phone = organizer.phoneNumber;
+        }
+        if (fields.includes('email') && organizer?.email) {
           contactData.email = organizer.email;
         }
       }
