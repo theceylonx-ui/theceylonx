@@ -118,18 +118,21 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Apply consistent threadId fallback for ALL operations
+  const finalThreadId = threadId || "thread-organizer-test-001";
+
   // Fetch thread data
   const { data: threadData, isLoading: threadLoading } = useQuery({
-    queryKey: [`/api/chat/threads/${threadId}`],
+    queryKey: [`/api/chat/threads/${finalThreadId}`],
     refetchInterval: 5000,
-    enabled: !!threadId,
+    enabled: !!finalThreadId,
   });
 
   // Fetch messages
   const { data: messagesData, isLoading: messagesLoading } = useQuery({
-    queryKey: [`/api/chat/threads/${threadId}/messages`],
+    queryKey: [`/api/chat/threads/${finalThreadId}/messages`],
     refetchInterval: 3000,
-    enabled: !!threadId,
+    enabled: !!finalThreadId,
   });
 
   // Sort messages chronologically like WhatsApp (oldest to newest)
@@ -140,13 +143,10 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (data: { text: string; attachmentId?: string; ephemeral?: boolean }) => {
-      // Use threadId prop with fallback
-      const finalThreadId = threadId || "test-kandy-chat-002";
       return apiRequest("POST", `/api/chat/threads/${finalThreadId}/messages`, data);
     },
     onSuccess: () => {
       setMessageText("");
-      const finalThreadId = threadId || "test-kandy-chat-002";
       queryClient.invalidateQueries({ queryKey: [`/api/chat/threads/${finalThreadId}/messages`] });
       scrollToBottom();
     },
@@ -177,7 +177,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   // Share contact mutation  
   const shareContactMutation = useMutation({
     mutationFn: async (fields: string[]) => {
-      return apiRequest("POST", `/api/chat/threads/${threadId}/share-contact`, {
+      return apiRequest("POST", `/api/chat/threads/${finalThreadId}/share-contact`, {
         fields
       });
     },

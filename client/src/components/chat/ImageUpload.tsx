@@ -100,7 +100,7 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
       }
       
       // Use threadId prop with fallback
-      const finalThreadId = threadId || "test-kandy-chat-002";
+      const finalThreadId = threadId || "thread-organizer-test-001";
       
       return apiRequest("POST", `/api/chat/threads/${finalThreadId}/messages`, {
         text: text || undefined, // Include message text if provided
@@ -121,7 +121,7 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
       resetUploadState();
       
       // Refresh messages
-      const finalThreadId = threadId || "test-kandy-chat-002";
+      const finalThreadId = threadId || "thread-organizer-test-001";
       queryClient.invalidateQueries({
         queryKey: [`/api/chat/threads/${finalThreadId}/messages`],
       });
