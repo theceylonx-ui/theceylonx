@@ -212,9 +212,19 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
     const uploadUrl = result.successful[0]?.uploadURL;
     if (uploadUrl) {
       // Get threadId from the current URL if not available as prop
-      const currentThreadId = threadId || window.location.pathname.split('/chat-buddy/')[1];
+      const urlPath = window.location.pathname;
+      const urlThreadId = urlPath.includes('/chat-buddy/') ? urlPath.split('/chat-buddy/')[1] : null;
+      const currentThreadId = threadId || urlThreadId;
       
-      if (currentThreadId) {
+      console.log('🖼️ Image upload debug:', { 
+        threadId, 
+        urlPath, 
+        urlThreadId, 
+        currentThreadId,
+        uploadUrl 
+      });
+      
+      if (currentThreadId && currentThreadId !== 'undefined') {
         sendMessageMutation.mutate({
           text: "",
           attachmentId: uploadUrl,
@@ -228,7 +238,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
       } else {
         toast({
           title: "Upload failed", 
-          description: "Unable to send image. Please refresh and try again.",
+          description: "Unable to find chat thread. Please refresh and try again.",
           variant: "destructive",
         });
       }
