@@ -1369,16 +1369,6 @@ export type UpsertSavedTrip = z.infer<typeof upsertSavedTripSchema>;
 export type SavedTrip = typeof savedTrips.$inferSelect;
 export type SavedTripWithTrip = SavedTrip & { trip: Trip };
 
-// Notification types for the new save system
-export type SaveNotification = {
-  id: string;
-  userId: string;
-  tripId: string | null;
-  type: 'trip_updated' | 'trip_removed' | 'save_removed';
-  payload: Record<string, any>;
-  isRead: boolean;
-  createdAt: Date;
-};
 
 // Normalized version for UI with properly handled user data
 export type TripWithNormalizedOrganizer = Omit<TripWithOrganizer, 'organizer'> & {

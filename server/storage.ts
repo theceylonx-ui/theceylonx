@@ -77,7 +77,6 @@ import {
   type SiteSetting,
   type InsertSiteSetting,
   type SavedTripWithTrip,
-  type SaveNotification,
   adminChatThreads,
   adminChatMessages,
   type AdminChatThread,
@@ -290,8 +289,6 @@ export interface IStorage {
   getUnreadNotificationCount(userId: string): Promise<number>;
   deleteNotification(id: string): Promise<void>;
   
-  // Legacy saved trip notifications
-  createSaveNotification(userId: string, tripId: string, type: 'trip_updated' | 'trip_removed' | 'save_removed', payload?: Record<string, any>): Promise<SaveNotification>;
 
   // Enhanced Chat System (new comprehensive chat implementation)
   getChatThreadByTripAndUsers(tripId: string, organizerId: string, userId: string): Promise<any | undefined>;
@@ -2236,38 +2233,6 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  // Notification operations for saved trips
-  async createSaveNotification(
-    userId: string, 
-    tripId: string, 
-    type: 'trip_updated' | 'trip_removed' | 'save_removed', 
-    payload: Record<string, any> = {}
-  ): Promise<SaveNotification> {
-    const [notification] = await db
-      .insert(notifications)
-      .values({
-        userId,
-        tripId,
-        type,
-        category: 'trips',
-        priority: 'normal',
-        title: this.getNotificationTitle(type),
-        message: this.getNotificationMessage(type, payload),
-        payload,
-        isRead: false,
-      })
-      .returning();
-
-    return {
-      id: notification.id,
-      userId: notification.userId,
-      tripId: notification.tripId || null,
-      type: notification.type as 'trip_updated' | 'trip_removed' | 'save_removed',
-      payload: notification.payload as Record<string, any>,
-      isRead: notification.isRead || false,
-      createdAt: notification.createdAt || new Date(),
-    };
-  }
 
   async getUserNotifications(userId: string, limit: number = 20): Promise<Notification[]> {
     try {
@@ -2315,32 +2280,6 @@ export class DatabaseStorage implements IStorage {
       .where(eq(notifications.id, notificationId));
   }
 
-  private getNotificationTitle(type: 'trip_updated' | 'trip_removed' | 'save_removed'): string {
-    switch (type) {
-      case 'trip_updated':
-        return 'Saved Trip Updated';
-      case 'trip_removed':
-        return 'Saved Trip Removed';
-      case 'save_removed':
-        return 'Trip Save Removed';
-      default:
-        return 'Trip Notification';
-    }
-  }
-
-  private getNotificationMessage(type: 'trip_updated' | 'trip_removed' | 'save_removed', payload: Record<string, any>): string {
-    switch (type) {
-      case 'trip_updated':
-        const changedFields = Object.keys(payload);
-        return `A trip you saved has been updated. Changes: ${changedFields.join(', ')}`;
-      case 'trip_removed':
-        return 'A trip you saved has been removed by the organizer.';
-      case 'save_removed':
-        return 'Your saved trip has been removed from your list.';
-      default:
-        return 'You have a new notification about a saved trip.';
-    }
-  }
 
   // Additional chat-related methods for Chat Buddy functionality
   async getAcceptedTripParticipants(tripId: string): Promise<User[]> {
