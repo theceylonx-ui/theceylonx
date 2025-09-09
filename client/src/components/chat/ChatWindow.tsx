@@ -92,6 +92,10 @@ interface ChatWindowProps {
 }
 
 export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps) {
+  // Ensure threadId is available for image uploads
+  if (!threadId) {
+    console.warn('⚠️ ChatWindow: threadId is undefined, image uploads may fail');
+  }
   // Show placeholder when no thread is selected
   if (!threadId) {
     return (
@@ -206,14 +210,23 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   };
 
   const handleImageUploaded = (result: any) => {
-    console.log('🖼️ Image uploaded:', { threadId, result });
     const uploadUrl = result.successful[0]?.uploadURL;
-    if (uploadUrl) {
-      console.log('📤 Sending image message with threadId:', threadId);
+    if (uploadUrl && threadId) {
       sendMessageMutation.mutate({
         text: "",
         attachmentId: uploadUrl,
         ephemeral: false,
+      });
+      
+      toast({
+        title: "Image sent!",
+        description: "Your image has been shared successfully.",
+      });
+    } else if (!threadId) {
+      toast({
+        title: "Upload failed",
+        description: "Unable to send image. Please refresh and try again.",
+        variant: "destructive",
       });
     }
   };

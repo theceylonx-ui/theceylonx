@@ -105,7 +105,7 @@ function ChatThreadsListView() {
             
             {/* Chat Window */}
             <div className="lg:col-span-2">
-              <ChatWindow threadId={threadId} currentUserId={user.id} />
+              <ChatWindow threadId={threadId} currentUserId={user?.id} />
             </div>
           </div>
         </div>
