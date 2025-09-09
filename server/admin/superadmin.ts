@@ -47,15 +47,21 @@ export class SuperadminManager {
    */
   generateInitToken(): string {
     const token = generateSecureToken(32);
-    console.log('\n🔐 SUPERADMIN INITIALIZATION TOKEN GENERATED');
-    console.log('='.repeat(50));
-    console.log(`Token: ${token}`);
-    console.log('='.repeat(50));
-    console.log('⚠️  SECURITY WARNING:');
-    console.log('1. This token grants superadmin access');
-    console.log('2. Store it securely and use only once');
-    console.log('3. Set as SUPERADMIN_INIT_TOKEN environment variable');
-    console.log('4. Delete after successful initialization\n');
+    
+    // Only display token in development environment
+    if (process.env.NODE_ENV === 'development') {
+      console.log('\n🔐 SUPERADMIN INITIALIZATION TOKEN GENERATED');
+      console.log('='.repeat(50));
+      console.log(`Token: ${token}`);
+      console.log('='.repeat(50));
+      console.log('⚠️  SECURITY WARNING:');
+      console.log('1. This token grants superadmin access');
+      console.log('2. Store it securely and use only once');
+      console.log('3. Set as SUPERADMIN_INIT_TOKEN environment variable');
+      console.log('4. Delete after successful initialization\n');
+    } else {
+      console.log('🔐 Superadmin initialization token generated. Check environment variables.');
+    }
     
     return token;
   }

@@ -183,7 +183,9 @@ router.post('/dev-login', async (req: Request, res: Response) => {
     const tokens = await generateAuthTokens(jwtUser);
     setAuthCookies(res, tokens);
     
-    console.log('🔧 Development login successful, tokens set');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔧 Development login successful, tokens set');
+    }
     res.json({ success: true, user: { id: testUser.id, email: testUser.email, name: testUser.name } });
   } catch (error) {
     console.error('❌ Dev login error:', error);

@@ -208,8 +208,11 @@ export async function authGuard(req: Request & { user?: JWTUser }, res: Response
 }
 
 export async function getCurrentUser(req: Request): Promise<JWTUser | null> {
-  console.log("🔍 Checking authentication - Cookies:", Object.keys(req.cookies || {}));
-  console.log("🔍 Authorization header:", req.headers.authorization ? "present" : "not present");
+  // Development-only debugging logs
+  if (process.env.NODE_ENV === 'development') {
+    console.log("🔍 Checking authentication - Cookies:", Object.keys(req.cookies || {}));
+    console.log("🔍 Authorization header:", req.headers.authorization ? "present" : "not present");
+  }
   
   // Try to get token from cookies first
   let accessToken = req.cookies?.accessToken;
@@ -223,11 +226,15 @@ export async function getCurrentUser(req: Request): Promise<JWTUser | null> {
   }
   
   if (!accessToken) {
-    console.log("❌ No access token found");
+    if (process.env.NODE_ENV === 'development') {
+      console.log("❌ No access token found");
+    }
     return null;
   }
 
   const user = verifyAccessToken(accessToken);
-  console.log("🔍 JWT verification result:", user ? "✅ valid" : "❌ invalid");
+  if (process.env.NODE_ENV === 'development') {
+    console.log("🔍 JWT verification result:", user ? "✅ valid" : "❌ invalid");
+  }
   return user;
 }
