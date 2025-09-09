@@ -32,7 +32,6 @@ export function StepPreview({ form }: StepPreviewProps) {
     { field: 'date', label: 'Trip date' },
     { field: 'time', label: 'Departure time' },
     { field: 'seatsAvailable', label: 'Available seats' },
-    { field: 'contactInfo', label: 'Contact information' },
     { field: 'termsAccepted', label: 'Terms acceptance' },
   ];
   
@@ -41,6 +40,16 @@ export function StepPreview({ form }: StepPreviewProps) {
     if (field === 'termsAccepted') return !value;
     return !value || (typeof value === 'string' && value.trim() === '');
   });
+
+  // Separate contact validation - check if at least phone OR email is provided
+  const hasPhone = formData.organizerPhone && formData.organizerPhone.length >= 9;
+  const hasEmail = formData.organizerEmail && formData.organizerEmail.length > 0;
+  const hasLegacyContact = formData.contactInfo && formData.contactInfo.length > 0;
+  const hasContactInfo = hasPhone || hasEmail || hasLegacyContact;
+  
+  if (!hasContactInfo) {
+    missingFields.push({ field: 'contact', label: 'Contact information' });
+  }
   
   const isReadyToPublish = missingFields.length === 0;
   

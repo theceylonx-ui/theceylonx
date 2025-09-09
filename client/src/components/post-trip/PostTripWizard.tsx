@@ -230,7 +230,10 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
         priceMin: formData.priceMin,
         priceMax: formData.priceMax,
         notes: formData.notes,
-        contactInfo: formData.contactInfo,
+        // New separate contact fields instead of contactInfo
+        organizerPhone: formData.organizerPhone,
+        organizerEmail: formData.organizerEmail,
+        organizerCountryCode: formData.organizerCountryCode || '+94',
         safetyFlags: formData.safetyFlags || [],
         region: formData.region,
         category: 'unknown', // Default category
