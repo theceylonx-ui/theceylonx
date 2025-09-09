@@ -3930,14 +3930,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get trip info for context (include userId for proper organizer data)
       const trip = await storage.getTrip(thread.tripId, userId);
       
-      // 🔥 FORCE LOGGING to see if this code runs
-      console.log('🔥 CHAT API CALLED - FRESH REQUEST!', {
-        threadId,
-        userId,
-        tripId: thread.tripId,
-        organizerData: trip?.organizer,
-        timestamp: new Date().toISOString()
-      });
+      // Log chat API access for monitoring
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Chat API accessed:', { threadId, userId, tripId: thread.tripId });
+      }
       
       res.json({ 
         thread, 
@@ -3950,11 +3946,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: trip.status,
           organizer: trip.organizer // Include full organizer data with contact info
         } : null,
-        _debug: {
-          organizerContactAvailable: !!(trip?.organizer?.phone || trip?.organizer?.email),
-          organizerPhone: trip?.organizer?.phone,
-          organizerEmail: trip?.organizer?.email,
-          timestamp: Date.now() // Force different response each time
+        metadata: {
+          hasContact: !!(trip?.organizer?.phone || trip?.organizer?.email)
         }
       });
     } catch (error) {
@@ -4009,7 +4002,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For demo purposes, create a local storage URL that will work
       const uploadUrl = `${req.protocol}://${req.get('host')}/api/chat-images/${filename}?upload=true`;
       
-      console.log("🔥 Generated upload URL:", uploadUrl);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Generated upload URL:", uploadUrl);
+      }
       
       res.json({ uploadUrl });
     } catch (error) {
@@ -4022,7 +4017,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/chat-images/:filename', unifiedAuthGuard, async (req: any, res) => {
     try {
       const { filename } = req.params;
-      console.log("🔥 Image upload received for:", filename);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Image upload received for:", filename);
+      }
       
       // For demo: just return success
       // In production, this would save to actual object storage
@@ -4040,7 +4037,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/chat-images/:filename', async (req, res) => {
     try {
       const { filename } = req.params;
-      console.log("🔥 Image request for:", filename);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Image request for:", filename);
+      }
       
       // For demo: return a placeholder image URL
       // In production, this would fetch from object storage

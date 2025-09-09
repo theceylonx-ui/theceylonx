@@ -121,33 +121,42 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   // Apply consistent threadId fallback for ALL operations
   const finalThreadId = threadId || "thread-organizer-test-001";
 
-  // Fetch thread data (FORCE FRESH - NO CACHE)
+  // Fetch thread data with optimized caching
   const { data: threadData, isLoading: threadLoading } = useQuery({
     queryKey: [`/api/chat/threads/${finalThreadId}`],
-    refetchInterval: 5000,
+    refetchInterval: 10000, // Less frequent for better performance
     enabled: !!finalThreadId,
-    staleTime: 0, // Always consider data stale
-    gcTime: 0, // Don't cache at all
+    staleTime: 30000, // Cache for 30 seconds
+    gcTime: 300000, // Keep in cache for 5 minutes
   });
 
-  // Fetch messages
+  // Fetch messages with optimized polling
   const { data: messagesData, isLoading: messagesLoading } = useQuery({
     queryKey: [`/api/chat/threads/${finalThreadId}/messages`],
-    refetchInterval: 3000,
+    refetchInterval: 5000, // Balanced refresh rate
     enabled: !!finalThreadId,
+    staleTime: 1000, // Allow 1 second staleness
+    gcTime: 600000, // Keep messages cached for 10 minutes
   });
 
   // Sort messages chronologically like WhatsApp (oldest to newest)
-  const messages = ((messagesData as any)?.messages || []).sort((a: ChatMessage, b: ChatMessage) => 
+  const messages = (messagesData?.messages || []).sort((a: ChatMessage, b: ChatMessage) => 
     new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive (optimized)
   useEffect(() => {
-    if (messagesEndRef.current && messages.length > 0) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages.length]); // Trigger when messages count changes
+    const scrollToBottom = () => {
+      if (messagesEndRef.current && messages.length > 0) {
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      }
+    };
+    
+    // Debounce scroll to avoid excessive scrolling
+    const timeoutId = setTimeout(scrollToBottom, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, [messages.length]);
 
   // Send message mutation
   const sendMessageMutation = useMutation({
@@ -156,13 +165,17 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
     },
     onSuccess: () => {
       setMessageText("");
-      queryClient.invalidateQueries({ queryKey: [`/api/chat/threads/${finalThreadId}/messages`] });
-      scrollToBottom();
+      // Optimized cache invalidation
+      queryClient.invalidateQueries({ 
+        queryKey: [`/api/chat/threads/${finalThreadId}/messages`],
+        exact: true 
+      });
     },
     onError: (error) => {
+      console.error('Message send error:', error);
       toast({
         title: "Failed to send message",
-        description: error.message,
+        description: error.message || "Please check your connection and try again",
         variant: "destructive",
       });
     },
@@ -235,8 +248,8 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
     reportMessageMutation.mutate({ messageId, reason });
   };
 
-  const isOrganizer = (threadData as any)?.trip?.organizer?.id === currentUserId;
-  const canShareContact = isOrganizer && ((threadData as any)?.trip?.organizer?.phone || (threadData as any)?.trip?.organizer?.email);
+  const isOrganizer = threadData?.trip?.organizer?.id === currentUserId;
+  const canShareContact = isOrganizer && (threadData?.trip?.organizer?.phone || threadData?.trip?.organizer?.email);
 
   if (threadLoading) {
     return (
@@ -263,7 +276,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   }
 
   // Check if trip is deleted or unavailable
-  if (!(threadData as any).trip) {
+  if (!threadData?.trip) {
     return (
       <Card className="h-full flex items-center justify-center">
         <div className="text-center text-gray-500">
