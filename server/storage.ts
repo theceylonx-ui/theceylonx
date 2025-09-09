@@ -282,10 +282,16 @@ export interface IStorage {
   getSavedTrip(userId: string, tripId: string): Promise<SavedTrip | undefined>;
   getUserSavedTrips(userId: string, saveType?: 'pinned' | 'interested'): Promise<SavedTripWithTrip[]>;
   
-  // Notification operations for saved trips
-  createSaveNotification(userId: string, tripId: string, type: 'trip_updated' | 'trip_removed' | 'save_removed', payload?: Record<string, any>): Promise<SaveNotification>;
-  getUserNotifications(userId: string, limit?: number, offset?: number): Promise<SaveNotification[]>;
+  // Notification operations
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  getUserNotifications(userId: string, limit?: number): Promise<Notification[]>;
   markNotificationAsRead(notificationId: string): Promise<void>;
+  markAllNotificationsAsRead(userId: string): Promise<void>;
+  getUnreadNotificationCount(userId: string): Promise<number>;
+  deleteNotification(id: string): Promise<void>;
+  
+  // Legacy saved trip notifications
+  createSaveNotification(userId: string, tripId: string, type: 'trip_updated' | 'trip_removed' | 'save_removed', payload?: Record<string, any>): Promise<SaveNotification>;
 
   // Enhanced Chat System (new comprehensive chat implementation)
   getChatThreadByTripAndUsers(tripId: string, organizerId: string, userId: string): Promise<any | undefined>;
@@ -2263,43 +2269,41 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getUserNotifications(userId: string, limit: number = 20, offset: number = 0): Promise<SaveNotification[]> {
-    // For now, return empty array until database is properly migrated
+  async getUserNotifications(userId: string, limit: number = 20): Promise<Notification[]> {
     try {
       const results = await db
         .select()
         .from(notifications)
         .where(eq(notifications.userId, userId))
         .orderBy(desc(notifications.createdAt))
-        .limit(limit)
-        .offset(offset);
+        .limit(limit);
 
       return results.map(notification => ({
         id: notification.id,
         userId: notification.userId,
-        tripId: notification.tripId || null,
-        type: (notification.type as 'trip_updated' | 'trip_removed' | 'save_removed') || 'trip_updated',
-        category: notification.category || 'trips',
-        priority: notification.priority || 'normal',
-        title: notification.title || '',
-        message: notification.message || '',
-        payload: (notification.payload as Record<string, any>) || {},
-        isRead: notification.isRead || false,
-        actionUrl: notification.actionUrl || null,
-        primaryActionLabel: notification.primaryActionLabel || null,
-        primaryActionUrl: notification.primaryActionUrl || null,
-        secondaryActionLabel: notification.secondaryActionLabel || null,
-        secondaryActionUrl: notification.secondaryActionUrl || null,
-        relatedTripId: notification.relatedTripId || null,
-        relatedUserId: notification.relatedUserId || null,
-        metadata: notification.metadata || {},
-        commentId: notification.commentId || null,
-        threadId: notification.threadId || null,
-        createdAt: notification.createdAt || new Date(),
-        updatedAt: notification.updatedAt || new Date(),
+        tripId: notification.tripId,
+        type: notification.type,
+        category: notification.category,
+        priority: notification.priority,
+        title: notification.title,
+        message: notification.message,
+        payload: notification.payload,
+        isRead: notification.isRead,
+        relatedTripId: notification.relatedTripId,
+        relatedUserId: notification.relatedUserId,
+        actionUrl: notification.actionUrl,
+        primaryActionLabel: notification.primaryActionLabel,
+        primaryActionUrl: notification.primaryActionUrl,
+        secondaryActionLabel: notification.secondaryActionLabel,
+        secondaryActionUrl: notification.secondaryActionUrl,
+        metadata: notification.metadata,
+        commentId: notification.commentId,
+        threadId: notification.threadId,
+        createdAt: notification.createdAt,
+        updatedAt: notification.updatedAt,
       }));
     } catch (error) {
-      console.error('Error fetching notifications (database may not be migrated):', error);
+      console.error('Error fetching notifications:', error);
       return [];
     }
   }
