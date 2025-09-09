@@ -3933,7 +3933,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           date: trip.date,
           status: trip.status,
           organizer: trip.organizer // Include full organizer data with contact info
-        } : null
+        } : null,
+        _debug: {
+          organizerContactAvailable: !!(trip?.organizer?.phone || trip?.organizer?.email),
+          organizerPhone: trip?.organizer?.phone,
+          organizerEmail: trip?.organizer?.email
+        }
       });
     } catch (error) {
       console.error('Error fetching chat thread:', error);
