@@ -25,6 +25,8 @@ import {
   ImageIcon
 } from 'lucide-react';
 import { ImageUpload } from '@/components/chat/ImageUpload';
+import { ChatThreadsList } from '@/components/chat/ChatThreadsList';
+import { ChatWindow } from '@/components/chat/ChatWindow';
 
 interface User {
   id: string;
@@ -54,6 +56,59 @@ interface ChatThread {
 interface TripStatus {
   status: 'none' | 'pending' | 'accepted' | 'rejected';
   chatThreadId?: string;
+}
+
+// Component to show all chat threads when accessed directly from navigation
+function ChatThreadsListView() {
+  const { user } = useAuth();
+  
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800">
+        <Navigation />
+        <div className="pt-20 pb-10">
+          <div className="max-w-4xl mx-auto p-6">
+            <div className="text-center">Please sign in to access your chats.</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800">
+      <Navigation />
+      <div className="pt-20 pb-10">
+        <div className="max-w-6xl mx-auto p-6">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 text-center">
+              <MessageSquare className="h-12 w-12 mx-auto mb-4 text-green-500" />
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                💬 Chat Buddy
+              </h1>
+              <p className="text-gray-600 dark:text-gray-300">
+                Connect with fellow travelers and trip organizers
+              </p>
+            </div>
+          </div>
+
+          {/* Chat Interface */}
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Threads List */}
+            <div className="lg:col-span-1">
+              <ChatThreadsList />
+            </div>
+            
+            {/* Chat Window */}
+            <div className="lg:col-span-2">
+              <ChatWindow />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function ChatBuddy() {
@@ -171,20 +226,7 @@ export default function ChatBuddy() {
   };
 
   if (!tripId) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <Card>
-            <CardContent className="p-8 text-center">
-              <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <h2 className="text-xl font-semibold mb-2">Invalid Chat Link</h2>
-              <p className="text-muted-foreground">Please access Chat Buddy through a trip page.</p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+    return <ChatThreadsListView />;
   }
 
   // Check if trip is deleted or unavailable
