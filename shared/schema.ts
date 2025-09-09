@@ -1059,7 +1059,12 @@ export const insertTripSchema = z.object({
     return val;
   }),
   region: z.string().min(1, "Region is required"),
-  contactInfo: z.string().min(1, "Contact information is required"),
+  // Legacy contact field - kept for backward compatibility, now optional
+  contactInfo: z.string().optional(),
+  // New separate contact fields
+  organizerPhone: z.string().min(9, "Phone number must be 9 digits").max(9, "Phone number must be 9 digits").optional(),
+  organizerEmail: z.string().email("Valid email required").optional(), 
+  organizerCountryCode: z.string().default("+94").optional(),
   notes: z.string().optional(),
   organizerId: z.string(),
   status: z.string().optional(),
@@ -1070,6 +1075,16 @@ export const insertTripSchema = z.object({
     return url.startsWith('data:') || z.string().url().safeParse(url).success;
   }, "Invalid image URL or data format")).max(12, "Maximum 12 images allowed").optional(),
   coverImageIndex: z.number().min(0).default(0).optional(),
+}).refine((data) => {
+  // Custom validation: require at least phone OR email contact information
+  const hasPhone = data.organizerPhone && data.organizerPhone.length >= 9;
+  const hasEmail = data.organizerEmail && data.organizerEmail.length > 0;
+  const hasLegacyContact = data.contactInfo && data.contactInfo.length > 0;
+  
+  return hasPhone || hasEmail || hasLegacyContact;
+}, {
+  message: "Please provide either a phone number or email address for contact",
+  path: ["organizerPhone"]
 });
 
 
