@@ -133,7 +133,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   });
 
   // Sort messages chronologically like WhatsApp (oldest to newest)
-  const messages = (messagesData || []).sort((a: ChatMessage, b: ChatMessage) => 
+  const messages = (messagesData?.messages || []).sort((a: ChatMessage, b: ChatMessage) => 
     new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
 
