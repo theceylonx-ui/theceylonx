@@ -39,6 +39,21 @@ export const questionVisibilityEnum = pgEnum('question_visibility', ['public', '
 // Preferences enums
 export const preferenceEventEnum = pgEnum('preference_event', ['created', 'updated', 'reset']);
 
+// Site settings table for dynamic content like background images
+export const siteSettings = pgTable("site_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  key: varchar("key").notNull().unique(),
+  value: text("value"),
+  description: text("description"),
+  category: varchar("category").default('general'),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Site settings types
+export type SiteSetting = typeof siteSettings.$inferSelect;
+export type InsertSiteSetting = typeof siteSettings.$inferInsert;
+
 // Join status enum (exists in database)
 export const joinStatusEnum = pgEnum('join_status', ['pending', 'accepted', 'declined', 'cancelled']);
 
