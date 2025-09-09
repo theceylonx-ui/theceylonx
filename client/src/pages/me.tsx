@@ -32,6 +32,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { ObjectUploader } from "@/components/ObjectUploader";
@@ -1506,8 +1508,8 @@ function SecuritySettings({ profile }: any) {
 function PrivacySettings({ privacy, onUpdate }: any) {
   const { toast } = useToast();
   const [settings, setSettings] = useState({
-    visibility: privacy?.visibility ?? 'public',
-    showOnline: privacy?.showOnline ?? true,
+    profileVisibility: privacy?.profileVisibility ?? 'public',
+    showOnlineStatus: privacy?.showOnlineStatus ?? true,
     showJoinedTrips: privacy?.showJoinedTrips ?? true,
     cityVisibility: privacy?.cityVisibility ?? 'show'
   });
@@ -1516,18 +1518,16 @@ function PrivacySettings({ privacy, onUpdate }: any) {
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      const response = await apiRequest('PATCH', '/api/me/privacy', settings);
-      if (response.ok) {
-        toast({
-          title: "Privacy Updated",
-          description: "Your privacy settings have been saved.",
-        });
-        onUpdate();
-      }
+      await apiRequest('PATCH', '/api/me/privacy', settings);
+      toast({
+        title: "Privacy Settings Updated",
+        description: "Your privacy preferences have been saved successfully.",
+      });
+      onUpdate();
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update privacy settings.",
+        description: "Failed to update privacy settings. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -1536,64 +1536,105 @@ function PrivacySettings({ privacy, onUpdate }: any) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Eye className="w-6 h-6" />
-          Privacy Settings
-        </CardTitle>
-        <p className="text-muted-foreground">
-          Control who can see your profile information and activity.
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 rounded-full bg-gray-100">
+          <Eye className="w-5 h-5 text-gray-600" />
+        </div>
         <div>
-          <Label>Profile Visibility</Label>
-          <select
-            value={settings.visibility}
-            onChange={(e) => setSettings({...settings, visibility: e.target.value})}
-            className="w-full mt-2 p-2 border rounded"
+          <h3 className="text-lg font-semibold text-gray-900">Privacy Settings</h3>
+          <p className="text-sm text-gray-600">
+            Control who can see your profile information and activity.
+          </p>
+        </div>
+      </div>
+
+      <div className="space-y-8">
+        {/* Profile Visibility */}
+        <div className="space-y-3">
+          <Label htmlFor="profile-visibility" className="text-base font-medium text-gray-700">
+            Profile Visibility
+          </Label>
+          <Select 
+            value={settings.profileVisibility} 
+            onValueChange={(value) => setSettings({...settings, profileVisibility: value})}
           >
-            <option value="public">Public - Everyone can see</option>
-            <option value="private">Private</option>
-          </select>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select visibility level" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="public">Public - Everyone can see</SelectItem>
+              <SelectItem value="friends">Friends Only</SelectItem>
+              <SelectItem value="private">Private - Only me</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label>Show Online Status</Label>
-            <input
-              type="checkbox"
-              checked={settings.showOnline}
-              onChange={(e) => setSettings({...settings, showOnline: e.target.checked})}
-            />
+        {/* Show Online Status */}
+        <div className="flex items-center justify-between py-3">
+          <div className="space-y-1">
+            <Label className="text-base font-medium text-gray-700">
+              Show Online Status
+            </Label>
+            <p className="text-sm text-gray-500">
+              Let others see when you're active on Ceylon Expand
+            </p>
           </div>
-          <div className="flex items-center justify-between">
-            <Label>Show Joined Trips</Label>
-            <input
-              type="checkbox"
-              checked={settings.showJoinedTrips}
-              onChange={(e) => setSettings({...settings, showJoinedTrips: e.target.checked})}
-            />
-          </div>
+          <Switch 
+            checked={settings.showOnlineStatus}
+            onCheckedChange={(checked) => setSettings({...settings, showOnlineStatus: checked})}
+            data-testid="switch-online-status"
+          />
         </div>
 
-        <div>
-          <Label>City Visibility</Label>
-          <select
-            value={settings.cityVisibility}
-            onChange={(e) => setSettings({...settings, cityVisibility: e.target.value})}
-            className="w-full mt-2 p-2 border rounded"
+        {/* Show Joined Trips */}
+        <div className="flex items-center justify-between py-3">
+          <div className="space-y-1">
+            <Label className="text-base font-medium text-gray-700">
+              Show Joined Trips
+            </Label>
+            <p className="text-sm text-gray-500">
+              Display trips you've joined on your profile
+            </p>
+          </div>
+          <Switch 
+            checked={settings.showJoinedTrips}
+            onCheckedChange={(checked) => setSettings({...settings, showJoinedTrips: checked})}
+            data-testid="switch-joined-trips"
+          />
+        </div>
+
+        {/* City Visibility */}
+        <div className="space-y-3">
+          <Label htmlFor="city-visibility" className="text-base font-medium text-gray-700">
+            City Visibility
+          </Label>
+          <Select 
+            value={settings.cityVisibility} 
+            onValueChange={(value) => setSettings({...settings, cityVisibility: value})}
           >
-            <option value="show">Show my city</option>
-            <option value="hide">Hide my city</option>
-          </select>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select city visibility" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="show">Show my city</SelectItem>
+              <SelectItem value="hide">Hide my city</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        <Button onClick={handleSave} disabled={isLoading}>
-          {isLoading ? "Saving..." : "Save Settings"}
-        </Button>
-      </CardContent>
-    </Card>
+        {/* Save Button */}
+        <div className="pt-4">
+          <Button 
+            onClick={handleSave} 
+            disabled={isLoading}
+            className="bg-ceylon-green hover:bg-ceylon-green/90 text-white px-8"
+            data-testid="button-save-privacy"
+          >
+            {isLoading ? "Saving Settings..." : "Save Settings"}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
