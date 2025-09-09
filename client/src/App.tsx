@@ -27,7 +27,6 @@ import DestinationPage from "@/pages/destination";
 import AdminDashboardPage from "@/pages/admin-dashboard";
 import AdminOverviewPage from "@/pages/admin/index";
 import ReportTripPage from "@/pages/report-trip";
-import ChatPage from "@/pages/chat";
 import ChatDemoPage from "@/pages/chat-demo";
 import UserDeletion from "@/pages/user-deletion";
 import CalendarPage from "@/pages/calendar";
@@ -86,8 +85,8 @@ function Router() {
             {/* Clerk routes temporarily disabled */}
             <Route path="/destination/:city" component={DestinationPage} />
 
-            <Route path="/chat" component={ChatPage} />
-            <Route path="/chat/:threadId" component={ChatPage} />
+
+
             <Route path="/chat-demo" component={ChatDemoPage} />
             <Route path="/user/delete" component={UserDeletion} />
             <Route path="/post" component={SignInRequired} />
@@ -123,9 +122,8 @@ function Router() {
             <Route path="/profile/:id" component={UserProfilePage} />
             
             {/* Chat Routes */}
-            <Route path="/chat" component={ChatPage} />
-            <Route path="/chat/threads" component={ChatPage} />
-            <Route path="/chat/:threadId" component={ChatPage} />
+
+
             <Route path="/chat-demo" component={ChatDemoPage} />
             <Route path="/chat-buddy" component={ChatBuddy} />
             

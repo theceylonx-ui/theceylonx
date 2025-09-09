@@ -1738,27 +1738,26 @@ export class DatabaseStorage implements IStorage {
       allTrips.forEach(trip => tripsMap.set(trip.id, trip));
     }
 
-    // Batch fetch last messages using window function
+    // Batch fetch last messages using simpler query
     const lastMessagesMap = new Map<string, ChatMessage>();
     if (threadIds.length > 0) {
-      const lastMessages = await db
-        .select({
-          message: chatMessages,
-          threadId: chatMessages.threadId,
-        })
-        .from(
-          db
-            .select({
-              ...chatMessages,
-              rn: sql<number>`ROW_NUMBER() OVER (PARTITION BY ${chatMessages.threadId} ORDER BY ${chatMessages.createdAt} DESC)`.as('rn')
-            })
-            .from(chatMessages)
-            .where(sql`${chatMessages.threadId} = ANY(${sql.raw(`ARRAY[${threadIds.map(id => `'${id}'`).join(',')}]`)})`)
-            .as('ranked_messages')
-        )
-        .where(sql`rn = 1`);
+      // Get last message for each thread by fetching all and sorting in app
+      const allMessages = await db
+        .select()
+        .from(chatMessages)
+        .where(sql`${chatMessages.threadId} = ANY(${sql.raw(`ARRAY[${threadIds.map(id => `'${id}'`).join(',')}]`)})`)
+        .orderBy(desc(chatMessages.createdAt));
       
-      lastMessages.forEach(lm => lastMessagesMap.set(lm.threadId, lm.message));
+      // Group by thread and take the first (most recent) message for each thread
+      const threadLastMessages = new Map<string, ChatMessage>();
+      for (const message of allMessages) {
+        if (!threadLastMessages.has(message.threadId)) {
+          threadLastMessages.set(message.threadId, message);
+        }
+      }
+      threadLastMessages.forEach((message, threadId) => {
+        lastMessagesMap.set(threadId, message);
+      });
     }
 
     // Batch fetch other users
