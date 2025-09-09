@@ -28,6 +28,7 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isEphemeral, setIsEphemeral] = useState(true); // Default to ephemeral for privacy
+  const [messageText, setMessageText] = useState(""); // Add message text state
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -74,10 +75,11 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
     },
     onSuccess: (data) => {
       setUploadProgress(100);
-      // Send the image as a message
+      // Send the image as a message with text
       sendImageMessageMutation.mutate({
         attachmentUrl: data.url,
         ephemeral: isEphemeral,
+        text: messageText.trim() || undefined, // Include message if provided
       });
     },
     onError: (error) => {
@@ -92,7 +94,7 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
 
   // Send image message mutation
   const sendImageMessageMutation = useMutation({
-    mutationFn: async ({ attachmentUrl, ephemeral }: { attachmentUrl: string; ephemeral: boolean }) => {
+    mutationFn: async ({ attachmentUrl, ephemeral, text }: { attachmentUrl: string; ephemeral: boolean; text?: string }) => {
       if (!attachmentUrl || attachmentUrl.trim() === '') {
         throw new Error('Invalid attachment URL');
       }
@@ -101,7 +103,7 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
       const finalThreadId = threadId || "test-kandy-chat-002";
       
       return apiRequest("POST", `/api/chat/threads/${finalThreadId}/messages`, {
-        text: undefined,
+        text: text || undefined, // Include message text if provided
         attachmentId: attachmentUrl,
         ephemeral,
       });
@@ -144,6 +146,7 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
     setPreviewUrl("");
     setUploadProgress(0);
     setShowPreview(false);
+    setMessageText(""); // Reset message text
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -256,6 +259,27 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
                 )}
               </div>
             )}
+
+            {/* Message Input */}
+            <div className="space-y-2">
+              <label htmlFor="message-input" className="text-sm font-medium">
+                Add a message (optional)
+              </label>
+              <textarea
+                id="message-input"
+                placeholder="Type your message here..."
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary dark:border-gray-700 dark:bg-gray-800"
+                rows={3}
+                maxLength={500}
+                disabled={isUploading}
+              />
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span>Optional caption for your image</span>
+                <span>{messageText.length}/500</span>
+              </div>
+            </div>
 
             {/* Privacy Options */}
             <div className="space-y-3">
