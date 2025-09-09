@@ -74,14 +74,7 @@ export const threadUsers = pgTable("thread_users", {
   lastReadAt: timestamp("last_read_at"),
 });
 
-// Messages table (exists in database) 
-export const messages = pgTable("messages", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  threadId: varchar("thread_id").notNull(),
-  authorId: varchar("author_id").notNull(),
-  body: text("body").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+// NOTE: messages table removed - unified with chatMessages table for consistency
 
 // Session storage table for Replit Auth
 export const sessions = pgTable(

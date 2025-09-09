@@ -27,7 +27,6 @@ import {
   chatParticipantState,
   userTripFlags,
   threadUsers,
-  messages,
   type User,
   type UpsertUser,
   type InsertTrip,
@@ -395,7 +394,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(comments).where(eq(comments.userId, id));
     
     // Delete messages
-    await db.delete(messages).where(eq(messages.authorId, id));
+    await db.delete(chatMessages).where(eq(chatMessages.senderId, id));
     
     // Remove user from chat threads
     await db.delete(threadUsers).where(eq(threadUsers.userId, id));
@@ -1868,9 +1867,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Message implementation
-  async createMessage(message: InsertMessage): Promise<Message> {
+  async createMessage(message: InsertChatMessage): Promise<ChatMessage> {
     const [newMessage] = await db
-      .insert(messages)
+      .insert(chatMessages)
       .values(message)
       .returning();
     
@@ -1883,25 +1882,25 @@ export class DatabaseStorage implements IStorage {
     return newMessage;
   }
 
-  async getThreadMessages(threadId: string, limit: number = 50, cursor?: string): Promise<(Message & { author: User })[]> {
-    let whereConditions = eq(messages.threadId, threadId);
+  async getThreadMessages(threadId: string, limit: number = 50, cursor?: string): Promise<(ChatMessage & { author: User })[]> {
+    let whereConditions = eq(chatMessages.threadId, threadId);
     
     if (cursor) {
       whereConditions = and(
-        eq(messages.threadId, threadId),
-        sql`${messages.createdAt} < (SELECT created_at FROM messages WHERE id = ${cursor})`
+        eq(chatMessages.threadId, threadId),
+        sql`${chatMessages.createdAt} < (SELECT created_at FROM chat_messages WHERE id = ${cursor})`
       ) as any;
     }
 
     const result = await db
       .select()
-      .from(messages)
-      .leftJoin(users, eq(messages.authorId, users.id))
+      .from(chatMessages)
+      .leftJoin(users, eq(chatMessages.senderId, users.id))
       .where(whereConditions)
-      .orderBy(desc(messages.createdAt))
+      .orderBy(desc(chatMessages.createdAt))
       .limit(limit);
     
-    return result.map(({ messages: msg, users: user }) => ({
+    return result.map(({ chatMessages: msg, users: user }) => ({
       ...msg,
       author: user!
     }));
