@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { ArrowLeft, MapPin, Calendar, Globe, MessageCircle, UserPlus, Heart, Shield, Flag } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Globe, Shield } from "lucide-react";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
 import { VerificationBadges } from "@/components/ui/verification-badges";
+import { FollowButton } from "@/components/ui/follow-button";
+import { ReportButton } from "@/components/ui/report-button";
 import ProfilePage from "@/pages/me"; // Fallback to own profile
 
 interface UserProfile {
@@ -249,18 +251,8 @@ export default function UserProfilePage() {
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-3">
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Message
-                </Button>
-                <Button variant="outline">
-                  <Heart className="h-4 w-4 mr-2" />
-                  Follow
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Flag className="h-4 w-4 mr-2" />
-                  Report
-                </Button>
+                <FollowButton userId={profile.id} />
+                <ReportButton userId={profile.id} username={profile.username || profile.displayName} />
               </div>
             </div>
           </CardContent>

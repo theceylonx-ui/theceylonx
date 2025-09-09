@@ -4251,6 +4251,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User follow/unfollow system
+  app.get('/api/users/:userId/following-status', unifiedAuthGuard, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const followerId = req.user!.id;
+      
+      const isFollowing = await storage.isUserFollowing(followerId, userId);
+      res.json({ isFollowing });
+    } catch (error) {
+      console.error("Error checking follow status:", error);
+      res.status(500).json({ message: "Failed to check follow status" });
+    }
+  });
+
+  app.post('/api/users/:userId/follow', unifiedAuthGuard, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const followerId = req.user!.id;
+
+      if (userId === followerId) {
+        return res.status(400).json({ message: "Cannot follow yourself" });
+      }
+
+      const follow = await storage.followUser(followerId, userId);
+      res.json(follow);
+    } catch (error) {
+      console.error("Error following user:", error);
+      res.status(500).json({ message: "Failed to follow user" });
+    }
+  });
+
+  app.delete('/api/users/:userId/follow', unifiedAuthGuard, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const followerId = req.user!.id;
+
+      await storage.unfollowUser(followerId, userId);
+      res.json({ message: "Unfollowed successfully" });
+    } catch (error) {
+      console.error("Error unfollowing user:", error);
+      res.status(500).json({ message: "Failed to unfollow user" });
+    }
+  });
+
+  // User reporting system
+  app.post('/api/users/:userId/report', unifiedAuthGuard, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const reporterId = req.user!.id;
+      const { reason, description } = req.body;
+
+      if (!reason) {
+        return res.status(400).json({ message: "Report reason is required" });
+      }
+
+      if (userId === reporterId) {
+        return res.status(400).json({ message: "Cannot report yourself" });
+      }
+
+      const report = await storage.createReport({
+        context: 'user_profile',
+        reportedUserId: userId,
+        reporterId: reporterId,
+        reason,
+        description: description || null,
+        status: 'open'
+      });
+
+      res.json(report);
+    } catch (error) {
+      console.error("Error creating user report:", error);
+      res.status(500).json({ message: "Failed to submit report" });
+    }
+  });
+
   // User profile viewing endpoints with privacy controls
   app.get('/api/users/:userId/profile', unifiedAuthGuard, async (req, res) => {
     try {

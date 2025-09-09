@@ -1392,6 +1392,23 @@ export type Rating = typeof ratings.$inferSelect;
 export type InsertReport = z.infer<typeof insertReportSchema>;
 export type Report = typeof reports.$inferSelect;
 
+// User follows table - for following other users to get notifications about new trips
+export const userFollows = pgTable("user_follows", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  followerId: varchar("follower_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  followingId: varchar("following_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  // Ensure unique follower-following pairs
+  unique("unique_user_follow").on(table.followerId, table.followingId),
+  // Indexes for performance
+  index("user_follows_follower_idx").on(table.followerId),
+  index("user_follows_following_idx").on(table.followingId),
+]);
+
+export type UserFollow = typeof userFollows.$inferSelect;
+export type InsertUserFollow = typeof userFollows.$inferInsert;
+
 // Admin Chat Types
 export type InsertAdminChatThread = z.infer<typeof insertAdminChatThreadSchema>;
 export type AdminChatThread = typeof adminChatThreads.$inferSelect;

@@ -86,6 +86,9 @@ import {
   type AdminChatMessage,
   type InsertAdminChatMessage,
   type AdminChatMessageWithSender,
+  userFollows,
+  type UserFollow,
+  type InsertUserFollow,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, ilike, desc, asc, gte, lte, count, sql, isNull, ne } from "drizzle-orm";
@@ -307,6 +310,13 @@ export interface IStorage {
   setSiteSetting(key: string, value: string, description?: string, category?: string): Promise<SiteSetting>;
   getAllSiteSettings(category?: string): Promise<SiteSetting[]>;
   deleteSiteSetting(key: string): Promise<void>;
+  
+  // User follow operations
+  isUserFollowing(followerId: string, followingId: string): Promise<boolean>;
+  followUser(followerId: string, followingId: string): Promise<UserFollow>;
+  unfollowUser(followerId: string, followingId: string): Promise<void>;
+  getUserFollowers(userId: string): Promise<UserFollow[]>;
+  getUserFollowing(userId: string): Promise<UserFollow[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2919,6 +2929,45 @@ export class DatabaseStorage implements IStorage {
       });
 
     return updatedUser;
+  }
+
+  // User follow operations
+  async isUserFollowing(followerId: string, followingId: string): Promise<boolean> {
+    const [follow] = await db
+      .select()
+      .from(userFollows)
+      .where(and(eq(userFollows.followerId, followerId), eq(userFollows.followingId, followingId)));
+    return !!follow;
+  }
+
+  async followUser(followerId: string, followingId: string): Promise<UserFollow> {
+    try {
+      const [follow] = await db
+        .insert(userFollows)
+        .values({ followerId, followingId })
+        .returning();
+      return follow;
+    } catch (error: any) {
+      // Handle duplicate follow attempts gracefully
+      if (error.code === '23505') { // Unique violation
+        throw new Error('Already following this user');
+      }
+      throw error;
+    }
+  }
+
+  async unfollowUser(followerId: string, followingId: string): Promise<void> {
+    await db
+      .delete(userFollows)
+      .where(and(eq(userFollows.followerId, followerId), eq(userFollows.followingId, followingId)));
+  }
+
+  async getUserFollowers(userId: string): Promise<UserFollow[]> {
+    return db.select().from(userFollows).where(eq(userFollows.followingId, userId));
+  }
+
+  async getUserFollowing(userId: string): Promise<UserFollow[]> {
+    return db.select().from(userFollows).where(eq(userFollows.followerId, userId));
   }
 }
 
