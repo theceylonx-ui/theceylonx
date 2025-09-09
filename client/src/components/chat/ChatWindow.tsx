@@ -303,23 +303,22 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
         </div>
 
         {canShareContact && (
-          <div className="flex items-center space-x-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <MoreVertical className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setIsContactShareOpen(true)}>
-                  <Phone className="w-4 h-4 mr-2" />
-                  Share Contact
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <Button 
+            variant="default" 
+            size="sm" 
+            onClick={() => setIsContactShareOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Phone className="w-4 h-4 mr-2" />
+            Share Contact
+          </Button>
+        )}
 
-            {/* Contact Share Dialog */}
-            <Dialog open={isContactShareOpen} onOpenChange={setIsContactShareOpen}>
+      </div>
+
+      {/* Contact Share Dialog - moved outside header */}
+      {canShareContact && (
+        <Dialog open={isContactShareOpen} onOpenChange={setIsContactShareOpen}>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Share Contact Information</DialogTitle>
@@ -329,11 +328,11 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
                 </DialogHeader>
                 
                 <div className="space-y-4">
-                  {threadData.trip?.organizer?.phone && (
+                  {threadData.trip?.organizer?.phoneNumber && (
                     <div className="flex items-center justify-between p-3 border rounded">
                       <div className="flex items-center space-x-2">
                         <Phone className="w-4 h-4" />
-                        <span>{threadData.trip.organizer.phone}</span>
+                        <span>{threadData.trip.organizer.phoneNumber}</span>
                       </div>
                       <Button 
                         size="sm" 
@@ -361,7 +360,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
                     </div>
                   )}
 
-                  {threadData.trip?.organizer?.phone && threadData.trip?.organizer?.email && (
+                  {threadData.trip?.organizer?.phoneNumber && threadData.trip?.organizer?.email && (
                     <div className="pt-2 border-t">
                       <Button 
                         className="w-full" 
