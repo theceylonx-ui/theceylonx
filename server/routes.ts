@@ -117,6 +117,8 @@ import { healthCheck, readinessCheck, livenessCheck } from "./health/healthCheck
 import { errorTrackingMiddleware } from "./monitoring/errorTracking";
 import { productionSecurityMiddleware, cacheHeadersMiddleware, productionErrorHandler, requestLoggingMiddleware } from "./middleware/production";
 import { seoRouter } from "./routes/seo";
+import { apiRateLimit, authRateLimit, uploadRateLimit, searchRateLimit, chatRateLimit, tripCreationRateLimit } from "./middleware/rateLimiting";
+import { validateInput, sanitizeTextContent } from "./middleware/inputValidation";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // CORS and cookie middleware - strict origin validation
@@ -151,6 +153,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }));
   app.use(cookieParser());
   
+  // 🔒 PHASE 4: Security middleware - input validation and sanitization
+  app.use(validateInput);
+  app.use(sanitizeTextContent);
+  
   // 🚀 PHASE 4: Production health check endpoints (before auth)
   app.get('/health', healthCheck);
   app.get('/health/ready', readinessCheck);
@@ -159,8 +165,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup Replit Auth first
   await setupAuth(app);
 
-  // Re-enable Google OAuth routes for user sign-in
-  app.use('/api/auth', authRouter);
+  // Re-enable Google OAuth routes for user sign-in with auth rate limiting
+  app.use('/api/auth', authRateLimit, authRouter);
   
   // Clerk health routes
   app.use(clerkHealth);
@@ -169,7 +175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(seoRouter);
 
   // 🚀 PHASE 3 PERFORMANCE: Cached site settings endpoint for unauthenticated access
-  app.get('/api/site-settings/:key', async (req, res) => {
+  app.get('/api/site-settings/:key', apiRateLimit, async (req, res) => {
     try {
       const { key } = req.params;
       const cacheKey = `site-setting:${key}`;
@@ -368,7 +374,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Trip routes
-  app.post('/api/trips', unifiedAuthGuard, async (req, res) => {
+  app.post('/api/trips', tripCreationRateLimit, unifiedAuthGuard, async (req, res) => {
     try {
       const userId = req.user!.id;
       // Extract image fields - use mediaUrls from form
@@ -430,7 +436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/trips', async (req, res) => {
+  app.get('/api/trips', searchRateLimit, async (req, res) => {
     try {
       const userId = (req as any).user?.id; // May be undefined for unauthenticated users  
       const page = req.query.page ? Number(req.query.page) : 1;

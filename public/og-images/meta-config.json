@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "description": "Open Graph image configuration for Ceylon Expand",
+  "images": {
+    "home": {
+      "title": "Ceylon Expand - Travel Together",
+      "subtitle": "Connect with Travel Buddies in Sri Lanka",
+      "theme": "tropical",
+      "background": "#0066CC",
+      "text_color": "#FFFFFF"
+    },
+    "browse": {
+      "title": "Discover Amazing Trips",
+      "subtitle": "Find Your Perfect Travel Match",
+      "theme": "adventure",
+      "background": "#FF6B35",
+      "text_color": "#FFFFFF"
+    },
+    "community": {
+      "title": "CeylonX Tribes",
+      "subtitle": "Connect with Fellow Travelers",
+      "theme": "community",
+      "background": "#8B5A3C",
+      "text_color": "#FFFFFF"
+    }
+  },
+  "default": {
+    "width": 1200,
+    "height": 630,
+    "format": "jpg",
+    "quality": 85
+  }
+}

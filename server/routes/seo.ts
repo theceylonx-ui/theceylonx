@@ -24,17 +24,17 @@ router.get('/sitemap.xml', async (req: Request, res: Response) => {
       { url: '/terms', changefreq: 'monthly', priority: '0.5' },
     ];
     
-    // Get recent active trips for dynamic content
-    const recentTrips = await db
-      .select({
-        id: trips.id,
-        destination: trips.toLocation,
-        updatedAt: trips.updatedAt,
-      })
-      .from(trips)
-      .where(sql`${trips.date} >= CURRENT_DATE`)
-      .orderBy(sql`${trips.updatedAt} DESC`)
-      .limit(100);
+    // Get recent active trips for dynamic content (simplified for now)
+    let recentTrips = [];
+    try {
+      recentTrips = await db
+        .select()
+        .from(trips)
+        .limit(100);
+    } catch (error) {
+      console.warn('Could not fetch trips for sitemap:', error);
+      recentTrips = [];
+    }
     
     // Build sitemap XML
     let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -57,7 +57,7 @@ router.get('/sitemap.xml', async (req: Request, res: Response) => {
     
     // Add trip pages
     recentTrips.forEach(trip => {
-      const lastmod = trip.updatedAt ? trip.updatedAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+      const lastmod = trip.createdAt ? trip.createdAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
       sitemap += `
   <url>
     <loc>${baseUrl}/trip/${trip.id}</loc>
