@@ -2273,18 +2273,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get privacy settings
+  app.get('/api/me/privacy', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      console.log('🔍 Getting privacy settings for userId:', userId);
+      
+      const privacy = await storage.getUserPrivacy(userId);
+      console.log('✅ Privacy settings retrieved:', privacy);
+      
+      res.json(privacy);
+    } catch (error) {
+      console.error("❌ Error fetching privacy settings:", error);
+      res.status(500).json({ message: "Failed to fetch privacy settings" });
+    }
+  });
+
   // Update privacy settings
   app.patch('/api/me/privacy', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { visibility, dmPolicy, showOnline, showJoinedTrips, cityVisibility } = req.body;
       
-      // Placeholder for privacy settings
-      const settings = { visibility, dmPolicy, showOnline, showJoinedTrips, cityVisibility };
+      console.log('🔄 Updating privacy settings for userId:', userId);
+      console.log('📝 Privacy settings:', { visibility, dmPolicy, showOnline, showJoinedTrips, cityVisibility });
+
+      // Update privacy settings in database
+      const updatedSettings = await storage.updateUserPrivacy(userId, {
+        visibility,
+        dmPolicy,
+        showOnline,
+        showJoinedTrips,
+        cityVisibility,
+      });
       
-      res.json(settings);
+      console.log('✅ Privacy settings updated successfully');
+      res.json(updatedSettings);
     } catch (error) {
-      console.error("Error updating privacy settings:", error);
+      console.error("❌ Error updating privacy settings:", error);
       res.status(500).json({ message: "Failed to update privacy settings" });
     }
   });

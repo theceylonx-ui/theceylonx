@@ -1508,8 +1508,8 @@ function SecuritySettings({ profile }: any) {
 function PrivacySettings({ privacy, onUpdate }: any) {
   const { toast } = useToast();
   const [settings, setSettings] = useState({
-    profileVisibility: privacy?.profileVisibility ?? 'public',
-    showOnlineStatus: privacy?.showOnlineStatus ?? true,
+    visibility: privacy?.visibility ?? 'public',
+    showOnline: privacy?.showOnline ?? true,
     showJoinedTrips: privacy?.showJoinedTrips ?? true,
     cityVisibility: privacy?.cityVisibility ?? 'show'
   });
@@ -1556,8 +1556,8 @@ function PrivacySettings({ privacy, onUpdate }: any) {
             Profile Visibility
           </Label>
           <Select 
-            value={settings.profileVisibility} 
-            onValueChange={(value) => setSettings({...settings, profileVisibility: value})}
+            value={settings.visibility} 
+            onValueChange={(value) => setSettings({...settings, visibility: value})}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select visibility level" />
@@ -1581,8 +1581,8 @@ function PrivacySettings({ privacy, onUpdate }: any) {
             </p>
           </div>
           <Switch 
-            checked={settings.showOnlineStatus}
-            onCheckedChange={(checked) => setSettings({...settings, showOnlineStatus: checked})}
+            checked={settings.showOnline}
+            onCheckedChange={(checked) => setSettings({...settings, showOnline: checked})}
             data-testid="switch-online-status"
           />
         </div>

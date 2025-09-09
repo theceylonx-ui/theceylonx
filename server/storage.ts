@@ -139,6 +139,10 @@ export interface IStorage {
   getUserPersonalization(userId: string): Promise<any>;
   updateUserPersonalization(userId: string, personalization: any): Promise<any>;
   
+  // User privacy operations
+  getUserPrivacy(userId: string): Promise<any>;
+  updateUserPrivacy(userId: string, privacy: any): Promise<any>;
+  
   // Trip operations
   createTrip(trip: InsertTrip): Promise<Trip>;
   getTrip(id: string): Promise<TripWithOrganizer | undefined>;
@@ -2875,6 +2879,77 @@ export class DatabaseStorage implements IStorage {
       });
 
     return updatedUser;
+  }
+
+  // User privacy operations
+  async getUserPrivacy(userId: string): Promise<any> {
+    const [privacy] = await db
+      .select({
+        visibility: userPrivacy.visibility,
+        dmPolicy: userPrivacy.dmPolicy,
+        showOnline: userPrivacy.showOnline,
+        showJoinedTrips: userPrivacy.showJoinedTrips,
+        cityVisibility: userPrivacy.cityVisibility,
+      })
+      .from(userPrivacy)
+      .where(eq(userPrivacy.userId, userId));
+    
+    return privacy || {
+      visibility: 'public',
+      dmPolicy: 'everyone',
+      showOnline: true,
+      showJoinedTrips: true,
+      cityVisibility: 'show',
+    };
+  }
+
+  async updateUserPrivacy(userId: string, privacy: any): Promise<any> {
+    const updateData: any = {};
+    
+    if (privacy.visibility !== undefined) updateData.visibility = privacy.visibility;
+    if (privacy.dmPolicy !== undefined) updateData.dmPolicy = privacy.dmPolicy;
+    if (privacy.showOnline !== undefined) updateData.showOnline = privacy.showOnline;
+    if (privacy.showJoinedTrips !== undefined) updateData.showJoinedTrips = privacy.showJoinedTrips;
+    if (privacy.cityVisibility !== undefined) updateData.cityVisibility = privacy.cityVisibility;
+    
+    updateData.updatedAt = new Date();
+
+    // Check if privacy record exists
+    const [existingPrivacy] = await db
+      .select()
+      .from(userPrivacy)
+      .where(eq(userPrivacy.userId, userId));
+
+    if (existingPrivacy) {
+      // Update existing privacy record
+      const [updatedPrivacy] = await db
+        .update(userPrivacy)
+        .set(updateData)
+        .where(eq(userPrivacy.userId, userId))
+        .returning({
+          visibility: userPrivacy.visibility,
+          dmPolicy: userPrivacy.dmPolicy,
+          showOnline: userPrivacy.showOnline,
+          showJoinedTrips: userPrivacy.showJoinedTrips,
+          cityVisibility: userPrivacy.cityVisibility,
+        });
+
+      return updatedPrivacy;
+    } else {
+      // Create new privacy record
+      const [newPrivacy] = await db
+        .insert(userPrivacy)
+        .values({ userId, ...updateData })
+        .returning({
+          visibility: userPrivacy.visibility,
+          dmPolicy: userPrivacy.dmPolicy,
+          showOnline: userPrivacy.showOnline,
+          showJoinedTrips: userPrivacy.showJoinedTrips,
+          cityVisibility: userPrivacy.cityVisibility,
+        });
+
+      return newPrivacy;
+    }
   }
 
   // User follow operations
