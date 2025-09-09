@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { adminService } from '../services/adminService';
 import { requireAdmin, requirePermission } from '../middleware/adminAuth';
-import { insertRoleSchema, insertMediaAssetSchema } from '@shared/schema';
+import { insertRoleSchema, insertMediaAssetSchema, insertSiteSettingSchema } from '@shared/schema';
 
 const router = Router();
 
@@ -248,6 +248,94 @@ router.get('/me', async (req, res) => {
   } catch (error) {
     console.error('❌ Admin user info error:', error);
     res.status(500).json({ message: 'Failed to load admin user info' });
+  }
+});
+
+// Site settings endpoints
+router.get('/settings', requirePermission('settings.view'), async (req, res) => {
+  try {
+    const { category } = req.query;
+    const { storage } = await import('../storage');
+    const settings = await storage.getAllSiteSettings(category as string);
+    res.json(settings);
+  } catch (error) {
+    console.error('❌ Admin get settings error:', error);
+    res.status(500).json({ message: 'Failed to load site settings' });
+  }
+});
+
+router.get('/settings/:key', requirePermission('settings.view'), async (req, res) => {
+  try {
+    const { key } = req.params;
+    const { storage } = await import('../storage');
+    const setting = await storage.getSiteSetting(key);
+    if (setting) {
+      res.json(setting);
+    } else {
+      res.status(404).json({ message: 'Setting not found' });
+    }
+  } catch (error) {
+    console.error('❌ Admin get setting error:', error);
+    res.status(500).json({ message: 'Failed to load setting' });
+  }
+});
+
+router.post('/settings', requirePermission('settings.edit'), async (req, res) => {
+  try {
+    const settingData = insertSiteSettingSchema.parse(req.body);
+    const { storage } = await import('../storage');
+    const setting = await storage.setSiteSetting(
+      settingData.key,
+      settingData.value || '',
+      settingData.description,
+      settingData.category
+    );
+    res.status(201).json(setting);
+  } catch (error) {
+    console.error('❌ Admin create setting error:', error);
+    if (error.name === 'ZodError') {
+      res.status(400).json({ message: 'Invalid setting data', errors: error.errors });
+    } else {
+      res.status(500).json({ message: 'Failed to create setting' });
+    }
+  }
+});
+
+router.put('/settings/:key', requirePermission('settings.edit'), async (req, res) => {
+  try {
+    const { key } = req.params;
+    const { value, description, category } = req.body;
+    const { storage } = await import('../storage');
+    const setting = await storage.setSiteSetting(key, value, description, category);
+    res.json(setting);
+  } catch (error) {
+    console.error('❌ Admin update setting error:', error);
+    res.status(500).json({ message: 'Failed to update setting' });
+  }
+});
+
+router.delete('/settings/:key', requirePermission('settings.edit'), async (req, res) => {
+  try {
+    const { key } = req.params;
+    const { storage } = await import('../storage');
+    await storage.deleteSiteSetting(key);
+    res.status(204).send();
+  } catch (error) {
+    console.error('❌ Admin delete setting error:', error);
+    res.status(500).json({ message: 'Failed to delete setting' });
+  }
+});
+
+// Object storage endpoint for background image uploads
+router.post('/settings/background-upload', requirePermission('settings.edit'), async (req, res) => {
+  try {
+    const { ObjectStorageService } = await import('../objectStorage');
+    const objectStorageService = new ObjectStorageService();
+    const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+    res.json({ uploadURL, method: 'PUT' });
+  } catch (error) {
+    console.error('❌ Background upload URL error:', error);
+    res.status(500).json({ message: 'Failed to generate upload URL' });
   }
 });
 

@@ -103,6 +103,7 @@ import {
   insertAnswerSchema,
   insertUserInteractionSchema,
   insertChatMessageSchema,
+  insertSiteSettingSchema,
   travelStyleSettingsSchema,
   type TravelStyleSettings
 } from "@shared/schema";
