@@ -24,16 +24,16 @@ import AuthSignInPage from "@/pages/auth-signin";
 import AuthMagicPage from "@/pages/auth-magic";
 import AuthCallbackPage from "@/pages/auth-callback";
 import DestinationPage from "@/pages/destination";
-import AdminDashboardPage from "@/pages/admin-dashboard";
+// import AdminDashboardPage from "@/pages/admin-dashboard";
 import AdminOverviewPage from "@/pages/admin/index";
-import ReportTripPage from "@/pages/report-trip";
+// import ReportTripPage from "@/pages/report-trip";
 import ChatDemoPage from "@/pages/chat-demo";
 import UserDeletion from "@/pages/user-deletion";
 import CalendarPage from "@/pages/calendar";
 import TravelStyleSettings from "@/pages/travel-style-settings";
 import ProfilePage from "@/pages/me";
 import ChatBuddy from "@/pages/chat-buddy";
-import AdminReportsPage from "@/pages/admin-reports";
+// import AdminReportsPage from "@/pages/admin-reports";
 import ClerkSmoke from "@/auth/ClerkSmoke";
 import UserProfilePage from "@/pages/profile/[id]";
 import UserTripsPage from "@/pages/users/[id]/trips";
@@ -136,8 +136,8 @@ function Router() {
             <Route path="/help/faq" component={HelpFAQPage} />
             <Route path="/settings/account" component={AccountSettingsPage} />
             <Route path="/user/delete" component={UserDeletion} />
-            {/* Enhanced Admin Routes */}
-            <Route path="/admin" component={AdminOverviewPage} />
+            {/* Enhanced Admin Routes - Temporarily disabled */}
+            {/* <Route path="/admin" component={AdminOverviewPage} />
             <Route path="/admin/dashboard" component={AdminOverviewPage} />
             <Route path="/admin/roles" component={() => import("@/pages/admin/roles").then(m => m.default)} />
             <Route path="/admin/moderation" component={() => import("@/pages/admin/moderation").then(m => m.default)} />
@@ -145,7 +145,7 @@ function Router() {
             <Route path="/admin/mobile-admin" component={() => import("@/pages/admin/mobile-admin").then(m => m.default)} />
             <Route path="/admin/audit-logs" component={() => import("@/pages/admin/audit-logs").then(m => m.default)} />
             <Route path="/admin/api-docs" component={() => import("@/pages/admin/api-docs").then(m => m.default)} />
-            <Route path="/admin/settings" component={() => import("@/components/admin/AdminSettings").then(m => m.default)} />
+            <Route path="/admin/settings" component={() => import("@/components/admin/AdminSettings").then(m => m.default)} /> */}
             
             {/* Legacy Admin Routes - Disabled for now to focus on user dashboard */}
             {/* <Route path="/admin-dashboard" component={AdminDashboardPage} />
