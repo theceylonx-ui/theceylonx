@@ -432,8 +432,17 @@ export class DatabaseStorage implements IStorage {
 
   // Trip operations
   async createTrip(trip: InsertTrip): Promise<Trip> {
+    // Create backward-compatible contactInfo for legacy support
+    let contactInfo = (trip as any).contactInfo;
+    if (!contactInfo && ((trip as any).organizerPhone || (trip as any).organizerEmail)) {
+      const phone = (trip as any).organizerPhone ? `${(trip as any).organizerCountryCode || '+94'} ${(trip as any).organizerPhone}` : '';
+      const email = (trip as any).organizerEmail || '';
+      contactInfo = [phone, email].filter(Boolean).join(' • ');
+    }
+    
     const tripData = {
       ...trip,
+      contactInfo: contactInfo || null, // Add backward compatibility field
       price: typeof trip.price === 'number' ? trip.price.toString() : trip.price,
       status: (trip.status as any) || 'active'
     };
