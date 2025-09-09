@@ -93,20 +93,15 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
   // Send image message mutation
   const sendImageMessageMutation = useMutation({
     mutationFn: async ({ attachmentUrl, ephemeral }: { attachmentUrl: string; ephemeral: boolean }) => {
-      // 🚨 CEYLON CHALLENGE FIX: Force threadId hardcoded! 
-      console.log("🚨 ImageUpload: threadId prop received:", threadId);
-      console.log("🔥 Sending image message with attachmentUrl:", attachmentUrl);
-      
       if (!attachmentUrl || attachmentUrl.trim() === '') {
         throw new Error('Invalid attachment URL');
       }
       
-      // HARDCODE the threadId to bypass prop issues!
-      const HARDCODED_THREAD_ID = "test-kandy-chat-002";
-      console.log("🎯 ImageUpload: FORCING threadId to:", HARDCODED_THREAD_ID);
+      // Use threadId prop with fallback
+      const finalThreadId = threadId || "test-kandy-chat-002";
       
-      return apiRequest("POST", `/api/chat/threads/${HARDCODED_THREAD_ID}/messages`, {
-        text: undefined, // Don't send null, use undefined
+      return apiRequest("POST", `/api/chat/threads/${finalThreadId}/messages`, {
+        text: undefined,
         attachmentId: attachmentUrl,
         ephemeral,
       });
@@ -123,9 +118,10 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
       // Reset state
       resetUploadState();
       
-      // Refresh messages - use hardcoded threadId
+      // Refresh messages
+      const finalThreadId = threadId || "test-kandy-chat-002";
       queryClient.invalidateQueries({
-        queryKey: [`/api/chat/threads/test-kandy-chat-002/messages`],
+        queryKey: [`/api/chat/threads/${finalThreadId}/messages`],
       });
       queryClient.invalidateQueries({
         queryKey: ["/api/chat/threads"],

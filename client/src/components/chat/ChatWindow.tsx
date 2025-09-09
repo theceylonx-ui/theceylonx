@@ -92,11 +92,6 @@ interface ChatWindowProps {
 }
 
 export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps) {
-  // 🚨 CEYLON CHALLENGE DEBUG: Track threadId at component level
-  console.log('🔴 ChatWindow rendered with threadId:', threadId);
-  console.log('🔴 Current URL:', window.location.href);
-  console.log('🔴 Component props:', { threadId, currentUserId, onBack: !!onBack });
-  
   // Show placeholder when no thread is selected
   if (!threadId) {
     return (
@@ -142,22 +137,17 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
     new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
 
-  // Send message mutation - completely rewritten to force correct threadId
+  // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (data: { text: string; attachmentId?: string; ephemeral?: boolean }) => {
-      console.log('🚨 MUTATION CALLED - threadId prop:', threadId);
-      console.log('🚨 MUTATION CALLED - data:', data);
-      
-      // FORCE the correct threadId - bypass all prop issues
-      const HARDCODED_THREAD_ID = "test-kandy-chat-002";
-      const url = `/api/chat/threads/${HARDCODED_THREAD_ID}/messages`;
-      console.log('🎯 FORCING message send to URL:', url);
-      return apiRequest("POST", url, data);
+      // Use threadId prop with fallback
+      const finalThreadId = threadId || "test-kandy-chat-002";
+      return apiRequest("POST", `/api/chat/threads/${finalThreadId}/messages`, data);
     },
     onSuccess: () => {
       setMessageText("");
-      // Force cache invalidation with hardcoded threadId
-      queryClient.invalidateQueries({ queryKey: [`/api/chat/threads/test-kandy-chat-002/messages`] });
+      const finalThreadId = threadId || "test-kandy-chat-002";
+      queryClient.invalidateQueries({ queryKey: [`/api/chat/threads/${finalThreadId}/messages`] });
       scrollToBottom();
     },
     onError: (error) => {
@@ -217,15 +207,8 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   };
 
   const handleImageUploaded = (result: any) => {
-    console.log('🚨 handleImageUploaded CALLED');
-    console.log('🚨 result:', result);
-    console.log('🚨 threadId in handler:', threadId);
-    
     const uploadUrl = result.successful[0]?.uploadURL;
     if (uploadUrl) {
-      console.log('🖼️ Image uploaded, sending to chat with URL:', uploadUrl);
-      console.log('🖼️ About to call sendMessageMutation.mutate');
-      
       sendMessageMutation.mutate({
         text: "",
         attachmentId: uploadUrl,
