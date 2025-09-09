@@ -3920,8 +3920,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Access denied' });
       }
 
-      // Get trip info for context
-      const trip = await storage.getTrip(thread.tripId);
+      // Get trip info for context (include userId for proper organizer data)
+      const trip = await storage.getTrip(thread.tripId, userId);
       
       res.json({ 
         thread, 
@@ -3931,7 +3931,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           fromLocation: trip.fromLocation,
           toLocation: trip.toLocation,
           date: trip.date,
-          status: trip.status
+          status: trip.status,
+          organizer: trip.organizer // Include full organizer data with contact info
         } : null
       });
     } catch (error) {
