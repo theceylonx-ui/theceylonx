@@ -133,16 +133,15 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   });
 
   // Sort messages chronologically like WhatsApp (oldest to newest)
-  const messages = (messagesData?.messages || []).sort((a: ChatMessage, b: ChatMessage) => 
+  const messages = (messagesData || []).sort((a: ChatMessage, b: ChatMessage) => 
     new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
 
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (data: { text: string; attachmentId?: string; ephemeral?: boolean }) => {
-      return apiRequest(`/api/chat/threads/${threadId}/messages`, {
-        method: "POST",
-        body: { ...data },
+      return apiRequest("POST", `/api/chat/threads/${threadId}/messages`, {
+        ...data
       });
     },
     onSuccess: () => {
@@ -162,9 +161,8 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   // Report message mutation
   const reportMessageMutation = useMutation({
     mutationFn: async (data: { messageId: string; reason: string }) => {
-      return apiRequest(`/api/chat/messages/${data.messageId}/report`, {
-        method: "POST",
-        body: { reason: data.reason },
+      return apiRequest("POST", `/api/messages/${data.messageId}/report`, {
+        reason: data.reason
       });
     },
     onSuccess: () => {
@@ -178,9 +176,8 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   // Share contact mutation  
   const shareContactMutation = useMutation({
     mutationFn: async (fields: string[]) => {
-      return apiRequest(`/api/chat/threads/${threadId}/share-contact`, {
-        method: "POST",
-        body: { fields },
+      return apiRequest("POST", `/api/chat/threads/${threadId}/share-contact`, {
+        fields
       });
     },
     onSuccess: () => {
