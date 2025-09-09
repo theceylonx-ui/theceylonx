@@ -54,6 +54,13 @@ export const siteSettings = pgTable("site_settings", {
 export type SiteSetting = typeof siteSettings.$inferSelect;
 export type InsertSiteSetting = typeof siteSettings.$inferInsert;
 
+// Insert schema for site settings
+export const insertSiteSettingSchema = createInsertSchema(siteSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Join status enum (exists in database)
 export const joinStatusEnum = pgEnum('join_status', ['pending', 'accepted', 'declined', 'cancelled']);
 

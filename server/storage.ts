@@ -73,6 +73,9 @@ import {
   type InsertCalendarEvent,
   type SavedTrip,
   type InsertSavedTrip,
+  siteSettings,
+  type SiteSetting,
+  type InsertSiteSetting,
   type SavedTripWithTrip,
   type SaveNotification,
   adminChatThreads,
@@ -297,6 +300,12 @@ export interface IStorage {
   // Admin helper methods
   getAllUsers(): Promise<User[]>;
   getAllTrips(): Promise<Trip[]>;
+
+  // Site settings operations
+  getSiteSetting(key: string): Promise<SiteSetting | undefined>;
+  setSiteSetting(key: string, value: string, description?: string, category?: string): Promise<SiteSetting>;
+  getAllSiteSettings(category?: string): Promise<SiteSetting[]>;
+  deleteSiteSetting(key: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1624,6 +1633,44 @@ export class DatabaseStorage implements IStorage {
     return result?.count || 0;
   }
 
+
+  // Site settings operations
+  async getSiteSetting(key: string): Promise<SiteSetting | undefined> {
+    const [setting] = await db
+      .select()
+      .from(siteSettings)
+      .where(eq(siteSettings.key, key));
+    return setting;
+  }
+
+  async setSiteSetting(key: string, value: string, description?: string, category?: string): Promise<SiteSetting> {
+    const [setting] = await db
+      .insert(siteSettings)
+      .values({ key, value, description, category })
+      .onConflictDoUpdate({
+        target: siteSettings.key,
+        set: {
+          value: value,
+          description: description,
+          category: category,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return setting;
+  }
+
+  async getAllSiteSettings(category?: string): Promise<SiteSetting[]> {
+    let query = db.select().from(siteSettings);
+    if (category) {
+      query = query.where(eq(siteSettings.category, category));
+    }
+    return await query;
+  }
+
+  async deleteSiteSetting(key: string): Promise<void> {
+    await db.delete(siteSettings).where(eq(siteSettings.key, key));
+  }
 
   // Chat thread implementation
   async createChatThread(thread: InsertChatThread): Promise<ChatThread> {
