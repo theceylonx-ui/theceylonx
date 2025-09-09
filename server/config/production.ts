@@ -3,8 +3,8 @@ import { z } from 'zod';
 
 // Production environment validation schema
 const productionConfigSchema = z.object({
-  // Core settings
-  NODE_ENV: z.literal('production'),
+  // Core settings - flexible for Replit deployment
+  NODE_ENV: z.enum(['production', 'development']).default('production'),
   PORT: z.string().transform(Number).default('5000'),
   
   // Database
@@ -53,7 +53,7 @@ export function validateProductionConfig(): ProductionConfig {
     console.error('⚠️ Production configuration validation failed, using defaults:', error);
     // Don't exit in deployment - use safe defaults
     return {
-      NODE_ENV: 'production',
+      NODE_ENV: process.env.REPLIT_DEPLOYMENT === '1' ? 'production' : 'development',
       PORT: parseInt(process.env.PORT || '5000'),
       DATABASE_URL: process.env.DATABASE_URL || '',
       POSTGRES_SSL: 'true',

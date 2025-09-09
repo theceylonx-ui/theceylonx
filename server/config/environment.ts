@@ -4,6 +4,10 @@ import { validateProductionConfig, productionSettings } from './production';
 export type Environment = 'development' | 'production' | 'test';
 
 export const getEnvironment = (): Environment => {
+  // Replit sets REPLIT_DEPLOYMENT=1 during production deployment
+  if (process.env.REPLIT_DEPLOYMENT === '1') {
+    return 'production';
+  }
   return (process.env.NODE_ENV as Environment) || 'development';
 };
 
@@ -63,7 +67,7 @@ export const getEnvironmentConfig = () => {
           skipSuccessfulRequests: true,
         },
         config: {
-          NODE_ENV: 'development',
+          NODE_ENV: getEnvironment(),
           PORT: parseInt(process.env.PORT || '5000'),
           DATABASE_URL: process.env.DATABASE_URL || '',
         },
