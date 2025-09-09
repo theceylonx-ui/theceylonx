@@ -1522,7 +1522,7 @@ export const TripSchema = z.object({
   // Step 1: Basics
   title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
   description: z.string().min(10, "Description must be at least 10 characters").max(1000, "Description must be less than 1000 characters"),
-  category: z.enum(['roadtrip', 'hiking', 'beach', 'culture', 'wellness', 'festival', 'workshop', 'wildlife', 'food', 'adventure_sport', 'unknown']),
+  category: z.enum(['roadtrip', 'hiking', 'beach', 'culture', 'wellness', 'festival', 'workshop', 'wildlife', 'food', 'adventure_sport', 'unknown']).refine(val => val !== 'unknown', "Please select a trip category"),
   
   // Step 2: Schedule
   fromLocation: z.string().min(1, "Departure location is required"),
@@ -1593,7 +1593,7 @@ const BaseTripSchema = z.object({
   // Step 1: Basics
   title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
   description: z.string().min(10, "Description must be at least 10 characters").max(1000, "Description must be less than 1000 characters"),
-  category: z.enum(['roadtrip', 'hiking', 'beach', 'culture', 'wellness', 'festival', 'workshop', 'wildlife', 'food', 'adventure_sport', 'unknown']),
+  category: z.enum(['roadtrip', 'hiking', 'beach', 'culture', 'wellness', 'festival', 'workshop', 'wildlife', 'food', 'adventure_sport', 'unknown']).refine(val => val !== 'unknown', "Please select a trip category"),
   
   // Step 2: Schedule
   fromLocation: z.string().min(1, "Departure location is required"),

@@ -89,7 +89,7 @@ export function StepBasics({ form }: StepBasicsProps) {
           name="category"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Trip Category</FormLabel>
+              <FormLabel>Trip Category <span className="text-red-500">*</span></FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger data-testid="trip-category-select">

@@ -27,6 +27,7 @@ export function StepPreview({ form }: StepPreviewProps) {
   const requiredFields = [
     { field: 'title', label: 'Trip title' },
     { field: 'description', label: 'Description' },
+    { field: 'category', label: 'Trip category' },
     { field: 'fromLocation', label: 'Departure location' },
     { field: 'toLocation', label: 'Destination' },
     { field: 'date', label: 'Trip date' },

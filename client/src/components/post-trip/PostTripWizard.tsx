@@ -236,7 +236,7 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
         organizerCountryCode: formData.organizerCountryCode || '+94',
         safetyFlags: formData.safetyFlags || [],
         region: formData.region,
-        category: 'unknown', // Default category
+        category: formData.category, // Use selected category (required field)
         difficulty: 'easy', // Default difficulty
         status: 'active',
         mediaUrls: formData.mediaUrls || [], // Send as mediaUrls to match server schema
