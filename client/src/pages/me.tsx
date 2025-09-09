@@ -24,7 +24,10 @@ import {
   Zap,
   Heart,
   Download,
-  UserX
+  UserX,
+  CheckCircle,
+  AlertCircle,
+  Send
 } from "lucide-react";
 import { getDisplayName, getInitials, getAvatarOptions, AVATAR_STYLES } from "@/lib/profileUtils";
 import { VisibilityToggle } from "@/components/VisibilityToggle";
@@ -38,6 +41,175 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { PreferencesForm } from "@/components/preferences/PreferencesForm";
+
+// Email Verification Component
+function EmailVerificationSection({ profile, onUpdate }: any) {
+  const { toast } = useToast();
+  const [email, setEmail] = useState(profile?.email || '');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [isEmailSent, setIsEmailSent] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const sendVerificationCode = async () => {
+    if (!email || !email.includes('@')) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const response = await apiRequest('POST', '/api/auth/send-verification', { email });
+      if (response.ok) {
+        setIsEmailSent(true);
+        toast({
+          title: "Email Sent",
+          description: "Verification code sent to your email",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send verification code",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const verifyEmailCode = async () => {
+    if (!verificationCode.trim()) {
+      toast({
+        title: "Code Required",
+        description: "Please enter the verification code",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsVerifying(true);
+    try {
+      const response = await apiRequest('POST', '/api/auth/verify-email', { 
+        email, 
+        code: verificationCode 
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        toast({
+          title: "Email Verified!",
+          description: "Your email has been successfully verified",
+        });
+        setIsEmailSent(false);
+        setVerificationCode('');
+        onUpdate();
+      } else {
+        toast({
+          title: "Verification Failed",
+          description: data.message || "Invalid or expired verification code",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to verify email",
+        variant: "destructive",
+      });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const isVerified = profile?.emailVerified || profile?.verificationBadges?.includes('email');
+
+  return (
+    <div className="border rounded-lg p-4 space-y-4">
+      <div className="flex items-center gap-2">
+        <Mail className="h-5 w-5 text-emerald-600" />
+        <Label className="text-base font-medium">Email Verification</Label>
+        {isVerified && (
+          <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Verified
+          </Badge>
+        )}
+      </div>
+      
+      {!isVerified ? (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="verification-email">Email Address</Label>
+            <div className="flex gap-2">
+              <Input
+                id="verification-email"
+                data-testid="input-verification-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email address"
+                disabled={isEmailSent}
+              />
+              <Button 
+                onClick={sendVerificationCode} 
+                disabled={isSending || isEmailSent}
+                data-testid="button-send-verification"
+                size="sm"
+              >
+                {isSending ? (
+                  <>Sending...</>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-1" />
+                    {isEmailSent ? 'Sent' : 'Verify'}
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {isEmailSent && (
+            <div className="space-y-2">
+              <Label htmlFor="verification-code">Verification Code</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="verification-code"
+                  data-testid="input-verification-code"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.toUpperCase())}
+                  placeholder="Enter 6-digit code"
+                  maxLength={6}
+                />
+                <Button 
+                  onClick={verifyEmailCode} 
+                  disabled={isVerifying}
+                  data-testid="button-verify-code"
+                  size="sm"
+                >
+                  {isVerifying ? 'Verifying...' : 'Confirm'}
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Check your email for a 6-digit verification code
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 text-sm text-emerald-600">
+          <CheckCircle className="h-4 w-4" />
+          <span>Your email is verified</span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // Travel Quote Component that uses session-based quote selection
 function TravelQuote() {
@@ -890,6 +1062,8 @@ function ProfileEditor({ profile, onUpdate }: any) {
               placeholder="City, Country"
             />
           </div>
+
+          <EmailVerificationSection profile={profile} onUpdate={onUpdate} />
 
           <Button type="submit" disabled={isLoading}>
             {isLoading ? "Updating..." : "Update Profile"}
