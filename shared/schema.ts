@@ -132,6 +132,22 @@ export const users = pgTable("users", {
   resetAt: timestamp("reset_at"),
   abTestGroup: varchar("ab_test_group").default('personalized'),
   
+  // Privacy settings
+  profileVisibility: varchar("profile_visibility").default("public").notNull(), // 'public', 'friends', 'private'
+  showEmail: boolean("show_email").default(false),
+  showPhone: boolean("show_phone").default(false),
+  showRealName: boolean("show_real_name").default(true),
+  showBio: boolean("show_bio").default(true),
+  showLocation: boolean("show_location").default(true),
+  showInterests: boolean("show_interests").default(true),
+  showTravelHistory: boolean("show_travel_history").default(true),
+  
+  // Verification and badges
+  isVerifiedUser: boolean("is_verified_user").default(false),
+  verificationBadges: text("verification_badges").array().default(sql`'{}'::text[]`), // ['email', 'phone', 'id', 'host', 'plus']
+  verificationLevel: integer("verification_level").default(0), // 0-5 scale
+  verificationDate: timestamp("verification_date"),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [

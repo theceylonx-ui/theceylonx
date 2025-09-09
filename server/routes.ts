@@ -915,7 +915,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { tripId } = req.params;
       
       // Verify user is the trip organizer
-      const trip = await storage.getTripById(tripId);
+      const trip = await storage.getTrip(tripId);
       if (!trip) {
         return res.status(404).json({ message: "Trip not found" });
       }
@@ -4248,6 +4248,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error reporting chat message:', error);
       res.status(500).json({ message: 'Failed to report message' });
+    }
+  });
+
+  // User profile viewing endpoints with privacy controls
+  app.get('/api/users/:userId/profile', unifiedAuthGuard, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const requesterId = req.user!.id;
+      
+      // Get user profile with privacy filtering
+      const userProfile = await storage.getUserProfile(userId, requesterId);
+      if (!userProfile) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Check if profile is accessible based on privacy settings
+      if (userProfile.profileVisibility === 'private' && userId !== requesterId) {
+        return res.status(403).json({ message: "Profile is private" });
+      }
+      
+      // Filter profile data based on privacy settings
+      const filteredProfile = {
+        id: userProfile.id,
+        displayName: userProfile.displayName || userProfile.username || 'Ceylon Traveler',
+        firstName: userProfile.showRealName ? userProfile.firstName : undefined,
+        lastName: userProfile.showRealName ? userProfile.lastName : undefined,
+        username: userProfile.username,
+        profileImageUrl: userProfile.profileImageUrl,
+        bio: userProfile.showBio ? userProfile.bio : undefined,
+        location: userProfile.showLocation ? userProfile.location : undefined,
+        languages: userProfile.languages || [],
+        emailVerified: userProfile.emailVerified,
+        isVerifiedUser: userProfile.isVerifiedUser || false,
+        verificationBadges: userProfile.verificationBadges || [],
+        verificationLevel: userProfile.verificationLevel || 0,
+        profileVisibility: userProfile.profileVisibility,
+        showEmail: userProfile.showEmail,
+        showPhone: userProfile.showPhone,
+        showRealName: userProfile.showRealName,
+        showBio: userProfile.showBio,
+        showLocation: userProfile.showLocation,
+        showInterests: userProfile.showInterests,
+        showTravelHistory: userProfile.showTravelHistory,
+        email: userProfile.showEmail ? userProfile.email : undefined,
+        phoneNumber: userProfile.showPhone ? userProfile.phoneNumber : undefined,
+        interests: userProfile.showInterests ? userProfile.interests : [],
+        vibe: userProfile.showInterests ? userProfile.vibe : [],
+        regions: userProfile.showInterests ? userProfile.regions : [],
+        createdAt: userProfile.createdAt,
+        // TODO: Add trip stats calculation
+        tripsOrganized: 0,
+        tripsJoined: 0,
+        totalRating: 0,
+        reviewCount: 0
+      };
+      
+      res.json(filteredProfile);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      res.status(500).json({ message: "Failed to fetch user profile" });
     }
   });
 

@@ -125,6 +125,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByGoogleId(googleId: string): Promise<User | undefined>;
+  getUserProfile(userId: string, requesterId?: string): Promise<User | undefined>;
   createUser(user: Partial<UpsertUser>): Promise<User>;
   updateUser(id: string, user: Partial<UpsertUser>): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
@@ -327,6 +328,15 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByGoogleId(googleId: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.googleId, googleId));
+    return user;
+  }
+
+  async getUserProfile(userId: string, requesterId?: string): Promise<User | undefined> {
+    // Get user with all profile information
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    if (!user) return undefined;
+    
+    // Return user data - privacy filtering will be handled at the API level
     return user;
   }
 

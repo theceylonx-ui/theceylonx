@@ -1,8 +1,9 @@
-import { UserAvatar } from "./user-avatar";
+import { ClickableAvatar } from "./clickable-avatar";
 import { cn } from "@/lib/utils";
 
 interface UserDisplayProps {
   user: {
+    id?: string;
     displayName: string;
     avatarUrl?: string | null;
     initials: string;
@@ -12,6 +13,7 @@ interface UserDisplayProps {
   className?: string;
   nameClassName?: string;
   layout?: "horizontal" | "vertical";
+  clickable?: boolean;
 }
 
 export function UserDisplay({ 
@@ -20,12 +22,13 @@ export function UserDisplay({
   avatarSize = "md",
   className,
   nameClassName,
-  layout = "horizontal"
+  layout = "horizontal",
+  clickable = true
 }: UserDisplayProps) {
   if (!user) {
     return (
       <div className={cn("flex items-center gap-2", className)}>
-        {showAvatar && <UserAvatar user={null} size={avatarSize} />}
+        {showAvatar && <ClickableAvatar user={null} size={avatarSize} disabled />}
         <span className={cn("text-muted-foreground", nameClassName)}>
           Unknown User
         </span>
@@ -36,7 +39,14 @@ export function UserDisplay({
   if (layout === "vertical") {
     return (
       <div className={cn("flex flex-col items-center gap-2", className)}>
-        {showAvatar && <UserAvatar user={user} size={avatarSize} />}
+        {showAvatar && (
+          <ClickableAvatar 
+            user={user} 
+            size={avatarSize} 
+            disabled={!clickable || !user.id}
+            showTooltip={clickable && !!user.id}
+          />
+        )}
         <span className={cn("font-medium", nameClassName)}>
           {user.displayName}
         </span>
@@ -46,7 +56,14 @@ export function UserDisplay({
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      {showAvatar && <UserAvatar user={user} size={avatarSize} />}
+      {showAvatar && (
+        <ClickableAvatar 
+          user={user} 
+          size={avatarSize} 
+          disabled={!clickable || !user.id}
+          showTooltip={clickable && !!user.id}
+        />
+      )}
       <span className={cn("font-medium", nameClassName)}>
         {user.displayName}
       </span>
