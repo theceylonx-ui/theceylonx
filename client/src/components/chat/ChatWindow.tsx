@@ -86,12 +86,32 @@ interface ChatThread {
 }
 
 interface ChatWindowProps {
-  threadId: string;
-  currentUserId: string;
-  onBack: () => void;
+  threadId?: string;
+  currentUserId?: string;
+  onBack?: () => void;
 }
 
 export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps) {
+  // Show placeholder when no thread is selected
+  if (!threadId) {
+    return (
+      <Card className="h-full flex items-center justify-center">
+        <div className="text-center p-8">
+          <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.126-.98L3 21l1.98-5.874A8.955 8.955 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            Select a conversation
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Choose a chat from your inbox to start messaging
+          </p>
+        </div>
+      </Card>
+    );
+  }
   const [messageText, setMessageText] = useState("");
   const [isContactShareOpen, setIsContactShareOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -102,12 +122,14 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   const { data: threadData, isLoading: threadLoading } = useQuery({
     queryKey: [`/api/chat/threads/${threadId}`],
     refetchInterval: 5000,
+    enabled: !!threadId,
   });
 
   // Fetch messages
   const { data: messagesData, isLoading: messagesLoading } = useQuery({
     queryKey: [`/api/chat/threads/${threadId}/messages`],
     refetchInterval: 3000,
+    enabled: !!threadId,
   });
 
   // Sort messages chronologically like WhatsApp (oldest to newest)
