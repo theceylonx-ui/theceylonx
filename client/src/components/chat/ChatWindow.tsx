@@ -49,10 +49,10 @@ interface ChatMessage {
   createdAt: string;
   sender: {
     id: string;
-    firstName?: string;
-    lastName?: string;
+    displayName: string;
     username?: string;
-    profileImageUrl?: string;
+    avatarUrl?: string;
+    initials: string;
   };
 }
 
@@ -62,10 +62,10 @@ interface ChatThread {
   status: string;
   participants: Array<{
     id: string;
-    firstName?: string;
-    lastName?: string;
+    displayName: string;
     username?: string;
-    profileImageUrl?: string;
+    avatarUrl?: string;
+    initials: string;
   }>;
   trip: {
     id: string;
@@ -75,8 +75,10 @@ interface ChatThread {
     departureDate: string;
     organizer: {
       id: string;
-      firstName?: string;
-      lastName?: string;
+      displayName: string;
+      username?: string;
+      avatarUrl?: string;
+      initials: string;
       phone?: string;
       email?: string;
     };
@@ -108,7 +110,10 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
     refetchInterval: 3000,
   });
 
-  const messages = messagesData?.messages || [];
+  // Sort messages chronologically like WhatsApp (oldest to newest)
+  const messages = (messagesData?.messages || []).sort((a: ChatMessage, b: ChatMessage) => 
+    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
 
   // Send message mutation
   const sendMessageMutation = useMutation({
@@ -616,7 +621,7 @@ function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
           {!isOwn && (
             <div className="flex items-center space-x-2 mb-1">
               <Avatar className="w-6 h-6">
-                <AvatarImage src={message.sender.profileImageUrl} />
+                <AvatarImage src={message.sender.avatarUrl} />
                 <AvatarFallback className="text-xs">
                   {message.sender.initials || "U"}
                 </AvatarFallback>

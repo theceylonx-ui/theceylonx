@@ -21,8 +21,10 @@ import {
   Heart,
   Eye,
   ArrowLeft,
-  MessageCircle
+  MessageCircle,
+  ImageIcon
 } from 'lucide-react';
+import { ImageUpload } from '@/components/chat/ImageUpload';
 
 interface User {
   id: string;
@@ -517,7 +519,9 @@ export default function ChatBuddy() {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {chatData.messages.map((message) => {
+                        {chatData.messages
+                          .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+                          .map((message) => {
                           const isOwnMessage = message.authorId === user?.id;
                           return (
                             <div
@@ -562,6 +566,16 @@ export default function ChatBuddy() {
                         placeholder="Type your message..."
                         disabled={sendMessageMutation.isPending}
                         className="flex-1"
+                      />
+                      <ImageUpload
+                        threadId={tripStatus?.chatThreadId || ''}
+                        disabled={!tripStatus?.chatThreadId}
+                        onImageSent={() => {
+                          // Refresh messages after image is sent
+                          queryClient.invalidateQueries({
+                            queryKey: ['/api/chat', 'threads', tripStatus?.chatThreadId, 'messages'],
+                          });
+                        }}
                       />
                       <Button
                         onClick={handleSendMessage}

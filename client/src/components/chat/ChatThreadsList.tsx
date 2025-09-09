@@ -25,10 +25,10 @@ interface ChatThread {
   };
   otherUser?: {
     id: string;
-    firstName?: string;
-    lastName?: string;
+    displayName: string;
     username?: string;
-    profileImageUrl?: string;
+    avatarUrl?: string;
+    initials: string;
   };
   unreadCount: number;
 }
@@ -43,9 +43,7 @@ export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
     queryKey: ["/api/threads"],
   });
 
-  // 🔥 DEBUG: Log click events 🔥
   const handleThreadClick = (threadId: string) => {
-    console.log("🔥 CEYLONX DEBUG - Thread clicked:", threadId);
     onThreadSelect?.(threadId);
   };
 
