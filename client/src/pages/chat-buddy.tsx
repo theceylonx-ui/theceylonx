@@ -72,7 +72,7 @@ function ChatThreadsListView() {
         {/* Chat Buddy Header with beautiful gradient like CeylonX Tribes */}
         <div className="py-8">
           <div className="max-w-6xl mx-auto p-6">
-            <div className="bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 rounded-2xl shadow-lg p-8 mb-8">
+            <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-2xl shadow-lg shadow-emerald-500/20 p-8 mb-8">
               <div className="text-center">
                 <h1 className="text-4xl font-bold text-white mb-2">💬 Chat Buddy</h1>
                 <p className="text-white/90 text-lg">Connect with fellow travelers and trip organizers</p>
@@ -95,7 +95,7 @@ function ChatThreadsListView() {
       <div className="py-8">
         <div className="max-w-6xl mx-auto p-6">
           {/* Chat Buddy Header with beautiful gradient like CeylonX Tribes */}
-          <div className="bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 rounded-2xl shadow-lg p-8 mb-8">
+          <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-2xl shadow-lg shadow-emerald-500/20 p-8 mb-8">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-4xl font-bold text-white mb-2">💬 Chat Buddy</h1>
