@@ -271,10 +271,12 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   // Debug logging to fix message sending issue
   console.log('🔍 ChatWindow Debug:', {
     threadDataStatus: threadData?.status,
+    threadDataThreadStatus: threadData?.thread?.status, // Check nested structure
     tripStatus,
     isTripUnavailable,
     canSendMessages: threadData?.status === 'open' && !isTripUnavailable,
-    threadDataKeys: threadData ? Object.keys(threadData) : 'no threadData'
+    threadDataKeys: threadData ? Object.keys(threadData) : 'no threadData',
+    fullThreadData: threadData // Show complete structure
   });
 
   return (
