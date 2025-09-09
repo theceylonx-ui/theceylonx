@@ -123,7 +123,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
 
   // Fetch thread data (FORCE FRESH - NO CACHE)
   const { data: threadData, isLoading: threadLoading } = useQuery({
-    queryKey: [`/api/chat/threads/${finalThreadId}`, Date.now()], // Add timestamp to force fresh
+    queryKey: [`/api/chat/threads/${finalThreadId}`],
     refetchInterval: 5000,
     enabled: !!finalThreadId,
     staleTime: 0, // Always consider data stale
