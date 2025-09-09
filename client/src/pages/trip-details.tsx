@@ -473,16 +473,6 @@ export default function TripDetails({ params }: TripDetailsProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setShowDateEditModal(true)}
-                      className="text-ceylon-green border-ceylon-green hover:bg-ceylon-green/10"
-                      data-testid="button-edit-dates"
-                    >
-                      <CalendarIcon className="h-4 w-4 mr-2" />
-                      Edit Dates
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
                       onClick={() => setShowTripEditDialog(true)}
                       data-testid="button-edit-trip"
                     >
