@@ -2731,7 +2731,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create message
       const message = await storage.createMessage({
         threadId,
-        authorId: userId,
+        senderId: userId,
         body: body.trim()
       });
 
@@ -2832,7 +2832,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create contact sharing message
       const message = await storage.createMessage({
         threadId,
-        authorId: userId,
+        senderId: userId,
         body: `📞 Contact shared:\\n${normalizedContact.phoneNumber ? `WhatsApp: ${normalizedContact.phoneNumber}` : ''}${normalizedContact.email ? `\\nEmail: ${normalizedContact.email}` : ''}`,
         type: "CONTACT_SHARE",
         payload: {

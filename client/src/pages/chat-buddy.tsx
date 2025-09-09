@@ -41,7 +41,7 @@ interface User {
 interface Message {
   id: string;
   threadId: string;
-  authorId: string;
+  senderId: string;
   body: string;
   createdAt: string;
   author: User;
@@ -606,7 +606,7 @@ export default function ChatBuddy() {
                         {chatData.messages
                           .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
                           .map((message) => {
-                          const isOwnMessage = message.authorId === user?.id;
+                          const isOwnMessage = message.senderId === user?.id;
                           return (
                             <div
                               key={message.id}

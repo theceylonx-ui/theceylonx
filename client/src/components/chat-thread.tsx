@@ -18,7 +18,7 @@ import { getDisplayName, getInitials, generateRandomProfilePicture } from "@/lib
 interface Message {
   id: string;
   threadId: string;
-  authorId: string;
+  senderId: string;
   body: string;
   messageType?: 'text' | 'contact_share';
   contactInfo?: string;

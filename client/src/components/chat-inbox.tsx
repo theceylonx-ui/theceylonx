@@ -31,7 +31,7 @@ interface ChatThread {
     id: string;
     body: string;
     createdAt: string;
-    authorId: string;
+    senderId: string;
   };
   unreadCount?: number;
 }
@@ -151,7 +151,7 @@ export function ChatInbox({ userId, onThreadSelect }: ChatInboxProps) {
                       
                       {thread.lastMessage ? (
                         <div className="text-sm text-muted-foreground truncate">
-                          {thread.lastMessage.authorId === userId ? "You: " : ""}
+                          {thread.lastMessage.senderId === userId ? "You: " : ""}
                           {thread.lastMessage.body}
                         </div>
                       ) : (
