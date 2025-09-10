@@ -128,27 +128,8 @@ import { validateInput, sanitizeTextContent } from "./middleware/inputValidation
 import { logger, log } from "./utils/logger";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Health check endpoints - separate from main website
-  app.get('/health', (req, res) => {
-    res.status(200).json({ 
-      status: 'healthy', 
-      service: 'Ceylon Expand',
-      timestamp: new Date().toISOString(),
-      version: '1.0.0',
-      uptime: process.uptime()
-    });
-  });
-  
-  // API health check
-  app.get('/api/health', (req, res) => {
-    res.status(200).json({ 
-      status: 'healthy', 
-      service: 'Ceylon Expand API',
-      timestamp: new Date().toISOString(),
-      version: '1.0.0',
-      uptime: process.uptime()
-    });
-  });
+  // Root path MUST NOT have any JSON response to allow React app to load
+  // Health checks are handled later in this file with proper functions
 
   // CORS and cookie middleware - strict origin validation
   const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS 
