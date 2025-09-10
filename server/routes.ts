@@ -355,6 +355,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ message: "Migration not needed - using Ceylon Expand logo for default images" });
   });
 
+  // Community stats endpoint
+  app.get('/api/community/stats', async (req, res) => {
+    try {
+      const questions = await storage.getQuestions({});
+      const topics = await storage.getTopics();
+      
+      // Count total answers across all questions
+      const totalAnswers = questions.questions.reduce((sum, question) => {
+        return sum + (question.answerCount || 0);
+      }, 0);
+      
+      res.json({
+        totalQuestions: questions.total || questions.questions.length,
+        totalAnswers: totalAnswers,
+        totalTopics: topics.length
+      });
+    } catch (error) {
+      console.error("Error fetching community stats:", error);
+      res.status(500).json({ message: "Failed to fetch community stats" });
+    }
+  });
+
   // Category management routes
   app.get('/api/categories', async (req, res) => {
     try {

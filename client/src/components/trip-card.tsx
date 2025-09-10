@@ -460,9 +460,11 @@ export default function TripCard({ trip, badges }: TripCardProps) {
             </h3>
             
             {/* Sample badge for system-generated content */}
-            {(trip.id.startsWith('sample-') || trip.organizer?.id === 'system-user') && (
+            {isSampleTrip && (
               <div className="mb-2">
-                <NeonBadge className="mb-1" />
+                <NeonBadge variant="sample" size="sm" className="mb-1">
+                  🎯 Sample Trip
+                </NeonBadge>
               </div>
             )}
             
