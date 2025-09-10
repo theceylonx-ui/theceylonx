@@ -564,11 +564,13 @@ export default function TripCard({ trip, badges }: TripCardProps) {
                 className="text-sm px-6 py-2.5 bg-brand text-white hover:bg-brand-hover font-medium h-10 shadow-sm"
                 data-testid={`button-view-${trip.id}`}
                 title="View trip details"
-                asChild
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.location.href = createTripDetailLink(trip.id);
+                }}
               >
-                <Link href={createTripDetailLink(trip.id)}>
-                  View Details
-                </Link>
+                View Details
               </Button>
             </div>
           </div>
