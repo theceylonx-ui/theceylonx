@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -1056,18 +1056,24 @@ function SavedTrips() {
     enabled: !!user,
   });
 
-  // Filter data client-side for better performance
-  const pinnedTrips = {
-    items: allSavedTrips.items.filter((trip: any) => trip.saveType === 'pinned'),
-    total: allSavedTrips.items.filter((trip: any) => trip.saveType === 'pinned').length,
-    totalPages: 1
-  };
+  // Filter data client-side for better performance (memoized)
+  const pinnedTrips = useMemo(() => {
+    const filteredItems = allSavedTrips.items.filter((trip: any) => trip.saveType === 'pinned');
+    return {
+      items: filteredItems,
+      total: filteredItems.length,
+      totalPages: 1
+    };
+  }, [allSavedTrips.items]);
 
-  const requestSentTrips = {
-    items: allSavedTrips.items.filter((trip: any) => trip.saveType === 'request_sent'),
-    total: allSavedTrips.items.filter((trip: any) => trip.saveType === 'request_sent').length,
-    totalPages: 1
-  };
+  const requestSentTrips = useMemo(() => {
+    const filteredItems = allSavedTrips.items.filter((trip: any) => trip.saveType === 'request_sent');
+    return {
+      items: filteredItems,
+      total: filteredItems.length,
+      totalPages: 1
+    };
+  }, [allSavedTrips.items]);
 
   const renderTripCard = (item: any) => (
     <div key={item.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow" data-testid={`saved-trip-${item.id}`}>
