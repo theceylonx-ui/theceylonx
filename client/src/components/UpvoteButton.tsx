@@ -91,7 +91,7 @@ export function UpvoteButton({
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth/signin";
         }, 1500);
       } else {
         toast({

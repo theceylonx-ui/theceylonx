@@ -147,7 +147,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth/signin";
         }, 500);
         return;
       }
@@ -179,7 +179,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth/signin";
         }, 500);
         return;
       }
@@ -212,7 +212,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth/signin";
         }, 500);
         return;
       }
@@ -246,7 +246,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth/signin";
         }, 500);
         return;
       }
@@ -281,7 +281,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth/signin";
         }, 500);
         return;
       }
@@ -313,7 +313,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth/signin";
         }, 500);
         return;
       }
@@ -363,7 +363,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
 
   const handleAddComment = () => {
     if (!isAuthenticated) {
-      window.location.href = "/api/login";
+      window.location.href = "/auth/signin";
       return;
     }
     if (newComment.trim()) {
@@ -373,7 +373,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
 
   const handleReport = () => {
     if (!isAuthenticated) {
-      window.location.href = "/api/login";
+      window.location.href = "/auth/signin";
       return;
     }
     // Navigate to dedicated report page

@@ -165,7 +165,7 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth/signin";
         }, 500);
         return;
       }
