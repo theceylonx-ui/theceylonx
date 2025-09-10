@@ -272,14 +272,12 @@ export default function TripRequestsPage({ params }: TripRequestsPageProps) {
                         <Avatar>
                           <AvatarImage src={request.user.profileImageUrl || undefined} />
                           <AvatarFallback>
-                            {request.user.firstName?.[0] || request.user.username?.[0] || 'U'}
+                            {(request.user.displayName || request.user.username || request.user.id).slice(0, 1).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <h3 className="font-semibold">
-                            {request.user.firstName && request.user.lastName 
-                              ? `${request.user.firstName} ${request.user.lastName}`
-                              : request.user.username}
+                            {request.user.displayName || request.user.username || request.user.id}
                           </h3>
                           <p className="text-sm text-gray-600">
                             Requested {request.createdAt ? new Date(request.createdAt).toLocaleDateString() : 'Date unknown'}

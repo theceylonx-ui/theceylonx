@@ -149,9 +149,7 @@ export default function UserProfilePage() {
     return name.split(' ').map(word => word[0]).join('').toUpperCase();
   };
 
-  const displayName = profile.showRealName && profile.firstName && profile.lastName 
-    ? `${profile.firstName} ${profile.lastName}`
-    : profile.displayName || profile.username || 'Ceylon Traveler';
+  const displayName = profile.displayName || profile.username || profile.id;
 
   const memberSince = new Date(profile.createdAt).toLocaleDateString('en-US', { 
     month: 'long', 
