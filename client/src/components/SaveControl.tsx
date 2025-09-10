@@ -42,7 +42,7 @@ export function SaveControl({ tripId, variant = 'default', className = '' }: Sav
 
   // Save trip mutation
   const saveMutation = useMutation({
-    mutationFn: async (saveType: 'pinned' | 'interested'): Promise<SaveResponse> => {
+    mutationFn: async (saveType: 'pinned'): Promise<SaveResponse> => {
       const response = await apiRequest('POST', `/api/trips/${tripId}/save`, { saveType });
       return await response.json();
     },
@@ -62,7 +62,7 @@ export function SaveControl({ tripId, variant = 'default', className = '' }: Sav
       
       toast({
         title: 'Trip Saved',
-        description: `Trip ${saveType === 'pinned' ? 'pinned' : 'marked as interested'} successfully`,
+        description: `Trip pinned successfully`,
       });
     },
     onError: (error, saveType) => {
@@ -71,7 +71,7 @@ export function SaveControl({ tripId, variant = 'default', className = '' }: Sav
       console.error('Error saving trip:', error);
       toast({
         title: 'Save Failed',
-        description: `Failed to ${saveType === 'pinned' ? 'pin' : 'mark as interested'} trip`,
+        description: `Failed to pin trip`,
         variant: 'destructive',
       });
     },
