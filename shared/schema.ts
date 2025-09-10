@@ -227,6 +227,14 @@ export const trips = pgTable("trips", {
   priceMin: decimal("price_min", { precision: 10, scale: 2 }),
   priceMax: decimal("price_max", { precision: 10, scale: 2 }),
   
+  // Additional trip details for "Show More" section
+  duration: varchar("duration"), // e.g., "3 days 2 nights", "Full day (8 hours)"
+  difficulty: varchar("difficulty"), // "easy", "moderate", "challenging"
+  buddyFriendly: boolean("buddy_friendly").default(false), // Solo traveler friendly
+  safetyFlags: text("safety_flags").array().default(sql`'{}'::text[]`), // Safety requirements/warnings
+  seasonality: varchar("seasonality"), // Best season for this trip
+  tags: text("tags").array().default(sql`'{}'::text[]`), // Hashtag-style tags
+  
   // Image fields for trip photos
   imageUrl: varchar("image_url"), // Single fallback image URL
   mediaUrls: text("media_urls").array().default(sql`'{}'::text[]`), // Array of uploaded images

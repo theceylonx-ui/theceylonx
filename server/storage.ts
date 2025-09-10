@@ -3,6 +3,7 @@ import {
   userNotifications,
   userPrivacy,
   trips,
+  tripMetadata,
   comments,
   ratings,
   reports,
@@ -493,11 +494,12 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(trips)
       .leftJoin(users, eq(trips.organizerId, users.id))
+      .leftJoin(tripMetadata, eq(trips.id, tripMetadata.tripId))
       .where(and(eq(trips.id, id), eq(trips.isDeleted, false)));
     
     if (result.length === 0) return undefined;
     
-    const { trips: trip, users: organizer } = result[0];
+    const { trips: trip, users: organizer, trip_metadata: metadata } = result[0];
     
     // Apply contact redaction if not the trip organizer
     const shouldRedact = shouldRedactContact(requestingUserId, trip.organizerId);
@@ -506,7 +508,19 @@ export class DatabaseStorage implements IStorage {
     // Also redact organizer's contact information if not the trip organizer
     const redactedOrganizer = shouldRedact ? redactContact(organizer!) : organizer!;
     
-    return { ...redactedTrip, organizer: redactedOrganizer };
+    // Include metadata fields for "Show More" tab
+    return { 
+      ...redactedTrip, 
+      organizer: redactedOrganizer,
+      // Add metadata fields if available
+      duration: metadata?.duration,
+      difficulty: metadata?.difficulty,
+      buddyFriendly: metadata?.buddyFriendly,
+      seasonality: metadata?.seasonality,
+      safetyFlags: metadata?.safetyFlags,
+      tags: metadata?.tags,
+      notes: metadata?.notes,
+    };
   }
 
   async updateTrip(id: string, trip: Partial<InsertTrip>): Promise<Trip> {
