@@ -51,7 +51,7 @@ export const uploadRateLimit = rateLimit({
 // Search/browse rate limiter (more lenient)
 export const searchRateLimit = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: isProduction() ? 30 : 200, // 30 searches per minute
+  max: isProduction() ? 60 : 200, // 60 searches per minute
   message: {
     error: 'Search limit exceeded',
     message: 'Maximum 30 searches per minute. Please slow down.',
@@ -64,7 +64,7 @@ export const searchRateLimit = rateLimit({
 // Chat/messaging rate limiter
 export const chatRateLimit = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: isProduction() ? 20 : 100, // 20 messages per minute
+  max: isProduction() ? 40 : 100, // 40 messages per minute
   message: {
     error: 'Messaging limit exceeded',
     message: 'Maximum 20 messages per minute. Please slow down.',
@@ -77,7 +77,7 @@ export const chatRateLimit = rateLimit({
 // Trip creation rate limiter
 export const tripCreationRateLimit = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: isProduction() ? 3 : 20, // 3 trip posts per hour
+  max: isProduction() ? 10 : 20, // 10 trip posts per hour
   message: {
     error: 'Trip creation limit exceeded',
     message: 'Maximum 3 trip posts per hour. Quality over quantity!',

@@ -31,8 +31,10 @@ const COOKIE_SECURE = process.env.COOKIE_SECURE === 'true';
 
 // For development, don't use domain/secure settings
 const isDevelopment = process.env.NODE_ENV === 'development';
+const isProduction = process.env.REPLIT_DEPLOYMENT === '1';
 const effectiveCookieDomain = isDevelopment ? undefined : COOKIE_DOMAIN;
-const effectiveCookieSecure = isDevelopment ? false : COOKIE_SECURE;
+// In production, default to secure=true for HTTPS, but allow override
+const effectiveCookieSecure = isDevelopment ? false : (process.env.COOKIE_SECURE !== 'false' && isProduction);
 
 // Cookie configuration for environment
 
