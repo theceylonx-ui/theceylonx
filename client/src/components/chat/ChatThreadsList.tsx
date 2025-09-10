@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageCircle, Clock, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { EmptyState } from "@/components/EmptyState";
+import { getDisplayName } from "@/lib/profileUtils";
 
 interface ChatThread {
   id: string;
@@ -25,8 +26,8 @@ interface ChatThread {
   };
   otherUser?: {
     id: string;
-    displayName: string;
-    username?: string;
+    displayName?: string | null;
+    username?: string | null;
     avatarUrl?: string;
     initials: string;
   };
@@ -126,7 +127,7 @@ export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
                   <Avatar className="w-12 h-12">
                     <AvatarImage 
                       src={thread.otherUser?.avatarUrl} 
-                      alt={thread.otherUser?.displayName || "User"} 
+                      alt={getDisplayName(thread.otherUser) || "User"} 
                     />
                     <AvatarFallback>
                       {thread.otherUser?.initials || "U"}
@@ -146,7 +147,7 @@ export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <p className="font-medium text-sm truncate">
-                      {thread.otherUser?.displayName}
+                      {getDisplayName(thread.otherUser)}
                       {thread.otherUser?.username && (
                         <span className="text-gray-500 ml-1">@{thread.otherUser.username}</span>
                       )}

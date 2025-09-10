@@ -38,6 +38,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getDisplayName } from "@/lib/profileUtils";
+
+// API Response Types
+interface ChatMessagesResponse {
+  messages: ChatMessage[];
+}
+
+interface ChatThreadResponse extends ChatThread {}
 
 interface ChatMessage {
   id: string;
@@ -49,8 +57,8 @@ interface ChatMessage {
   createdAt: string;
   sender: {
     id: string;
-    displayName: string;
-    username?: string;
+    displayName?: string | null;
+    username?: string | null;
     avatarUrl?: string;
     initials: string;
   };
@@ -60,27 +68,34 @@ interface ChatThread {
   id: string;
   tripId: string;
   status: string;
+  thread?: {
+    status: string;
+  };
   participants: Array<{
     id: string;
-    displayName: string;
-    username?: string;
+    displayName?: string | null;
+    username?: string | null;
     avatarUrl?: string;
     initials: string;
   }>;
-  trip: {
+  trip?: {
     id: string;
     title: string;
-    origin: string;
-    destination: string;
+    origin?: string;
+    destination?: string;
+    fromLocation?: string;
+    toLocation?: string;
     departureDate: string;
+    status?: string;
     organizer: {
       id: string;
-      displayName: string;
-      username?: string;
+      displayName?: string | null;
+      username?: string | null;
       avatarUrl?: string;
       initials: string;
       phone?: string;
       email?: string;
+      phoneNumber?: string;
     };
   };
 }
@@ -122,7 +137,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   const finalThreadId = threadId || "thread-organizer-test-001";
 
   // Fetch thread data with optimized caching
-  const { data: threadData, isLoading: threadLoading } = useQuery({
+  const { data: threadData, isLoading: threadLoading } = useQuery<ChatThreadResponse>({
     queryKey: [`/api/chat/threads/${finalThreadId}`],
     refetchInterval: 10000, // Less frequent for better performance
     enabled: !!finalThreadId,
@@ -131,7 +146,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   });
 
   // Fetch messages with optimized polling
-  const { data: messagesData, isLoading: messagesLoading } = useQuery({
+  const { data: messagesData, isLoading: messagesLoading } = useQuery<ChatMessagesResponse>({
     queryKey: [`/api/chat/threads/${finalThreadId}/messages`],
     refetchInterval: 5000, // Balanced refresh rate
     enabled: !!finalThreadId,
@@ -228,21 +243,6 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
     sendMessageMutation.mutate({ text: messageText.trim() });
   };
 
-  const handleImageUploaded = (result: any) => {
-    const uploadUrl = result.successful[0]?.uploadURL;
-    if (uploadUrl) {
-      sendMessageMutation.mutate({
-        text: "",
-        attachmentId: uploadUrl,
-        ephemeral: false,
-      });
-      
-      toast({
-        title: "Image sent!",
-        description: "Your image has been shared successfully.",
-      });
-    }
-  };
 
   const handleReport = (messageId: string, reason: string) => {
     reportMessageMutation.mutate({ messageId, reason });
@@ -416,12 +416,12 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
             <p className="text-sm">Start the conversation!</p>
           </div>
         ) : (
-          messages.map((message) => (
+          messages.map((message: ChatMessage) => (
             <MessageBubble
               key={message.id}
               message={message}
               isOwn={message.senderId === currentUserId}
-              onReport={(reason) => handleReport(message.id, reason)}
+              onReport={(reason: string) => handleReport(message.id, reason)}
             />
           ))
         )}
@@ -450,9 +450,19 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
               </div>
               
               <ImageUpload
-                onComplete={handleImageUploaded}
-                maxFiles={1}
-                maxFileSize={10 * 1024 * 1024}
+                threadId={finalThreadId}
+                onImageSent={() => {
+                  // Image sent successfully, refresh messages
+                  queryClient.invalidateQueries({ 
+                    queryKey: [`/api/chat/threads/${finalThreadId}/messages`],
+                    exact: true 
+                  });
+                  toast({
+                    title: "Image sent!",
+                    description: "Your image has been shared successfully.",
+                  });
+                }}
+                disabled={sendMessageMutation.isPending}
               />
               
               <Button 
@@ -542,7 +552,7 @@ function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-xs text-gray-500">
-                  {message.sender.displayName}
+                  {getDisplayName(message.sender)}
                 </span>
               </div>
             )}
@@ -724,7 +734,7 @@ function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
           
           <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <p className="text-sm text-gray-600 dark:text-gray-400 italic">
-              "{message.text?.substring(0, 100)}{message.text?.length > 100 ? '...' : ''}"
+              "{message.text?.substring(0, 100)}{(message.text?.length || 0) > 100 ? '...' : ''}"
             </p>
           </div>
 

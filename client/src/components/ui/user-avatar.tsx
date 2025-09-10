@@ -1,9 +1,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { getDisplayName } from "@/lib/profileUtils";
 
 interface UserAvatarProps {
   user: {
-    displayName: string;
+    id?: string;
+    displayName?: string | null;
+    username?: string | null;
     avatarUrl?: string | null;
     initials: string;
   } | null;
@@ -32,7 +35,7 @@ export function UserAvatar({ user, size = "md", className }: UserAvatarProps) {
       {user.avatarUrl && (
         <AvatarImage 
           src={user.avatarUrl} 
-          alt={user.displayName}
+          alt={getDisplayName(user)}
           className="object-cover"
         />
       )}

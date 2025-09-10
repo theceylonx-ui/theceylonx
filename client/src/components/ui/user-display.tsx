@@ -1,10 +1,12 @@
 import { ClickableAvatar } from "./clickable-avatar";
 import { cn } from "@/lib/utils";
+import { getDisplayName } from "@/lib/profileUtils";
 
 interface UserDisplayProps {
   user: {
     id?: string;
-    displayName: string;
+    displayName?: string | null;
+    username?: string | null;
     avatarUrl?: string | null;
     initials: string;
   } | null;
@@ -48,7 +50,7 @@ export function UserDisplay({
           />
         )}
         <span className={cn("font-medium", nameClassName)}>
-          {user.displayName}
+          {getDisplayName(user)}
         </span>
       </div>
     );
@@ -65,7 +67,7 @@ export function UserDisplay({
         />
       )}
       <span className={cn("font-medium", nameClassName)}>
-        {user.displayName}
+        {getDisplayName(user)}
       </span>
     </div>
   );

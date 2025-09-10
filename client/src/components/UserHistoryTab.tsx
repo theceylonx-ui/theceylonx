@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, Pin, Heart, CheckCircle, XCircle } from "lucide-react";
 import { Link } from "wouter";
+import { getDisplayName } from "@/lib/profileUtils";
 
 interface UserHistoryEntry {
   action: string;
@@ -16,7 +17,9 @@ interface UserHistoryEntry {
     fromLocation: string;
     toLocation: string;
     organizer: {
-      displayName: string;
+      id?: string;
+      displayName?: string | null;
+      username?: string | null;
       avatarUrl?: string;
     };
   };
@@ -172,7 +175,7 @@ export function UserHistoryTab() {
                       {entry.trip.fromLocation} → {entry.trip.toLocation}
                     </div>
                     <div className="text-xs text-gray-500">
-                      Organized by {entry.trip.organizer.displayName}
+                      Organized by {getDisplayName(entry.trip.organizer)}
                     </div>
                   </Link>
                   
