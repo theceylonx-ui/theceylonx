@@ -435,7 +435,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumbs */}
-        <TripBreadcrumbs trip={trip} className="mb-4" />
+        <TripBreadcrumbs trip={trip as any} className="mb-4" />
         
         {/* Enhanced Back Button with preserved search state */}
         <div className="mb-6">
@@ -779,20 +779,21 @@ export default function TripDetails({ params }: TripDetailsProps) {
             {/* Trip Notes */}
             {trip.notes && (
               <div className="mt-6" data-testid="trip-notes">
-                <h3 className="font-semibold text-gray-800 mb-2">Trip Details</h3>
+                <h3 className="font-semibold text-gray-800 mb-2">Additional Notes</h3>
                 <p className="text-gray-700 whitespace-pre-wrap">{trip.notes}</p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Tabbed Interface for Comments */}
+        {/* Tabbed Interface for Comments and Additional Details */}
         <Card>
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <div className="px-6 py-4 border-b">
-                <TabsList className="grid w-full grid-cols-1">
+                <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="details">Comments & Questions</TabsTrigger>
+                  <TabsTrigger value="more">Show More</TabsTrigger>
                 </TabsList>
               </div>
 
@@ -855,6 +856,125 @@ export default function TripDetails({ params }: TripDetailsProps) {
                       No comments yet. Be the first to ask a question!
                     </div>
                   )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="more" className="px-6 py-4">
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Additional Trip Information</h3>
+                    
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Trip Duration */}
+                      {(trip as any).duration && (
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-gray-700">Duration</h4>
+                          <p className="text-gray-600 bg-gray-50 px-3 py-2 rounded-md">
+                            {(trip as any).duration}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Difficulty Level */}
+                      {(trip as any).difficulty && (
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-gray-700">Difficulty Level</h4>
+                          <Badge 
+                            variant="outline" 
+                            className={`
+                              ${(trip as any).difficulty === 'easy' ? 'border-green-500 text-green-700 bg-green-50' : ''}
+                              ${(trip as any).difficulty === 'moderate' ? 'border-yellow-500 text-yellow-700 bg-yellow-50' : ''}
+                              ${(trip as any).difficulty === 'challenging' ? 'border-red-500 text-red-700 bg-red-50' : ''}
+                            `}
+                          >
+                            {(trip as any).difficulty.charAt(0).toUpperCase() + (trip as any).difficulty.slice(1)}
+                          </Badge>
+                        </div>
+                      )}
+
+                      {/* Price Range */}
+                      {((trip as any).priceMin || (trip as any).priceMax) && (
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-gray-700">Price Range</h4>
+                          <p className="text-gray-600 bg-gray-50 px-3 py-2 rounded-md">
+                            LKR {(trip as any).priceMin || 0} - {(trip as any).priceMax || 'Open'}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Buddy Friendly */}
+                      {(trip as any).buddyFriendly !== undefined && (
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-gray-700">Solo Travelers Welcome</h4>
+                          <Badge 
+                            variant="outline" 
+                            className={`
+                              ${(trip as any).buddyFriendly ? 'border-green-500 text-green-700 bg-green-50' : 'border-gray-500 text-gray-700 bg-gray-50'}
+                            `}
+                          >
+                            {(trip as any).buddyFriendly ? 'Yes - Solo travelers welcome!' : 'Group travelers preferred'}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Tags */}
+                    {trip.tags && trip.tags.length > 0 && (
+                      <div className="mt-6">
+                        <h4 className="font-medium text-gray-700 mb-3">Tags</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {trip.tags.map((tag, index) => (
+                            <Badge key={index} variant="secondary" className="bg-ceylon-green/10 text-ceylon-green">
+                              #{tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Safety Flags */}
+                    {(trip as any).safetyFlags && (trip as any).safetyFlags.length > 0 && (
+                      <div className="mt-6">
+                        <h4 className="font-medium text-gray-700 mb-3">Safety & Requirements</h4>
+                        <div className="space-y-2">
+                          {(trip as any).safetyFlags.map((flag: string, index: number) => (
+                            <div key={index} className="flex items-center space-x-2 bg-amber-50 border border-amber-200 px-3 py-2 rounded-md">
+                              <Flag className="h-4 w-4 text-amber-600" />
+                              <span className="text-amber-800 text-sm">{flag}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Seasonality */}
+                    {(trip as any).seasonality && (trip as any).seasonality.length > 0 && (
+                      <div className="mt-6">
+                        <h4 className="font-medium text-gray-700 mb-3">Best Season</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {(trip as any).seasonality.map((season: string, index: number) => (
+                            <Badge key={index} variant="outline" className="border-blue-500 text-blue-700 bg-blue-50">
+                              {season}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Show message if no additional info */}
+                    {!((trip as any).duration || (trip as any).difficulty || (trip as any).priceMin || (trip as any).priceMax || 
+                        (trip as any).buddyFriendly !== undefined || (trip.tags && trip.tags.length > 0) || 
+                        ((trip as any).safetyFlags && (trip as any).safetyFlags.length > 0) || 
+                        ((trip as any).seasonality && (trip as any).seasonality.length > 0)) && (
+                      <div className="text-center py-8 text-gray-500">
+                        <div className="text-gray-400 mb-2">
+                          <Calendar className="h-8 w-8 mx-auto" />
+                        </div>
+                        <p className="text-sm">No additional trip details available.</p>
+                        <p className="text-xs mt-1">The organizer hasn't provided extra information for this trip.</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </TabsContent>
 
