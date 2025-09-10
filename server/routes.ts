@@ -377,6 +377,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Profile image upload endpoint
+  app.post('/api/profile/upload-url', unifiedAuthGuard, async (req, res) => {
+    try {
+      const { ObjectStorageService } = await import('./objectStorage');
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error getting profile upload URL:", error);
+      res.status(500).json({ message: "Failed to get upload URL" });
+    }
+  });
+
   // Category management routes
   app.get('/api/categories', async (req, res) => {
     try {

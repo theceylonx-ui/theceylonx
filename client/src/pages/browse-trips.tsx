@@ -270,14 +270,16 @@ export default function BrowseTrips() {
         ) : trips.length === 0 ? (
           <div className="flex justify-center">
             <EmptyState
-              icon="search"
+              type="trips"
               title="No trips match your filters"
               description="Try adjusting your search criteria or clear all filters to see more results."
-              actionLabel="Clear Filters"
-              onAction={() => {
-                // Reset all filters
-                const { clearAllFilters } = useTripsFiltersStore.getState();
-                clearAllFilters();
+              primaryAction={{
+                label: "Clear Filters",
+                onClick: () => {
+                  // Reset all filters
+                  const { clearAll } = useTripsFiltersStore.getState();
+                  clearAll();
+                }
               }}
             />
           </div>
