@@ -9,6 +9,7 @@ import { UpvoteButton } from '@/components/UpvoteButton';
 import { formatDistanceToNow } from "date-fns";
 import { getDisplayName, getInitials } from "@/lib/profileUtils";
 import type { QuestionWithDetails } from "@shared/schema";
+import { NeonBadge } from "@/components/ui/neon-badge";
 
 interface QuestionCardProps {
   question: QuestionWithDetails;
@@ -44,6 +45,13 @@ export function QuestionCard({ question, onEdit, onDelete, currentUserId, showPr
               <h3 className="text-lg font-semibold text-text-primary hover:text-brand transition-colors line-clamp-2 mb-2">
                 {question.title}
               </h3>
+              
+              {/* Sample badge for system-generated content */}
+              {(question.id.startsWith('sample-') || question.userId === 'system-user') && (
+                <div className="mb-2">
+                  <NeonBadge className="mb-1" />
+                </div>
+              )}
             </div>
           
             {/* Action buttons for author */}
@@ -113,7 +121,7 @@ export function QuestionCard({ question, onEdit, onDelete, currentUserId, showPr
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 <span className="caption">
-                  {formatDistanceToNow(new Date(question.createdAt), { addSuffix: true })}
+                  {question.createdAt ? formatDistanceToNow(new Date(question.createdAt), { addSuffix: true }) : 'Recently'}
                 </span>
               </div>
             </div>
@@ -123,19 +131,19 @@ export function QuestionCard({ question, onEdit, onDelete, currentUserId, showPr
               {/* Upvotes */}
               <div className="flex items-center gap-1">
                 <ThumbsUp className="h-4 w-4" />
-                <span className="caption font-medium">{question.upvotes || 0}</span>
+                <span className="caption font-medium">{question.votesCount || 0}</span>
               </div>
               
               {/* Answers */}
               <div className="flex items-center gap-1">
                 <MessageSquare className="h-4 w-4" />
-                <span className="caption font-medium">{question.answerCount || 0}</span>
+                <span className="caption font-medium">{question.answersCount || 0}</span>
               </div>
 
               {/* Views */}
               <div className="flex items-center gap-1">
                 <Eye className="h-4 w-4" />
-                <span className="caption font-medium">{question.views || 0}</span>
+                <span className="caption font-medium">{0}</span>
               </div>
             </div>
           </div>

@@ -15,6 +15,7 @@ import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { SaveControl } from "@/components/SaveControl";
 import { createTripDetailLink } from "@/utils/searchParams";
 import { useState, useCallback } from "react";
+import { NeonBadge } from "@/components/ui/neon-badge";
 
 interface TripCardProps {
   trip: TripWithOrganizer & { isPinned?: boolean; isInterested?: boolean };
@@ -454,6 +455,13 @@ export default function TripCard({ trip, badges }: TripCardProps) {
             <h3 className="text-base sm:text-lg font-semibold text-text-primary mb-2 line-clamp-2 hover:text-brand transition-colors" data-testid={`trip-title-${trip.id}`}>
               {trip.title}
             </h3>
+            
+            {/* Sample badge for system-generated content */}
+            {(trip.id.startsWith('sample-') || trip.organizer?.id === 'system-user') && (
+              <div className="mb-2">
+                <NeonBadge className="mb-1" />
+              </div>
+            )}
             
             {/* Category badge */}
             <div className="flex flex-wrap gap-2 mb-2">
