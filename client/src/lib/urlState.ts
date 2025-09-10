@@ -6,6 +6,7 @@ export function encodeFiltersToQuery(f: TripsFilters): string {
   if (f.from) p.set("from", f.from);
   if (f.to) p.set("to", f.to);
   if (f.region) p.set("region", f.region);
+  if (f.category) p.set("category", f.category);
   if (f.startDate) p.set("start", f.startDate);
   if (f.endDate) p.set("end", f.endDate);
   if (f.maxPrice != null) p.set("maxPrice", String(f.maxPrice));
@@ -25,6 +26,7 @@ export function decodeFiltersFromQuery(search: string): Partial<TripsFilters> {
     from: pick("from"),
     to: pick("to"),
     region: pick("region"),
+    category: pick("category"),
     startDate: pick("start"),
     endDate: pick("end"),
     maxPrice: n("maxPrice"),
