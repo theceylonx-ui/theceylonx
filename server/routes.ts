@@ -423,7 +423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Use the category as-is, no need for validation since we removed Sri Lanka images
       // The category might come from the original clientData if not in tripData
-      const safeCategory = (tripData as any).category || req.body.category || 'unknown';
+      const safeCategory = (tripData as any).category || req.body.category || 'adventure_sport';
       
       // Merge image data with trip data
       const tripWithImage = {
@@ -567,7 +567,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const normalizedTrip = {
         ...trip,
         organizer: normalizeUserForUI(trip.organizer),
-        comments: trip.comments?.map((comment: any) => ({
+        comments: (trip as any).comments?.map((comment: any) => ({
           ...comment,
           user: normalizeUserForUI(comment.user)
         })) || []
@@ -1449,7 +1449,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const report of reports) {
         const thread = await storage.getAdminChatThread(report.id);
         if (thread?.id === threadId) {
-          hasAccess = adminUserIds.includes(userId) || thread.organizerId === userId;
+          hasAccess = adminUserIds.includes(userId) || (thread as any).organizerId === userId;
           break;
         }
       }

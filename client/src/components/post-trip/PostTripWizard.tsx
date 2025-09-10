@@ -74,7 +74,7 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
     defaultValues: {
       title: "",
       description: "",
-      category: "unknown",
+      category: "adventure_sport",
       fromLocation: "",
       toLocation: "",
       region: "",
