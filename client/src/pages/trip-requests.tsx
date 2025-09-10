@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
+import { getDisplayName, getInitials } from "@/lib/profileUtils";
 import type { TripInterestRequest, User as UserType } from "@shared/schema";
 
 interface TripInterestRequestWithUser extends TripInterestRequest {
@@ -272,12 +273,12 @@ export default function TripRequestsPage({ params }: TripRequestsPageProps) {
                         <Avatar>
                           <AvatarImage src={request.user.profileImageUrl || undefined} />
                           <AvatarFallback>
-                            {(request.user.displayName || request.user.username || request.user.id).slice(0, 1).toUpperCase()}
+                            {getInitials(request.user)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <h3 className="font-semibold">
-                            {request.user.displayName || request.user.username || request.user.id}
+                            {getDisplayName(request.user)}
                           </h3>
                           <p className="text-sm text-gray-600">
                             Requested {request.createdAt ? new Date(request.createdAt).toLocaleDateString() : 'Date unknown'}
