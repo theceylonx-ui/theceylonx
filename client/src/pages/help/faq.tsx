@@ -52,17 +52,17 @@ export default function HelpFAQPage() {
     {
       id: "getting-started",
       question: "How do I get started with Ceylon Expand?",
-      answer: "Getting started is easy! Create an account by clicking 'Sign In' and completing your profile. Add your travel preferences, profile photo, and contact information. Then you can start browsing trips, posting your own trips, or using our calendar to plan your journeys across Sri Lanka.",
+      answer: "Getting started is easy! Create an account using Google, email, or other supported sign-in methods. Complete your profile with travel preferences, profile photo, and contact information. You can immediately start browsing trips (no signup required for viewing), but you'll need an account to post trips, chat with organizers, or save favorites.",
       category: "Getting Started",
-      keywords: ["signup", "account", "profile", "start", "begin", "register"],
+      keywords: ["signup", "account", "profile", "start", "begin", "register", "google", "oauth"],
       icon: <Users className="h-5 w-5 text-ceylon-blue" />
     },
     {
       id: "profile-setup",
       question: "What should I include in my profile?",
-      answer: "Complete your profile with: a clear profile photo, your travel preferences (adventure, relaxation, cultural), contact information, and a brief bio. This helps other travelers understand your travel style and builds trust in the community. Verified profiles get priority in recommendations.",
+      answer: "Complete your profile with: a clear profile photo, your travel preferences (adventure, relaxation, cultural), contact information, and a brief bio. Add your interests and travel style details. Complete profiles get verification badges and priority in recommendations. Other users can follow you to see your latest trips.",
       category: "Getting Started",
-      keywords: ["profile", "photo", "preferences", "bio", "verification", "complete"],
+      keywords: ["profile", "photo", "preferences", "bio", "verification", "complete", "follow", "badges"],
       icon: <User className="h-5 w-5 text-ceylon-green" />
     },
 
@@ -78,10 +78,18 @@ export default function HelpFAQPage() {
     {
       id: "trip-photos",
       question: "How do I add photos to my trips?",
-      answer: "When posting or editing a trip, click the camera icon to upload photos. You can add multiple images showing your planned route, destinations, or vehicle. Photos help other travelers better understand your trip and increase engagement. Supported formats: JPG, PNG, up to 10MB per image.",
+      answer: "When posting or editing a trip, click the camera icon to upload photos. You can add multiple images showing your planned route, destinations, or vehicle. Photos are automatically compressed for optimal loading. Set a cover image that represents your trip best. Supported formats: JPG, PNG, up to 10MB per image.",
       category: "Trip Management",
-      keywords: ["photos", "images", "upload", "camera", "pictures", "media"],
+      keywords: ["photos", "images", "upload", "camera", "pictures", "media", "cover"],
       icon: <Camera className="h-5 w-5 text-ceylon-green" />
+    },
+    {
+      id: "trip-details-info",
+      question: "What additional information can I see about trips?",
+      answer: "Each trip has a 'Show More' tab with detailed information including: trip duration (e.g., '3 days 2 nights'), difficulty level (easy/moderate/challenging), whether it's solo traveler friendly, price ranges, hashtag-style tags, safety requirements, and best seasonal recommendations. This helps you make informed decisions about joining trips.",
+      category: "Trip Management",
+      keywords: ["details", "duration", "difficulty", "solo", "tags", "safety", "season", "show more"],
+      icon: <HelpCircle className="h-5 w-5 text-ceylon-blue" />
     },
     {
       id: "trip-editing",
@@ -103,10 +111,10 @@ export default function HelpFAQPage() {
     },
     {
       id: "pinned-interested",
-      question: "What are Pinned and Interested trips?",
-      answer: "Pin trips (📌) you're seriously considering to save them for later. Mark trips as Interested (⭐) when you want to join. Pinned trips are private bookmarks, while Interested shows your intent to the organizer. When you mark a trip as Interested, it automatically unpins if it was pinned before.",
+      question: "What are Pinned and Request Sent trips?",
+      answer: "Pin trips (📌) you're seriously considering to save them for later viewing. When you're ready to join, send an interest request which moves the trip to 'Request Sent' status. Pinned trips are private bookmarks, while Request Sent means the organizer has been notified of your interest and can approve or decline your request through the chat system.",
       category: "Calendar & Planning",
-      keywords: ["pin", "pinned", "interested", "bookmark", "save", "favorite"],
+      keywords: ["pin", "pinned", "request", "interest", "bookmark", "save", "approve", "decline"],
       icon: <Pin className="h-5 w-5 text-orange-500" />
     },
     {
@@ -122,25 +130,25 @@ export default function HelpFAQPage() {
     {
       id: "chat-system",
       question: "How does the Chat Buddy system work?",
-      answer: "Click 'Chat' in the navigation to access your message threads. You can start conversations with trip organizers or participants. The system supports text messages, photo sharing, and trip-specific discussions. Your chat history is preserved, and you'll get notifications for new messages.",
+      answer: "Access your chats by clicking 'Chat Buddy' in the navigation. The WhatsApp-style interface supports text messages, photo sharing, contact sharing, and trip-specific discussions. Chat threads are automatically created when you send interest requests. You can see message delivery status, typing indicators, and unread counts.",
       category: "Communication",
-      keywords: ["chat", "messages", "communication", "conversation", "buddy"],
+      keywords: ["chat", "messages", "communication", "conversation", "buddy", "whatsapp", "delivery"],
       icon: <MessageCircle className="h-5 w-5 text-ceylon-green" />
     },
     {
       id: "contacting-organizers",
       question: "How do I contact trip organizers?",
-      answer: "Use our built-in Chat Buddy system to message trip organizers privately and securely. Phone numbers and email addresses are kept private - organizers can choose to share their contact details with you directly through the chat system once you've established communication. You can also leave public comments on trip posts to ask general questions.",
+      answer: "Send an interest request on any trip to start a private chat thread with the organizer. Use the Chat Buddy system for secure messaging. Organizers can share their contact details (WhatsApp, email) directly through the chat system once you've established communication. You can also leave public comments on trip posts for general questions.",
       category: "Communication",
-      keywords: ["contact", "organizer", "chat", "private", "secure", "communicate"],
+      keywords: ["contact", "organizer", "chat", "private", "secure", "communicate", "interest", "request"],
       icon: <Phone className="h-5 w-5 text-ceylon-blue" />
     },
     {
       id: "chat-photos",
-      question: "Can I send photos through the chat system?",
-      answer: "Yes! Click the camera icon in any chat conversation to share photos. This is perfect for sharing location updates, trip photos, or coordinating meetup points. Photos are securely stored and only visible to conversation participants.",
+      question: "Can I send photos and share contact info through chat?",
+      answer: "Yes! Click the camera icon to share photos and the contact icon to share your contact details. Photos are perfect for location updates, trip coordination, or sharing experiences. Contact sharing lets you securely exchange WhatsApp numbers or email addresses with trip participants when you're ready to move to direct communication.",
       category: "Communication",
-      keywords: ["chat", "photos", "share", "camera", "images", "location"],
+      keywords: ["chat", "photos", "share", "camera", "images", "location", "contact", "whatsapp"],
       icon: <Camera className="h-5 w-5 text-ceylon-green" />
     },
 
@@ -202,17 +210,33 @@ export default function HelpFAQPage() {
     {
       id: "travel-preferences",
       question: "How do I set my travel preferences?",
-      answer: "Go to your Profile Menu > Travel Settings to set your preferences. Choose your travel style (adventure, relaxation, cultural), preferred regions, budget range, and travel companion preferences. These settings help customize your trip recommendations and calendar filters.",
+      answer: "Go to your Profile Menu > Travel Settings to set your preferences. Choose your travel style (adventure, relaxation, cultural), preferred regions, budget range, and travel companion preferences. These settings help customize your trip recommendations and calendar filters. You can also enable notifications for specific types of trips.",
       category: "Account & Settings",
       keywords: ["preferences", "settings", "travel style", "profile", "customize"],
       icon: <Settings className="h-5 w-5 text-ceylon-blue" />
     },
     {
+      id: "user-verification",
+      question: "How do I get verified and what are verification badges?",
+      answer: "Verification badges are earned through active platform participation: completing your profile, posting quality trips, receiving positive feedback, and contributing to the community. Verified users get priority in search results and recommendations. There's no manual verification process - badges are automatically awarded based on your activity.",
+      category: "Account & Settings",
+      keywords: ["verification", "badges", "verified", "trust", "quality", "priority"],
+      icon: <CheckCircle className="h-5 w-5 text-green-500" />
+    },
+    {
+      id: "following-users",
+      question: "How does the follow system work?",
+      answer: "You can follow other travelers to see their latest trips and activities. Click the follow button on any user's profile. Following someone shows their trips prominently in your recommendations and helps you stay updated with trusted organizers. Followers get notified when you post new trips.",
+      category: "Account & Settings",
+      keywords: ["follow", "followers", "following", "users", "updates", "notifications"],
+      icon: <Heart className="h-5 w-5 text-red-500" />
+    },
+    {
       id: "notifications",
       question: "How do notifications work?",
-      answer: "You'll receive notifications for: new messages in chats, updates to trips you're interested in, responses to your questions, and relevant trip recommendations. Manage your notification preferences in your account settings to control what alerts you receive.",
+      answer: "You'll receive notifications for: new chat messages, interest requests on your trips, trip updates from organizers, new followers, community Q&A responses, and personalized trip recommendations. View all notifications in your notification center and manage preferences in your account settings.",
       category: "Account & Settings",
-      keywords: ["notifications", "alerts", "messages", "updates", "settings"],
+      keywords: ["notifications", "alerts", "messages", "updates", "settings", "interest", "followers"],
       icon: <Bell className="h-5 w-5 text-yellow-500" />
     },
 
@@ -256,9 +280,9 @@ export default function HelpFAQPage() {
     {
       id: "sri-lanka-coverage",
       question: "What regions of Sri Lanka does Ceylon Expand cover?",
-      answer: "Ceylon Expand covers all provinces and regions of Sri Lanka! Filter trips by Western Province (Colombo, Gampaha), Central Province (Kandy, Nuwara Eliya), Southern Province (Galle, Matara), and all other provinces. Find travel companions for journeys between major cities or to destinations like Sigiriya, Ella, or Yala National Park.",
+      answer: "Ceylon Expand covers all provinces and regions of Sri Lanka! Filter trips by Western Province (Colombo, Gampaha), Central Province (Kandy, Nuwara Eliya), Southern Province (Galle, Matara), and all other provinces including Northern, Eastern, North Western, North Central, Uva, and Sabaragamuwa. Find travel companions for journeys between major cities or to destinations like Sigiriya, Ella, or Yala National Park.",
       category: "Regional Coverage",
-      keywords: ["regions", "provinces", "colombo", "kandy", "galle", "coverage", "destinations"],
+      keywords: ["regions", "provinces", "colombo", "kandy", "galle", "coverage", "destinations", "northern", "eastern"],
       icon: <MapPin className="h-5 w-5 text-ceylon-blue" />
     }
   ];
