@@ -2424,10 +2424,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/me/activity/questions', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      console.log('🔍 Fetching questions for user:', userId);
       const questions = await storage.getUserQuestions(userId);
+      console.log('✅ Found questions:', questions.length);
       res.json(questions);
     } catch (error) {
-      console.error("Error fetching user questions:", error);
+      console.error("❌ Error fetching user questions:", error);
       res.status(500).json({ message: "Failed to fetch questions" });
     }
   });
