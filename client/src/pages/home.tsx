@@ -18,6 +18,12 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   
+  // Determine if user is new (created within last 7 days or low profile completion)
+  const isNewUser = user && (
+    (new Date().getTime() - new Date(user.createdAt || '').getTime()) < (7 * 24 * 60 * 60 * 1000) ||
+    (user.profileCompletePct || 0) < 70
+  );
+  
   // Get trending trips with badges instead of regular trips
   const { data: trendingData, isLoading } = useQuery<any[]>({
     queryKey: ["/api/recommendations/trending"],
@@ -44,7 +50,7 @@ export default function Home() {
         
         <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center text-white">
           <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-4 mt-4 drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }} data-testid="hero-welcome">
-            {user ? "Welcome back, Explorer!" : "Discover Sri Lanka Together"}
+            {user ? (isNewUser ? "Welcome to Ceylon Expand!" : "Welcome back, Explorer!") : "Discover Sri Lanka Together"}
           </h1>
           
           {/* Free to Use Badge */}
@@ -53,16 +59,35 @@ export default function Home() {
               className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 text-sm font-semibold shadow-lg border-0 hover:from-green-600 hover:to-emerald-700 transition-all duration-200" 
               data-testid="free-badge"
             >
-              {user ? "Enjoy every feature, at zero cost." : "Create your account — enjoy every feature, at zero cost."}
+              {user ? (isNewUser ? "Welcome! Everything is 100% free to use." : "Enjoy every feature, at zero cost.") : "Create your account — enjoy every feature, at zero cost."}
             </Badge>
           </div>
           
           <p className="text-base sm:text-lg md:text-xl mb-8 max-w-2xl mx-auto px-4 drop-shadow-lg" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8), 0px 0px 2px rgba(0,0,0,0.6)' }} data-testid="hero-subtitle">
             {user 
-              ? "Ready for your next adventure? Discover new trips or share your journey with fellow travelers."
+              ? (isNewUser 
+                  ? "Great to have you here! Start by browsing trips or posting your own adventure. Need help getting started?" 
+                  : "Ready for your next adventure? Discover new trips or share your journey with fellow travelers."
+                )
               : "Join our community of travelers and explore the beauty of Sri Lanka with like-minded adventurers."
             }
           </p>
+          
+          {/* FAQ Link for New Users */}
+          {user && isNewUser && (
+            <div className="mb-6 flex justify-center">
+              <Link href="/faq">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="bg-white/20 text-white border-white/40 hover:bg-white/30 hover:border-white/60 transition-all duration-200 backdrop-blur-sm"
+                  data-testid="button-faq-newuser"
+                >
+                  📚 How to Use Ceylon Expand - Quick Guide
+                </Button>
+              </Link>
+            </div>
+          )}
           <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
             <Button 
               size="lg"
