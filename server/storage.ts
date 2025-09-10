@@ -508,6 +508,12 @@ export class DatabaseStorage implements IStorage {
         organizer = organizerResult.rows[0] || null;
       }
       
+      // Get metadata separately
+      let metadata = null;
+      const metadataQuery = `SELECT * FROM trip_metadata WHERE trip_id = '${id}'`;
+      const metadataResult = await pool.query(metadataQuery);
+      metadata = metadataResult.rows[0] || null;
+      
       // Construct trip object from result
       const trip = {
         id: tripRow.id,
@@ -560,14 +566,14 @@ export class DatabaseStorage implements IStorage {
       return { 
         ...redactedTrip, 
         organizer: redactedOrganizer,
-        // Empty metadata for now
-        duration: null,
-        difficulty: null,
-        buddyFriendly: null,
-        seasonality: null,
-        safetyFlags: null,
-        tags: null,
-        notes: null,
+        // Include metadata fields if available
+        duration: metadata?.duration || null,
+        difficulty: metadata?.difficulty || null,
+        buddyFriendly: metadata?.buddy_friendly || null,
+        seasonality: metadata?.seasonality || null,
+        safetyFlags: metadata?.safety_flags || null,
+        tags: metadata?.tags || null,
+        notes: metadata?.notes || null,
       };
     } catch (error) {
       console.error("Error in getTrip:", error);
