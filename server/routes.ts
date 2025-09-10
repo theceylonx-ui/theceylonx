@@ -1129,17 +1129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User activity endpoint for profile page
-  app.get('/api/me/activity/trips', unifiedAuthGuard, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const trips = await storage.getUserTrips(userId);
-      res.json(trips);
-    } catch (error) {
-      console.error("Error fetching user activity trips:", error);
-      res.status(500).json({ message: "Failed to fetch user activity" });
-    }
-  });
+  // User activity endpoint for profile page (removed duplicate)
 
 
 
