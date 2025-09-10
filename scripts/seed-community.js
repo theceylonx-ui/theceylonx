@@ -323,7 +323,7 @@ async function seedQA() {
 
     // Add answers
     let acceptedAnswerId = null;
-    for (const ans of item.answers) {
+    for (const ans of item.answers || []) {
       const user = await db.select().from(users).where(eq(users.email, ans.authorEmail));
       const userId = user.length > 0 ? user[0].id : seedUserId;
       
@@ -342,11 +342,14 @@ async function seedQA() {
 
     // Update question with accepted answer and answer count
     const answerCount = await db.select().from(answers).where(eq(answers.questionId, questionId));
+    const updateData = { 
+      answersCount: answerCount.length
+    };
+    if (acceptedAnswerId) {
+      updateData.acceptedAnswerId = acceptedAnswerId;
+    }
     await db.update(questions)
-      .set({ 
-        acceptedAnswerId: acceptedAnswerId,
-        answersCount: answerCount.length
-      })
+      .set(updateData)
       .where(eq(questions.id, questionId));
   }
 

@@ -99,8 +99,10 @@ app.use((req, res, next) => {
         await seedSampleTrips();
         console.log('✅ Sample trips seeded successfully');
         
-        // Skip community seeding for now due to SQL syntax issues
-        console.log('⚠️ Skipping community seeding - will be fixed in next deployment');
+        // Run simple questions seeding
+        const { seedSimpleQuestions } = await import('../scripts/seed-simple-questions');
+        await seedSimpleQuestions();
+        console.log('✅ Sample questions seeded successfully');
       } catch (error) {
         console.error('⚠️ Sample data seeding failed:', error);
         // Don't exit - continue with server startup
