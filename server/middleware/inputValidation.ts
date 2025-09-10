@@ -12,12 +12,17 @@ export function sanitizeHtml(input: string): string {
   });
 }
 
-// SQL injection prevention patterns
+// SQL injection prevention patterns - more specific to avoid false positives
 const SQL_INJECTION_PATTERNS = [
-  /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE)\b.*\b(FROM|WHERE|INTO|VALUES|SET)\b)/i,
+  /(\bSELECT\s+\*\s+FROM\b)/i,
+  /(\bINSERT\s+INTO\b.*\bVALUES\b)/i,
+  /(\bUPDATE\b.*\bSET\b.*\bWHERE\b)/i,
+  /(\bDELETE\s+FROM\b.*\bWHERE\b)/i,
   /(\bUNION\b.*\bSELECT\b)/i,
   /(\bDROP\s+TABLE\b)/i,
   /(\bEXEC\s*\()/i,
+  /(--[^\r\n]*)/,
+  /\/\*[\s\S]*?\*\//,
 ];
 
 // XSS prevention patterns
@@ -28,14 +33,13 @@ const XSS_PATTERNS = [
   /on\w+\s*=/i,
 ];
 
-// Path traversal patterns
+// Path traversal patterns - more specific
 const PATH_TRAVERSAL_PATTERNS = [
-  /\.\./,
-  /\.\\\\/,
-  /\.\.\//,
-  /%2e%2e/i,
-  /%2f/i,
-  /%5c/i,
+  /\.\.[\/\\]/,
+  /%2e%2e[\/\\]/i,
+  /\.\.[\\\/][^\/\\]*[\\\/]/,
+  /%2e%2e%2f/i,
+  /%2e%2e%5c/i,
 ];
 
 // Validate and sanitize request input
