@@ -19,7 +19,7 @@ import { z } from "zod";
 
 // PostgreSQL Enums for data integrity
 // tripStatusEnum removed - using varchar instead
-export const saveTypeEnum = pgEnum('save_type', ['pinned', 'interested']);
+export const saveTypeEnum = pgEnum('save_type', ['pinned', 'request_sent']);
 export const notificationTypeEnum = pgEnum('notification_type', [
   // Trip participation
   'trip_interest_request', 'trip_join_request', 'interest_accepted', 'interest_declined',
