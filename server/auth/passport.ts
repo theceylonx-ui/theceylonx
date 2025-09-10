@@ -14,17 +14,13 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   const isReplitDeployment = process.env.REPL_SLUG || process.env.REPLIT_DEPLOYMENT || process.env.REPLIT_DOMAINS;
   
   let googleCallbackURL;
-  if (isReplitDeployment && process.env.REPLIT_DOMAINS) {
-    // PRIORITY 1: Use Replit domain if available (even in development)
-    const primaryDomain = process.env.REPLIT_DOMAINS.split(',')[0];
-    googleCallbackURL = `https://${primaryDomain}/api/auth/google/callback`;
-  } else if (isDevelopment) {
-    // PRIORITY 2: Use localhost only for pure local development
+  // Always use production domain for OAuth callbacks since OAuth apps are configured for production
+  const baseUrl = process.env.APP_URL || 'https://www.theceylonx.com';
+  googleCallbackURL = `${baseUrl}/api/auth/google/callback`;
+  
+  // Override only for pure localhost development (no Replit environment)
+  if (isDevelopment && !isReplitDeployment) {
     googleCallbackURL = 'http://localhost:5000/api/auth/google/callback';
-  } else {
-    // PRIORITY 3: Fallback to configured APP_URL or default
-    const baseUrl = process.env.APP_URL || 'https://www.theceylonx.com';
-    googleCallbackURL = `${baseUrl}/api/auth/google/callback`;
   }
   
   console.log('🔧 OAuth Configuration:', {
@@ -100,17 +96,13 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
   const isReplitDeployment = process.env.REPL_SLUG || process.env.REPLIT_DEPLOYMENT || process.env.REPLIT_DOMAINS;
   
   let facebookCallbackURL;
-  if (isReplitDeployment && process.env.REPLIT_DOMAINS) {
-    // PRIORITY 1: Use Replit domain if available (even in development)
-    const primaryDomain = process.env.REPLIT_DOMAINS.split(',')[0];
-    facebookCallbackURL = `https://${primaryDomain}/api/auth/facebook/callback`;
-  } else if (isDevelopment) {
-    // PRIORITY 2: Use localhost only for pure local development
+  // Always use production domain for OAuth callbacks since OAuth apps are configured for production
+  const baseUrl = process.env.APP_URL || 'https://www.theceylonx.com';
+  facebookCallbackURL = `${baseUrl}/api/auth/facebook/callback`;
+  
+  // Override only for pure localhost development (no Replit environment)
+  if (isDevelopment && !isReplitDeployment) {
     facebookCallbackURL = 'http://localhost:5000/api/auth/facebook/callback';
-  } else {
-    // PRIORITY 3: Fallback to configured APP_URL or default
-    const baseUrl = process.env.APP_URL || 'https://www.theceylonx.com';
-    facebookCallbackURL = `${baseUrl}/api/auth/facebook/callback`;
   }
   
   console.log('🔧 Facebook OAuth Configuration:', {
