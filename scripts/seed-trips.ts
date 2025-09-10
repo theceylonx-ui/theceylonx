@@ -27,8 +27,13 @@ async function seedUsers() {
 async function seedSampleTrips() {
   console.log("Starting sample trips seeding...");
   
-  // Ensure seed users exist first
-  await seedUsers();
+  try {
+    // Verify database connection
+    await db.select().from(users).limit(1);
+    console.log("✅ Database connection verified for trips seeding");
+    
+    // Ensure seed users exist first
+    await seedUsers();
   
   const seedUser = await db.select().from(users).where(eq(users.email, "seed@theceylonx.com"));
   const traveler1 = await db.select().from(users).where(eq(users.email, "traveler1@theceylonx.com"));
@@ -214,6 +219,11 @@ async function seedSampleTrips() {
   }
   
   console.log(`✅ Seeded ${tripCount} sample trips`);
+  
+  } catch (error) {
+    console.error("❌ Error in seedSampleTrips:", error);
+    throw error;
+  }
 }
 
 async function main() {

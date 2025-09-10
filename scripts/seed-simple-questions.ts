@@ -6,18 +6,22 @@ import { nanoid } from 'nanoid';
 async function seedSimpleQuestions() {
   console.log("🌱 Starting simple questions seeding...");
   
-  // Ensure seed user exists
-  const seedUser = await db.select().from(users).where(eq(users.email, "seed@theceylonx.com"));
-  if (seedUser.length === 0) {
-    await db.insert(users).values({
-      id: nanoid(),
-      email: "seed@theceylonx.com",
-      name: "CeylonX"
-    });
-  }
-  
-  const user = await db.select().from(users).where(eq(users.email, "seed@theceylonx.com"));
-  const userId = user[0].id;
+  try {
+    // Ensure seed user exists
+    const seedUser = await db.select().from(users).where(eq(users.email, "seed@theceylonx.com"));
+    if (seedUser.length === 0) {
+      await db.insert(users).values({
+        id: nanoid(),
+        email: "seed@theceylonx.com",
+        name: "CeylonX"
+      });
+    }
+    
+    const user = await db.select().from(users).where(eq(users.email, "seed@theceylonx.com"));
+    if (user.length === 0) {
+      throw new Error("Failed to create or find seed user");
+    }
+    const userId = user[0].id;
   
   // Create a default topic if none exists
   let defaultTopic = await db.select().from(topics).limit(1);
@@ -184,6 +188,11 @@ async function seedSimpleQuestions() {
   }
   
   console.log(`✅ Seeded ${questionCount} sample questions`);
+  
+  } catch (error) {
+    console.error("❌ Error in seedSimpleQuestions:", error);
+    throw error;
+  }
 }
 
 async function main() {

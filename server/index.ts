@@ -95,6 +95,10 @@ app.use((req, res, next) => {
     if (process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT === '1') {
       console.log('🌱 Production environment detected - ensuring sample data...');
       try {
+        // Test database connection first
+        await import('../server/db');
+        console.log('✅ Database connection verified');
+        
         const { seedSampleTrips } = await import('../scripts/seed-trips');
         await seedSampleTrips();
         console.log('✅ Sample trips seeded successfully');
@@ -104,7 +108,7 @@ app.use((req, res, next) => {
         await seedSimpleQuestions();
         console.log('✅ Sample questions seeded successfully');
       } catch (error) {
-        console.error('⚠️ Sample data seeding failed:', error);
+        console.error('⚠️ Sample data seeding failed:', error.message || error);
         // Don't exit - continue with server startup
       }
     }
