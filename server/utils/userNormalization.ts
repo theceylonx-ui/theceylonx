@@ -11,42 +11,32 @@ export interface NormalizedUser {
 }
 
 /**
- * Normalizes user data for UI consumption with safe fallbacks
- * Implements the displayName fallback strategy:
- * 1. Use 'displayName' field if available (user's preferred display name)
- * 2. Use 'name' if available
- * 3. Use firstName + lastName if available
- * 4. Use email prefix if email exists
- * 5. Use "Traveler" + short ID as last resort
+ * Normalizes user data for UI consumption with STRICT naming policy
+ * ONLY uses user-provided display name, username, or USER ID
+ * 
+ * STRICT POLICY:
+ * 1. Use 'displayName' field if available (user's chosen display name)
+ * 2. Use 'username' field if displayName is empty
+ * 3. Use USER ID if both are empty
+ * 4. NEVER use OAuth names, firstName+lastName, or email fallbacks
  */
 export function normalizeUserForUI(user: User | null): NormalizedUser | null {
   if (!user) return null;
 
-  // Generate display name with fallback strategy (prioritize displayName field)
+  // STRICT naming policy - only use user-provided fields or USER ID
   let displayName = '';
   
   if (user.displayName?.trim()) {
     displayName = user.displayName.trim();
-  } else if (user.name?.trim()) {
-    displayName = user.name.trim();
-  } else if (user.firstName?.trim() || user.lastName?.trim()) {
-    displayName = [user.firstName?.trim(), user.lastName?.trim()]
-      .filter(Boolean)
-      .join(' ');
-  } else if (user.email?.includes('@')) {
-    displayName = user.email.split('@')[0];
+  } else if (user.username?.trim()) {
+    displayName = user.username.trim();
   } else {
-    // Last resort: Traveler + short ID
-    const shortId = user.id.slice(-4);
-    displayName = `Traveler${shortId}`;
+    // Use USER ID if no display name or username provided
+    displayName = user.id;
   }
 
-  // Generate username fallback if not available
-  let username = user.username?.trim() || null;
-  if (!username && user.email?.includes('@')) {
-    // Generate username from email prefix if no username set
-    username = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-  }
+  // Username from profile field only - no fallbacks
+  const username = user.username?.trim() || null;
 
   // Generate initials from display name
   const initials = generateInitials(displayName);
@@ -67,17 +57,24 @@ export function normalizeUserForUI(user: User | null): NormalizedUser | null {
 
 /**
  * Generate initials from a display name
- * Falls back to "TR" (TRaveler) if unable to generate meaningful initials
+ * Uses first 2 characters for user IDs, proper initials for names
  */
 function generateInitials(displayName: string): string {
-  if (!displayName?.trim()) return 'TR';
+  if (!displayName?.trim()) return 'ID';
   
-  const words = displayName.trim().split(/\s+/);
+  const trimmed = displayName.trim();
+  
+  // If it looks like a user ID (contains hyphens or underscores), use first 2 chars
+  if (trimmed.includes('-') || trimmed.includes('_') || trimmed.length > 20) {
+    return trimmed.slice(0, 2).toUpperCase();
+  }
+  
+  const words = trimmed.split(/\s+/);
   
   if (words.length === 1) {
     // Single word: take first 2 characters
     const word = words[0];
-    return word.length >= 2 ? word.slice(0, 2).toUpperCase() : (word + 'R').toUpperCase();
+    return word.length >= 2 ? word.slice(0, 2).toUpperCase() : (word + 'X').toUpperCase();
   }
   
   // Multiple words: take first letter of first two words
@@ -85,7 +82,7 @@ function generateInitials(displayName: string): string {
     .slice(0, 2)
     .map(word => word.charAt(0))
     .join('')
-    .toUpperCase() || 'TR';
+    .toUpperCase() || 'ID';
 }
 
 /**
@@ -116,16 +113,24 @@ export function normalizeUsersForUI(users: User[]): NormalizedUser[] {
 
 /**
  * Extract display name only (lightweight version)
+ * Follows strict naming policy
  */
 export function getDisplayName(user: User | null): string {
-  const normalized = normalizeUserForUI(user);
-  return normalized?.displayName || 'Unknown User';
+  if (!user) return 'Unknown User';
+  
+  if (user.displayName?.trim()) {
+    return user.displayName.trim();
+  } else if (user.username?.trim()) {
+    return user.username.trim();
+  } else {
+    return user.id;
+  }
 }
 
 /**
- * Telemetry: Track when fallbacks are used
+ * Telemetry: Track when USER ID is used as display name
  */
-export function trackUserNormalizationFallback(user: User, fallbackType: 'email_prefix' | 'traveler_id' | 'no_avatar'): void {
-  // Low-overhead logging for telemetry
+export function trackUserNormalizationFallback(user: User, fallbackType: 'user_id' | 'no_avatar'): void {
+  // Log when we fall back to USER ID for display name
   console.log(`user_display_fallback_used:${fallbackType}:${user.id}`);
 }

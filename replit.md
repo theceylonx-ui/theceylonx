@@ -22,6 +22,12 @@ Ceylon Expand is a travel buddy and trip-sharing platform specifically designed 
 
 Preferred communication style: Simple, everyday language.
 
+**STRICT User Display Name Policy (Sept 10, 2025):**
+- ONLY use `displayName` and `username` from user profile
+- If both empty, use USER ID
+- NEVER use OAuth names, firstName+lastName, or email fallbacks
+- Ensures consistent user identification across all platform areas
+
 ## System Architecture
 
 ### Frontend Architecture
