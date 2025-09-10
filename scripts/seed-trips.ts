@@ -1,5 +1,5 @@
 import { db } from '../server/db';
-import { trips, users } from '../shared/schema';
+import { trips, users, type InsertTrip } from '../shared/schema';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 
@@ -41,7 +41,7 @@ async function seedSampleTrips() {
     return;
   }
   
-  const sampleTrips = [
+  const sampleTrips: InsertTrip[] = [
     {
       id: "sample-trip-001",
       title: "Colombo to Kandy Cultural Journey",
@@ -52,7 +52,7 @@ async function seedSampleTrips() {
       seatsAvailable: 3,
       price: "2500.00",
       region: "Central",
-      category: "culture",
+      category: "culture" as const,
       organizerId: seedUser[0].id,
       organizerPhone: "771234567",
       organizerEmail: "seed@theceylonx.com",
@@ -71,7 +71,7 @@ async function seedSampleTrips() {
       seatsAvailable: 4,
       price: "3000.00",
       region: "Southern",
-      category: "culture",
+      category: "culture" as const,
       organizerId: traveler1[0]?.id || seedUser[0].id,
       organizerPhone: "776543210",
       organizerEmail: "traveler1@theceylonx.com",
@@ -90,7 +90,7 @@ async function seedSampleTrips() {
       seatsAvailable: 2,
       price: "4500.00",
       region: "Central",
-      category: "adventure_sport",
+      category: "adventure_sport" as const,
       organizerId: traveler2[0]?.id || seedUser[0].id,
       organizerPhone: "771122334",
       organizerEmail: "traveler2@theceylonx.com",
@@ -109,7 +109,7 @@ async function seedSampleTrips() {
       seatsAvailable: 3,
       price: "2800.00",
       region: "Central",
-      category: "hiking",
+      category: "hiking" as const,
       organizerId: guide[0]?.id || seedUser[0].id,
       organizerPhone: "774455667",
       organizerEmail: "guide@theceylonx.com",
@@ -128,7 +128,7 @@ async function seedSampleTrips() {
       seatsAvailable: 6,
       price: "5500.00",
       region: "Southern",
-      category: "wildlife",
+      category: "wildlife" as const,
       organizerId: explorer[0]?.id || seedUser[0].id,
       organizerPhone: "777888999",
       organizerEmail: "explorer@theceylonx.com",
@@ -147,7 +147,7 @@ async function seedSampleTrips() {
       seatsAvailable: 4,
       price: "3200.00",
       region: "Central",
-      category: "hiking",
+      category: "hiking" as const,
       organizerId: seedUser[0].id,
       organizerPhone: "771234567",
       organizerEmail: "seed@theceylonx.com",
@@ -166,7 +166,7 @@ async function seedSampleTrips() {
       seatsAvailable: 5,
       price: "4000.00",
       region: "North Central",
-      category: "culture",
+      category: "culture" as const,
       organizerId: guide[0]?.id || seedUser[0].id,
       organizerPhone: "774455667",
       organizerEmail: "guide@theceylonx.com",
@@ -185,7 +185,7 @@ async function seedSampleTrips() {
       seatsAvailable: 8,
       price: "3500.00",
       region: "Southern",
-      category: "wildlife",
+      category: "wildlife" as const,
       organizerId: explorer[0]?.id || seedUser[0].id,
       organizerPhone: "777888999",
       organizerEmail: "explorer@theceylonx.com",
