@@ -60,96 +60,63 @@ export function getAvatarOptions(userId: string): Array<{ style: AvatarStyle; ur
   return options;
 }
 
-// Generate display name based on user data - general version
+// Generate display name using STRICT naming policy
+// ONLY uses displayName, username, or USER ID
 export function getDisplayName(user: {
   displayName?: string | null;
   username?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  email?: string | null;
   id?: string;
 } | null | undefined): string {
   if (!user) {
     return 'Anonymous';
   }
   
-  // Prioritize displayName field first (from profile form)
+  // STRICT POLICY: displayName → username → USER ID
   if (user.displayName?.trim()) {
     return user.displayName.trim();
   }
   
-  // Then check for firstName + lastName combination
-  if (user.firstName && user.lastName) {
-    return `${user.firstName} ${user.lastName}`;
+  if (user.username?.trim()) {
+    return user.username.trim();
   }
   
-  if (user.firstName) {
-    return user.firstName;
-  }
-  
-  if (user.lastName) {
-    return user.lastName;
-  }
-  
-  // Fall back to username if no real name
-  if (user.username) {
-    return user.username;
-  }
-  
-  if (user.email) {
-    return user.email.split('@')[0];
-  }
-  
-  // Fallback to user ID if available
+  // Use USER ID if no display name or username
   if (user.id) {
-    return `User ${user.id.slice(0, 8)}`;
+    return user.id;
   }
   
   return 'User';
 }
 
-// Get initials for avatar fallback
+// Get initials using STRICT naming policy
+// ONLY uses displayName, username, or USER ID
 export function getInitials(user: {
   displayName?: string | null;
   username?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  email?: string | null;
+  id?: string;
 } | null | undefined): string {
   if (!user) {
     return 'A';
   }
   
-  // Use displayName for initials if available
-  if (user.displayName?.trim()) {
-    const words = user.displayName.trim().split(/\s+/);
-    if (words.length >= 2) {
-      return `${words[0][0]}${words[1][0]}`.toUpperCase();
-    }
-    return user.displayName.slice(0, 2).toUpperCase();
+  // Get display name first using strict policy
+  const displayName = getDisplayName(user);
+  
+  if (displayName === 'Anonymous' || displayName === 'User') {
+    return 'U';
   }
   
-  // Prioritize real name initials over username
-  if (user.firstName && user.lastName) {
-    return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+  // If it looks like a user ID (contains hyphens or underscores), use first 2 chars
+  if (displayName.includes('-') || displayName.includes('_') || displayName.length > 20) {
+    return displayName.slice(0, 2).toUpperCase();
   }
   
-  if (user.firstName) {
-    return user.firstName.slice(0, 2).toUpperCase();
+  // For normal names, try to get proper initials
+  const words = displayName.trim().split(/\s+/);
+  if (words.length >= 2) {
+    return `${words[0][0]}${words[1][0]}`.toUpperCase();
   }
   
-  if (user.lastName) {
-    return user.lastName.slice(0, 2).toUpperCase();
-  }
-  
-  // Fall back to username initials
-  if (user.username) {
-    return user.username.slice(0, 2).toUpperCase();
-  }
-  
-  if (user.email) {
-    return user.email[0].toUpperCase();
-  }
-  
-  return 'U';
+  // Single word: take first 2 characters
+  return displayName.slice(0, 2).toUpperCase();
 }

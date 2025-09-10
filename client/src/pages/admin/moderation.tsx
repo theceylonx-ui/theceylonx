@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { PermissionGuard } from "@/components/admin/PermissionGuard";
 import { DestructiveActionButton } from "@/components/admin/DestructiveActionButton";
+import { getDisplayName } from "@/lib/profileUtils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -63,14 +64,14 @@ interface Report {
   reporter?: {
     id: string;
     email: string;
-    firstName?: string;
-    lastName?: string;
+    displayName?: string | null;
+    username?: string | null;
   };
   assignee?: {
     id: string;
     email: string;
-    firstName?: string;
-    lastName?: string;
+    displayName?: string | null;
+    username?: string | null;
   };
 }
 
@@ -99,8 +100,8 @@ interface ModerationAction {
   moderator: {
     id: string;
     email: string;
-    firstName?: string;
-    lastName?: string;
+    displayName?: string | null;
+    username?: string | null;
   };
 }
 
@@ -190,7 +191,7 @@ function ReportCard({ report, onAssign, onResolve, onEscalate }: {
             <div>
               <span className="font-medium">Reporter:</span>
               <div className="text-gray-600">
-                {report.reporter?.firstName} {report.reporter?.lastName}
+                {getDisplayName(report.reporter) || 'Unknown'}
               </div>
             </div>
             <div>
@@ -208,10 +209,7 @@ function ReportCard({ report, onAssign, onResolve, onEscalate }: {
             <div>
               <span className="font-medium">Assigned:</span>
               <div className="text-gray-600">
-                {report.assignee ? 
-                  `${report.assignee.firstName} ${report.assignee.lastName}` : 
-                  'Unassigned'
-                }
+                {report.assignee ? getDisplayName(report.assignee) : 'Unassigned'}
               </div>
             </div>
           </div>
@@ -270,7 +268,7 @@ function ModerationQueue() {
   const queryClient = useQueryClient();
 
   // Fetch reports with filtering
-  const { data: reports = [], isLoading } = useQuery({
+  const { data: reports = [], isLoading } = useQuery<Report[]>({
     queryKey: ['/api/admin/reports', { priority: selectedPriority, status: selectedStatus, search: searchTerm }],
     queryFn: async () => {
       const params = new URLSearchParams();

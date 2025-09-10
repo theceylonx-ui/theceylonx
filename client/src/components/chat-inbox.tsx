@@ -22,9 +22,8 @@ interface ChatThread {
   };
   otherUser?: {
     id: string;
-    firstName?: string;
-    lastName?: string;
-    username?: string;
+    displayName?: string | null;
+    username?: string | null;
     profileImageUrl?: string;
   };
   lastMessage?: {

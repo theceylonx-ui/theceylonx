@@ -9,15 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { VerificationBadges } from "@/components/ui/verification-badges";
+import { getDisplayName, getInitials } from "@/lib/profileUtils";
 import TripCard from "@/components/trip-card";
 
 interface UserTripsData {
   user: {
     id: string;
-    displayName: string;
-    firstName?: string;
-    lastName?: string;
-    username?: string;
+    displayName?: string | null;
+    username?: string | null;
     profileImageUrl?: string;
     isVerifiedUser: boolean;
     verificationBadges: string[];
@@ -112,11 +111,7 @@ export default function UserTripsPage() {
     );
   }
 
-  const getInitials = (name: string) => {
-    return name.split(' ').map(word => word[0]).join('').toUpperCase();
-  };
-
-  const displayName = data.user.displayName || data.user.username || 'Ceylon Traveler';
+  const displayName = getDisplayName(data.user) || 'Ceylon Traveler';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -140,7 +135,7 @@ export default function UserTripsPage() {
               <Avatar className="h-16 w-16 border-2 border-white shadow-md">
                 <AvatarImage src={data.user.profileImageUrl || undefined} />
                 <AvatarFallback className="text-lg font-semibold bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                  {getInitials(displayName)}
+                  {getInitials(data.user)}
                 </AvatarFallback>
               </Avatar>
               

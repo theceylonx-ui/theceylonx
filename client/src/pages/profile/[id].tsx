@@ -12,14 +12,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { VerificationBadges } from "@/components/ui/verification-badges";
 import { FollowButton } from "@/components/ui/follow-button";
 import { ReportButton } from "@/components/ui/report-button";
+import { getDisplayName, getInitials } from "@/lib/profileUtils";
 import ProfilePage from "@/pages/me"; // Fallback to own profile
 
 interface UserProfile {
   id: string;
-  displayName: string;
-  firstName?: string;
-  lastName?: string;
-  username?: string;
+  displayName?: string | null;
+  username?: string | null;
   profileImageUrl?: string;
   bio?: string;
   location?: string;
@@ -145,11 +144,7 @@ export default function UserProfilePage() {
     );
   }
 
-  const getInitials = (name: string) => {
-    return name.split(' ').map(word => word[0]).join('').toUpperCase();
-  };
-
-  const displayName = profile.displayName || profile.username || profile.id;
+  const displayName = getDisplayName(profile);
 
   const memberSince = new Date(profile.createdAt).toLocaleDateString('en-US', { 
     month: 'long', 
@@ -180,7 +175,7 @@ export default function UserProfilePage() {
                 <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
                   <AvatarImage src={profile.profileImageUrl || undefined} />
                   <AvatarFallback className="text-2xl font-semibold bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                    {getInitials(displayName)}
+                    {getInitials(profile)}
                   </AvatarFallback>
                 </Avatar>
                 
@@ -274,7 +269,7 @@ export default function UserProfilePage() {
                   </Button>
                 </Link>
                 <FollowButton userId={profile.id} />
-                <ReportButton userId={profile.id} username={profile.username || profile.displayName} />
+                <ReportButton userId={profile.id} username={getDisplayName(profile)} />
               </div>
             </div>
           </CardContent>

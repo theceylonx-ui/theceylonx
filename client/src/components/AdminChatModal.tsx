@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { getDisplayName } from "@/lib/profileUtils";
 import { Send, Shield, ShieldOff, AlertTriangle, User, UserCheck } from "lucide-react";
 
 interface AdminChatModalProps {
@@ -31,13 +32,13 @@ interface ChatThread {
   blockedBy: string | null;
   admin: {
     id: string;
-    firstName: string;
-    lastName: string;
+    displayName?: string | null;
+    username?: string | null;
   };
   organizer: {
     id: string;
-    firstName: string;
-    lastName: string;
+    displayName?: string | null;
+    username?: string | null;
   };
   report: {
     id: string;
@@ -57,8 +58,8 @@ interface ChatMessage {
   createdAt: string;
   sender: {
     id: string;
-    firstName: string;
-    lastName: string;
+    displayName?: string | null;
+    username?: string | null;
   };
 }
 
@@ -292,7 +293,7 @@ export function AdminChatModal({ isOpen, onClose, reportId, reportDetails }: Adm
                           <User className="w-4 h-4 text-gray-500" />
                         )}
                         <span className="text-sm font-medium">
-                          {isAdmin ? 'Admin' : 'Organizer'}
+                          {isAdmin ? getDisplayName(msg.sender) : getDisplayName(msg.sender)}
                         </span>
                         <span className="text-xs text-muted-foreground">
                           {formatTime(msg.createdAt)}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { PermissionGuard } from "@/components/admin/PermissionGuard";
 import { DestructiveActionButton } from "@/components/admin/DestructiveActionButton";
+import { getDisplayName } from "@/lib/profileUtils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,8 +55,8 @@ interface RoleAssignment {
   user: {
     id: string;
     email: string;
-    firstName?: string;
-    lastName?: string;
+    displayName?: string | null;
+    username?: string | null;
   };
   role: Role;
   assignedBy: string;
@@ -322,13 +323,13 @@ export default function AdminRolesPage() {
   const { hasPermission } = useAdminAuth();
 
   // Fetch roles
-  const { data: roles = [], isLoading: rolesLoading } = useQuery({
+  const { data: roles = [], isLoading: rolesLoading } = useQuery<Role[]>({
     queryKey: ['/api/admin/roles'],
     enabled: hasPermission('roles.view'),
   });
 
   // Fetch role assignments
-  const { data: assignments = [], isLoading: assignmentsLoading } = useQuery({
+  const { data: assignments = [], isLoading: assignmentsLoading } = useQuery<RoleAssignment[]>({
     queryKey: ['/api/admin/role-assignments'],
     enabled: hasPermission('roles.view'),
   });
@@ -486,7 +487,7 @@ export default function AdminRolesPage() {
                             <TableCell>
                               <div>
                                 <div className="font-medium">
-                                  {assignment.user.firstName} {assignment.user.lastName}
+                                  {getDisplayName(assignment.user)}
                                 </div>
                                 <div className="text-sm text-gray-500">
                                   {assignment.user.email}

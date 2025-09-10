@@ -25,9 +25,8 @@ interface Message {
   createdAt: string;
   author: {
     id: string;
-    firstName?: string;
-    lastName?: string;
-    username?: string;
+    displayName?: string | null;
+    username?: string | null;
     profileImageUrl?: string;
   };
 }
@@ -46,9 +45,8 @@ interface ChatThreadData {
   };
   users: Array<{
     id: string;
-    firstName?: string;
-    lastName?: string;
-    username?: string;
+    displayName?: string | null;
+    username?: string | null;
     profileImageUrl?: string;
   }>;
 }
