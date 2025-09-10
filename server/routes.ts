@@ -128,12 +128,22 @@ import { validateInput, sanitizeTextContent } from "./middleware/inputValidation
 import { logger, log } from "./utils/logger";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Root health check endpoint - responds immediately for deployment health checks
-  // No database operations - just returns healthy status
-  app.get('/', (req, res) => {
+  // Health check endpoints - separate from main website
+  app.get('/health', (req, res) => {
     res.status(200).json({ 
       status: 'healthy', 
       service: 'Ceylon Expand',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      uptime: process.uptime()
+    });
+  });
+  
+  // API health check
+  app.get('/api/health', (req, res) => {
+    res.status(200).json({ 
+      status: 'healthy', 
+      service: 'Ceylon Expand API',
       timestamp: new Date().toISOString(),
       version: '1.0.0',
       uptime: process.uptime()
