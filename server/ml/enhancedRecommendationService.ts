@@ -716,7 +716,7 @@ export class EnhancedRecommendationService {
       .innerJoin(users, eq(trips.organizerId, users.id))
       .where(and(
         eq(trips.status, 'active'),
-        ne(trips.organizerId, userId), // Don't recommend user's own trips
+        // Remove the filter that excludes user's own trips - users should see their own posts
         sql`${trips.date} >= CURRENT_DATE` // Only future trips
       ));
 
@@ -778,7 +778,7 @@ export class EnhancedRecommendationService {
         .innerJoin(users, eq(trips.organizerId, users.id))
         .where(and(
           eq(trips.status, 'active'),
-          ne(trips.organizerId, userId),
+          // Remove the filter that excludes user's own trips - users should see their own posts
           sql`${trips.date} >= CURRENT_DATE`,
           ...conditions
         ));
