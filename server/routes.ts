@@ -128,6 +128,16 @@ import { validateInput, sanitizeTextContent } from "./middleware/inputValidation
 import { logger, log } from "./utils/logger";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Root health check endpoint - responds immediately for deployment health checks
+  app.get('/', (req, res) => {
+    res.status(200).json({ 
+      status: 'healthy', 
+      service: 'Ceylon Expand',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0'
+    });
+  });
+
   // CORS and cookie middleware - strict origin validation
   const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS 
     ? process.env.CORS_ALLOWED_ORIGINS.split(',')
