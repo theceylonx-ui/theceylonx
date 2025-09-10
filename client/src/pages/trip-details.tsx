@@ -51,6 +51,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
   // Get tab from URL params
   const urlParams = new URLSearchParams(window.location.search);
   const activeTab = urlParams.get('tab') || 'details';
+  const [activeTabState, setActiveTabState] = useState(activeTab);
 
   // Track trip view when component mounts and user is authenticated
   useEffect(() => {
@@ -329,6 +330,9 @@ export default function TripDetails({ params }: TripDetailsProps) {
     const newUrl = new URL(window.location.href);
     newUrl.searchParams.set('tab', newTab);
     window.history.pushState({}, '', newUrl.toString());
+    
+    // Update state to trigger re-render
+    setActiveTabState(newTab);
   };
 
   const canDeleteComment = (comment: CommentWithUser) => {
@@ -789,7 +793,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
         {/* Tabbed Interface for Comments and Additional Details */}
         <Card>
           <CardContent className="p-0">
-            <Tabs value={activeTab} onValueChange={handleTabChange}>
+            <Tabs value={activeTabState} onValueChange={handleTabChange}>
               <div className="px-6 py-4 border-b">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="details">Comments & Questions</TabsTrigger>
