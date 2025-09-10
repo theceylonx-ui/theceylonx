@@ -12,12 +12,25 @@ export function CommunityStats() {
   const { data: stats } = useQuery<CommunityStatsData>({
     queryKey: ['/api/community/stats'],
     queryFn: async () => {
-      // Fallback to hardcoded values if API not available
-      return {
-        totalQuestions: 30,
-        totalAnswers: 24,
-        totalTopics: 12
-      };
+      try {
+        const response = await fetch('/api/community/stats');
+        if (response.ok) {
+          return await response.json();
+        }
+        // Fallback to hardcoded values if API not available
+        return {
+          totalQuestions: 10,
+          totalAnswers: 24,
+          totalTopics: 12
+        };
+      } catch {
+        // Fallback to hardcoded values if API not available
+        return {
+          totalQuestions: 10,
+          totalAnswers: 24,
+          totalTopics: 12
+        };
+      }
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });

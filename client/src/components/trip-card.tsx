@@ -30,6 +30,9 @@ export default function TripCard({ trip, badges }: TripCardProps) {
   // State for edit and delete dialogs
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
+  // Check if this is a system-created sample trip
+  const isSampleTrip = trip.id.startsWith('sample-') || trip.organizer?.email === 'system@ceylonexpand.com';
 
   const pinMutation = useMutation({
     mutationFn: async (pinned: boolean) => {

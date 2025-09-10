@@ -14,9 +14,10 @@ export function sanitizeHtml(input: string): string {
 
 // SQL injection prevention patterns
 const SQL_INJECTION_PATTERNS = [
-  /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE)\b)/i,
-  /(--|;|\||\&)/,
-  /(union|select|from|where|order by|group by|having)/i,
+  /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE)\b.*\b(FROM|WHERE|INTO|VALUES|SET)\b)/i,
+  /(\bUNION\b.*\bSELECT\b)/i,
+  /(\bDROP\s+TABLE\b)/i,
+  /(\bEXEC\s*\()/i,
 ];
 
 // XSS prevention patterns
