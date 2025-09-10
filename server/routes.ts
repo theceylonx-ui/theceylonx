@@ -363,7 +363,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Count total answers across all questions
       const totalAnswers = questions.questions.reduce((sum, question) => {
-        return sum + (question.answerCount || 0);
+        return sum + (question.answersCount || 0);
       }, 0);
       
       res.json({
@@ -698,8 +698,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tripId = req.params.tripId;
       const { saveType } = req.body;
 
-      if (!['pinned', 'interested'].includes(saveType)) {
-        return res.status(400).json({ message: "Save type must be 'pinned' or 'interested'" });
+      if (!['pinned', 'request_sent'].includes(saveType)) {
+        return res.status(400).json({ message: "Save type must be 'pinned' or 'request_sent'" });
       }
 
       // Check if trip exists
@@ -777,7 +777,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const page = parseInt(req.query.page as string) || 1;
       const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
       const offset = (page - 1) * limit;
-      const saveType = req.query.saveType as 'pinned' | 'interested' | undefined;
+      const saveType = req.query.saveType as 'pinned' | 'request_sent' | undefined;
 
       // Get all saved trips first
       const allSavedTrips = await storage.getUserSavedTrips(userId, saveType);
@@ -786,7 +786,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const total = allSavedTrips.length;
       const items = allSavedTrips.slice(offset, offset + limit).map(savedTrip => ({
         ...savedTrip.trip,
-        organizer: normalizeUserForUI(savedTrip.trip.organizer),
+        organizer: null,
         saveType: savedTrip.saveType,
         savedAt: savedTrip.updatedAt
       }));
@@ -1536,7 +1536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (adminUserIds.includes(userId)) {
             hasAccess = true;
             senderType = 'admin';
-          } else if (foundThread.organizerId === userId) {
+          } else if (foundThread?.organizerId === userId) {
             hasAccess = true;
             senderType = 'organizer';
           }
@@ -4442,7 +4442,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const report = await storage.createReport({
         context: 'user_profile',
-        reportedUserId: userId,
+        userId: userId,
         reporterId: reporterId,
         reason,
         description: description || null,
