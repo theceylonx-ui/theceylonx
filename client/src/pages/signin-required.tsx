@@ -2,11 +2,34 @@ import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserPlus, ArrowRight } from "lucide-react";
+import { UserPlus, ArrowRight, Lock } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function SignInRequired() {
+  const [location] = useLocation();
+  
   const handleSignIn = () => {
-    window.location.href = "/auth/signin";
+    // Redirect back to the original page after sign in
+    const redirectTo = encodeURIComponent(location);
+    window.location.href = `/auth/signin?redirect=${redirectTo}`;
+  };
+
+  // Get feature-specific messaging based on the route
+  const getFeatureMessage = () => {
+    if (location.includes('/post')) {
+      return 'You need to sign in to post your trip and connect with fellow travelers.';
+    } else if (location.includes('/me') || location.includes('/profile')) {
+      return 'You need to sign in to view and manage your profile.';
+    } else if (location.includes('/chat')) {
+      return 'You need to sign in to chat with other travelers and trip organizers.';
+    } else if (location.includes('/requests')) {
+      return 'You need to sign in to view and manage trip requests.';
+    } else if (location.includes('/settings')) {
+      return 'You need to sign in to access your account settings.';
+    } else if (location.includes('/dashboard')) {
+      return 'You need to sign in to access your personal dashboard.';
+    }
+    return 'You need to sign in to access this feature and connect with fellow travelers.';
   };
 
   return (
@@ -17,7 +40,7 @@ export default function SignInRequired() {
         <Card className="text-center">
           <CardHeader>
             <div className="mx-auto w-16 h-16 bg-ceylon-green/10 rounded-full flex items-center justify-center mb-4">
-              <UserPlus className="h-8 w-8 text-ceylon-green" />
+              <Lock className="h-8 w-8 text-ceylon-green" />
             </div>
             <CardTitle className="text-2xl font-bold text-gray-800" data-testid="signin-title">
               Sign In Required
@@ -25,7 +48,7 @@ export default function SignInRequired() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-gray-600" data-testid="signin-message">
-              You need to sign in to post your trip and connect with fellow travelers across Sri Lanka.
+              {getFeatureMessage()}
             </p>
             
             <div className="space-y-3 text-sm text-gray-500">

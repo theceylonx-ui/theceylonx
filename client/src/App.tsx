@@ -105,6 +105,16 @@ function Router() {
           <Route path="/user/delete" component={handleRoute(UserDeletion)} />
           <Route path="/post" component={handleRoute(SignInRequired)} />
           <Route path="/dashboard" component={handleRoute(SignInRequired)} />
+          
+          {/* Protected routes - redirect to sign in */}
+          <Route path="/me" component={handleRoute(SignInRequired)} />
+          <Route path="/profile/:id" component={handleRoute(SignInRequired)} />
+          <Route path="/users/:id/trips" component={handleRoute(SignInRequired)} />
+          <Route path="/trips/:id/requests" component={handleRoute(SignInRequired)} />
+          <Route path="/chat-buddy" component={handleRoute(SignInRequired)} />
+          <Route path="/chat-buddy/:threadId" component={handleRoute(SignInRequired)} />
+          <Route path="/settings/account" component={handleRoute(SignInRequired)} />
+          <Route path="/travel-style-settings" component={handleRoute(SignInRequired)} />
         </>
       ) : (
         <>
