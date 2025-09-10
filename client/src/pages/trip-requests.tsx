@@ -64,7 +64,7 @@ export default function TripRequestsPage({ params }: TripRequestsPageProps) {
       return response;
     },
     onMutate: (requestId) => {
-      setProcessingRequests(prev => new Set([...prev, requestId]));
+      setProcessingRequests(prev => new Set([...Array.from(prev), requestId]));
     },
     onSuccess: () => {
       toast({
@@ -99,7 +99,7 @@ export default function TripRequestsPage({ params }: TripRequestsPageProps) {
       return response;
     },
     onMutate: (requestId) => {
-      setProcessingRequests(prev => new Set([...prev, requestId]));
+      setProcessingRequests(prev => new Set([...Array.from(prev), requestId]));
     },
     onSuccess: () => {
       toast({
@@ -282,7 +282,7 @@ export default function TripRequestsPage({ params }: TripRequestsPageProps) {
                               : request.user.username}
                           </h3>
                           <p className="text-sm text-gray-600">
-                            Requested {new Date(request.createdAt).toLocaleDateString()}
+                            Requested {request.createdAt ? new Date(request.createdAt).toLocaleDateString() : 'Date unknown'}
                           </p>
                         </div>
                       </div>
@@ -363,7 +363,7 @@ export default function TripRequestsPage({ params }: TripRequestsPageProps) {
                     {request.status !== 'pending' && (
                       <div className="text-xs text-gray-500 mt-2">
                         {request.status === 'accepted' ? 'Accepted' : 'Declined'} on{' '}
-                        {new Date(request.updatedAt).toLocaleDateString()}
+                        {request.updatedAt ? new Date(request.updatedAt).toLocaleDateString() : 'Date unknown'}
                       </div>
                     )}
                   </div>

@@ -1204,11 +1204,6 @@ function UserActivity() {
     enabled: !!user,
   });
 
-  const { data: requests = [], isLoading: requestsLoading } = useQuery<any>({
-    queryKey: ['/api/my-trips/interest-requests'],
-    enabled: !!user,
-  });
-
   return (
     <Card>
       <CardHeader>
@@ -1216,10 +1211,9 @@ function UserActivity() {
       </CardHeader>
       <CardContent>
         <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="questions">Questions</TabsTrigger>
             <TabsTrigger value="trips">Trips</TabsTrigger>
-            <TabsTrigger value="requests">Requests</TabsTrigger>
             <TabsTrigger value="saved">Saved</TabsTrigger>
           </TabsList>
 
@@ -1344,83 +1338,6 @@ function UserActivity() {
                 <Button className="mt-4" onClick={() => setLocation('/post')}>
                   Post Your First Trip
                 </Button>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="requests" className="mt-6">
-            {requestsLoading ? (
-              <div>Loading requests...</div>
-            ) : requests?.length > 0 ? (
-              <div className="space-y-4">
-                {requests.map((request: any) => (
-                  <div key={request.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{request.tripTitle}</h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          Interest from: {request.requesterName} {request.requesterLastName}
-                        </p>
-                        {request.message && (
-                          <p className="text-sm text-gray-700 mt-2 p-2 bg-gray-50 rounded">
-                            "{request.message}"
-                          </p>
-                        )}
-                        <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                          <span>⏰ {request.durationSinceRequest}</span>
-                          <Badge 
-                            variant={
-                              request.status === 'pending' ? 'default' : 
-                              request.status === 'accepted' ? 'default' : 
-                              'secondary'
-                            }
-                            className={
-                              request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              request.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                              'bg-red-100 text-red-800'
-                            }
-                          >
-                            {request.status === 'pending' ? '⏳ Pending' :
-                             request.status === 'accepted' ? '✅ Accepted' :
-                             request.status === 'declined' ? '❌ Declined' : request.status}
-                          </Badge>
-                          {request.waitingTimeCategory === 'urgent' && (
-                            <Badge variant="destructive" className="animate-pulse">
-                              🚨 Urgent ({request.daysWaiting}+ days)
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex flex-col gap-2 ml-4">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => window.location.href = `/trips/${request.tripId}/requests`}
-                          data-testid={`button-view-trip-requests-${request.tripId}`}
-                        >
-                          👁️ View Details
-                        </Button>
-                        {request.status === 'accepted' && request.chatThreadId && (
-                          <Button
-                            size="sm"
-                            variant="default"
-                            onClick={() => window.location.href = `/chat-buddy/${request.chatThreadId}`}
-                            data-testid={`button-chat-${request.chatThreadId}`}
-                          >
-                            💬 Chat
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No interest requests yet.</p>
-                <p className="text-sm text-gray-400 mt-1">
-                  When people show interest in your trips, they'll appear here.
-                </p>
               </div>
             )}
           </TabsContent>
