@@ -109,6 +109,21 @@ export class UserActionsService {
           message: message 
         });
 
+        // Create notification for the trip organizer when reactivated
+        if (trip.organizerId !== userId) {
+          await storage.createNotification({
+            userId: trip.organizerId,
+            tripId: tripId,
+            type: null,
+            category: 'trips',
+            priority: 'normal',
+            title: 'Trip Interest Renewed',
+            content: `Someone renewed their interest in your trip "${trip.title}"`,
+            actionUrl: `/trips/${tripId}/requests`,
+            isRead: false
+          });
+        }
+
         return { 
           requestId: existingRequest.id, 
           status: 'pending', 
@@ -143,6 +158,21 @@ export class UserActionsService {
 
     // Log the action
     await this.logAction(userId, 'INTEREST', tripId, { message });
+
+    // Create notification for the trip organizer
+    if (trip.organizerId !== userId) { // Don't notify yourself
+      await storage.createNotification({
+        userId: trip.organizerId,
+        tripId: tripId,
+        type: null, // Will use enum value
+        category: 'trips',
+        priority: 'normal',
+        title: 'New Trip Interest',
+        content: `Someone is interested in your trip "${trip.title}"`,
+        actionUrl: `/trips/${tripId}/requests`,
+        isRead: false
+      });
+    }
 
     return { 
       requestId: created.id, 
