@@ -90,6 +90,30 @@ app.use((req, res, next) => {
     }
 
     console.log('Starting server initialization...');
+    
+    // Production seeding - ensure sample data exists
+    if (process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT === '1') {
+      console.log('🌱 Production environment detected - ensuring sample data...');
+      try {
+        const { seedSampleTrips } = await import('../scripts/seed-trips');
+        await seedSampleTrips();
+        console.log('✅ Sample trips seeded successfully');
+        
+        // Run community seeding
+        const fs = await import('fs');
+        const path = await import('path');
+        const seedCommunityPath = path.resolve(import.meta.dirname, '../scripts/seed-community.js');
+        if (fs.existsSync(seedCommunityPath)) {
+          const { execSync } = await import('child_process');
+          execSync('npx tsx scripts/seed-community.js', { cwd: path.resolve(import.meta.dirname, '..'), stdio: 'inherit' });
+          console.log('✅ Community data seeded successfully');
+        }
+      } catch (error) {
+        console.error('⚠️ Sample data seeding failed:', error);
+        // Don't exit - continue with server startup
+      }
+    }
+    
     const server = await registerRoutes(app);
     console.log('Routes registered successfully');
 
