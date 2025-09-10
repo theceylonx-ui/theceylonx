@@ -988,9 +988,16 @@ export class DatabaseStorage implements IStorage {
     }
     
     if (filters?.topic) {
-      const topic = await this.getTopic(filters.topic);
-      if (topic) {
-        conditions.push(eq(questions.topicId, topic.id));
+      // Topic can be either ID or slug, check both
+      if (filters.topic.length > 20) {
+        // Looks like a UUID (topic ID), use directly
+        conditions.push(eq(questions.topicId, filters.topic));
+      } else {
+        // Looks like a slug, fetch topic first
+        const topic = await this.getTopic(filters.topic);
+        if (topic) {
+          conditions.push(eq(questions.topicId, topic.id));
+        }
       }
     }
     
