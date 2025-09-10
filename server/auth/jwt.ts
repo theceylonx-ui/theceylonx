@@ -37,20 +37,23 @@ const isProduction = process.env.NODE_ENV === 'production' || isReplitProduction
 // Domain configuration - no domain restriction for Replit deployments
 const effectiveCookieDomain = isDevelopment || isReplitProduction ? undefined : COOKIE_DOMAIN;
 
-// Cookie security - flexible for Replit environment while maintaining security
+// Cookie security - prioritize Replit environment detection
 const effectiveCookieSecure = (() => {
-  // Explicit override via environment variable
+  // ALWAYS false for Replit environments (they handle SSL/TLS automatically)
+  if (process.env.REPL_SLUG || process.env.REPLIT_DEPLOYMENT || process.env.REPLIT_DOMAINS) {
+    console.log("🔧 Forcing cookie secure=false for Replit environment");
+    return false;
+  }
+  
+  // Always false for development
+  if (process.env.NODE_ENV === 'development') return false;
+  
+  // Explicit override via environment variable only for non-Replit environments
   if (process.env.COOKIE_SECURE === 'false') return false;
   if (process.env.COOKIE_SECURE === 'true') return true;
   
-  // Development is always non-secure
-  if (isDevelopment) return false;
-  
-  // For Replit production, allow both HTTP and HTTPS
-  if (isReplitProduction) return false;
-  
-  // Other production environments default to secure
-  return isProduction;
+  // Default to false for maximum compatibility
+  return false;
 })();
 
 // Cookie configuration for environment
