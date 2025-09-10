@@ -171,6 +171,11 @@ export function PreferencesForm() {
       queryClient.setQueryData(["/api/preferences"], data.preferences);
       setIsOptimistic(false);
       
+      // CRITICAL: Invalidate user profile queries to update completion status
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/preferences"] });
+      
       toast({
         title: "Preferences saved",
         description: "Your travel preferences have been updated successfully. Redirecting to recommendations...",
@@ -206,6 +211,11 @@ export function PreferencesForm() {
           // If retry succeeds, update the data
           const data = await response.json();
           queryClient.setQueryData(["/api/preferences"], data.preferences);
+          
+          // CRITICAL: Invalidate user profile queries to update completion status
+          queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/me"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/user/preferences"] });
           
           toast({
             title: "Preferences saved",
