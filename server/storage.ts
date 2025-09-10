@@ -281,10 +281,10 @@ export interface IStorage {
   deleteCalendarEvent(id: string): Promise<void>;
   
   // Saved trips operations (Pin and Interest system)
-  upsertSavedTrip(userId: string, tripId: string, saveType: 'pinned' | 'interested'): Promise<SavedTrip>;
+  upsertSavedTrip(userId: string, tripId: string, saveType: 'pinned' | 'request_sent'): Promise<SavedTrip>;
   removeSavedTrip(userId: string, tripId: string): Promise<void>;
   getSavedTrip(userId: string, tripId: string): Promise<SavedTrip | undefined>;
-  getUserSavedTrips(userId: string, saveType?: 'pinned' | 'interested'): Promise<SavedTripWithTrip[]>;
+  getUserSavedTrips(userId: string, saveType?: 'pinned' | 'request_sent'): Promise<SavedTripWithTrip[]>;
   
   // Notification operations
   createNotification(notification: InsertNotification): Promise<Notification>;
@@ -2196,7 +2196,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Saved trips operations (Pin and Interest system)
-  async upsertSavedTrip(userId: string, tripId: string, saveType: 'pinned' | 'interested'): Promise<SavedTrip> {
+  async upsertSavedTrip(userId: string, tripId: string, saveType: 'pinned' | 'request_sent'): Promise<SavedTrip> {
     try {
       const [savedTrip] = await db
         .insert(savedTrips)
@@ -2240,7 +2240,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getUserSavedTrips(userId: string, saveType?: 'pinned' | 'interested'): Promise<SavedTripWithTrip[]> {
+  async getUserSavedTrips(userId: string, saveType?: 'pinned' | 'request_sent'): Promise<SavedTripWithTrip[]> {
     const baseQuery = db
       .select({
         savedTrip: savedTrips,
