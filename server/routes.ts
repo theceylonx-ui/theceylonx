@@ -116,7 +116,7 @@ import {
 import { enhancedRecommendationService } from "./ml/enhancedRecommendationService";
 import { z } from "zod";
 import { errorTracker } from "./utils/errorTracking";
-import { normalizeUserForUI, normalizeUsersForUI, trackUserNormalizationFallback } from "./utils/userNormalization";
+import { normalizeUserForUI, normalizeUsersForUI, trackUserNormalizationFallback, getDisplayName } from "./utils/userNormalization";
 import type { NormalizedUser } from "./utils/userNormalization";
 import { cache, CACHE_TTL } from "./cache/cacheService";
 import { healthCheck, readinessCheck, livenessCheck } from "./health/healthCheck";
@@ -1940,7 +1940,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           category: "social",
           priority: "normal",
           title: "Your Question Got an Answer!",
-          message: `${answerer?.firstName || 'Someone'} answered your question "${question.title}".`,
+          message: `${getDisplayName(answerer)} answered your question "${question.title}".`,
           relatedUserId: userId,
           actionUrl: `/community/questions/${question.id}#answer-${answer.id}`,
           isRead: false,
@@ -1994,7 +1994,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           category: "social",
           priority: "normal",
           title: "Your Answer Was Accepted!",
-          message: `${questionAuthor?.firstName || 'Someone'} accepted your answer to "${question.title}".`,
+          message: `${getDisplayName(questionAuthor)} accepted your answer to "${question.title}".`,
           relatedUserId: userId,
           actionUrl: `/community/questions/${question.id}#answer-${answer.id}`,
           isRead: false,
@@ -2090,7 +2090,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 category: "social",
                 priority: "low",
                 title: "Your Question Received an Upvote!",
-                message: `${voter?.firstName || 'Someone'} upvoted your question "${question.title}".`,
+                message: `${getDisplayName(voter)} upvoted your question "${question.title}".`,
                 relatedUserId: userId,
                 actionUrl: `/community/questions/${question.id}`,
                 isRead: false,
@@ -2106,7 +2106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 category: "social",
                 priority: "low",
                 title: "Your Answer Received an Upvote!",
-                message: `${voter?.firstName || 'Someone'} upvoted your answer.`,
+                message: `${getDisplayName(voter)} upvoted your answer.`,
                 relatedUserId: userId,
                 actionUrl: `/community/questions/${answer.questionId}#answer-${answer.id}`,
                 isRead: false,
@@ -2905,7 +2905,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           category: "social",
           priority: "normal",
           title: "New Message",
-          message: `${currentUser?.firstName || 'Someone'}: ${text.substring(0, 60)}${text.length > 60 ? '...' : ''}`,
+          message: `${getDisplayName(currentUser)}: ${text.substring(0, 60)}${text.length > 60 ? '...' : ''}`,
           threadId: threadId,
           relatedUserId: userId,
           actionUrl: `/chat/${threadId}`,
@@ -3012,7 +3012,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           category: "social",
           priority: "high",
           title: "Contact Details Shared",
-          message: `${currentUser?.firstName || 'Trip organizer'} shared their contact details with you`,
+          message: `${getDisplayName(currentUser) || 'Trip organizer'} shared their contact details with you`,
           threadId: threadId,
           relatedUserId: userId,
           actionUrl: `/chat/${threadId}`,
@@ -3207,7 +3207,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         category: "social", 
         priority: "normal",
         title: "New Trip Message",
-        message: `${currentUser?.firstName || 'Someone'}: ${message.substring(0, 60)}${message.length > 60 ? '...' : ''}`,
+        message: `${getDisplayName(currentUser)}: ${message.substring(0, 60)}${message.length > 60 ? '...' : ''}`,
         threadId: chatThread.id,
         relatedUserId: currentUserId,
         actionUrl: `/chat-buddy?tripId=${tripId}&userId=${currentUserId}`,
