@@ -164,8 +164,8 @@ export default function BrowseTripsFilters({
             <SelectContent>
               <SelectItem value="all">All regions</SelectItem>
               {regions.map((r) => (
-                <SelectItem key={typeof r === 'string' ? r : r.value} value={typeof r === 'string' ? r.toLowerCase() : r.value}>
-                  {typeof r === 'string' ? r : r.label}
+                <SelectItem key={r.value} value={r.value}>
+                  {r.label}
                 </SelectItem>
               ))}
             </SelectContent>

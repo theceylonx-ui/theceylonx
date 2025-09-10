@@ -296,7 +296,7 @@ export default function BrowseTrips() {
                       Featured
                     </Badge>
                   )}
-                  <TripCard trip={trip} />
+                  <TripCard trip={trip as any} />
                 </div>
               ))}
             </div>
