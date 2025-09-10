@@ -9,11 +9,30 @@ import { JWTUser } from './jwt';
 
 // Google OAuth Strategy
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  // Use proper deployment URL for OAuth callbacks
+  // Dynamic callback URL detection for all environments
   const isDevelopment = process.env.NODE_ENV === 'development';
-  const googleCallbackURL = isDevelopment 
-    ? 'http://localhost:5000/api/auth/google/callback'
-    : 'https://www.theceylonx.com/api/auth/google/callback';
+  const isReplitDeployment = process.env.REPL_SLUG || process.env.REPLIT_DEPLOYMENT || process.env.REPLIT_DOMAINS;
+  
+  let googleCallbackURL;
+  if (isReplitDeployment && process.env.REPLIT_DOMAINS) {
+    // PRIORITY 1: Use Replit domain if available (even in development)
+    const primaryDomain = process.env.REPLIT_DOMAINS.split(',')[0];
+    googleCallbackURL = `https://${primaryDomain}/api/auth/google/callback`;
+  } else if (isDevelopment) {
+    // PRIORITY 2: Use localhost only for pure local development
+    googleCallbackURL = 'http://localhost:5000/api/auth/google/callback';
+  } else {
+    // PRIORITY 3: Fallback to configured APP_URL or default
+    const baseUrl = process.env.APP_URL || 'https://www.theceylonx.com';
+    googleCallbackURL = `${baseUrl}/api/auth/google/callback`;
+  }
+  
+  console.log('🔧 OAuth Configuration:', {
+    isDevelopment,
+    isReplitDeployment: !!isReplitDeployment,
+    replitDomains: process.env.REPLIT_DOMAINS,
+    configuredCallbackURL: googleCallbackURL
+  });
     
   // Google OAuth callback configured
     
@@ -76,11 +95,29 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 
 // Facebook OAuth Strategy
 if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
-  // Dynamic callback URL based on environment
+  // Dynamic callback URL detection for all environments (same as Google)
   const isDevelopment = process.env.NODE_ENV === 'development';
-  const facebookCallbackURL = isDevelopment 
-    ? 'http://localhost:5000/api/auth/facebook/callback'
-    : 'https://www.theceylonx.com/api/auth/facebook/callback';
+  const isReplitDeployment = process.env.REPL_SLUG || process.env.REPLIT_DEPLOYMENT || process.env.REPLIT_DOMAINS;
+  
+  let facebookCallbackURL;
+  if (isReplitDeployment && process.env.REPLIT_DOMAINS) {
+    // PRIORITY 1: Use Replit domain if available (even in development)
+    const primaryDomain = process.env.REPLIT_DOMAINS.split(',')[0];
+    facebookCallbackURL = `https://${primaryDomain}/api/auth/facebook/callback`;
+  } else if (isDevelopment) {
+    // PRIORITY 2: Use localhost only for pure local development
+    facebookCallbackURL = 'http://localhost:5000/api/auth/facebook/callback';
+  } else {
+    // PRIORITY 3: Fallback to configured APP_URL or default
+    const baseUrl = process.env.APP_URL || 'https://www.theceylonx.com';
+    facebookCallbackURL = `${baseUrl}/api/auth/facebook/callback`;
+  }
+  
+  console.log('🔧 Facebook OAuth Configuration:', {
+    isDevelopment,
+    isReplitDeployment: !!isReplitDeployment,
+    configuredCallbackURL: facebookCallbackURL
+  });
     
   passport.use(new FacebookStrategy({
     clientID: process.env.FACEBOOK_APP_ID,
