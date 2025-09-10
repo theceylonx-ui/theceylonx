@@ -22,6 +22,7 @@ import type { QuestionWithDetails, Topic, User as UserType } from "@shared/schem
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import { TipsBox } from "@/components/TipsBox";
+import { getDisplayName } from "@/lib/profileUtils";
 import communityBgImage from "@assets/2_1756418517711.png";
 
 const questionSchema = z.object({
@@ -537,9 +538,6 @@ export default function CommunityPage() {
                 </Form>
               </DialogContent>
             </Dialog>
-              </div>
-              </div>
-            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -734,7 +732,7 @@ export default function CommunityPage() {
                           <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
                             <div className="flex items-center">
                               <User className="w-4 h-4 mr-1" />
-                              {question.isAnonymous ? 'Anonymous' : (question.user?.displayName || 'Anonymous')}
+                              {question.isAnonymous ? 'Anonymous' : getDisplayName(question.user)}
                             </div>
                             <div className="flex items-center">
                               <Calendar className="w-4 h-4 mr-1" />
@@ -812,6 +810,7 @@ export default function CommunityPage() {
               />
             </div>
           </div>
+        </div>
         </div>
       </div>
       <Footer />

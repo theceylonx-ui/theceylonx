@@ -37,6 +37,7 @@ import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 // VotingControls removed - replaced with new UpvoteButton
 import { UpvoteButton } from '@/components/UpvoteButton';
+import { getDisplayName } from '@/lib/profileUtils';
 
 const answerSchema = z.object({
   body: z.string().min(10, "Answer must be at least 10 characters"),
@@ -330,7 +331,7 @@ export default function QuestionDetailPage() {
                 <div className="flex items-center space-x-4 text-sm text-gray-500">
                   <div className="flex items-center">
                     <User className="w-4 h-4 mr-1" />
-                    {question.user?.displayName || 'Anonymous'}
+                    {question.isAnonymous ? 'Anonymous' : getDisplayName(question.user)}
                   </div>
                   <div className="flex items-center">
                     <Calendar className="w-4 h-4 mr-1" />
@@ -590,7 +591,7 @@ export default function QuestionDetailPage() {
                       <div className="flex items-center space-x-3 text-sm text-gray-500">
                         <div className="flex items-center">
                           <User className="w-4 h-4 mr-1" />
-                          {answer.user?.displayName || 'Anonymous'}
+                          {getDisplayName(answer.user)}
                         </div>
                         <div className="flex items-center">
                           <Calendar className="w-4 h-4 mr-1" />
