@@ -104,6 +104,9 @@ export class UserActionsService {
           })
           .where(eq(tripInterestRequests.id, existingRequest.id));
 
+        // Also save this trip as "request_sent" in saved trips when reactivated
+        await storage.upsertSavedTrip(userId, tripId, 'request_sent');
+
         await this.logAction(userId, 'INTEREST', tripId, { 
           action: 'reactivated',
           message: message 
@@ -155,6 +158,9 @@ export class UserActionsService {
       .insert(tripInterestRequests)
       .values(newRequest)
       .returning();
+
+    // Also save this trip as "request_sent" in saved trips
+    await storage.upsertSavedTrip(userId, tripId, 'request_sent');
 
     // Log the action
     await this.logAction(userId, 'INTEREST', tripId, { message });
@@ -209,6 +215,9 @@ export class UserActionsService {
         updatedAt: new Date() 
       })
       .where(eq(tripInterestRequests.id, existingRequest.id));
+
+    // Remove from saved trips when withdrawing interest
+    await storage.removeSavedTrip(userId, tripId);
 
     // Log the action
     await this.logAction(userId, 'WITHDRAW', tripId);
