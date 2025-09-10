@@ -8,19 +8,21 @@ import { clerkHealth } from "./routes/clerkHealth";
 
 // Unified auth helper function
 async function getAuthenticatedUser(req: any): Promise<UnifiedUser | null> {
-  // Checking authentication methods
+  console.log('🔍 /api/auth/me called - checking auth methods');
+  console.log('🔍 Checking authentication - Cookies:', Object.keys(req.cookies || {}));
+  console.log('🔍 Authorization header:', req.headers.authorization ? 'present' : 'not present');
+  
   try {
     // First try Clerk authentication
     const { getClerkUser } = await import('./auth/clerk');
     const clerkUser = getClerkUser(req);
     if (clerkUser) {
-      // Clerk user authenticated
+      console.log('✅ Clerk user authenticated:', clerkUser.email);
       return {
         id: clerkUser.id,
         email: clerkUser.email,
         name: clerkUser.name,
         provider: 'clerk',
-        // Additional properties for Clerk integration (not in UnifiedUser interface)
       };
     }
     
@@ -29,7 +31,7 @@ async function getAuthenticatedUser(req: any): Promise<UnifiedUser | null> {
     const jwtUser = await getCurrentUser(req);
     
     if (jwtUser) {
-      // JWT user authenticated
+      console.log('✅ JWT user authenticated:', jwtUser.email);
       return {
         id: jwtUser.id,
         email: jwtUser.email,
@@ -38,13 +40,15 @@ async function getAuthenticatedUser(req: any): Promise<UnifiedUser | null> {
         provider: jwtUser.provider || 'jwt'
       };
     }
+    console.log('❌ No access token found');
     
     // Fallback to Replit Auth
-    // Trying Replit Auth fallback
+    console.log('🔍 Trying Replit Auth fallback, isAuthenticated:', typeof req.isAuthenticated);
     if (req.isAuthenticated && req.isAuthenticated()) {
+      console.log('🔍 req.isAuthenticated() returned:', req.isAuthenticated());
       const user = req.user as any;
       if ((user as any)?.claims?.sub) {
-        // Replit user authenticated
+        console.log('✅ Replit user authenticated:', user.claims.email);
         return {
           id: user.claims.sub,
           email: user.claims.email,
@@ -53,8 +57,10 @@ async function getAuthenticatedUser(req: any): Promise<UnifiedUser | null> {
           claims: user.claims
         };
       }
+    } else {
+      console.log('🔍 req.isAuthenticated() returned:', req.isAuthenticated ? req.isAuthenticated() : 'function not available');
     }
-    // No authentication method worked
+    console.log('❌ No authentication method worked');
     
     return null;
   } catch (error) {

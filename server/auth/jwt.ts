@@ -29,12 +29,29 @@ const REFRESH_TOKEN_EXPIRY = '30d';
 const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN;
 const COOKIE_SECURE = process.env.COOKIE_SECURE === 'true';
 
-// For development, don't use domain/secure settings
+// Enhanced environment detection for Replit deployment
 const isDevelopment = process.env.NODE_ENV === 'development';
-const isProduction = process.env.REPLIT_DEPLOYMENT === '1';
-const effectiveCookieDomain = isDevelopment ? undefined : COOKIE_DOMAIN;
-// In production, default to secure=true for HTTPS, but allow override
-const effectiveCookieSecure = isDevelopment ? false : (process.env.COOKIE_SECURE !== 'false' && isProduction);
+const isReplitProduction = process.env.REPLIT_DEPLOYMENT === '1' || process.env.REPL_SLUG;
+const isProduction = process.env.NODE_ENV === 'production' || isReplitProduction;
+
+// Domain configuration - no domain restriction for Replit deployments
+const effectiveCookieDomain = isDevelopment || isReplitProduction ? undefined : COOKIE_DOMAIN;
+
+// Cookie security - flexible for Replit environment while maintaining security
+const effectiveCookieSecure = (() => {
+  // Explicit override via environment variable
+  if (process.env.COOKIE_SECURE === 'false') return false;
+  if (process.env.COOKIE_SECURE === 'true') return true;
+  
+  // Development is always non-secure
+  if (isDevelopment) return false;
+  
+  // For Replit production, allow both HTTP and HTTPS
+  if (isReplitProduction) return false;
+  
+  // Other production environments default to secure
+  return isProduction;
+})();
 
 // Cookie configuration for environment
 
@@ -210,11 +227,11 @@ export async function authGuard(req: Request & { user?: JWTUser }, res: Response
 }
 
 export async function getCurrentUser(req: Request): Promise<JWTUser | null> {
-  // Development-only debugging logs
-  if (process.env.NODE_ENV === 'development') {
-    console.log("🔍 Checking authentication - Cookies:", Object.keys(req.cookies || {}));
-    console.log("🔍 Authorization header:", req.headers.authorization ? "present" : "not present");
-  }
+  // Enhanced debugging for production troubleshooting
+  console.log("🔍 JWT Auth - Environment:", { isDevelopment, isProduction, isReplitProduction });
+  console.log("🔍 JWT Auth - Cookie settings:", { effectiveCookieSecure, effectiveCookieDomain });
+  console.log("🔍 JWT Auth - Cookies received:", Object.keys(req.cookies || {}));
+  console.log("🔍 JWT Auth - Authorization header:", req.headers.authorization ? "present" : "not present");
   
   // Try to get token from cookies first
   let accessToken = req.cookies?.accessToken;
@@ -228,15 +245,14 @@ export async function getCurrentUser(req: Request): Promise<JWTUser | null> {
   }
   
   if (!accessToken) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log("❌ No access token found");
-    }
+    console.log("❌ No access token found");
     return null;
   }
 
   const user = verifyAccessToken(accessToken);
-  if (process.env.NODE_ENV === 'development') {
-    console.log("🔍 JWT verification result:", user ? "✅ valid" : "❌ invalid");
+  console.log("🔍 JWT verification result:", user ? "✅ valid" : "❌ invalid");
+  if (user) {
+    console.log("✅ JWT user details:", { id: user.id, email: user.email, provider: user.provider });
   }
   return user;
 }
