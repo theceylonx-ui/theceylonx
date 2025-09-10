@@ -26,9 +26,7 @@ export function FollowButton({ userId }: FollowButtonProps) {
 
   const followMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest(`/api/users/${userId}/follow`, {
-        method: "POST",
-      });
+      await apiRequest("POST", `/api/users/${userId}/follow`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/following-status`] });
@@ -48,9 +46,7 @@ export function FollowButton({ userId }: FollowButtonProps) {
 
   const unfollowMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest(`/api/users/${userId}/follow`, {
-        method: "DELETE",
-      });
+      await apiRequest("DELETE", `/api/users/${userId}/follow`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/following-status`] });
