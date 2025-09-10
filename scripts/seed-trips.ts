@@ -52,7 +52,7 @@ async function seedSampleTrips() {
       seatsAvailable: 3,
       price: "2500.00",
       region: "Central",
-      category: "cultural",
+      category: "culture",
       organizerId: seedUser[0].id,
       organizerPhone: "771234567",
       organizerEmail: "seed@theceylonx.com",
@@ -71,7 +71,7 @@ async function seedSampleTrips() {
       seatsAvailable: 4,
       price: "3000.00",
       region: "Southern",
-      category: "cultural",
+      category: "culture",
       organizerId: traveler1[0]?.id || seedUser[0].id,
       organizerPhone: "776543210",
       organizerEmail: "traveler1@theceylonx.com",
@@ -90,7 +90,7 @@ async function seedSampleTrips() {
       seatsAvailable: 2,
       price: "4500.00",
       region: "Central",
-      category: "adventure",
+      category: "adventure_sport",
       organizerId: traveler2[0]?.id || seedUser[0].id,
       organizerPhone: "771122334",
       organizerEmail: "traveler2@theceylonx.com",
@@ -109,7 +109,7 @@ async function seedSampleTrips() {
       seatsAvailable: 3,
       price: "2800.00",
       region: "Central",
-      category: "nature",
+      category: "hiking",
       organizerId: guide[0]?.id || seedUser[0].id,
       organizerPhone: "774455667",
       organizerEmail: "guide@theceylonx.com",
@@ -147,7 +147,7 @@ async function seedSampleTrips() {
       seatsAvailable: 4,
       price: "3200.00",
       region: "Central",
-      category: "nature",
+      category: "hiking",
       organizerId: seedUser[0].id,
       organizerPhone: "771234567",
       organizerEmail: "seed@theceylonx.com",
@@ -166,7 +166,7 @@ async function seedSampleTrips() {
       seatsAvailable: 5,
       price: "4000.00",
       region: "North Central",
-      category: "cultural",
+      category: "culture",
       organizerId: guide[0]?.id || seedUser[0].id,
       organizerPhone: "774455667",
       organizerEmail: "guide@theceylonx.com",
@@ -202,7 +202,7 @@ async function seedSampleTrips() {
     const existing = await db.select().from(trips).where(eq(trips.id, trip.id));
     if (existing.length === 0) {
       try {
-        await db.insert(trips).values(trip);
+        await db.insert(trips).values([trip]);
         tripCount++;
         console.log(`✅ Created trip: ${trip.title}`);
       } catch (error) {

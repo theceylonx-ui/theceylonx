@@ -99,15 +99,8 @@ app.use((req, res, next) => {
         await seedSampleTrips();
         console.log('✅ Sample trips seeded successfully');
         
-        // Run community seeding
-        const fs = await import('fs');
-        const path = await import('path');
-        const seedCommunityPath = path.resolve(import.meta.dirname, '../scripts/seed-community.js');
-        if (fs.existsSync(seedCommunityPath)) {
-          const { execSync } = await import('child_process');
-          execSync('npx tsx scripts/seed-community.js', { cwd: path.resolve(import.meta.dirname, '..'), stdio: 'inherit' });
-          console.log('✅ Community data seeded successfully');
-        }
+        // Skip community seeding for now due to SQL syntax issues
+        console.log('⚠️ Skipping community seeding - will be fixed in next deployment');
       } catch (error) {
         console.error('⚠️ Sample data seeding failed:', error);
         // Don't exit - continue with server startup
