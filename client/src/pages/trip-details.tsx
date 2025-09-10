@@ -300,8 +300,8 @@ export default function TripDetails({ params }: TripDetailsProps) {
     },
     onSuccess: () => {
       toast({
-        title: "Interest Sent!",
-        description: "Your interest has been sent to the trip organizer. They will review and respond soon.",
+        title: "Request Sent!",
+        description: "Your request has been sent to the trip organizer. They will review and respond soon.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/trips", id, "interest-request"] });
     },
@@ -319,7 +319,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
       }
       toast({
         title: "Error",
-        description: "Failed to send interest. Please try again.",
+        description: "Failed to send request. Please try again.",
         variant: "destructive",
       });
     },
@@ -724,7 +724,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
                           </>
                         ) : (
                           <>
-                            I'm Interested
+                            Send Request
                           </>
                         )}
                       </Button>
@@ -743,7 +743,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
                       data-testid="button-signin-interest"
                     >
                       <Lock className="h-4 w-4 mr-2" />
-                      Sign in to show interest
+                      Sign in to send request
                     </Button>
                   )}
 
@@ -756,7 +756,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
                         ? 'bg-red-100 text-red-800 border border-red-200' 
                         : 'bg-blue-100 text-blue-800 border border-blue-200'
                     }`} data-testid="interest-status">
-                      {existingInterestRequest.status === 'pending' && 'Your interest request is pending review by the organizer'}
+                      {existingInterestRequest.status === 'pending' && 'Your request is pending review by the organizer'}
                       {existingInterestRequest.status === 'accepted' && (
                         <div>
                           <div className="font-medium">Request accepted! 🎉</div>

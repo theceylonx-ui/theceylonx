@@ -113,7 +113,7 @@ export function SaveControl({ tripId, variant = 'default', className = '' }: Sav
     },
   });
 
-  const handleSave = (saveType: 'pinned' | 'interested') => {
+  const handleSave = (saveType: 'pinned') => {
     if (currentStatus?.isSaved && currentStatus.saveType === saveType) {
       // If already saved with same type, remove it
       removeMutation.mutate();
@@ -138,21 +138,11 @@ export function SaveControl({ tripId, variant = 'default', className = '' }: Sav
         >
           <Pin className="w-3 h-3" />
         </Button>
-        <Button 
-          variant="outline" 
-          size={isCompact ? 'sm' : 'default'} 
-          disabled 
-          className={isCompact ? 'text-xs px-2 py-1' : ''}
-          data-testid="interest-button-loading"
-        >
-          <Star className="w-3 h-3" />
-        </Button>
       </div>
     );
   }
 
   const isPinned = currentStatus?.isSaved && currentStatus.saveType === 'pinned';
-  const isInterested = currentStatus?.isSaved && currentStatus.saveType === 'interested';
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
@@ -176,29 +166,6 @@ export function SaveControl({ tripId, variant = 'default', className = '' }: Sav
           <span className="text-orange-200">📌</span>
         ) : (
           <Pin className="w-3 h-3" />
-        )}
-      </Button>
-
-      {/* Interest Button */}
-      <Button
-        variant={isInterested ? 'default' : 'outline'}
-        size={isCompact ? 'sm' : 'default'}
-        onClick={() => handleSave('interested')}
-        disabled={isPending}
-        className={`${isCompact ? 'h-9 w-9 p-0' : 'h-10 w-10 p-0'} transition-all duration-200 ${
-          isInterested 
-            ? 'bg-yellow-500 text-white hover:bg-yellow-600 border-yellow-500 shadow-md' 
-            : 'border-ui-line text-text-muted hover:bg-ui-surface hover:border-yellow-400'
-        }`}
-        data-testid={`interest-button-${tripId}`}
-        title={isInterested ? "Remove interest" : "Mark as interested"}
-      >
-        {isPending && currentStatus?.saveType === 'interested' ? (
-          <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
-        ) : isInterested ? (
-          <span className="text-yellow-200">⭐</span>
-        ) : (
-          <Star className="w-3 h-3" />
         )}
       </Button>
     </div>
