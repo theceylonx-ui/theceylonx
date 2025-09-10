@@ -490,37 +490,89 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTrip(id: string, requestingUserId?: string): Promise<TripWithOrganizer | undefined> {
-    const result = await db
-      .select()
-      .from(trips)
-      .leftJoin(users, eq(trips.organizerId, users.id))
-      .leftJoin(tripMetadata, eq(trips.id, tripMetadata.tripId))
-      .where(and(eq(trips.id, id), eq(trips.isDeleted, false)));
-    
-    if (result.length === 0) return undefined;
-    
-    const { trips: trip, users: organizer, trip_metadata: metadata } = result[0];
-    
-    // Apply contact redaction if not the trip organizer
-    const shouldRedact = shouldRedactContact(requestingUserId, trip.organizerId);
-    const redactedTrip = shouldRedact ? redactContact(trip) : trip;
-    
-    // Also redact organizer's contact information if not the trip organizer
-    const redactedOrganizer = shouldRedact ? redactContact(organizer!) : organizer!;
-    
-    // Include metadata fields for "Show More" tab
-    return { 
-      ...redactedTrip, 
-      organizer: redactedOrganizer,
-      // Add metadata fields if available
-      duration: metadata?.duration,
-      difficulty: metadata?.difficulty,
-      buddyFriendly: metadata?.buddyFriendly,
-      seasonality: metadata?.seasonality,
-      safetyFlags: metadata?.safetyFlags,
-      tags: metadata?.tags,
-      notes: metadata?.notes,
-    };
+    try {
+      // Use template literals to avoid parameter binding issues with Neon serverless
+      const { pool } = await import("./db");
+      const simpleQuery = `SELECT * FROM trips WHERE id = '${id}' AND is_deleted = false`;
+      const result = await pool.query(simpleQuery);
+      
+      if (result.rows.length === 0) return undefined;
+      
+      const tripRow = result.rows[0];
+      
+      // Get organizer separately if needed
+      let organizer = null;
+      if (tripRow.organizer_id) {
+        const organizerQuery = `SELECT * FROM users WHERE id = '${tripRow.organizer_id}'`;
+        const organizerResult = await pool.query(organizerQuery);
+        organizer = organizerResult.rows[0] || null;
+      }
+      
+      // Construct trip object from result
+      const trip = {
+        id: tripRow.id,
+        title: tripRow.title,
+        fromLocation: tripRow.from_location,
+        toLocation: tripRow.to_location,
+        date: tripRow.date,
+        time: tripRow.time,
+        price: tripRow.price,
+        priceMin: tripRow.price_min,
+        priceMax: tripRow.price_max,
+        seatsAvailable: tripRow.seats_available,
+        organizerId: tripRow.organizer_id,
+        organizerPhone: tripRow.organizer_phone,
+        organizerEmail: tripRow.organizer_email,
+        organizerCountryCode: tripRow.organizer_country_code,
+        contactInfo: tripRow.contact_info,
+        region: tripRow.region,
+        category: tripRow.category,
+        status: tripRow.status,
+        imageUrl: tripRow.image_url,
+        mediaUrls: tripRow.media_urls,
+        coverImageIndex: tripRow.cover_image_index,
+        isDeleted: tripRow.is_deleted,
+        createdAt: tripRow.created_at,
+        updatedAt: tripRow.updated_at,
+        deletedAt: tripRow.deleted_at,
+      };
+      
+      // Construct organizer object if found
+      const organizerObject = organizer ? {
+        id: organizer.id,
+        name: organizer.name,
+        username: organizer.username,
+        email: organizer.email,
+        profileImage: organizer.profile_image_url,
+      } : {
+        id: trip.organizerId,
+        name: 'Unknown User',
+        username: null,
+        email: null,
+        profileImage: null,
+      };
+      
+      // Apply contact redaction if not the trip organizer
+      const shouldRedact = shouldRedactContact(requestingUserId, trip.organizerId);
+      const redactedTrip = shouldRedact ? redactContact(trip) : trip;
+      const redactedOrganizer = shouldRedact ? redactContact(organizerObject) : organizerObject;
+      
+      return { 
+        ...redactedTrip, 
+        organizer: redactedOrganizer,
+        // Empty metadata for now
+        duration: null,
+        difficulty: null,
+        buddyFriendly: null,
+        seasonality: null,
+        safetyFlags: null,
+        tags: null,
+        notes: null,
+      };
+    } catch (error) {
+      console.error("Error in getTrip:", error);
+      throw error;
+    }
   }
 
   async updateTrip(id: string, trip: Partial<InsertTrip>): Promise<Trip> {
