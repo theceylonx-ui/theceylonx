@@ -1063,10 +1063,10 @@ function SavedTrips() {
     enabled: !!user,
   });
 
-  // Get interested trips only
-  const { data: interestedTrips = { items: [], total: 0, totalPages: 0 }, isLoading: interestedLoading } = useQuery<any>({
-    queryKey: ['/api/user/saved-trips', { saveType: 'interested' }],
-    queryFn: () => fetch('/api/user/saved-trips?saveType=interested').then(res => res.json()),
+  // Get request sent trips only
+  const { data: requestSentTrips = { items: [], total: 0, totalPages: 0 }, isLoading: requestSentLoading } = useQuery<any>({
+    queryKey: ['/api/user/saved-trips', { saveType: 'request_sent' }],
+    queryFn: () => fetch('/api/user/saved-trips?saveType=request_sent').then(res => res.json()),
     enabled: !!user,
   });
 
@@ -1083,7 +1083,7 @@ function SavedTrips() {
             <span>👥 {item.seatsAvailable} seats</span>
             <span>📅 {new Date(item.date).toLocaleDateString()}</span>
             <Badge variant={item.saveType === 'pinned' ? 'default' : 'secondary'}>
-              {item.saveType === 'pinned' ? '📌 Pinned' : '💫 Interested'} {new Date(item.savedAt).toLocaleDateString()}
+              {item.saveType === 'pinned' ? '📌 Pinned' : '📩 Request Sent'} {new Date(item.savedAt).toLocaleDateString()}
             </Badge>
           </div>
         </div>
@@ -1106,7 +1106,7 @@ function SavedTrips() {
       <CardHeader>
         <CardTitle>Saved Trips</CardTitle>
         <p className="text-sm text-gray-600">
-          Manage your pinned and interested trips
+          Manage your pinned and request sent trips
         </p>
       </CardHeader>
       <CardContent>
@@ -1114,7 +1114,7 @@ function SavedTrips() {
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="all" data-testid="tab-all-saved">All Saved</TabsTrigger>
             <TabsTrigger value="pinned" data-testid="tab-pinned">📌 Pinned</TabsTrigger>
-            <TabsTrigger value="interested" data-testid="tab-interested">💫 Interested</TabsTrigger>
+            <TabsTrigger value="request_sent" data-testid="tab-request-sent">📩 Request Sent</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="mt-6">
@@ -1135,7 +1135,7 @@ function SavedTrips() {
               <div className="text-center py-8" data-testid="empty-all-saved">
                 <p className="text-gray-500">No saved trips yet.</p>
                 <p className="text-sm text-gray-400 mt-1">
-                  Pin trips you want to join or mark them as interested to keep track.
+                  Pin trips you want to join or send requests to keep track.
                 </p>
                 <Button className="mt-4" onClick={() => setLocation('/browse-trips')}>
                   Browse Trips
@@ -1164,18 +1164,18 @@ function SavedTrips() {
             )}
           </TabsContent>
 
-          <TabsContent value="interested" className="mt-6">
-            {interestedLoading ? (
-              <div className="text-center py-8" data-testid="loading-interested">Loading interested trips...</div>
-            ) : interestedTrips?.items?.length > 0 ? (
+          <TabsContent value="request_sent" className="mt-6">
+            {requestSentLoading ? (
+              <div className="text-center py-8" data-testid="loading-request-sent">Loading request sent trips...</div>
+            ) : requestSentTrips?.items?.length > 0 ? (
               <div className="space-y-4">
-                {interestedTrips.items.map(renderTripCard)}
+                {requestSentTrips.items.map(renderTripCard)}
               </div>
             ) : (
-              <div className="text-center py-8" data-testid="empty-interested">
-                <p className="text-gray-500">No interested trips yet.</p>
+              <div className="text-center py-8" data-testid="empty-request-sent">
+                <p className="text-gray-500">No request sent trips yet.</p>
                 <p className="text-sm text-gray-400 mt-1">
-                  Mark trips as interested to track ones you might want to join.
+                  Send requests to track trips you're interested in joining.
                 </p>
                 <Button className="mt-4" onClick={() => setLocation('/browse-trips')}>
                   Browse Trips to Save
