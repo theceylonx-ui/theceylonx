@@ -1050,25 +1050,24 @@ function SavedTrips() {
   const { user } = useAuth();
   const [activeSubTab, setActiveSubTab] = useState("all");
   
-  // Get all saved trips
-  const { data: allSavedTrips = { items: [], total: 0, totalPages: 0 }, isLoading: allLoading } = useQuery<any>({
+  // Get all saved trips (optimized - single query)
+  const { data: allSavedTrips = { items: [], total: 0, totalPages: 0 }, isLoading: savedTripsLoading } = useQuery<any>({
     queryKey: ['/api/user/saved-trips'],
     enabled: !!user,
   });
 
-  // Get pinned trips only
-  const { data: pinnedTrips = { items: [], total: 0, totalPages: 0 }, isLoading: pinnedLoading } = useQuery<any>({
-    queryKey: ['/api/user/saved-trips', { saveType: 'pinned' }],
-    queryFn: () => fetch('/api/user/saved-trips?saveType=pinned').then(res => res.json()),
-    enabled: !!user,
-  });
+  // Filter data client-side for better performance
+  const pinnedTrips = {
+    items: allSavedTrips.items.filter((trip: any) => trip.saveType === 'pinned'),
+    total: allSavedTrips.items.filter((trip: any) => trip.saveType === 'pinned').length,
+    totalPages: 1
+  };
 
-  // Get request sent trips only
-  const { data: requestSentTrips = { items: [], total: 0, totalPages: 0 }, isLoading: requestSentLoading } = useQuery<any>({
-    queryKey: ['/api/user/saved-trips', { saveType: 'request_sent' }],
-    queryFn: () => fetch('/api/user/saved-trips?saveType=request_sent').then(res => res.json()),
-    enabled: !!user,
-  });
+  const requestSentTrips = {
+    items: allSavedTrips.items.filter((trip: any) => trip.saveType === 'request_sent'),
+    total: allSavedTrips.items.filter((trip: any) => trip.saveType === 'request_sent').length,
+    totalPages: 1
+  };
 
   const renderTripCard = (item: any) => (
     <div key={item.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow" data-testid={`saved-trip-${item.id}`}>
@@ -1118,7 +1117,7 @@ function SavedTrips() {
           </TabsList>
 
           <TabsContent value="all" className="mt-6">
-            {allLoading ? (
+            {savedTripsLoading ? (
               <div className="text-center py-8" data-testid="loading-all-saved">Loading saved trips...</div>
             ) : allSavedTrips?.items?.length > 0 ? (
               <div className="space-y-4">
@@ -1145,7 +1144,7 @@ function SavedTrips() {
           </TabsContent>
 
           <TabsContent value="pinned" className="mt-6">
-            {pinnedLoading ? (
+            {savedTripsLoading ? (
               <div className="text-center py-8" data-testid="loading-pinned">Loading pinned trips...</div>
             ) : pinnedTrips?.items?.length > 0 ? (
               <div className="space-y-4">
@@ -1165,7 +1164,7 @@ function SavedTrips() {
           </TabsContent>
 
           <TabsContent value="request_sent" className="mt-6">
-            {requestSentLoading ? (
+            {savedTripsLoading ? (
               <div className="text-center py-8" data-testid="loading-request-sent">Loading request sent trips...</div>
             ) : requestSentTrips?.items?.length > 0 ? (
               <div className="space-y-4">
