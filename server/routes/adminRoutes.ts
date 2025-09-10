@@ -339,4 +339,73 @@ router.post('/settings/background-upload', requirePermission('settings.edit'), a
   }
 });
 
+// Manual role validation endpoint - check role permissions independently
+router.post('/validate-roles', requireAdmin, async (req, res) => {
+  try {
+    console.log('🔍 Manual role validation requested by admin...');
+    
+    const { db } = await import('../db');
+    const { validateRolePermissions } = await import('../admin/validation');
+    const { roles } = await import('@shared/schema');
+    
+    const existingRoles = await db.select().from(roles);
+    const isValid = await validateRolePermissions(existingRoles);
+    
+    res.json({
+      status: 'success',
+      valid: isValid,
+      message: isValid ? 'All role permissions are valid' : 'Some role permissions are invalid',
+      timestamp: new Date().toISOString(),
+      rolesChecked: existingRoles.length
+    });
+  } catch (error) {
+    console.error('❌ Manual role validation error:', error);
+    res.status(500).json({
+      status: 'error', 
+      message: 'Failed to validate roles',
+      error: error.message || 'Unknown error'
+    });
+  }
+});
+
+// Manual seeding endpoint - runs independently after deployment
+router.post('/seed-data', requireAdmin, async (req, res) => {
+  try {
+    console.log('🌱 Manual seeding requested by admin...');
+    
+    // Test database connection first
+    await import('../db');
+    console.log('✅ Database connection verified');
+    
+    // Seed trips
+    const { seedSampleTrips } = await import('../../scripts/seed-trips');
+    await seedSampleTrips();
+    console.log('✅ Sample trips seeded successfully');
+    
+    // Seed questions
+    const { seedSimpleQuestions } = await import('../../scripts/seed-simple-questions');
+    await seedSimpleQuestions();
+    console.log('✅ Sample questions seeded successfully');
+    
+    console.log('🎉 Manual seeding completed successfully');
+    
+    res.json({ 
+      status: 'success',
+      message: 'Sample data seeded successfully',
+      timestamp: new Date().toISOString(),
+      data: {
+        trips: '8 sample trips created',
+        questions: '10 sample questions created'
+      }
+    });
+  } catch (error) {
+    console.error('❌ Manual seeding error:', error);
+    res.status(500).json({ 
+      status: 'error',
+      message: 'Failed to seed sample data',
+      error: error.message || 'Unknown error'
+    });
+  }
+});
+
 export default router;

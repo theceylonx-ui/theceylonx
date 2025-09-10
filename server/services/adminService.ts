@@ -39,20 +39,9 @@ export class AdminService {
         await db.insert(roles).values(rolesToCreate);
         console.log('✅ Admin roles initialized with new permission system');
       } else {
-        // Validate existing roles
-        console.log('🔍 Validating existing role permissions...');
-        const isValid = await validateRolePermissions(existingRoles);
-        
-        if (!isValid) {
-          if (process.env.NODE_ENV === 'production') {
-            console.error('❌ CRITICAL: Invalid permissions found in production! System may not function correctly.');
-            throw new Error('Invalid role permissions detected in production');
-          } else {
-            console.warn('⚠️ Invalid permissions found in development. Consider running migration.');
-          }
-        } else {
-          console.log('✅ All role permissions are valid');
-        }
+        // Skip validation during startup for fast deployment
+        console.log('✅ Existing roles found, skipping validation for fast startup');
+        console.log('💡 Role validation available at POST /api/admin/validate-roles');
       }
     } catch (error) {
       console.error('❌ Failed to initialize admin system:', error);

@@ -133,14 +133,7 @@ app.use((req, res, next) => {
     }, () => {
       log(`serving on port ${port}`);
       console.log('Server startup completed successfully');
-      
-      // Run background seeding after server is up and responding
-      if (process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT === '1') {
-        console.log('🌱 Starting background seeding process...');
-        backgroundSeed().catch(error => {
-          console.error('⚠️ Background seeding failed:', error.message || error);
-        });
-      }
+      console.log('💡 To seed sample data, call POST /api/admin/seed-data after deployment');
     });
     
     // Handle server errors
@@ -158,29 +151,6 @@ app.use((req, res, next) => {
     process.exit(1);
   }
 })();
-
-// Background seeding function that runs after server startup
-async function backgroundSeed() {
-  try {
-    console.log('🌱 Production environment detected - ensuring sample data...');
-    
-    // Test database connection first
-    await import('../server/db');
-    console.log('✅ Database connection verified');
-    
-    const { seedSampleTrips } = await import('../scripts/seed-trips');
-    await seedSampleTrips();
-    console.log('✅ Sample trips seeded successfully');
-    
-    // Run simple questions seeding
-    const { seedSimpleQuestions } = await import('../scripts/seed-simple-questions');
-    await seedSimpleQuestions();
-    console.log('✅ Sample questions seeded successfully');
-    console.log('🎉 Background seeding completed successfully');
-  } catch (error) {
-    console.error('❌ Background seeding error:', error);
-  }
-}
 
 // Handle uncaught exceptions and unhandled rejections
 process.on('uncaughtException', (error) => {
