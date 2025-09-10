@@ -344,7 +344,7 @@ async function seedQA() {
     const answerCount = await db.select().from(answers).where(eq(answers.questionId, questionId));
     await db.update(questions)
       .set({ 
-        acceptedAnswerId,
+        acceptedAnswerId: acceptedAnswerId,
         answersCount: answerCount.length
       })
       .where(eq(questions.id, questionId));
