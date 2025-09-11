@@ -130,15 +130,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/health', healthCheck);
   app.get('/health/ready', readinessCheck);
   app.get('/health/live', livenessCheck);
-  app.get('/', (req, res) => {
-    // Simple health check for root endpoint (used by load balancers)
-    res.status(200).json({ 
-      status: 'healthy', 
-      service: 'ceylon-expand',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime()
-    });
-  });
 
   // SECURITY: Enterprise-grade CORS with explicit allowlist - no wildcards in production
   const isDevelopment = process.env.NODE_ENV === 'development';
