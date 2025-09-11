@@ -335,7 +335,7 @@ export default function QuestionDetailPage() {
                   </div>
                   <div className="flex items-center">
                     <Calendar className="w-4 h-4 mr-1" />
-                    {formatDistanceToNow(new Date(question.createdAt || new Date()), { addSuffix: true })}
+                    {question.createdAt && !isNaN(new Date(question.createdAt).getTime()) ? formatDistanceToNow(new Date(question.createdAt), { addSuffix: true }) : 'Recently'}
                   </div>
                   {question.topic && (
                     <Badge variant="secondary">
@@ -595,7 +595,7 @@ export default function QuestionDetailPage() {
                         </div>
                         <div className="flex items-center">
                           <Calendar className="w-4 h-4 mr-1" />
-                          {formatDistanceToNow(new Date(answer.createdAt || new Date()), { addSuffix: true })}
+                          {answer.createdAt && !isNaN(new Date(answer.createdAt).getTime()) ? formatDistanceToNow(new Date(answer.createdAt), { addSuffix: true }) : 'Recently'}
                         </div>
                         {answer.id === question.acceptedAnswerId && (
                           <Badge variant="default" className="bg-green-100 text-green-800">
