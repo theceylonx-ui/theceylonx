@@ -14,14 +14,11 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   const isReplitDeployment = process.env.REPL_SLUG || process.env.REPLIT_DEPLOYMENT || process.env.REPLIT_DOMAINS;
   
   let googleCallbackURL;
-  // Always use production domain for OAuth callbacks since OAuth apps are configured for production
-  const baseUrl = process.env.APP_URL || 'https://www.theceylonx.com';
+  // Dynamic base URL detection for any deployment environment
+  const baseUrl = process.env.APP_URL ?? 
+    (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}` : 
+      (isDevelopment && !isReplitDeployment ? 'http://localhost:5000' : 'https://www.theceylonx.com'));
   googleCallbackURL = `${baseUrl}/api/auth/google/callback`;
-  
-  // Override only for pure localhost development (no Replit environment)
-  if (isDevelopment && !isReplitDeployment) {
-    googleCallbackURL = 'http://localhost:5000/api/auth/google/callback';
-  }
   
   console.log('🔧 OAuth Configuration:', {
     isDevelopment,
@@ -96,14 +93,11 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
   const isReplitDeployment = process.env.REPL_SLUG || process.env.REPLIT_DEPLOYMENT || process.env.REPLIT_DOMAINS;
   
   let facebookCallbackURL;
-  // Always use production domain for OAuth callbacks since OAuth apps are configured for production
-  const baseUrl = process.env.APP_URL || 'https://www.theceylonx.com';
+  // Dynamic base URL detection for any deployment environment (same as Google)
+  const baseUrl = process.env.APP_URL ?? 
+    (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}` : 
+      (isDevelopment && !isReplitDeployment ? 'http://localhost:5000' : 'https://www.theceylonx.com'));
   facebookCallbackURL = `${baseUrl}/api/auth/facebook/callback`;
-  
-  // Override only for pure localhost development (no Replit environment)
-  if (isDevelopment && !isReplitDeployment) {
-    facebookCallbackURL = 'http://localhost:5000/api/auth/facebook/callback';
-  }
   
   console.log('🔧 Facebook OAuth Configuration:', {
     isDevelopment,

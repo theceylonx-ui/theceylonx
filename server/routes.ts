@@ -151,6 +151,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...(replitDomains ? [`https://${replitDomains}`] : [])
       ] : [])
     ].filter(Boolean);
+
+  // Automatically include APP_URL in allowed origins if set
+  if (process.env.APP_URL && !allowedOrigins.includes(process.env.APP_URL)) {
+    allowedOrigins.push(process.env.APP_URL);
+  }
     
   app.use(cors({
     origin: (origin, callback) => {

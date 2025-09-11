@@ -31,7 +31,7 @@ const COOKIE_SECURE = process.env.COOKIE_SECURE === 'true';
 
 // Enhanced environment detection for Replit deployment
 const isDevelopment = process.env.NODE_ENV === 'development';
-const isReplitProduction = process.env.REPLIT_DEPLOYMENT === '1' || process.env.REPL_SLUG;
+const isReplitProduction = Boolean(process.env.REPLIT_DEPLOYMENT === '1' || process.env.REPL_SLUG);
 const isProduction = process.env.NODE_ENV === 'production' || isReplitProduction;
 
 // Domain configuration - no domain restriction for Replit deployments
