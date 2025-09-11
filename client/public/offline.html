@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - Ceylon Expand</title>
+    <style>
+        :root {
+            --brand: #0F8B6E;
+            --text-primary: #0B0B0B;
+            --text-secondary: #4A4A4A;
+            --ui-bg: #FFFFFF;
+            --ui-surface: #F7F7F7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--ui-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .offline-content {
+            text-align: center;
+            max-width: 500px;
+            padding: 3rem 2rem;
+            background: var(--ui-surface);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 2rem;
+            background: var(--brand);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            line-height: 1.7;
+        }
+
+        .offline-features {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border: 1px solid #E5E7EB;
+        }
+
+        .offline-features h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .feature-list {
+            text-align: left;
+            list-style: none;
+        }
+
+        .feature-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #F3F4F6;
+            color: var(--text-secondary);
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-list li::before {
+            content: "✓";
+            color: var(--brand);
+            font-weight: bold;
+            margin-right: 0.75rem;
+        }
+
+        .retry-button {
+            background: var(--brand);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+        }
+
+        .retry-button:hover {
+            background: #0C6F59;
+            transform: translateY(-1px);
+        }
+
+        .retry-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(15, 139, 110, 0.3);
+        }
+
+        .network-status {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .status-offline {
+            background: #FEF2F2;
+            color: #DC2626;
+            border: 1px solid #FECACA;
+        }
+
+        .status-online {
+            background: #F0FDF4;
+            color: #16A34A;
+            border: 1px solid #BBF7D0;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .offline-content {
+                padding: 2rem 1.5rem;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            p {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="offline-content">
+            <div class="logo">CE</div>
+            
+            <h1>You're Offline</h1>
+            <p>It looks like you've lost your internet connection. Don't worry - Ceylon Expand works offline too!</p>
+            
+            <div class="offline-features">
+                <h3>Available Offline:</h3>
+                <ul class="feature-list">
+                    <li>Browse cached trips and destinations</li>
+                    <li>View your saved trips and bookmarks</li>
+                    <li>Compose trip posts (will sync when online)</li>
+                    <li>Access help and safety guidelines</li>
+                    <li>Use the app interface and navigation</li>
+                </ul>
+            </div>
+
+            <div class="network-status" id="networkStatus">
+                <span class="status-offline">🔴 Currently offline</span>
+            </div>
+
+            <button class="retry-button" onclick="checkConnection()">
+                Check Connection
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let isOnline = navigator.onLine;
+
+        function updateNetworkStatus() {
+            const statusElement = document.getElementById('networkStatus');
+            if (navigator.onLine) {
+                statusElement.innerHTML = '<span class="status-online">🟢 Back online!</span>';
+                statusElement.className = 'network-status status-online';
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                statusElement.innerHTML = '<span class="status-offline">🔴 Currently offline</span>';
+                statusElement.className = 'network-status status-offline';
+            }
+        }
+
+        function checkConnection() {
+            // Force a network check
+            fetch('/api/health', { 
+                method: 'HEAD',
+                cache: 'no-cache',
+                mode: 'no-cors'
+            }).then(() => {
+                // Connection successful
+                window.location.reload();
+            }).catch(() => {
+                // Still offline
+                updateNetworkStatus();
+            });
+        }
+
+        // Listen for network status changes
+        window.addEventListener('online', updateNetworkStatus);
+        window.addEventListener('offline', updateNetworkStatus);
+
+        // Initial status check
+        updateNetworkStatus();
+
+        // Auto-retry every 30 seconds
+        setInterval(() => {
+            if (!navigator.onLine) {
+                checkConnection();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

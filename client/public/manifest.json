@@ -1,0 +1,125 @@
+{
+  "name": "Ceylon Expand - Travel Together, Share the Journey",
+  "short_name": "Ceylon Expand",
+  "description": "Find travel companions and share journeys across Sri Lanka. Connect with fellow travelers for amazing adventures.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F8B6E",
+  "theme_color": "#0F8B6E",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["travel", "social", "lifestyle"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/assets/5_1756417819316.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Trips",
+      "short_name": "Browse",
+      "description": "Browse available trips and find travel companions",
+      "url": "/browse-trips",
+      "icons": [
+        {
+          "src": "/pwa-icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Post Trip",
+      "short_name": "Post",
+      "description": "Post a new trip and find companions",
+      "url": "/post",
+      "icons": [
+        {
+          "src": "/pwa-icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Community",
+      "short_name": "Tribes",
+      "description": "Join CeylonX travel community",
+      "url": "/community",
+      "icons": [
+        {
+          "src": "/pwa-icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "file_handlers": [],
+  "protocol_handlers": [],
+  "share_target": {
+    "action": "/post",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
+}
