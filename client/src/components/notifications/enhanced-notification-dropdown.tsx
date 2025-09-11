@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Bell, MoreVertical, Trash2, Check, CheckCheck, X } from "lucide-react";
+import { Bell, MoreVertical, Trash2, Check, CheckCheck, X, Wifi, WifiOff } from "lucide-react";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -25,6 +26,23 @@ type NotificationPriority = "critical" | "normal" | "info";
 export function EnhancedNotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<NotificationCategory | "all">("all");
+  
+  // Initialize WebSocket for real-time notifications
+  const { isConnected, connectionState } = useWebSocket({
+    enabled: true,
+    onMessage: (message) => {
+      if (message.type === 'notification') {
+        console.log('🔔 Real-time notification received:', message.data?.title);
+        // The queryClient invalidation is handled inside the hook
+      }
+    },
+    onConnect: () => {
+      console.log('✅ WebSocket connected for real-time notifications');
+    },
+    onDisconnect: () => {
+      console.log('🔌 WebSocket disconnected, falling back to polling');
+    }
+  });
 
   // Fetch notifications with development fallback
   const { data: notifications = [], isLoading, error } = useQuery<Notification[]>({
@@ -246,8 +264,13 @@ export function EnhancedNotificationDropdown() {
           size="sm"
           className="relative"
           data-testid="button-notifications"
+          title={isConnected ? 'Notifications (Real-time)' : 'Notifications (Polling)'}
         >
-          <Bell className="h-5 w-5" />
+          <div className="relative">
+            <Bell className="h-5 w-5" />
+            {/* Real-time connection indicator */}
+            <div className={`absolute -top-1 -right-1 w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-yellow-500'}`} />
+          </div>
           {unreadCount > 0 && (
             <Badge 
               className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-red-500 hover:bg-red-500"

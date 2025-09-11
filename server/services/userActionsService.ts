@@ -3,6 +3,7 @@ import { pinnedTrips, userHistory, tripInterestRequests, trips, users } from '..
 import { eq, and, sql } from 'drizzle-orm';
 import type { InsertUserHistoryEntry, InsertTripInterestRequest } from '../../shared/schema';
 import { storage } from '../storage';
+import { websocketService } from './websocketService';
 
 export type UserActionType = 'PIN' | 'UNPIN' | 'INTEREST' | 'WITHDRAW' | 'INTEREST_ACCEPTED' | 'INTEREST_DECLINED';
 
@@ -114,10 +115,10 @@ export class UserActionsService {
 
         // Create notification for the trip organizer when reactivated
         if (trip.organizerId !== userId) {
-          await storage.createNotification({
+          const notification = await storage.createNotification({
             userId: trip.organizerId,
             tripId: tripId,
-            type: 'interest_renewed',
+            type: 'trip_interest_request',
             category: 'trips',
             priority: 'normal',
             title: 'Trip Interest Renewed',
@@ -125,6 +126,25 @@ export class UserActionsService {
             actionUrl: `/trips/${tripId}/requests`,
             isRead: false
           });
+          
+          // Broadcast notification in real-time
+          if (notification) {
+            websocketService.broadcastNotification({
+              type: 'notification',
+              data: {
+                id: notification.id,
+                userId: trip.organizerId,
+                type: 'trip_interest_request',
+                title: 'Trip Interest Renewed',
+                message: `Someone renewed their interest in your trip "${trip.title}"`,
+                category: 'trips',
+                priority: 'normal',
+                isRead: false,
+                createdAt: new Date().toISOString(),
+                actionUrl: `/trips/${tripId}/requests`
+              }
+            });
+          }
         }
 
         return { 
@@ -167,10 +187,10 @@ export class UserActionsService {
 
     // Create notification for the trip organizer
     if (trip.organizerId !== userId) { // Don't notify yourself
-      await storage.createNotification({
+      const notification = await storage.createNotification({
         userId: trip.organizerId,
         tripId: tripId,
-        type: 'interest_request',
+        type: 'trip_interest_request',
         category: 'trips',
         priority: 'normal',
         title: 'New Trip Interest',
@@ -178,6 +198,25 @@ export class UserActionsService {
         actionUrl: `/trips/${tripId}/requests`,
         isRead: false
       });
+      
+      // Broadcast notification in real-time
+      if (notification) {
+        websocketService.broadcastNotification({
+          type: 'notification',
+          data: {
+            id: notification.id,
+            userId: trip.organizerId,
+            type: 'trip_interest_request',
+            title: 'New Trip Interest',
+            message: `Someone is interested in your trip "${trip.title}"`,
+            category: 'trips',
+            priority: 'normal',
+            isRead: false,
+            createdAt: new Date().toISOString(),
+            actionUrl: `/trips/${tripId}/requests`
+          }
+        });
+      }
     }
 
     return { 
@@ -272,10 +311,10 @@ export class UserActionsService {
     // Create notification for the interested user
     const [trip] = await db.select().from(trips).where(eq(trips.id, request.tripId));
     if (trip) {
-      await storage.createNotification({
+      const notification = await storage.createNotification({
         userId: request.userId,
         tripId: request.tripId,
-        type: null, // This will be handled by the notification enum
+        type: 'interest_accepted',
         category: 'trips',
         priority: 'normal',
         title: 'Trip Request Accepted!',
@@ -292,6 +331,29 @@ export class UserActionsService {
           organizerId: organizerId
         }
       });
+      
+      // Broadcast notification in real-time
+      if (notification) {
+        websocketService.broadcastNotification({
+          type: 'notification',
+          data: {
+            id: notification.id,
+            userId: request.userId,
+            type: 'interest_accepted',
+            title: 'Trip Request Accepted!',
+            message: `Your interest in "${trip.title}" has been accepted by the organizer. You can now chat with them to coordinate details.`,
+            category: 'trips',
+            priority: 'normal',
+            isRead: false,
+            createdAt: new Date().toISOString(),
+            actionUrl: `/trips/${request.tripId}`,
+            primaryActionLabel: 'View Trip',
+            primaryActionUrl: `/trips/${request.tripId}`,
+            secondaryActionLabel: 'Start Chat',
+            secondaryActionUrl: `/chat`
+          }
+        });
+      }
     }
   }
 
@@ -358,19 +420,17 @@ export class UserActionsService {
    * Get user's interest requests count by status
    */
   async getInterestCount(userId: string, status?: string): Promise<number> {
-    let query = db
-      .select({ count: sql<number>`count(*)` })
-      .from(tripInterestRequests)
-      .where(eq(tripInterestRequests.userId, userId));
-
+    const whereConditions = [eq(tripInterestRequests.userId, userId)];
+    
     if (status) {
-      query = query.where(and(
-        eq(tripInterestRequests.userId, userId),
-        eq(tripInterestRequests.status, status)
-      ));
+      whereConditions.push(eq(tripInterestRequests.status, status));
     }
 
-    const result = await query;
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(tripInterestRequests)
+      .where(and(...whereConditions));
+    
     return result[0]?.count || 0;
   }
 

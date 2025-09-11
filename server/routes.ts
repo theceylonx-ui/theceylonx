@@ -11,7 +11,7 @@ import { requireAdmin } from "./middleware/adminAuth";
 import { logAuthSuccess, logAuthFailure, sanitizeRequestForLogging } from './utils/secureLogging';
 
 // Unified auth helper function
-async function getAuthenticatedUser(req: any, res?: any): Promise<UnifiedUser | null> {
+export async function getAuthenticatedUser(req: any, res?: any): Promise<UnifiedUser | null> {
   const requestContext = sanitizeRequestForLogging(req);
   
   try {
@@ -4185,6 +4185,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Notifications API endpoints
+  // WebSocket statistics endpoint
+  app.get('/api/websocket/stats', requireAdmin, async (req, res) => {
+    try {
+      const { websocketService } = await import('./services/websocketService');
+      const stats = websocketService.getStats();
+      
+      res.json({
+        status: 'active',
+        ...stats,
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error getting WebSocket stats:", error);
+      res.status(500).json({ 
+        status: 'error',
+        message: "Failed to fetch WebSocket statistics",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   app.get('/api/notifications', unifiedAuthGuard, async (req, res) => {
     try {
       const userId = req.user!.id;

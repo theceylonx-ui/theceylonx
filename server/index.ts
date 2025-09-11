@@ -217,6 +217,11 @@ app.use((req, res, next) => {
     // Create the server first (needed for Vite setup)
     const server = createServer(app);
     
+    // Initialize WebSocket service for real-time notifications
+    console.log('Initializing WebSocket service...');
+    const { websocketService } = await import('./services/websocketService');
+    websocketService.initialize(server);
+    
     // CRITICAL: Register API routes BEFORE Vite to prevent catch-all interception
     await registerRoutes(app);
     console.log('Routes registered successfully');
@@ -307,6 +312,19 @@ app.use((req, res, next) => {
       console.error('Server error:', err);
       process.exit(1);
     });
+    
+    // Graceful shutdown handler for WebSocket
+    const gracefulShutdown = () => {
+      console.log('🔄 Graceful shutdown initiated...');
+      websocketService.shutdown();
+      server.close(() => {
+        console.log('✅ Server closed');
+        process.exit(0);
+      });
+    };
+    
+    process.on('SIGTERM', gracefulShutdown);
+    process.on('SIGINT', gracefulShutdown);
     
   } catch (error) {
     console.error('Failed to start server:', error);
