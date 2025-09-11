@@ -868,6 +868,16 @@ export default function TripDetails({ params }: TripDetailsProps) {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Additional Trip Information</h3>
                     
+                    {/* Trip Description */}
+                    {trip.description && (
+                      <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+                        <h4 className="font-medium text-gray-700 mb-3">Trip Description</h4>
+                        <div className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                          {trip.description}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="grid md:grid-cols-2 gap-6">
                       {/* Trip Duration */}
                       {(trip as any).duration && (
@@ -966,7 +976,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
                     )}
 
                     {/* Show message if no additional info */}
-                    {!((trip as any).duration || (trip as any).difficulty || (trip as any).priceMin || (trip as any).priceMax || 
+                    {!(trip.description || (trip as any).duration || (trip as any).difficulty || (trip as any).priceMin || (trip as any).priceMax || 
                         (trip as any).buddyFriendly !== undefined || (trip.tags && trip.tags.length > 0) || 
                         ((trip as any).safetyFlags && (trip as any).safetyFlags.length > 0) || 
                         ((trip as any).seasonality && (trip as any).seasonality.length > 0)) && (
