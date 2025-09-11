@@ -4081,7 +4081,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Access denied' });
       }
 
-      // Get trip info for context (include userId for proper organizer data)
+      // Get trip info for context (include userId for proper organizer data)  
       const trip = await storage.getTrip(thread.tripId, userId || undefined);
       
       // Log chat API access for monitoring
