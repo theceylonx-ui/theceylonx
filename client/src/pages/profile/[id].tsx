@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { ArrowLeft, MapPin, Calendar, Globe, Shield } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Globe, Shield, Lock, UserX } from "lucide-react";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,7 +68,9 @@ export default function UserProfilePage() {
   const { data: profile, isLoading, error } = useQuery<UserProfile>({
     queryKey: [`/api/users/${userId}/profile`],
     queryFn: async () => {
-      const response = await fetch(`/api/users/${userId}/profile`);
+      const response = await fetch(`/api/users/${userId}/profile`, {
+        credentials: 'include', // Include authentication cookies
+      });
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error("User not found");
@@ -76,20 +78,33 @@ export default function UserProfilePage() {
         if (response.status === 403) {
           throw new Error("Profile is private");
         }
+        if (response.status === 401) {
+          throw new Error("Please sign in to view profiles");
+        }
         throw new Error("Failed to load profile");
       }
       return response.json();
     },
   });
 
-  // Fetch follow stats
+  // Fetch follow stats - only if profile query is successful or unauthenticated user viewing public profile
   const { data: followStats } = useQuery({
     queryKey: [`/api/users/${userId}/follow-stats`],
     queryFn: async () => {
-      const response = await fetch(`/api/users/${userId}/follow-stats`);
-      if (!response.ok) return { followersCount: 0, followingCount: 0 };
+      const response = await fetch(`/api/users/${userId}/follow-stats`, {
+        credentials: 'include', // Include authentication cookies
+      });
+      if (!response.ok) {
+        if (response.status === 401) {
+          // For unauthenticated users, return zeros instead of throwing error
+          // This allows showing the profile layout without follow stats
+          return { followersCount: 0, followingCount: 0 };
+        }
+        return { followersCount: 0, followingCount: 0 };
+      }
       return response.json();
     },
+    enabled: !error, // Only fetch if profile query didn't error
   });
 
   if (isLoading) {
@@ -109,33 +124,73 @@ export default function UserProfilePage() {
 
   if (error || !profile) {
     const errorMessage = error?.message || "Profile not found";
+    const isAuthRequired = errorMessage === "Please sign in to view profiles";
     const isPrivate = errorMessage === "Profile is private";
+    const isNotFound = errorMessage === "User not found";
     
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
         <div className="max-w-4xl mx-auto px-4 py-8">
+          {/* Back Navigation */}
+          <div className="mb-6">
+            <Link href="/browse-trips">
+              <Button variant="ghost" className="text-gray-600 hover:text-gray-900" data-testid="button-back-browse">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Browse
+              </Button>
+            </Link>
+          </div>
+
           <Card>
             <CardContent className="text-center py-12">
-              {isPrivate ? (
+              {isAuthRequired ? (
+                <>
+                  <Lock className="h-12 w-12 text-blue-500 mx-auto mb-4" />
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2" data-testid="text-auth-required-title">Sign In Required</h2>
+                  <p className="text-gray-600 mb-6" data-testid="text-auth-required-message">
+                    Please sign in to view user profiles and connect with other travelers.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Link href="/auth/signin">
+                      <Button className="bg-blue-600 hover:bg-blue-700" data-testid="button-sign-in">
+                        Sign In
+                      </Button>
+                    </Link>
+                    <Link href="/browse-trips">
+                      <Button variant="outline" data-testid="button-browse-trips">
+                        Browse Trips
+                      </Button>
+                    </Link>
+                  </div>
+                </>
+              ) : isPrivate ? (
                 <>
                   <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2">Private Profile</h2>
-                  <p className="text-gray-600 mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2" data-testid="text-private-profile-title">Private Profile</h2>
+                  <p className="text-gray-600 mb-6" data-testid="text-private-profile-message">
                     This user has set their profile to private. Only friends can view their information.
                   </p>
+                  <Link href="/browse-trips">
+                    <Button data-testid="button-browse-travelers">Browse Travelers</Button>
+                  </Link>
                 </>
               ) : (
                 <>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2">Profile Not Found</h2>
-                  <p className="text-gray-600 mb-6">
-                    The user you're looking for doesn't exist or has been deactivated.
+                  <UserX className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2" data-testid="text-not-found-title">
+                    {isNotFound ? "User Not Found" : "Profile Not Found"}
+                  </h2>
+                  <p className="text-gray-600 mb-6" data-testid="text-not-found-message">
+                    {isNotFound 
+                      ? "The user you're looking for doesn't exist or has been deactivated."
+                      : "We couldn't load this profile. Please try again later."}
                   </p>
+                  <Link href="/browse-trips">
+                    <Button data-testid="button-browse-travelers">Browse Travelers</Button>
+                  </Link>
                 </>
               )}
-              <Link href="/browse-trips">
-                <Button>Browse Travelers</Button>
-              </Link>
             </CardContent>
           </Card>
         </div>
