@@ -1,0 +1,115 @@
+MASTER PROMPT — FULL SITE AUDIT → HARDEN → PROD RELEASE (Ceylon Expand v4.0 “Supernova”)
+
+You are my Senior Release Engineer + QA Lead. Using the Supernova Blueprint below, perform an end-to-end audit, fix, and productionization of the entire project, then promote a verified build to production with rollback ready.
+
+— Context —
+Product: Ceylon Expand (CeyEx) — Sri Lanka travel buddy platform
+Vision: “Einstein’s Brain powering a 5-Year-Old’s Playground”
+Domain: https://theceylonx.com  | Free-to-use, zero commission
+Blueprint Date: 2025-09-11 (v4.0 production)
+Primary market: Sri Lanka; multilingual (English, Sinhala, Tamil)
+Key flows: Browse Trips, Post a Trip (AI-assist), Chat Buddy, CeylonX Tribes Q&A, Notifications, Account (My Profile, Help/FAQ, Account Settings: download data / delete account)
+Infra: Replit hosting, CDN, Neon PostgreSQL, Redis cache, WebSockets, Object storage
+Frontend: React 18 + TypeScript, Tailwind + shadcn/ui, Framer Motion, TanStack Query, Vite
+Backend: Node 20 + Express/TS, Drizzle ORM, PostgreSQL (pgvector-ready), WebSocket RT features
+Non-func: PWA/offline, WCAG 2.2, SEO, security hardening, observability
+Menu note: “My Profile” (not “Dashboard”); keep Travel Preferences page as-is
+Goal: 0 known errors, no duplication, no “patchy” fixes; airtight security; full automated tests; hard performance targets; clean CI/CD; blue-green/canary release; documented rollback
+
+— Your Output (in this exact order) —
+1) Plan.md (inline first): A concise, numbered plan of ALL checks, tools, and commands you will run.
+2) Implement the plan in the repo with PRs/commits. Enforce policies via CI.
+3) Deliver an /audit/ folder with reports & artifacts (see “Reporting” section).
+4) Produce Release_Notes.md, Runbook.md, Rollback.md, Security.md.
+5) Cut a release branch, complete staging verification, execute blue-green/canary to prod, validate SLOs, and declare release complete.
+
+— Mandatory Checks & Fixes —
+A. Code Quality & Structure
+- TypeScript: strict mode; forbid implicit any; fail build on type errors.
+- ESLint (strict), Prettier; import/order; no unused vars/exports; dead code removal.
+- Detect & remove duplication (jscpd target <1%); detect & eliminate circular deps (madge).
+- Component & hook dedupe; shared utilities; enforce atomic design where applicable.
+
+B. Security (OWASP Top 10 + platform specifics)
+- Dependency scan & pinning (npm/yarn/pnpm audit fix as applicable); set Renovate config.
+- Secret scanning (gitleaks/trufflehog); purge secrets from repo; .env hygiene + .env.example (exhaustive).
+- HTTP security headers: HSTS, CSP (no unsafe-inline; hashes/nonces if needed), X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy.
+- Auth/session: JWT/refresh flow hardening; cookie flags (HttpOnly, Secure, SameSite); CSRF where relevant; rate limiting per route class (auth 50/hr, uploads 100/hr, search 1000/hr).
+- Input validation (zod/yup/schema) server-side; SSR guardrails (escape, no user HTML without sanitize); file upload sanitation; path traversal protections; CORS allowlist by env.
+- Run OWASP ZAP against staging; document all findings with evidence and fixes.
+
+C. Performance & Scalability
+- Next/Vite build analysis; route-level bundle budgets; code-splitting; tree-shaking; image optimization; prefetch/prerender where safe; critical CSS; caching headers and CDN directives.
+- DB: EXPLAIN ANALYZE for top queries; missing indexes; N+1 detection; connection pool sanity; long-running query thresholds; Redis TTLs & eviction policy; background jobs health.
+- Lighthouse CI on key pages (landing, Browse Trips, Trip Detail, Post Trip, Tribes, My Profile, Help/FAQ).
+- Load test with k6: concurrent RPS to meet targets; report p50/p95/p99 latency & error rate; throttle & circuit breaker checks.
+
+D. Accessibility & i18n
+- Axe + Lighthouse a11y (WCAG 2.2 AA+): focus management, aria, skip links, keyboard paths, color contrast; RTL/LTR safe.
+- Verify Sinhala/Tamil/English language switching across core flows; ensure translation fallbacks and no layout breaks.
+
+E. SEO & PWA
+- Meta, OG/Twitter cards, canonical, robots, sitemap, structured data for trip pages; schema.org where relevant.
+- PWA manifest, service worker; offline states for browse & read; graceful empty states.
+
+F. Core User Flows (E2E Coverage Required)
+- Browse Trips: filters (location/date/price/category), AI recommendations, interest expression, organizer contact initiation.
+- Post a Trip: AI-assisted form, media upload/optimization, pricing suggestions, publish.
+- Chat Buddy: organizer gating, 1:1 and group chat, media sharing (with expirations), “typing”, unread counts, safety report.
+- CeylonX Tribes: ask, answer, upvote, accepted answer, gamification hooks.
+- Notifications: real-time interest alerts, trip updates, community highlights.
+- Account: My Profile; Account Settings (download data export; delete account with confirmations); Help/FAQ.
+- Error/edge: offline/PWA mode, empty states, form validation errors, auth edge cases, upload failures.
+
+G. Observability & Ops
+- Health checks (liveness/readiness); structured logs (request IDs), metrics (error rate, latency, CPU/mem), tracing hooks.
+- Dashboards: API latency, error spikes, DB/Redis health, WebSocket connections.
+- Alerts: error spike, high latency, job failures, index lag.
+
+H. CI/CD (Replit-aware)
+- On PR: typecheck → lint → unit/integration → e2e (Playwright) → Lighthouse CI → security scans. Block merge on fail.
+- Preview deploys for PRs; artifacts for all reports.
+- Release: blue-green or canary with automated smoke; post-deploy verification; fast rollback switch.
+- Environment parity & feature flags; idempotent, reversible DB migrations.
+
+— Testing Requirements —
+- Unit & integration (Vitest/Jest) + E2E (Playwright) on all core flows listed above.
+- Non-functional: Lighthouse CI (desktop+mobile), k6 load, a11y axe checks, security scans.
+- Coverage thresholds: ≥85% statements/branches; no flaky tests (quarantine or fix root cause).
+
+— Acceptance Criteria (MUST all pass) —
+1) All pipelines green; no HIGH/CRITICAL security issues remain (document accepted LOW/MED with rationale).
+2) Lighthouse (mobile & desktop) on key pages: Perf ≥ 90, A11y ≥ 95, Best Practices ≥ 95, SEO ≥ 95.
+3) Route bundle sizes under budget; largest route analyzed & justified.
+4) Duplicate code <1% (jscpd); 0 circular dependencies.
+5) Server logs: no unhandled rejections; client: zero runtime console errors.
+6) A11y keyboard navigation validated for all interactive paths.
+7) Load test meets target RPS with p95 latency within agreed budget and <0.1% error rate.
+8) Blue-green/canary executed; rollback verified; monitoring dashboards live; alerts configured.
+
+— Reporting (create /audit/ directory) —
+/audit/
+  Plan.md
+  Findings.md  (each issue: severity, evidence, file/route, steps, PR link)
+  Fixes.md     (summary per PR/commit)
+  Coverage/    (Coverage.html + coverage-summary.json)
+  Lighthouse/  (per-page HTML & JSON)
+  Security/    (ZAP, gitleaks/trufflehog, audit logs)
+  LoadTest/    (k6 scripts & results: p50/p95/p99, RPS, error rate)
+  BundleReports/ (before/after)
+Release_Notes.md  (version, changes, risks, migration notes)
+Runbook.md        (deploy, smoke tests, rollback, on-call checks)
+Rollback.md       (DB & app rollback, verification steps)
+Security.md       (threat model, mitigations, residual risks)
+
+— Process Rules —
+- Work on branches with descriptive PRs & checklists. No direct pushes to main.
+- Fix root causes, not snapshots. Use feature flags for risky changes.
+- Keep a change log in Findings.md as you go.
+- Respect the menu/page structure: “My Profile”, Help/FAQ, Account Settings (download data, delete account), ChatBuddy, Ceylon’s Tribes.
+- Preserve the free-to-use model copy across UI; ensure “0 hidden costs” statements are consistent.
+
+— Begin NOW —
+1) Output the full contents of Plan.md inline for review (bullet list with the exact commands/tools you’ll run).
+2) After I confirm Plan.md, proceed to implement end-to-end, committing changes, generating reports, and preparing the production release.
+3) Pause only if you hit a blocker that requires a product decision; otherwise continue until the Acceptance Criteria are met.
