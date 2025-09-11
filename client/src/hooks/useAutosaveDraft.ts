@@ -20,10 +20,7 @@ export function useAutosaveDraft(data: Partial<TripFormData>, options: AutosaveO
       const endpoint = draftData.id ? `/api/trips/draft/${draftData.id}` : "/api/trips/draft";
       const method = draftData.id ? "PATCH" : "POST";
       
-      return apiRequest(endpoint, {
-        method,
-        body: JSON.stringify(draftData),
-      });
+      return apiRequest(method, endpoint, draftData);
     },
     onSuccess: (savedDraft) => {
       queryClient.invalidateQueries({ queryKey: ["/api/trips/drafts"] });
