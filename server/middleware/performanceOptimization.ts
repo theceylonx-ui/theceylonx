@@ -35,6 +35,25 @@ export const intelligentCompression = compression({
 export const responseTimeTracking = (req: Request, res: Response, next: NextFunction) => {
   const startTime = process.hrtime();
   
+  // Set response time header before response is sent
+  const originalEnd = res.end.bind(res);
+  res.end = function(...args: any[]) {
+    const [seconds, nanoseconds] = process.hrtime(startTime);
+    const duration = seconds * 1000 + nanoseconds / 1000000; // Convert to milliseconds
+    
+    try {
+      // Only set header if response hasn't been sent yet
+      if (!res.headersSent) {
+        res.setHeader('X-Response-Time', `${duration.toFixed(2)}ms`);
+      }
+    } catch (error) {
+      // Silently ignore header setting errors to prevent crashes
+      console.debug('Could not set response time header:', error);
+    }
+    
+    return originalEnd.apply(res, args);
+  };
+  
   res.on('finish', () => {
     const [seconds, nanoseconds] = process.hrtime(startTime);
     const duration = seconds * 1000 + nanoseconds / 1000000; // Convert to milliseconds
@@ -43,9 +62,6 @@ export const responseTimeTracking = (req: Request, res: Response, next: NextFunc
     if (duration > 1000) { // > 1 second
       console.warn(`🐌 Slow request: ${req.method} ${req.path} took ${duration.toFixed(2)}ms`);
     }
-    
-    // Add response time header for monitoring
-    res.setHeader('X-Response-Time', `${duration.toFixed(2)}ms`);
     
     // Track metrics (could be sent to monitoring service)
     if (process.env.NODE_ENV === 'development') {
@@ -131,6 +147,25 @@ function removeEmptyValues(obj: any): any {
 export const memoryMonitoring = (req: Request, res: Response, next: NextFunction) => {
   const memoryBefore = process.memoryUsage();
   
+  // Set memory header before response is sent
+  const originalEnd = res.end.bind(res);
+  res.end = function(...args: any[]) {
+    const memoryAfter = process.memoryUsage();
+    const heapDiff = memoryAfter.heapUsed - memoryBefore.heapUsed;
+    
+    try {
+      // Add memory usage header for debugging (only if headers not sent)
+      if (process.env.NODE_ENV === 'development' && !res.headersSent) {
+        res.setHeader('X-Memory-Used', `${(heapDiff / 1024 / 1024).toFixed(2)}MB`);
+      }
+    } catch (error) {
+      // Silently ignore header setting errors to prevent crashes
+      console.debug('Could not set memory usage header:', error);
+    }
+    
+    return originalEnd.apply(res, args);
+  };
+  
   res.on('finish', () => {
     const memoryAfter = process.memoryUsage();
     const heapDiff = memoryAfter.heapUsed - memoryBefore.heapUsed;
@@ -138,11 +173,6 @@ export const memoryMonitoring = (req: Request, res: Response, next: NextFunction
     // Log memory-intensive requests
     if (heapDiff > 10 * 1024 * 1024) { // > 10MB
       console.warn(`🧠 Memory intensive request: ${req.method} ${req.path} used ${(heapDiff / 1024 / 1024).toFixed(2)}MB`);
-    }
-    
-    // Add memory usage header for debugging
-    if (process.env.NODE_ENV === 'development') {
-      res.setHeader('X-Memory-Used', `${(heapDiff / 1024 / 1024).toFixed(2)}MB`);
     }
   });
   
@@ -192,7 +222,16 @@ export const requestBatchingOptimization = (req: Request, res: Response, next: N
   // Enable request batching for specific endpoints
   if (req.path.includes('/api/batch')) {
     (req as any).enableBatching = true;
-    res.setHeader('X-Batching-Enabled', 'true');
+    
+    try {
+      // Only set header if response hasn't been sent yet
+      if (!res.headersSent) {
+        res.setHeader('X-Batching-Enabled', 'true');
+      }
+    } catch (error) {
+      // Silently ignore header setting errors to prevent crashes
+      console.debug('Could not set batching header:', error);
+    }
   }
   
   next();

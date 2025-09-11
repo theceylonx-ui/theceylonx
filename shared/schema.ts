@@ -79,15 +79,23 @@ export const insertSiteSettingSchema = createInsertSchema(siteSettings).omit({
 // Join status enum (exists in database)
 export const joinStatusEnum = pgEnum('join_status', ['pending', 'accepted', 'declined', 'cancelled']);
 
-// Thread users table (exists in database)
+// Thread users table with enhanced constraints
 export const threadUsers = pgTable("thread_users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  threadId: varchar("thread_id").notNull(),
-  userId: varchar("user_id").notNull(),
-  joinedAt: timestamp("joined_at").defaultNow(),
-  unreadCount: integer("unread_count").default(0),
+  threadId: varchar("thread_id").notNull().references(() => chatThreads.id, { onDelete: 'cascade' }), // FK to chatThreads.id
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+  unreadCount: integer("unread_count").default(0).notNull(),
   lastReadAt: timestamp("last_read_at"),
-});
+}, (table) => [
+  // Unique constraint - one record per user per thread
+  unique("unique_user_thread").on(table.userId, table.threadId),
+  // CHECK constraints
+  sql`CONSTRAINT check_unread_count_positive CHECK (unread_count >= 0)`,
+  // Indexes for performance
+  index("thread_users_thread_idx").on(table.threadId),
+  index("thread_users_user_idx").on(table.userId),
+]);
 
 // NOTE: messages table removed - unified with chatMessages table for consistency
 
@@ -105,66 +113,66 @@ export const sessions = pgTable(
 // Users table for multi-provider auth with hardened constraints
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email"),
-  phone: varchar("phone"),
-  name: varchar("name"),
-  image: varchar("image"),
-  provider: varchar("provider"), // 'google' | 'facebook' | 'microsoft' | 'apple' | 'email' | 'phone'
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
-  username: varchar("username"),
-  profileImageUrl: varchar("profile_image_url"),
-  phoneNumber: varchar("phone_number"),
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 20 }),
+  name: varchar("name", { length: 100 }),
+  image: varchar("image", { length: 500 }),
+  provider: varchar("provider", { length: 50 }).notNull().default("email"), // 'google' | 'facebook' | 'microsoft' | 'apple' | 'email' | 'phone'
+  firstName: varchar("first_name", { length: 50 }),
+  lastName: varchar("last_name", { length: 50 }),
+  username: varchar("username", { length: 50 }),
+  profileImageUrl: varchar("profile_image_url", { length: 500 }),
+  phoneNumber: varchar("phone_number", { length: 20 }),
   bio: text("bio"),
-  googleId: varchar("google_id"),
-  facebookId: varchar("facebook_id"),
-  microsoftId: varchar("microsoft_id"),
-  appleId: varchar("apple_id"),
-  roleId: varchar("role_id"), // References roles table
-  emailVerified: boolean("email_verified").default(false),
+  googleId: varchar("google_id", { length: 100 }),
+  facebookId: varchar("facebook_id", { length: 100 }),
+  microsoftId: varchar("microsoft_id", { length: 100 }),
+  appleId: varchar("apple_id", { length: 100 }),
+  roleId: varchar("role_id").references(() => roles.id, { onDelete: 'set null' }), // FK to roles.id
+  emailVerified: boolean("email_verified").default(false).notNull(),
   // Additional auth fields that exist in database
-  authProvider: varchar("auth_provider").default("email"),
-  password: varchar("password"),
-  providerId: varchar("provider_id"),
+  authProvider: varchar("auth_provider", { length: 50 }).default("email").notNull(),
+  password: varchar("password", { length: 255 }),
+  providerId: varchar("provider_id", { length: 100 }),
   // New profile fields for redesigned system
   displayName: text("display_name"),
   location: text("location"),
   languages: text("languages").array(),
-  linksJson: jsonb("links_json").default(sql`'{}'::jsonb`),
+  linksJson: jsonb("links_json").default(sql`'{}'::jsonb`).notNull(),
   profileCompletePct: integer("profile_complete_pct").default(0).notNull(),
   
   // Travel preferences (consolidated from user_preferences table)
-  vibe: text("vibe").array().default(sql`'{}'::text[]`), 
-  companions: text("companions").array().default(sql`'{}'::text[]`),
-  interests: text("interests").array().default(sql`'{}'::text[]`),
-  months: text("months").array().default(sql`'{}'::text[]`),
-  regions: text("regions").array().default(sql`'{}'::text[]`),
+  vibe: text("vibe").array().default(sql`'{}'::text[]`).notNull(), 
+  companions: text("companions").array().default(sql`'{}'::text[]`).notNull(),
+  interests: text("interests").array().default(sql`'{}'::text[]`).notNull(),
+  months: text("months").array().default(sql`'{}'::text[]`).notNull(),
+  regions: text("regions").array().default(sql`'{}'::text[]`).notNull(),
   budgetMin: integer("budget_min"),
   budgetMax: integer("budget_max"),
   
   // Personalization settings (consolidated from user_personalization table)
-  isPaused: boolean("is_paused").default(false),
+  isPaused: boolean("is_paused").default(false).notNull(),
   resetAt: timestamp("reset_at"),
-  abTestGroup: varchar("ab_test_group").default('personalized'),
+  abTestGroup: varchar("ab_test_group", { length: 50 }).default('personalized').notNull(),
   
   // Privacy settings
-  profileVisibility: varchar("profile_visibility").default("public").notNull(), // 'public', 'friends', 'private'
-  showEmail: boolean("show_email").default(false),
-  showPhone: boolean("show_phone").default(false),
-  showRealName: boolean("show_real_name").default(true),
-  showBio: boolean("show_bio").default(true),
-  showLocation: boolean("show_location").default(true),
-  showInterests: boolean("show_interests").default(true),
-  showTravelHistory: boolean("show_travel_history").default(true),
+  profileVisibility: varchar("profile_visibility", { length: 20 }).default("public").notNull(), // 'public', 'friends', 'private'
+  showEmail: boolean("show_email").default(false).notNull(),
+  showPhone: boolean("show_phone").default(false).notNull(),
+  showRealName: boolean("show_real_name").default(true).notNull(),
+  showBio: boolean("show_bio").default(true).notNull(),
+  showLocation: boolean("show_location").default(true).notNull(),
+  showInterests: boolean("show_interests").default(true).notNull(),
+  showTravelHistory: boolean("show_travel_history").default(true).notNull(),
   
   // Verification and badges
-  isVerifiedUser: boolean("is_verified_user").default(false),
-  verificationBadges: text("verification_badges").array().default(sql`'{}'::text[]`), // ['email', 'phone', 'id', 'host', 'plus']
-  verificationLevel: integer("verification_level").default(0), // 0-5 scale
+  isVerifiedUser: boolean("is_verified_user").default(false).notNull(),
+  verificationBadges: text("verification_badges").array().default(sql`'{}'::text[]`).notNull(), // ['email', 'phone', 'id', 'host', 'plus']
+  verificationLevel: integer("verification_level").default(0).notNull(), // 0-5 scale
   verificationDate: timestamp("verification_date"),
   
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
   // Unique constraints
   unique("unique_email_not_null").on(table.email).nullsNotDistinct(),
@@ -173,6 +181,14 @@ export const users = pgTable("users", {
   unique("unique_phone_number_not_null").on(table.phoneNumber).nullsNotDistinct(),
   unique("unique_google_id_not_null").on(table.googleId).nullsNotDistinct(),
   unique("unique_facebook_id_not_null").on(table.facebookId).nullsNotDistinct(),
+  // CHECK constraints for data validation
+  sql`CONSTRAINT check_email_format CHECK (email IS NULL OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')`,
+  sql`CONSTRAINT check_phone_format CHECK (phone IS NULL OR phone ~* '^[+]?[0-9\s\-()]{8,20}$')`,
+  sql`CONSTRAINT check_profile_visibility CHECK (profile_visibility IN ('public', 'friends', 'private'))`,
+  sql`CONSTRAINT check_verification_level CHECK (verification_level >= 0 AND verification_level <= 5)`,
+  sql`CONSTRAINT check_profile_complete_pct CHECK (profile_complete_pct >= 0 AND profile_complete_pct <= 100)`,
+  sql`CONSTRAINT check_budget_range CHECK (budget_min IS NULL OR budget_max IS NULL OR budget_min <= budget_max)`,
+  sql`CONSTRAINT check_auth_provider_valid CHECK (auth_provider IN ('email', 'google', 'facebook', 'microsoft', 'apple', 'phone'))`,
   // 🚀 PERFORMANCE: Critical user lookup indexes
   index("idx_users_email").on(table.email),
   index("idx_users_username").on(table.username),
@@ -213,24 +229,24 @@ export const phoneOtps = pgTable("phone_otps", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Optimized trips table (core data only)
+// Optimized trips table (core data only) with enhanced constraints
 export const trips = pgTable("trips", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  title: varchar("title").notNull(),
-  fromLocation: varchar("from_location").notNull(),
-  toLocation: varchar("to_location").notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  fromLocation: varchar("from_location", { length: 100 }).notNull(),
+  toLocation: varchar("to_location", { length: 100 }).notNull(),
   date: timestamp("date").notNull(),
-  time: varchar("time").notNull(),
+  time: varchar("time", { length: 10 }).notNull(),
   seatsAvailable: integer("seats_available").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }),
-  region: varchar("region").notNull(),
-  category: tripCategoryEnum("category").default("unknown"),
-  contactInfo: varchar("contact_info"), // Legacy field - kept for backward compatibility
-  organizerPhone: varchar("organizer_phone"),
-  organizerEmail: varchar("organizer_email"), 
-  organizerCountryCode: varchar("organizer_country_code").default("+94"), // Default to Sri Lanka
+  region: varchar("region", { length: 50 }).notNull(),
+  category: tripCategoryEnum("category").default("unknown").notNull(),
+  contactInfo: varchar("contact_info", { length: 500 }), // Legacy field - kept for backward compatibility
+  organizerPhone: varchar("organizer_phone", { length: 20 }),
+  organizerEmail: varchar("organizer_email", { length: 255 }), 
+  organizerCountryCode: varchar("organizer_country_code", { length: 10 }).default("+94").notNull(), // Default to Sri Lanka
   organizerId: varchar("organizer_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  status: varchar("status").default("active"),
+  status: varchar("status", { length: 20 }).default("active").notNull(),
   
   // Pricing variants
   priceMin: decimal("price_min", { precision: 10, scale: 2 }),
@@ -249,11 +265,22 @@ export const trips = pgTable("trips", {
   mediaUrls: text("media_urls").array().default(sql`'{}'::text[]`), // Array of uploaded images
   coverImageIndex: integer("cover_image_index").default(0), // Which image to use as cover
   
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  isDeleted: boolean("is_deleted").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  isDeleted: boolean("is_deleted").default(false).notNull(),
   deletedAt: timestamp("deleted_at"),
 }, (table) => [
+  // CHECK constraints for data validation
+  sql`CONSTRAINT check_seats_positive CHECK (seats_available > 0 AND seats_available <= 100)`,
+  sql`CONSTRAINT check_price_positive CHECK (price IS NULL OR price >= 0)`,
+  sql`CONSTRAINT check_price_range CHECK (price_min IS NULL OR price_max IS NULL OR price_min <= price_max)`,
+  sql`CONSTRAINT check_trip_date_future CHECK (date > NOW() - INTERVAL '1 day')`, // Allow trips starting today
+  sql`CONSTRAINT check_time_format CHECK (time ~* '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$')`,
+  sql`CONSTRAINT check_organizer_email_format CHECK (organizer_email IS NULL OR organizer_email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')`,
+  sql`CONSTRAINT check_organizer_phone_format CHECK (organizer_phone IS NULL OR organizer_phone ~* '^[0-9]{9}$')`,
+  sql`CONSTRAINT check_status_valid CHECK (status IN ('active', 'inactive', 'cancelled', 'completed'))`,
+  sql`CONSTRAINT check_country_code_format CHECK (organizer_country_code ~* '^[+][0-9]{1,4}$')`,
+  sql`CONSTRAINT check_contact_required CHECK (organizer_phone IS NOT NULL OR organizer_email IS NOT NULL OR contact_info IS NOT NULL)`,
   // Performance indexes for core fields only
   index("trips_region_date_idx").on(table.region, table.date),
   index("trips_status_idx").on(table.status),
@@ -346,20 +373,20 @@ export const calendarEvents = pgTable("calendar_events", {
 // Notifications table
 export const notifications = pgTable("notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(), // who receives the notification
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }), // who receives the notification
   tripId: varchar("trip_id").references(() => trips.id, { onDelete: 'cascade' }), // related trip for save notifications
-  type: notificationTypeEnum("type"), // trip_updated, trip_removed, save_removed
-  category: varchar("category").notNull(), // "trips", "social", "safety", "system"
-  priority: varchar("priority").notNull(), // "critical", "normal", "info"
-  title: varchar("title").notNull(),
+  type: notificationTypeEnum("type").notNull(), // trip_updated, trip_removed, save_removed
+  category: varchar("category", { length: 50 }).notNull(), // "trips", "social", "safety", "system"
+  priority: varchar("priority", { length: 20 }).notNull(), // "critical", "normal", "info"
+  title: varchar("title", { length: 200 }).notNull(),
   message: text("message").notNull(),
-  payload: jsonb("payload").default(sql`'{}'::jsonb`), // store changed fields for trip_updated
-  isRead: boolean("is_read").default(false),
-  relatedTripId: varchar("related_trip_id"), // optional: related trip
-  relatedUserId: varchar("related_user_id"), // optional: who triggered the notification
-  actionUrl: varchar("action_url"), // optional: where to navigate when clicked
-  primaryActionLabel: varchar("primary_action_label"), // e.g., "View Trip"
-  primaryActionUrl: varchar("primary_action_url"), // primary action link
+  payload: jsonb("payload").default(sql`'{}'::jsonb`).notNull(), // store changed fields for trip_updated
+  isRead: boolean("is_read").default(false).notNull(),
+  relatedTripId: varchar("related_trip_id").references(() => trips.id, { onDelete: 'set null' }), // optional: related trip
+  relatedUserId: varchar("related_user_id").references(() => users.id, { onDelete: 'set null' }), // optional: who triggered the notification
+  actionUrl: varchar("action_url", { length: 500 }), // optional: where to navigate when clicked
+  primaryActionLabel: varchar("primary_action_label", { length: 100 }), // e.g., "View Trip"
+  primaryActionUrl: varchar("primary_action_url", { length: 500 }), // primary action link
   secondaryActionLabel: varchar("secondary_action_label"), // e.g., "Ask Question"
   secondaryActionUrl: varchar("secondary_action_url"), // secondary action link
   metadata: jsonb("metadata").default({}), // additional data for weather alerts, view counts, etc.
@@ -374,17 +401,24 @@ export const notifications = pgTable("notifications", {
   index("idx_notifications_trip").on(table.tripId),
 ]);
 
-// Comments table with foreign key constraints
+// Comments table with enhanced constraints
 export const comments = pgTable("comments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   tripId: varchar("trip_id").notNull().references(() => trips.id, { onDelete: 'cascade' }),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   content: text("content").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  isDeleted: boolean("is_deleted").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  isDeleted: boolean("is_deleted").default(false).notNull(),
   deletedAt: timestamp("deleted_at"),
-});
+}, (table) => [
+  // CHECK constraints
+  sql`CONSTRAINT check_content_not_empty CHECK (LENGTH(TRIM(content)) > 0 AND LENGTH(content) <= 2000)`,
+  // Indexes for performance
+  index("comments_trip_idx").on(table.tripId),
+  index("comments_user_idx").on(table.userId),
+  index("comments_created_at_idx").on(table.createdAt),
+]);
 
 // Trip Views table for tracking views and generating notifications
 export const tripViews = pgTable("trip_views", {
@@ -507,16 +541,26 @@ export const userHistory = pgTable("user_history", {
   userIdCreatedAtIdx: index("user_history_user_id_created_at_idx").on(table.userId, table.createdAt),
 }));
 
-// Ratings table
+// Ratings table with enhanced constraints
 export const ratings = pgTable("ratings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  tripId: varchar("trip_id").notNull(),
-  raterId: varchar("rater_id").notNull(),
-  ratedId: varchar("rated_id").notNull(),
+  tripId: varchar("trip_id").notNull().references(() => trips.id, { onDelete: 'cascade' }),
+  raterId: varchar("rater_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  ratedId: varchar("rated_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   rating: integer("rating").notNull(), // 1-5
   review: text("review"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  // CHECK constraints
+  sql`CONSTRAINT check_rating_range CHECK (rating >= 1 AND rating <= 5)`,
+  sql`CONSTRAINT check_no_self_rating CHECK (rater_id != rated_id)`,
+  // Unique constraint to prevent duplicate ratings
+  unique("unique_rating_per_trip").on(table.tripId, table.raterId, table.ratedId),
+  // Indexes for performance
+  index("ratings_trip_idx").on(table.tripId),
+  index("ratings_rater_idx").on(table.raterId),
+  index("ratings_rated_idx").on(table.ratedId),
+]);
 
 // Reports table - enhanced to support chat message reporting
 // Enhanced Reports table for comprehensive moderation workflow
@@ -597,25 +641,39 @@ export const contentFlags = pgTable("content_flags", {
 export const adminChatThreads = pgTable("admin_chat_threads", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   reportId: varchar("report_id").notNull().references(() => reports.id, { onDelete: 'cascade' }),
-  adminId: varchar("admin_id").notNull(),
-  organizerId: varchar("organizer_id").notNull(),
-  isBlocked: boolean("is_blocked").default(false),
+  adminId: varchar("admin_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  organizerId: varchar("organizer_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  isBlocked: boolean("is_blocked").default(false).notNull(),
   blockedAt: timestamp("blocked_at"),
-  blockedBy: varchar("blocked_by"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+  blockedBy: varchar("blocked_by").references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  // Unique constraint - one thread per report
+  unique("unique_report_thread").on(table.reportId),
+  // Indexes for performance
+  index("admin_chat_threads_report_idx").on(table.reportId),
+  index("admin_chat_threads_admin_idx").on(table.adminId),
+  index("admin_chat_threads_organizer_idx").on(table.organizerId),
+]);
 
 // Admin chat messages
 export const adminChatMessages = pgTable("admin_chat_messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   threadId: varchar("thread_id").notNull().references(() => adminChatThreads.id, { onDelete: 'cascade' }),
-  senderId: varchar("sender_id").notNull(), // admin or organizer ID
-  senderType: varchar("sender_type").notNull(), // 'admin' | 'organizer'
+  senderId: varchar("sender_id").notNull().references(() => users.id, { onDelete: 'cascade' }), // admin or organizer ID
+  senderType: varchar("sender_type", { length: 20 }).notNull(), // 'admin' | 'organizer'
   content: text("content").notNull(),
-  isRead: boolean("is_read").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+  isRead: boolean("is_read").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  // CHECK constraints
+  sql`CONSTRAINT check_sender_type CHECK (sender_type IN ('admin', 'organizer'))`,
+  sql`CONSTRAINT check_content_not_empty CHECK (LENGTH(TRIM(content)) > 0 AND LENGTH(content) <= 5000)`,
+  // Indexes for performance
+  index("admin_chat_messages_thread_idx").on(table.threadId),
+  index("admin_chat_messages_sender_idx").on(table.senderId),
+]);
 
 // Community Q&A Tables
 

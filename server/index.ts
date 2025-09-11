@@ -203,6 +203,37 @@ app.use((req, res, next) => {
     const server = await registerRoutes(app);
     console.log('Routes registered successfully');
 
+    // Initialize idempotency system for data integrity
+    console.log('Initializing idempotency system...');
+    const { initializeIdempotencyTable, cleanupExpiredKeys } = await import('./utils/idempotencyHandler');
+    await initializeIdempotencyTable();
+    console.log('Idempotency system initialized successfully');
+
+    // Start scheduled cleanup for expired idempotency keys
+    console.log('Starting idempotency cleanup scheduler...');
+    const CLEANUP_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
+    let cleanupIntervalId: NodeJS.Timeout;
+    
+    const runCleanup = async () => {
+      try {
+        const cleanedCount = await cleanupExpiredKeys();
+        if (cleanedCount > 0) {
+          console.log(`🧹 Scheduled cleanup: Removed ${cleanedCount} expired idempotency keys`);
+        } else {
+          console.log('🧹 Scheduled cleanup: No expired idempotency keys found');
+        }
+      } catch (error) {
+        console.error('❌ Scheduled idempotency cleanup failed:', error);
+      }
+    };
+    
+    // Run initial cleanup after 5 minutes (to let server fully start)
+    setTimeout(runCleanup, 5 * 60 * 1000);
+    
+    // Schedule recurring cleanup every 6 hours
+    cleanupIntervalId = setInterval(runCleanup, CLEANUP_INTERVAL_MS);
+    console.log('✅ Idempotency cleanup scheduler started (every 6 hours)');
+
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";

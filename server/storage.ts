@@ -29,6 +29,14 @@ import {
   userTripFlags,
   threadUsers,
   auditLogs,
+  userFollows,
+  pinnedTrips,
+  userHistory,
+  moderationActions,
+  contentFlags,
+  adminChatThreads,
+  adminChatMessages,
+  roleAssignments,
   type User,
   type UpsertUser,
   type InsertTrip,
@@ -93,6 +101,7 @@ import {
 import { db } from "./db";
 import { eq, and, or, ilike, desc, asc, gte, lte, count, sql, isNull, ne } from "drizzle-orm";
 import { normalizeUserForUI } from "./utils/userNormalization";
+import { withDatabaseTransaction } from "./utils/databaseErrorHandler";
 
 // Contact redaction utilities
 export function redactContact<T extends { contactInfo?: string | null; whatsapp?: string | null; email?: string | null; phone?: string | null }>(userOrTrip: T): T & { contactRedacted?: boolean } {
@@ -399,74 +408,188 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUser(id: string): Promise<void> {
-    // Delete user data in correct order to respect foreign key constraints
-    // Start with dependent records first
-    
-    // Delete notifications
-    await db.delete(notifications).where(eq(notifications.userId, id));
-    
-    // Delete user interactions
-    await db.delete(userInteractions).where(eq(userInteractions.userId, id));
-    
-    // Delete question upvotes
-    await db.delete(questionUpvotes).where(eq(questionUpvotes.userId, id));
-    
-    // Delete answer upvotes  
-    await db.delete(answerUpvotes).where(eq(answerUpvotes.userId, id));
-    
-    // Delete answers
-    await db.delete(answers).where(eq(answers.userId, id));
-    
-    // Delete questions
-    await db.delete(questions).where(eq(questions.userId, id));
-    
-    // Delete reports (both reported by and reported user)
-    await db.delete(reports).where(or(eq(reports.reporterId, id), eq(reports.userId, id)));
-    
-    // Delete ratings (both given and received)
-    await db.delete(ratings).where(or(eq(ratings.raterId, id), eq(ratings.ratedId, id)));
-    
-    // Delete comments
-    await db.delete(comments).where(eq(comments.userId, id));
-    
-    // Delete messages
-    await db.delete(chatMessages).where(eq(chatMessages.senderId, id));
-    
-    // Remove user from chat threads
-    await db.delete(threadUsers).where(eq(threadUsers.userId, id));
-    
-    // Delete trip interest requests  
-    await db.delete(tripInterestRequests).where(eq(tripInterestRequests.userId, id));
-    
-    // Delete trip views
-    await db.delete(tripViews).where(eq(tripViews.userId, id));
-    
-    // Delete trips organized by user
-    await db.delete(trips).where(eq(trips.organizerId, id));
-    
-    // Delete auth sessions
-    await db.delete(authSessions).where(eq(authSessions.userId, id));
-    
-    // Get user data for cleaning up related records
-    const userData = await db.select({ email: users.email, phone: users.phoneNumber })
-      .from(users).where(eq(users.id, id));
-    
-    if (userData.length > 0) {
-      const { email, phone } = userData[0];
+    // CRITICAL OPERATION - FIXED: Complete transaction with all related data cleanup
+    return withDatabaseTransaction(db, async (tx) => {
+      console.log(`🗑️ Starting complete user deletion for user ID: ${id}`);
       
-      // Delete email tokens
-      if (email) {
-        await db.delete(emailTokens).where(eq(emailTokens.email, email));
+      // Delete user data in correct order to respect foreign key constraints
+      // Start with dependent records first, ordered by dependency depth
+      
+      // PHASE 1: Delete records that depend on other user-owned entities
+      
+      // Delete admin chat messages first (depends on admin chat threads)
+      await tx.delete(adminChatMessages).where(eq(adminChatMessages.senderId, id));
+      console.log('✅ Deleted admin chat messages');
+      
+      // Delete admin chat threads
+      await tx.delete(adminChatThreads).where(or(
+        eq(adminChatThreads.adminId, id),
+        eq(adminChatThreads.organizerId, id)
+      ));
+      console.log('✅ Deleted admin chat threads');
+      
+      // Delete role assignments (user's roles and roles they assigned/revoked)
+      await tx.delete(roleAssignments).where(or(
+        eq(roleAssignments.userId, id),
+        eq(roleAssignments.assignedBy, id),
+        eq(roleAssignments.revokedBy, id)
+      ));
+      console.log('✅ Deleted role assignments');
+      
+      // Delete audit logs (as actor or target)
+      await tx.delete(auditLogs).where(or(
+        eq(auditLogs.actorUserId, id),
+        eq(auditLogs.targetUserId, id)
+      ));
+      console.log('✅ Deleted audit logs');
+      
+      // PHASE 2: Delete direct user-owned entities
+      
+      // Delete user follows (both following and followers)
+      await tx.delete(userFollows).where(or(
+        eq(userFollows.followerId, id),
+        eq(userFollows.followingId, id)
+      ));
+      console.log('✅ Deleted user follows');
+      
+      // Delete user trip flags
+      await tx.delete(userTripFlags).where(eq(userTripFlags.userId, id));
+      console.log('✅ Deleted user trip flags');
+      
+      // Delete user history
+      await tx.delete(userHistory).where(eq(userHistory.userId, id));
+      console.log('✅ Deleted user history');
+      
+      // Delete pinned trips
+      await tx.delete(pinnedTrips).where(eq(pinnedTrips.userId, id));
+      console.log('✅ Deleted pinned trips');
+      
+      // Delete saved trips
+      await tx.delete(savedTrips).where(eq(savedTrips.userId, id));
+      console.log('✅ Deleted saved trips');
+      
+      // Delete calendar events
+      await tx.delete(calendarEvents).where(eq(calendarEvents.userId, id));
+      console.log('✅ Deleted calendar events');
+      
+      // Delete chat participant state
+      await tx.delete(chatParticipantState).where(eq(chatParticipantState.userId, id));
+      console.log('✅ Deleted chat participant state');
+      
+      // Delete content flags (flagged by or reviewed by user)
+      await tx.delete(contentFlags).where(or(
+        eq(contentFlags.flaggedBy, id),
+        eq(contentFlags.reviewedBy, id)
+      ));
+      console.log('✅ Deleted content flags');
+      
+      // Delete moderation actions
+      await tx.delete(moderationActions).where(eq(moderationActions.moderatorId, id));
+      console.log('✅ Deleted moderation actions');
+      
+      // PHASE 3: Delete previously existing cleanup (enhanced with logging)
+      
+      // Delete notifications
+      await tx.delete(notifications).where(eq(notifications.userId, id));
+      console.log('✅ Deleted notifications');
+      
+      // Delete user interactions
+      await tx.delete(userInteractions).where(eq(userInteractions.userId, id));
+      console.log('✅ Deleted user interactions');
+      
+      // Delete question upvotes
+      await tx.delete(questionUpvotes).where(eq(questionUpvotes.userId, id));
+      console.log('✅ Deleted question upvotes');
+      
+      // Delete answer upvotes  
+      await tx.delete(answerUpvotes).where(eq(answerUpvotes.userId, id));
+      console.log('✅ Deleted answer upvotes');
+      
+      // Delete answers
+      await tx.delete(answers).where(eq(answers.userId, id));
+      console.log('✅ Deleted answers');
+      
+      // Delete questions
+      await tx.delete(questions).where(eq(questions.userId, id));
+      console.log('✅ Deleted questions');
+      
+      // Delete reports - ENHANCED: Handle all user-related report fields
+      await tx.delete(reports).where(or(
+        eq(reports.reporterId, id),
+        eq(reports.userId, id),
+        eq(reports.assignedTo, id),
+        eq(reports.escalatedBy, id),
+        eq(reports.resolvedBy, id)
+      ));
+      console.log('✅ Deleted reports (all related)');
+      
+      // Delete ratings (both given and received)
+      await tx.delete(ratings).where(or(eq(ratings.raterId, id), eq(ratings.ratedId, id)));
+      console.log('✅ Deleted ratings');
+      
+      // Delete comments
+      await tx.delete(comments).where(eq(comments.userId, id));
+      console.log('✅ Deleted comments');
+      
+      // Delete messages
+      await tx.delete(chatMessages).where(eq(chatMessages.senderId, id));
+      console.log('✅ Deleted chat messages');
+      
+      // Remove user from chat threads
+      await tx.delete(threadUsers).where(eq(threadUsers.userId, id));
+      console.log('✅ Removed from chat threads');
+      
+      // Delete chat threads where user is organizer or participant
+      await tx.delete(chatThreads).where(or(
+        eq(chatThreads.organizerId, id),
+        eq(chatThreads.userId, id)
+      ));
+      console.log('✅ Deleted chat threads');
+      
+      // Delete trip interest requests  
+      await tx.delete(tripInterestRequests).where(eq(tripInterestRequests.userId, id));
+      console.log('✅ Deleted trip interest requests');
+      
+      // Delete trip views
+      await tx.delete(tripViews).where(eq(tripViews.userId, id));
+      console.log('✅ Deleted trip views');
+      
+      // Delete trips organized by user
+      await tx.delete(trips).where(eq(trips.organizerId, id));
+      console.log('✅ Deleted trips organized by user');
+      
+      // Delete auth sessions
+      await tx.delete(authSessions).where(eq(authSessions.userId, id));
+      console.log('✅ Deleted auth sessions');
+      
+      // PHASE 4: Delete authentication tokens (existing logic enhanced)
+      
+      // Get user data for cleaning up related records
+      const userData = await tx.select({ email: users.email, phone: users.phoneNumber })
+        .from(users).where(eq(users.id, id));
+      
+      if (userData.length > 0) {
+        const { email, phone } = userData[0];
+        
+        // Delete email tokens
+        if (email) {
+          await tx.delete(emailTokens).where(eq(emailTokens.email, email));
+          console.log('✅ Deleted email tokens');
+        }
+        
+        // Delete phone OTPs
+        if (phone) {
+          await tx.delete(phoneOtps).where(eq(phoneOtps.phone, phone));
+          console.log('✅ Deleted phone OTPs');
+        }
       }
       
-      // Delete phone OTPs
-      if (phone) {
-        await db.delete(phoneOtps).where(eq(phoneOtps.phone, phone));
-      }
-    }
-    
-    // Finally, delete the user record
-    await db.delete(users).where(eq(users.id, id));
+      // PHASE 5: Finally, delete the user record
+      await tx.delete(users).where(eq(users.id, id));
+      console.log('✅ Deleted user record');
+      
+      console.log(`🎉 Complete user deletion successful for user ID: ${id}`);
+    }, 'deleteUser');
   }
 
   // Trip operations
