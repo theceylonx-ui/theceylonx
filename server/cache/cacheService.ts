@@ -146,4 +146,13 @@ export const CACHE_TTL = {
   USER_PROFILES: 600, // 10 minutes - semi-static
   SEARCH_RESULTS: 60, // 1 minute - very dynamic
   STATIC_DATA: 7200, // 2 hours - very rarely changes
+  // 🚀 PERFORMANCE: Enhanced cache TTL for different content types
+  AUTH_USER: 900, // 15 minutes - user auth data
+  RECOMMENDATIONS: 1800, // 30 minutes - AI recommendations
+  TRENDING_TRIPS: 600, // 10 minutes - trending data
+  CALENDAR_EVENTS: 300, // 5 minutes - calendar data
+  CHAT_THREADS: 120, // 2 minutes - chat data (semi-realtime)
+  NOTIFICATIONS: 60, // 1 minute - notification data
+  API_METADATA: 3600, // 1 hour - API structure/metadata
+  ADMIN_STATS: 300, // 5 minutes - admin dashboard stats
 };

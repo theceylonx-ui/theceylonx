@@ -173,6 +173,15 @@ export const users = pgTable("users", {
   unique("unique_phone_number_not_null").on(table.phoneNumber).nullsNotDistinct(),
   unique("unique_google_id_not_null").on(table.googleId).nullsNotDistinct(),
   unique("unique_facebook_id_not_null").on(table.facebookId).nullsNotDistinct(),
+  // 🚀 PERFORMANCE: Critical user lookup indexes
+  index("idx_users_email").on(table.email),
+  index("idx_users_username").on(table.username),
+  index("idx_users_provider").on(table.provider),
+  index("idx_users_created_at").on(table.createdAt),
+  // 🚀 PERFORMANCE: GIN indexes for array-based preference search
+  index("idx_users_interests_gin").using("gin", table.interests),
+  index("idx_users_regions_gin").using("gin", table.regions),
+  index("idx_users_vibe_gin").using("gin", table.vibe),
 ]);
 
 // JWT refresh token sessions
@@ -706,7 +715,16 @@ export const userInteractions = pgTable("user_interactions", {
   sessionId: varchar("session_id"), // anon_session_id for first-time visitors
   abTestGroup: varchar("ab_test_group"), // 'baseline' | 'personalized' for A/B testing
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  // 🚀 PERFORMANCE: Critical indexes for user interaction analytics
+  index("idx_user_interactions_user_id").on(table.userId),
+  index("idx_user_interactions_trip_id").on(table.tripId),
+  index("idx_user_interactions_type").on(table.interactionType),
+  index("idx_user_interactions_created_at").on(table.createdAt),
+  // Composite indexes for common query patterns
+  index("idx_user_interactions_user_type").on(table.userId, table.interactionType),
+  index("idx_user_interactions_user_created").on(table.userId, table.createdAt),
+]);
 
 // Trip features table for ML analysis
 export const tripFeatures = pgTable("trip_features", {

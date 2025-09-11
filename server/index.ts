@@ -120,7 +120,25 @@ app.use(rateLimit({
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: false, limit: '20mb' }));
 
-// Security-hardened request logging middleware
+// 🚀 PERFORMANCE: Integrate all performance optimization middleware
+import { 
+  intelligentCompression,
+  responseTimeTracking,
+  requestSizeLimit,
+  queryOptimizationMiddleware,
+  apiResponseOptimization,
+  memoryMonitoring,
+  paginationOptimization,
+  performanceMiddlewareStack
+} from "./middleware/performanceOptimization";
+import { smartCacheHeaders } from "./cache/enhancedCacheService";
+
+// Apply performance middleware stack for optimal request processing
+console.log('🚀 Applying performance optimizations...');
+app.use(performanceMiddlewareStack);
+console.log('✅ Performance middleware integrated successfully');
+
+// Security-hardened request logging middleware (enhanced with performance tracking)
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -138,6 +156,13 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+      
+      // 🚀 PERFORMANCE: Add performance indicators to logs
+      if (duration > 1000) {
+        logLine += ' 🐌'; // Slow request indicator
+      } else if (duration < 100) {
+        logLine += ' ⚡'; // Fast request indicator
+      }
       
       // SECURITY: Sanitize response body to prevent PII leakage
       if (capturedJsonResponse) {

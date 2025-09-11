@@ -9,6 +9,8 @@ import ErrorBoundary from "@/components/common/ErrorBoundary";
 import RouteErrorBoundary from "@/components/common/RouteErrorBoundary";
 import { NetworkError } from "@/components/common/NetworkError";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+// 🚀 PERFORMANCE: Import performance monitoring for development
+import { PerformanceMonitor } from "@/components/PerformanceMonitor";
 
 // 🚀 PHASE 3 PERFORMANCE: Lazy load all components for better initial load time
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -205,6 +207,8 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          {/* 🚀 PERFORMANCE: Add performance monitor for development */}
+          <PerformanceMonitor />
         </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>

@@ -16,6 +16,8 @@ import { SaveControl } from "@/components/SaveControl";
 import { createTripDetailLink } from "@/utils/searchParams";
 import { useState, useCallback } from "react";
 import { NeonBadge } from "@/components/ui/neon-badge";
+// 🚀 PERFORMANCE: Import LazyImage for optimized image loading
+import { LazyImage } from "@/components/common/LazyImage";
 
 interface TripCardProps {
   trip: TripWithOrganizer & { isPinned?: boolean; isInterested?: boolean };
@@ -406,40 +408,15 @@ export default function TripCard({ trip, badges }: TripCardProps) {
               </div>
             </div>
           ) : (
-            <img 
+            <LazyImage 
               src={getTripImage()}
               alt={`${trip.region} travel photo of Sri Lanka - ${trip.fromLocation} to ${trip.toLocation}`}
               className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
               loading="lazy"
-              onError={(e) => {
-                // Replace with beautiful Ceylon Expand fallback
-                const target = e.currentTarget;
-                const container = target.parentElement;
-                if (container) {
-                  container.innerHTML = `
-                    <div class="w-full h-48 bg-gradient-to-br from-ceylon-green via-ceylon-blue to-purple-600 flex flex-col items-center justify-center relative overflow-hidden">
-                      <div class="absolute inset-0 opacity-10">
-                        <div class="absolute top-4 left-4 w-8 h-8 border-2 border-white rounded-full"></div>
-                        <div class="absolute top-12 right-8 w-4 h-4 border border-white rounded-full"></div>
-                        <div class="absolute bottom-8 left-12 w-6 h-6 border border-white rounded-full"></div>
-                        <div class="absolute bottom-4 right-4 w-3 h-3 bg-white rounded-full opacity-50"></div>
-                      </div>
-                      <div class="text-white mb-2">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" class="drop-shadow-sm">
-                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                          <circle cx="18" cy="8" r="2"/>
-                          <circle cx="6" cy="8" r="2"/>
-                          <path d="M18 10c-1.33 0-2.67.33-3.33 1H15v2h1.67c.66-.67 2-.33 3.33-1v-2z"/>
-                          <path d="M6 10v2c1.33.67 2.67.33 3.33 1H11v-2H9.33C8.67 10.33 7.33 10 6 10z"/>
-                        </svg>
-                      </div>
-                      <div class="text-center text-white">
-                        <div class="text-lg font-bold tracking-wide drop-shadow-sm">Ceylon Expand</div>
-                        <div class="text-xs opacity-90 mt-1">Travel Together</div>
-                      </div>
-                    </div>
-                  `;
-                }
+              fallback="/assets/5_1756417819316.png"
+              onError={() => {
+                console.log('LazyImage failed to load:', getTripImage());
+                // Fallback handled by LazyImage component automatically
               }}
             />
           )}
