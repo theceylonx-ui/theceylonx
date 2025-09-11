@@ -782,6 +782,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pin/Unpin endpoints that frontend expects
+  // Pin a trip (specific endpoint that TripCard expects)
+  app.post('/api/trips/:id/pin', unifiedAuthGuard, async (req, res) => {
+    try {
+      const { userActionsService } = await import('./services/userActionsService');
+      const userId = req.user!.id;
+      const tripId = req.params.id;
+      
+      await userActionsService.pinTrip(userId, tripId);
+      
+      res.status(204).send(); // No content - success
+    } catch (error) {
+      console.error("Error pinning trip:", error);
+      res.status(500).json({ message: "Failed to pin trip" });
+    }
+  });
+
+  // Unpin a trip (specific endpoint that TripCard expects)
+  app.delete('/api/trips/:id/pin', unifiedAuthGuard, async (req, res) => {
+    try {
+      const { userActionsService } = await import('./services/userActionsService');
+      const userId = req.user!.id;
+      const tripId = req.params.id;
+      
+      await userActionsService.unpinTrip(userId, tripId);
+      
+      res.status(204).send(); // No content - success
+    } catch (error) {
+      console.error("Error unpinning trip:", error);
+      res.status(500).json({ message: "Failed to unpin trip" });
+    }
+  });
+
   // Get save status for a specific trip
   app.get('/api/trips/:tripId/save-status', unifiedAuthGuard, async (req, res) => {
     try {
