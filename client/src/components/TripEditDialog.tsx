@@ -37,7 +37,7 @@ export function TripEditDialog({ isOpen, onClose, trip }: TripEditDialogProps) {
     title: trip.title,
     fromLocation: trip.fromLocation,
     toLocation: trip.toLocation,
-    date: trip.date ? new Date(trip.date).toISOString().split('T')[0] : "",
+    date: trip.date && !isNaN(new Date(trip.date).getTime()) ? new Date(trip.date).toISOString().split('T')[0] : "",
     time: trip.time,
     seatsAvailable: trip.seatsAvailable,
     price: trip.price?.toString() || "",

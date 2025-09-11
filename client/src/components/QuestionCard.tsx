@@ -49,7 +49,7 @@ export function QuestionCard({ question, onEdit, onDelete, currentUserId, showPr
               {/* Sample badge for system-generated content */}
               {(question.id.startsWith('sample-') || question.userId === 'system-user') && (
                 <div className="mb-2">
-                  <NeonBadge className="mb-1" />
+                  <NeonBadge text="🎯 Sample Q&A" className="mb-1" />
                 </div>
               )}
             </div>
@@ -121,7 +121,7 @@ export function QuestionCard({ question, onEdit, onDelete, currentUserId, showPr
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 <span className="caption">
-                  {question.createdAt ? formatDistanceToNow(new Date(question.createdAt), { addSuffix: true }) : 'Recently'}
+                  {question.createdAt && !isNaN(new Date(question.createdAt).getTime()) ? formatDistanceToNow(new Date(question.createdAt), { addSuffix: true }) : 'Recently'}
                 </span>
               </div>
             </div>

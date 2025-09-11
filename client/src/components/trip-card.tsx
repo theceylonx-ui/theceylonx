@@ -439,9 +439,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
             {/* Sample badge for system-generated content */}
             {isSampleTrip && (
               <div className="mb-2">
-                <NeonBadge variant="sample" size="sm" className="mb-1">
-                  🎯 Sample Trip
-                </NeonBadge>
+                <NeonBadge text="🎯 Sample Trip" className="mb-1" />
               </div>
             )}
             
