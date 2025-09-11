@@ -514,14 +514,21 @@ export default function TripCard({ trip, badges }: TripCardProps) {
           <div className="border-t border-ui-line mt-6 pt-4 space-y-4">
             {/* Row 1: Organizer Info */}
             <div className="flex items-center" data-testid={`trip-organizer-${trip.id}`}>
-              <Link href={`/profile/${trip.organizer?.username || trip.organizer?.id}`} className="hover:opacity-80 transition-opacity">
+              <div 
+                className="hover:opacity-80 transition-opacity cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.location.href = `/profile/${trip.organizer?.username || trip.organizer?.id}`;
+                }}
+              >
                 <UserDisplay 
                   user={trip.organizer}
                   avatarSize="lg"
                   className="gap-3"
                   nameClassName="text-sm font-medium text-text-primary"
                 />
-              </Link>
+              </div>
             </div>
             
             {/* Row 2: Action Buttons - Well Spaced */}
