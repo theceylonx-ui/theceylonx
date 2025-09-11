@@ -363,7 +363,7 @@ export function EnhancedNotificationDropdown() {
                         
                         <div className="flex items-center justify-between mt-2">
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {formatDistanceToNow(new Date(notification.createdAt || new Date()), { addSuffix: true })}
+                            {notification.createdAt && !isNaN(new Date(notification.createdAt).getTime()) ? formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true }) : 'Recently'}
                           </p>
                           <Badge variant="outline" className="text-xs text-gray-600 dark:text-gray-400">
                             {getCategoryLabel(notification.category as NotificationCategory)}

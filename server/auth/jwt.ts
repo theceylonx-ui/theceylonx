@@ -233,7 +233,7 @@ export async function authGuard(req: Request & { user?: JWTUser }, res: Response
   next();
 }
 
-export async function getCurrentUser(req: Request): Promise<JWTUser | null> {
+export async function getCurrentUser(req: Request, res?: Response): Promise<JWTUser | null> {
   // SECURITY: Development-only debugging to prevent PII logging in production
   if (isDevelopment) {
     console.log("🔍 JWT Auth - Environment:", { isDevelopment, isProduction, isReplitProduction });
@@ -244,6 +244,7 @@ export async function getCurrentUser(req: Request): Promise<JWTUser | null> {
   
   // Try to get token from cookies first
   let accessToken = req.cookies?.accessToken;
+  const refreshToken = req.cookies?.refreshToken;
   
   // If not in cookies, try Authorization header
   if (!accessToken) {
@@ -253,12 +254,30 @@ export async function getCurrentUser(req: Request): Promise<JWTUser | null> {
     }
   }
   
-  if (!accessToken) {
+  // Try to verify access token
+  let user = null;
+  if (accessToken) {
+    user = verifyAccessToken(accessToken);
+  }
+
+  // If access token is invalid but refresh token exists, try to refresh
+  if (!user && refreshToken && res) {
+    if (isDevelopment) console.log("🔄 Access token invalid, attempting refresh...");
+    const newTokens = await refreshUserTokens(refreshToken);
+    if (newTokens) {
+      setAuthCookies(res, newTokens);
+      user = verifyAccessToken(newTokens.accessToken);
+      if (isDevelopment) console.log("✅ Token refresh successful");
+    } else {
+      if (isDevelopment) console.log("❌ Token refresh failed");
+    }
+  }
+  
+  if (!accessToken && !refreshToken) {
     if (isDevelopment) console.log("❌ No access token found");
     return null;
   }
 
-  const user = verifyAccessToken(accessToken);
   if (isDevelopment) {
     console.log("🔍 JWT verification result:", user ? "✅ valid" : "❌ invalid");
     // SECURITY: Only log user ID in development - no email/PII

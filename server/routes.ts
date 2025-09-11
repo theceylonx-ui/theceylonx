@@ -11,7 +11,7 @@ import { requireAdmin } from "./middleware/adminAuth";
 import { logAuthSuccess, logAuthFailure, sanitizeRequestForLogging } from './utils/secureLogging';
 
 // Unified auth helper function
-async function getAuthenticatedUser(req: any): Promise<UnifiedUser | null> {
+async function getAuthenticatedUser(req: any, res?: any): Promise<UnifiedUser | null> {
   const requestContext = sanitizeRequestForLogging(req);
   
   try {
@@ -28,9 +28,9 @@ async function getAuthenticatedUser(req: any): Promise<UnifiedUser | null> {
       };
     }
     
-    // Then try JWT authentication (for Google/Facebook OAuth users)
+    // Then try JWT authentication (for Google/Facebook OAuth users) with token refresh support
     const { getCurrentUser } = await import('./auth/jwt');
-    const jwtUser = await getCurrentUser(req);
+    const jwtUser = await getCurrentUser(req, res);
     
     if (jwtUser) {
       logAuthSuccess('jwt', { userId: jwtUser.id, provider: jwtUser.provider, ip: req.ip });
@@ -68,7 +68,7 @@ async function getAuthenticatedUser(req: any): Promise<UnifiedUser | null> {
 
 // Unified auth guard middleware
 const unifiedAuthGuard = async (req: any, res: any, next: any) => {
-  const user = await getAuthenticatedUser(req);
+  const user = await getAuthenticatedUser(req, res);
   if (!user) {
     return res.status(401).json({ message: "Unauthorized" });
   }
