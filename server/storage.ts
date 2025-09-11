@@ -1971,7 +1971,7 @@ export class DatabaseStorage implements IStorage {
       .from(chatParticipantState)
       .leftJoin(chatThreads, eq(chatParticipantState.threadId, chatThreads.id))
       .where(eq(chatParticipantState.userId, userId))
-      .orderBy(desc(chatThreads.updatedAt));
+      .orderBy(desc(chatThreads.createdAt));
 
     const threads: (ChatThread & { lastMessage?: ChatMessage, unreadCount: number, otherUser?: User, trip?: Trip })[] = [];
     
