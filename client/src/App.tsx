@@ -5,6 +5,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Suspense, lazy, startTransition } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import ErrorBoundary from "@/components/common/ErrorBoundary";
+import RouteErrorBoundary from "@/components/common/RouteErrorBoundary";
+import { NetworkError } from "@/components/common/NetworkError";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 
 // 🚀 PHASE 3 PERFORMANCE: Lazy load all components for better initial load time
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -38,7 +42,7 @@ const AccountSettingsPage = lazy(() => import("@/pages/settings/account"));
 const MeRedirect = lazy(() => import("@/pages/me-redirect"));
 const TripRequestsPage = lazy(() => import("@/pages/trip-requests"));
 
-// Performance loading component
+// Performance loading component with error boundary
 const PageLoader = () => (
   <div className="min-h-screen bg-gradient-to-br from-ceylon-green/10 to-ceylon-orange/10 flex items-center justify-center">
     <div className="text-center">
@@ -47,6 +51,17 @@ const PageLoader = () => (
     </div>
   </div>
 );
+
+// Enhanced loading component with network error handling
+const EnhancedPageLoader = () => {
+  const networkStatus = useNetworkStatus();
+  
+  if (!networkStatus.isOnline) {
+    return <NetworkError />;
+  }
+  
+  return <PageLoader />;
+};
 // Clerk components temporarily disabled
 // import ClerkSignInPage from "@/pages/clerk-sign-in";
 // import ClerkSignUpPage from "@/pages/clerk-sign-up";
@@ -67,13 +82,15 @@ function Router() {
     );
   }
 
-  // Wrap routing in startTransition for better Suspense handling
-  const handleRoute = (Component: any) => {
+  // Wrap routing in startTransition for better Suspense handling with error boundaries
+  const handleRoute = (Component: any, routeName?: string) => {
     return (props: any) => {
       return (
-        <Suspense fallback={<PageLoader />}>
-          <Component {...props} />
-        </Suspense>
+        <RouteErrorBoundary routeName={routeName}>
+          <Suspense fallback={<EnhancedPageLoader />}>
+            <Component {...props} />
+          </Suspense>
+        </RouteErrorBoundary>
       );
     };
   };
@@ -174,12 +191,23 @@ function App() {
   //   clerkPubKey.length > 50;
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ErrorBoundary
+      showReportButton={true}
+      onError={(error, errorInfo) => {
+        console.error("🚨 App-level error:", {
+          error: error.message,
+          stack: error.stack,
+          componentStack: errorInfo.componentStack,
+        });
+      }}
+    >
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

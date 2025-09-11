@@ -121,6 +121,8 @@ import { seoRouter } from "./routes/seo";
 import { apiRateLimit, authRateLimit, uploadRateLimit, searchRateLimit, chatRateLimit, tripCreationRateLimit } from "./middleware/rateLimiting";
 import { validateInput, sanitizeTextContent } from "./middleware/inputValidation";
 import { logger, log } from "./utils/logger";
+import { setupErrorReporting } from "./routes/errorReporting";
+import { enhancedErrorHandler, setupGlobalErrorHandlers } from "./middleware/enhancedErrorHandler";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Root path MUST NOT have any JSON response to allow React app to load
@@ -176,6 +178,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/health', healthCheck);
   app.get('/health/ready', readinessCheck);
   app.get('/health/live', livenessCheck);
+  
+  // Setup error reporting endpoints
+  setupErrorReporting(app);
+  
+  // Setup global error handlers for unhandled errors
+  setupGlobalErrorHandlers();
   
   // Setup Replit Auth first
   await setupAuth(app);
@@ -4598,6 +4606,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // 🚀 PHASE 4: Production error handling (after all routes)
   app.use(errorTrackingMiddleware);
+  // Enhanced comprehensive error handler for all routes (before production handler)
+  app.use(enhancedErrorHandler);
+  
   app.use(productionErrorHandler);
 
   const httpServer = createServer(app);
