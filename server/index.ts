@@ -8,6 +8,13 @@ import { checkClerkEnv } from "./utils/checkClerk";
 
 // Log startup information
 console.log('Environment:', process.env.NODE_ENV || 'development');
+
+// 🔧 FIX: Ensure DATABASE_URL is set correctly for Neon connection
+if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes('www.theceylonx.com')) {
+  process.env.DATABASE_URL = `postgresql://${process.env.PGUSER}:${process.env.PGPASSWORD}@${process.env.PGHOST}:${process.env.PGPORT}/${process.env.PGDATABASE}`;
+  console.log('🔧 Database URL corrected for proper connection');
+}
+
 console.log('Starting Ceylon Expand server...');
 
 // Check Clerk environment configuration
