@@ -8,11 +8,11 @@ export function useAuth() {
   const { data: user, isLoading, error } = useQuery({
     queryKey: ["/api/auth/me"],
     retry: false,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     refetchOnMount: true,
     refetchInterval: false,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     queryFn: async () => {
       const timestamp = Date.now();
       const headers: Record<string, string> = {
