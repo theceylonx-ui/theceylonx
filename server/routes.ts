@@ -3470,7 +3470,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (tagList.length > 0) {
           filteredTrips = filteredTrips.filter(trip => {
             const tripTags = trip.tags || [];
-            return tagList.some(tag => 
+            return tagList.some((tag: string) => 
               tripTags.some((tripTag: string) => 
                 tripTag.toLowerCase().includes(tag.toLowerCase())
               )
@@ -3565,7 +3565,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Apply filters (logical AND across selected filters)
       let userFilteredTrips = filteredTrips.filter(trip => {
         // Check each requested filter
-        const filterResults = requestedFilters.map(filter => {
+        const filterResults = requestedFilters.map((filter: string) => {
           switch (filter) {
             case 'pinned':
               return pinnedTripIds.has(trip.id);
@@ -3584,7 +3584,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         // All filters must pass (logical AND)
-        return filterResults.every(result => result);
+        return filterResults.every((result: boolean) => result);
       });
       
       const total = userFilteredTrips.length;
@@ -3687,7 +3687,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (tagList.length > 0) {
           filteredTrips = filteredTrips.filter(trip => {
             const tripTags = trip.tags || [];
-            return tagList.some(tag => 
+            return tagList.some((tag: string) => 
               tripTags.some((tripTag: string) => 
                 tripTag.toLowerCase().includes(tag.toLowerCase())
               )
@@ -3707,7 +3707,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const interestedTripIds = new Set(interestedTrips.map(trip => trip.id));
         
         filteredTrips = filteredTrips.filter(trip => {
-          const filterResults = requestedFilters.map(filter => {
+          const filterResults = requestedFilters.map((filter: string) => {
             switch (filter) {
               case 'pinned':
                 return pinnedTripIds.has(trip.id);
@@ -3724,7 +3724,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 return true;
             }
           });
-          return filterResults.every(result => result);
+          return filterResults.every((result: boolean) => result);
         });
       }
       
@@ -4082,7 +4082,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get trip info for context (include userId for proper organizer data)
-      const trip = await storage.getTrip(thread.tripId, userId);
+      const trip = await storage.getTrip(thread.tripId, userId || undefined);
       
       // Log chat API access for monitoring
       if (process.env.NODE_ENV === 'development') {
@@ -4126,15 +4126,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create notification for other participant
       const otherUserId = thread.userId;
-      await storage.createNotification({
-        userId: otherUserId,
-        type: 'chat_closed',
-        category: 'social',
-        priority: 'normal',
-        title: 'Chat Closed',
-        message: 'A chat thread has been closed',
-        isRead: false
-      });
+      if (otherUserId) {
+        await storage.createNotification({
+          userId: otherUserId,
+          type: 'chat_closed',
+          category: 'social',
+          priority: 'normal',
+          title: 'Chat Closed',
+          message: 'A chat thread has been closed',
+          isRead: false
+        });
+      }
 
       res.json({ success: true });
     } catch (error) {
@@ -4242,7 +4244,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update unread counts for other participant
       const otherUserId = thread.organizerId === userId ? thread.userId : thread.organizerId;
-      await storage.incrementUnreadCount(threadId, otherUserId);
+      if (otherUserId) {
+        await storage.incrementUnreadCount(threadId, otherUserId);
+      }
 
       res.json({ message });
     } catch (error) {
@@ -4301,13 +4305,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get trip contact info
-      const trip = await storage.getTrip(thread.tripId);
+      const trip = await storage.getTrip(thread.tripId, undefined);
       if (!trip) {
         return res.status(404).json({ message: 'Trip not found' });
       }
 
       // Create contact share message
-      const contactData = {};
+      const contactData: { phone?: string; email?: string } = {};
       if (trip.organizerId) {
         const organizer = await storage.getUser(trip.organizerId);
         if (fields.includes('phone') && organizer?.phoneNumber) {
@@ -4327,7 +4331,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Update unread count
-      await storage.incrementUnreadCount(threadId, thread.userId);
+      if (thread.userId) {
+        await storage.incrementUnreadCount(threadId, thread.userId);
+      }
 
       res.json({ message });
     } catch (error) {
