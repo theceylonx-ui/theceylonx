@@ -210,16 +210,16 @@ app.use((req, res, next) => {
     // Create the server first (needed for Vite setup)
     const server = createServer(app);
     
-    // CRITICAL: In development, mount Vite FIRST before any API middleware
+    // CRITICAL: Register API routes BEFORE Vite to prevent catch-all interception
+    await registerRoutes(app);
+    console.log('Routes registered successfully');
+    
+    // Mount Vite AFTER routes are registered
     if (isDevelopment) {
       console.log('Setting up Vite for development...');
       const { setupVite } = await import('./vite');
       await setupVite(app, server);
     }
-    
-    // Register routes on the main app
-    await registerRoutes(app);
-    console.log('Routes registered successfully');
 
     // Initialize idempotency system for data integrity
     console.log('Initializing idempotency system...');
