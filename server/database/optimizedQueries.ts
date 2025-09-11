@@ -46,8 +46,8 @@ export class QueryOptimizer {
           price: trips.price,
           availableSpots: trips.availableSpots,
           maxParticipants: trips.maxParticipants,
-          departureDate: trips.departureDate,
-          endDate: trips.endDate,
+          departureDate: trips.date,
+          endDate: trips.date,
           status: trips.status,
           imageUrl: trips.imageUrl,
           category: trips.category,
@@ -63,7 +63,7 @@ export class QueryOptimizer {
           }
         })
         .from(trips)
-        .leftJoin(users, eq(trips.userId, users.id))
+        .leftJoin(users, eq(trips.organizerId, users.id))
         .where(eq(trips.status, 'active'))
         .orderBy(desc(trips.createdAt))
         .limit(limit)
@@ -85,19 +85,19 @@ export class QueryOptimizer {
       }
       
       if (priceMin !== undefined) {
-        conditions.push(gte(trips.price, priceMin));
+        conditions.push(gte(trips.price, priceMin.toString()));
       }
       
       if (priceMax !== undefined) {
-        conditions.push(lte(trips.price, priceMax));
+        conditions.push(lte(trips.price, priceMax.toString()));
       }
       
       if (departureDate) {
-        conditions.push(gte(trips.departureDate, departureDate));
+        conditions.push(gte(trips.date, departureDate));
       }
       
       if (userId) {
-        conditions.push(eq(trips.userId, userId));
+        conditions.push(eq(trips.organizerId, userId));
       }
       
       if (conditions.length > 1) {
