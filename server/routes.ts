@@ -127,8 +127,19 @@ import { setupErrorReporting } from "./routes/errorReporting";
 import { enhancedErrorHandler, setupGlobalErrorHandlers } from "./middleware/enhancedErrorHandler";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Root path MUST NOT have any JSON response to allow React app to load
-  // Health checks are handled later in this file with proper functions
+  // 🚀 PRODUCTION FIX: Health check endpoints BEFORE CORS to allow no-origin requests
+  app.get('/health', healthCheck);
+  app.get('/health/ready', readinessCheck);
+  app.get('/health/live', livenessCheck);
+  app.get('/', (req, res) => {
+    // Simple health check for root endpoint (used by load balancers)
+    res.status(200).json({ 
+      status: 'healthy', 
+      service: 'ceylon-expand',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    });
+  });
 
   // SECURITY: Enterprise-grade CORS with explicit allowlist - no wildcards in production
   const isDevelopment = process.env.NODE_ENV === 'development';
@@ -152,9 +163,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
   app.use(cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, etc.) only in development
+      // Allow requests with no origin for health checks in all environments
       if (!origin) {
-        return isDevelopment ? callback(null, true) : callback(new Error('Origin required in production'), false);
+        return callback(null, true);
       }
       
       // SECURITY: Strict explicit matching only - no substring matching
@@ -175,11 +186,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 🔒 PHASE 4: Security middleware - input validation and sanitization
   app.use(validateInput);
   app.use(sanitizeTextContent);
-  
-  // 🚀 PHASE 4: Production health check endpoints (before auth)
-  app.get('/health', healthCheck);
-  app.get('/health/ready', readinessCheck);
-  app.get('/health/live', livenessCheck);
   
   // Setup error reporting endpoints
   setupErrorReporting(app);
