@@ -4060,7 +4060,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/chat/threads/:id', unifiedAuthGuard, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user!.id;
       const threadId = req.params.id;
       
       // 🔥 FORCE NO CACHING - Cache busting headers
@@ -4294,7 +4294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Contact Sharing (Organizer Only)
   app.post('/api/chat/threads/:id/share-contact', unifiedAuthGuard, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user!.id;
       const threadId = req.params.id;
       const { fields } = req.body; // Array of field names to share
 
