@@ -201,10 +201,15 @@ export default function UserProfilePage() {
 
   const displayName = getDisplayName(profile);
 
-  const memberSince = new Date(profile.createdAt).toLocaleDateString('en-US', { 
-    month: 'long', 
-    year: 'numeric' 
-  });
+  const memberSince = profile.createdAt && 
+    typeof profile.createdAt === 'string' && 
+    profile.createdAt.trim() !== '' && 
+    !isNaN(Date.parse(profile.createdAt))
+    ? new Date(profile.createdAt).toLocaleDateString('en-US', { 
+        month: 'long', 
+        year: 'numeric' 
+      })
+    : 'Recently';
 
   return (
     <div className="min-h-screen bg-gray-50">
