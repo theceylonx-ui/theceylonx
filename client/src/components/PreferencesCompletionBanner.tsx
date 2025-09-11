@@ -45,7 +45,7 @@ export function PreferencesCompletionBanner({ onDismiss, className }: Preference
     retry: false,
   });
 
-  const completionPercentage = calculatePreferencesCompletion(preferences);
+  const completionPercentage = calculatePreferencesCompletion(preferences || null);
 
   // Don't show banner if dismissed, loading, or preferences are complete
   if (isDismissed || isLoading || completionPercentage >= 75) {

@@ -171,12 +171,15 @@ export function PreferencesForm() {
       queryClient.setQueryData(["/api/preferences"], data.preferences);
       setIsOptimistic(false);
       
-      // Invalidate related queries to update completion status
-      // Use a single batch invalidation to avoid race conditions
+      // CRITICAL FIX: Properly invalidate the /api/preferences query that the banner uses
+      // This ensures the PreferencesCompletionBanner gets fresh data when user returns
       queryClient.invalidateQueries({ 
         predicate: (query) => {
           const key = query.queryKey[0] as string;
-          return key.includes('/api/me') || key.includes('/api/auth/me') || key.includes('/api/user/preferences');
+          return key === '/api/preferences' || 
+                 key.includes('/api/me') || 
+                 key.includes('/api/auth/me') || 
+                 key.includes('/api/user/preferences');
         }
       });
       
