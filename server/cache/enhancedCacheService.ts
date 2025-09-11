@@ -58,6 +58,23 @@ const cacheConfigs: Map<string, CacheConfig> = new Map([
     conditions: (req) => req.user?.role === 'admin',
     cacheVisibility: 'private', // SECURITY: Private cache - admin-only data
     varyHeaders: ['Authorization', 'Cookie'] // SECURITY: Vary on auth headers
+  }],
+  // 🚀 COMMUNITY PERFORMANCE FIX: Add caching for community endpoints
+  ['/api/topics', {
+    ttl: CACHE_TTL.STATIC_DATA, // 2 hours - topics rarely change
+    strategy: 'memory',
+    tags: ['community', 'topics']
+  }],
+  ['/api/questions', {
+    ttl: CACHE_TTL.TRIP_LISTINGS, // 5 minutes - questions are dynamic
+    strategy: 'hybrid',
+    tags: ['community', 'questions'],
+    keyGenerator: (req) => `questions:${req.query.q || ''}:${req.query.topic || 'all'}:${req.query.sort || 'top'}:${req.query.limit || 10}:${req.query.offset || 0}`
+  }],
+  ['/api/community/stats', {
+    ttl: CACHE_TTL.TRENDING_TRIPS, // 10 minutes - stats update moderately
+    strategy: 'memory',
+    tags: ['community', 'stats']
   }]
 ]);
 
