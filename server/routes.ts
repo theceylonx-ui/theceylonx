@@ -116,7 +116,6 @@ import { errorTracker } from "./utils/errorTracking";
 import { normalizeUserForUI, normalizeUsersForUI, trackUserNormalizationFallback, getDisplayName } from "./utils/userNormalization";
 import type { NormalizedUser } from "./utils/userNormalization";
 import { cache, CACHE_TTL } from "./cache/cacheService";
-import { healthCheck, readinessCheck, livenessCheck } from "./health/healthCheck";
 import { errorTrackingMiddleware } from "./monitoring/errorTracking";
 import { productionSecurityMiddleware, cacheHeadersMiddleware, productionErrorHandler, requestLoggingMiddleware } from "./middleware/production";
 import { seoRouter } from "./routes/seo";
