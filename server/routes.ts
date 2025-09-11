@@ -2810,6 +2810,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // DEVELOPMENT: Enhanced fallback for notification count with automatic fallback
+  if (process.env.NODE_ENV === 'development') {
+    app.get('/api/notifications/unread-count/enhanced', async (req, res) => {
+      try {
+        const user = await getAuthenticatedUser(req);
+        if (user) {
+          const count = await storage.getUnreadNotificationCount(user.id);
+          res.json({ count, authenticated: true });
+        } else {
+          // Return sample data for unauthenticated users in development
+          res.json({ count: 2, authenticated: false, note: 'Sample data - authentication required for real data' });
+        }
+      } catch (error) {
+        console.error("Error in enhanced notification count:", error);
+        res.status(500).json({ message: "Failed to fetch notification count" });
+      }
+    });
+  }
+
   app.patch('/api/notifications/:id/read', unifiedAuthGuard, async (req, res) => {
     try {
       const { id } = req.params;
@@ -3964,6 +3983,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to fetch notifications' });
     }
   });
+
+  // DEVELOPMENT: Fallback notification endpoints for testing without authentication
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔧 Development mode: Adding fallback notification endpoints');
+    
+    // Test notifications endpoint - returns sample data when no user is authenticated
+    app.get('/api/notifications/dev-fallback', async (req, res) => {
+      try {
+        // Check if user is authenticated first
+        const user = await getAuthenticatedUser(req);
+        if (user) {
+          // If authenticated, use real notifications
+          const page = Number(req.query.page) || 1;
+          const limit = Math.min(Number(req.query.limit) || 20, 50);
+          const notifications = await storage.getUserNotifications(user.id, limit * page);
+          return res.json(notifications);
+        }
+        
+        // If not authenticated, return sample notifications for testing
+        const sampleNotifications = [
+          {
+            id: 'dev-1',
+            userId: 'dev-user',
+            type: 'trip_interest_request',
+            category: 'trips',
+            priority: 'normal',
+            title: '🎒 New Trip Interest!',
+            message: 'Sarah wants to join your hiking trip to Sigiriya Rock.',
+            isRead: false,
+            actionUrl: '/trips/sample-trip',
+            primaryActionLabel: 'View Request',
+            primaryActionUrl: '/trips/sample-trip',
+            createdAt: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
+            updatedAt: new Date(Date.now() - 1000 * 60 * 30)
+          },
+          {
+            id: 'dev-2',
+            userId: 'dev-user', 
+            type: 'trip_viewed',
+            category: 'trips',
+            priority: 'info',
+            title: '👀 Trip Milestone!',
+            message: 'Your beach trip to Mirissa has reached 25 views!',
+            isRead: false,
+            actionUrl: '/trips/sample-trip-2',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 2)
+          },
+          {
+            id: 'dev-3',
+            userId: 'dev-user',
+            type: 'system_update', 
+            category: 'system',
+            priority: 'info',
+            title: '📢 Welcome to Ceylon Expand!',
+            message: 'Discover amazing travel companions and create unforgettable memories together.',
+            isRead: true,
+            actionUrl: '/browse-trips',
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24)
+          }
+        ];
+        
+        res.json(sampleNotifications);
+      } catch (error) {
+        console.error('Error in dev fallback notifications:', error);
+        res.status(500).json({ message: 'Failed to fetch notifications' });
+      }
+    });
+    
+    // Test unread count endpoint
+    app.get('/api/notifications/unread-count/dev-fallback', async (req, res) => {
+      try {
+        const user = await getAuthenticatedUser(req);
+        if (user) {
+          const count = await storage.getUnreadNotificationCount(user.id);
+          return res.json({ count });
+        }
+        
+        // Return sample unread count for testing
+        res.json({ count: 2 });
+      } catch (error) {
+        console.error('Error in dev fallback unread count:', error);
+        res.status(500).json({ message: 'Failed to fetch notification count' });
+      }
+    });
+  }
 
 
   // Admin endpoints for system monitoring (placeholder - would need proper admin auth)

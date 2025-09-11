@@ -26,18 +26,82 @@ export function EnhancedNotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<NotificationCategory | "all">("all");
 
-  // Fetch notifications
+  // Fetch notifications with development fallback
   const { data: notifications = [], isLoading, error } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
     enabled: isOpen,
+    retry: (failureCount, error) => {
+      // If we get 401 (Unauthorized) and we're in development, try fallback
+      if (error instanceof Error && error.message.includes('401') && failureCount === 0) {
+        return true; // Allow one retry for fallback
+      }
+      return failureCount < 1;
+    },
+    queryFn: async () => {
+      try {
+        // First try the regular endpoint
+        const response = await fetch('/api/notifications', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          return await response.json();
+        }
+        
+        // If unauthorized and in development, try fallback
+        if (response.status === 401 && import.meta.env.DEV) {
+          console.log('🔄 Auth failed, trying development fallback for notifications');
+          const fallbackResponse = await fetch('/api/notifications/dev-fallback');
+          if (fallbackResponse.ok) {
+            return await fallbackResponse.json();
+          }
+        }
+        
+        throw new Error(`${response.status}: ${response.statusText}`);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        throw error;
+      }
+    }
   });
 
   // Notifications loaded successfully
 
-  // Fetch unread count
+  // Fetch unread count with development fallback
   const { data: unreadCountData } = useQuery<{ count: number }>({
     queryKey: ["/api/notifications/unread-count"],
     refetchInterval: 30000, // Refetch every 30 seconds
+    retry: (failureCount, error) => {
+      // If we get 401 (Unauthorized) and we're in development, try fallback
+      if (error instanceof Error && error.message.includes('401') && failureCount === 0) {
+        return true;
+      }
+      return failureCount < 1;
+    },
+    queryFn: async () => {
+      try {
+        // First try the regular endpoint
+        const response = await fetch('/api/notifications/unread-count', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          return await response.json();
+        }
+        
+        // If unauthorized and in development, try fallback
+        if (response.status === 401 && import.meta.env.DEV) {
+          console.log('🔄 Auth failed, trying development fallback for unread count');
+          const fallbackResponse = await fetch('/api/notifications/unread-count/dev-fallback');
+          if (fallbackResponse.ok) {
+            return await fallbackResponse.json();
+          }
+        }
+        
+        throw new Error(`${response.status}: ${response.statusText}`);
+      } catch (error) {
+        console.error('Error fetching unread count:', error);
+        throw error;
+      }
+    }
   });
 
   const unreadCount = unreadCountData?.count || 0;
