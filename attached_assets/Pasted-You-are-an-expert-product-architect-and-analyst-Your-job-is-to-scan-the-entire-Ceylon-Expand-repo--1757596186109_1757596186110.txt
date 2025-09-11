@@ -1,0 +1,67 @@
+You are an expert product architect and analyst.
+Your job is to scan the entire Ceylon Expand repo (code, docs, configs, comments) and produce a comprehensive Supernova Blueprint that captures every critical dimension of the site.
+🔑 Deliverables
+A. Executive Vision
+200–250 word narrative: why this site exists, the problem it solves, and how it fits into the Sri Lankan tourism ecosystem.
+Use simple, inspiring language suitable for both investors and team onboarding.
+B. 5W1H Master Framework
+For each of What, Why, Who, Where, When, How, provide:
+Core Points (bullets)
+Detailed Analysis (short paragraphs)
+Assumptions / Gaps (clearly marked)
+C. Technical Architecture Map
+Tech stack (frontend, backend, DB, infra, APIs, integrations)
+Data flow diagram (users → system → outputs)
+Security, privacy, and scalability features
+DevOps pipeline (deployment, testing, monitoring)
+D. User Journey Blueprint
+Entry points (where users discover the site)
+Core flows: Browse Trips, Post a Trip, ChatBuddy, CeylonX Tribes, Notifications
+Edge cases (errors, empty states, safety reporting)
+Accessibility and multilingual strategy
+E. Business & Growth Model
+Monetization options (ads, partnerships, premium features)
+Marketing & acquisition channels
+Retention mechanics (gamification, streaks, community badges)
+Competitive analysis summary
+F. KPIs & Analytics
+Provide a markdown table:
+KPI	Definition	Tool/Source	Cadence	Owner	Benchmark
+CTR	% clicks on trips	GA4 / Mixpanel	Weekly	Growth Lead	3–5%
+DAU/WAU	Daily/Weekly Active Users	DB logs	Daily	Product	20%+
+Trip Posts	# of new trips	Internal DB	Weekly	Community	—
+(Fill as many rows as possible from repo or inferred product goals.)
+G. Risks & Mitigations
+List 8–12 product, technical, and market risks
+For each: probability, impact, mitigation strategy
+H. Roadmap Snapshot
+Past milestones completed
+Next 90-day deliverables
+6–12 month “North Star” vision
+I. One-Page Pitch Deck Content
+Headline, subhead, 3 proof points, call-to-action
+Suitable for an investor or partner one-pager
+J. JSON Manifest
+At the end, output a structured JSON with all essentials for quick reference:
+{
+  "product": "Ceylon Expand",
+  "vision": "Short mission statement",
+  "what": ["purpose", "features", "differentiators"],
+  "why": ["problems solved", "value proposition", "business case"],
+  "who": {"audience": ["..."], "stakeholders": ["..."], "competitors": ["..."]},
+  "where": {"channels": ["..."], "hosting": "...", "geo": ["Sri Lanka"]},
+  "when": {"status": "production-ready", "milestones": ["..."]},
+  "how": {"stack": ["frontend", "backend", "db", "infra"], "flows": ["browse", "post", "chat"]},
+  "kpis": ["CTR", "DAU/WAU", "Trip Posts", "Retention D30"],
+  "risks": ["scaling costs", "adoption curve", "safety moderation"],
+  "roadmap": {"next_90_days": ["..."], "north_star": "..."}
+}
+📌 Constraints
+Be specific and avoid generic startup talk.
+Mark assumptions where repo info is missing.
+Keep full blueprint under 2,500 words.
+Use clear section headers, markdown formatting, and diagrams if possible.
+✅ This will give you a deep “Supernova Blueprint” that you can:
+Save in Notion / Google Docs for reference
+Share with your team and investors
+Re-use whenever you update Ceylon Expand
