@@ -249,12 +249,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { key } = req.params;
       const cacheKey = `site-setting:${key}`;
       
+      // 🛠️ TEMPORARY: Clear cache for landing_background_image to fix stuck cache
+      if (key === 'landing_background_image') {
+        await cache.delete(cacheKey);
+        console.log(`🧹 Cleared cache for key: ${key}`);
+      }
+      
       // Use intelligent caching for site settings
       const setting = await cache.getOrSet(
         cacheKey,
         () => storage.getSiteSetting(key),
         CACHE_TTL.SITE_SETTINGS
       );
+      
+      console.log(`🔍 Site setting lookup: key="${key}", found=${!!setting}, value="${setting?.value?.substring(0, 50)}..."`);
       
       if (setting) {
         res.json(setting);
@@ -264,6 +272,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('❌ Public site settings error:', error);
       res.status(500).json({ message: 'Failed to load setting' });
+    }
+  });
+
+  // 🛠️ TEMPORARY: Site settings initialization endpoint (remove after setup)
+  app.post('/api/init-site-settings', apiRateLimit, async (req, res) => {
+    try {
+      console.log('🚀 Initializing site settings...');
+      
+      const defaultSettings = [
+        {
+          key: 'landing_background_image',
+          value: '/assets/generated_images/Sri_Lanka_beach_scene_60ca99d3.png',
+          description: 'Background image for the landing page',
+          category: 'ui'
+        },
+        {
+          key: 'site_name',
+          value: 'Ceylon Expand',
+          description: 'Display name of the site',
+          category: 'branding'
+        },
+        {
+          key: 'hero_title',
+          value: 'Explore Sri Lanka Together',
+          description: 'Main hero title on landing page',
+          category: 'content'
+        },
+        {
+          key: 'hero_subtitle',
+          value: 'Join fellow travelers, discover hidden gems, and create lasting memories in the Pearl of the Indian Ocean.',
+          description: 'Hero subtitle on landing page',
+          category: 'content'
+        },
+        {
+          key: 'site_tagline',
+          value: 'Discover Sri Lanka with Like-minded Travelers',
+          description: 'Main tagline for the site',
+          category: 'branding'
+        },
+        {
+          key: 'contact_email',
+          value: 'hello@theceylonx.com',
+          description: 'Main contact email for the site',
+          category: 'contact'
+        },
+        {
+          key: 'maintenance_mode',
+          value: 'false',
+          description: 'Whether the site is in maintenance mode',
+          category: 'system'
+        }
+      ];
+      
+      const results = [];
+      
+      for (const setting of defaultSettings) {
+        try {
+          // Check if setting already exists
+          const existing = await storage.getSiteSetting(setting.key);
+          
+          if (existing) {
+            results.push({ key: setting.key, status: 'exists', value: existing.value });
+            continue;
+          }
+          
+          // Create the setting
+          const result = await storage.setSiteSetting(
+            setting.key,
+            setting.value,
+            setting.description,
+            setting.category
+          );
+          
+          results.push({ key: setting.key, status: 'created', value: result.value });
+          
+          // Clear cache for this setting
+          await cache.delete(`site-setting:${setting.key}`);
+          
+        } catch (error) {
+          console.error(`❌ Failed to add setting ${setting.key}:`, error);
+          results.push({ key: setting.key, status: 'error', error: error instanceof Error ? error.message : String(error) });
+        }
+      }
+      
+      console.log('✅ Site settings initialization completed');
+      res.json({
+        success: true,
+        message: 'Site settings initialized',
+        results
+      });
+      
+    } catch (error) {
+      console.error('❌ Site settings initialization failed:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to initialize site settings',
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 

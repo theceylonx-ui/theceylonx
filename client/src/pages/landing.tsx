@@ -10,7 +10,7 @@ import defaultBackgroundImage from "@assets/2_1757396354796.png";
 import { SEO, SEOConfigs } from "@/components/SEO";
 
 export default function Landing() {
-  // Fetch dynamic background image setting
+  // Fetch dynamic background image setting with fallback
   const { data: backgroundSetting } = useQuery({
     queryKey: ['/api/site-settings/landing_background_image'],
     queryFn: () => fetch('/api/site-settings/landing_background_image').then(res => 
@@ -20,7 +20,18 @@ export default function Landing() {
     refetchOnWindowFocus: false,
   });
 
-  const backgroundImage = backgroundSetting?.value || defaultBackgroundImage;
+  // Fallback to alternative background_image setting if primary setting fails
+  const { data: fallbackBackgroundSetting } = useQuery({
+    queryKey: ['/api/site-settings/background_image'],
+    queryFn: () => fetch('/api/site-settings/background_image').then(res => 
+      res.ok ? res.json() : null
+    ).catch(() => null),
+    retry: false,
+    refetchOnWindowFocus: false,
+    enabled: !backgroundSetting?.value, // Only fetch if primary setting is not available
+  });
+
+  const backgroundImage = backgroundSetting?.value || fallbackBackgroundSetting?.value || defaultBackgroundImage;
 
   const handleLogin = () => {
     window.location.href = '/auth/signin';
