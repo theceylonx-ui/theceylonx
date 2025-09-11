@@ -638,6 +638,7 @@ export class DatabaseStorage implements IStorage {
       const trip = {
         id: tripRow.id,
         title: tripRow.title,
+        description: tripRow.description,
         fromLocation: tripRow.from_location,
         toLocation: tripRow.to_location,
         date: tripRow.date,
@@ -878,6 +879,7 @@ export class DatabaseStorage implements IStorage {
         trip: {
           id: trips.id,
           title: trips.title,
+          description: trips.description,
           fromLocation: trips.fromLocation,
           toLocation: trips.toLocation,
           date: trips.date,
