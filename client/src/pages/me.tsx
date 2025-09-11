@@ -231,7 +231,7 @@ export default function ProfilePage() {
                     )}
                     <div className="flex items-center bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">
                       <Calendar className="h-4 w-4 mr-2" />
-                      Member since {new Date(profile.createdAt).toLocaleDateString()}
+                      Member since {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'Recently'}
                     </div>
                   </div>
                   
@@ -520,11 +520,11 @@ function ProfileOverview({ profile, stats, preferences }: any) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-white/50">
             <div className="text-sm text-gray-600 mb-1">Member Since</div>
-            <div className="font-semibold text-gray-900">{new Date(profile.createdAt).toLocaleDateString()}</div>
+            <div className="font-semibold text-gray-900">{profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'Recently'}</div>
           </div>
           <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-white/50">
             <div className="text-sm text-gray-600 mb-1">Last Updated</div>
-            <div className="font-semibold text-gray-900">{new Date(profile.updatedAt).toLocaleDateString()}</div>
+            <div className="font-semibold text-gray-900">{profile.updatedAt ? new Date(profile.updatedAt).toLocaleDateString() : 'Recently'}</div>
           </div>
         </div>
       </div>
@@ -1087,9 +1087,9 @@ function SavedTrips() {
           <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
             <span>💰 ${item.price}</span>
             <span>👥 {item.seatsAvailable} seats</span>
-            <span>📅 {new Date(item.date).toLocaleDateString()}</span>
+            <span>📅 {item.date ? new Date(item.date).toLocaleDateString() : 'Date TBD'}</span>
             <Badge variant={item.saveType === 'pinned' ? 'default' : 'secondary'}>
-              {item.saveType === 'pinned' ? '📌 Pinned' : '📩 Request Sent'} {new Date(item.savedAt).toLocaleDateString()}
+              {item.saveType === 'pinned' ? '📌 Pinned' : '📩 Request Sent'} {item.savedAt ? new Date(item.savedAt).toLocaleDateString() : 'Recently'}
             </Badge>
           </div>
         </div>
