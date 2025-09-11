@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import { createServer } from "http";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import helmet from "helmet";
@@ -22,11 +23,12 @@ const app = express();
 // Trust proxy for proper IP detection (required for rate limiting in production)
 app.set('trust proxy', 1);
 
-// SECURITY: Enterprise-grade unified CSP policy with minimal permissions
-const isDevelopment = process.env.NODE_ENV === 'development';
-const isProduction = process.env.NODE_ENV === 'production';
+// CRITICAL: In development, mount Vite FIRST before any middleware
+const isDevelopment = app.get('env') === 'development';
+const isProduction = !isDevelopment;
 
-app.use(helmet({
+// SECURITY: Enterprise-grade unified CSP policy with minimal permissions  
+const helmetConfig = {
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
@@ -35,10 +37,11 @@ app.use(helmet({
         "'self'",
         // SECURITY: Only specific trusted domains - no wildcards
         "https://js.stripe.com", // Stripe payments (specific URL)
+        "https://replit.com", // Replit development banner (development mode)
         // SECURITY: Clerk domains only if configured
         ...(process.env.CLERK_PUBLISHABLE_KEY ? ["https://clerk.ceylonx.com"] : []),
-        // SECURITY: Only allow unsafe-eval in development for HMR
-        ...(isDevelopment ? ["'unsafe-eval'"] : []),
+        // SECURITY: Only allow unsafe-eval and blob: in development for HMR
+        ...(isDevelopment ? ["'unsafe-eval'", "blob:"] : []),
       ].filter(Boolean),
       // SECURITY: Strict style sources with minimal inline permissions
       styleSrc: [
@@ -46,8 +49,8 @@ app.use(helmet({
         "https://fonts.googleapis.com", // Google Fonts styles
         // SECURITY: Specific style hashes for critical inline styles only
         "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='", // Empty style hash
-        // SECURITY: Allow unsafe-inline only in development for hot reload
-        ...(isDevelopment ? ["'unsafe-inline'"] : []),
+        // SECURITY: Allow unsafe-inline and blob: only in development for hot reload
+        ...(isDevelopment ? ["'unsafe-inline'", "blob:"] : []),
         // SECURITY: Clerk styles only if configured
         ...(process.env.CLERK_PUBLISHABLE_KEY ? ["https://clerk.ceylonx.com"] : []),
       ].filter(Boolean),
@@ -60,7 +63,7 @@ app.use(helmet({
       imgSrc: [
         "'self'",
         "data:", // Data URLs for inline images
-        "blob:", // Blob URLs for user uploads
+        "blob:", // Blob URLs for user uploads and Vite HMR
         // SECURITY: Specific image domains only - no wildcards
         "https://images.unsplash.com", // Unsplash (specific subdomain)
         "https://lh3.googleusercontent.com", // Google profile images (specific subdomain)
@@ -72,14 +75,17 @@ app.use(helmet({
       // SECURITY: Strict connection sources - removed broad wss:// and ws:// wildcards
       connectSrc: [
         "'self'",
-        // SECURITY: Specific WebSocket endpoints only
+        // SECURITY: Allow broader connections in development for Vite HMR
         ...(isDevelopment ? [
-          "ws://localhost:*", // Local development WebSocket
-          "wss://localhost:*", // Local development secure WebSocket
-        ] : []),
-        // SECURITY: Specific API endpoints only
-        "https://api.clerk.com", // Clerk API
-        "https://api.stripe.com", // Stripe API
+          "ws:",     // WebSocket on any host for Vite HMR
+          "wss:",    // Secure WebSocket on any host for Vite HMR
+          "http:",   // HTTP for development
+          "https:",  // HTTPS for development
+        ] : [
+          // SECURITY: Specific endpoints only in production
+          "https://api.clerk.com", // Clerk API
+          "https://api.stripe.com", // Stripe API
+        ]),
         // SECURITY: Clerk domains only if configured
         ...(process.env.CLERK_PUBLISHABLE_KEY ? ["https://clerk.ceylonx.com"] : []),
       ].filter(Boolean),
@@ -104,21 +110,20 @@ app.use(helmet({
   noSniff: true,
   frameguard: { action: 'deny' },
   referrerPolicy: { policy: ['strict-origin-when-cross-origin'] }, // SECURITY: Stricter referrer policy
-  crossOriginEmbedderPolicy: isProduction, // SECURITY: Enable COEP in production
-  crossOriginOpenerPolicy: isProduction, // SECURITY: Enable COOP in production
+  crossOriginEmbedderPolicy: isProduction, // SECURITY: Disable COEP in development for Vite
+  crossOriginOpenerPolicy: isProduction, // SECURITY: Disable COOP in development for Vite
   crossOriginResourcePolicy: { policy: 'same-origin' } // SECURITY: Restrict cross-origin resources
-}));
+};
 
-// Global rate limiting
-app.use(rateLimit({
+// Apply security and API middleware scoped to /api routes
+app.use('/api', helmet(helmetConfig));
+app.use('/api', rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 1000, // Limit each IP to 1000 requests per windowMs
   message: { message: "Too many requests from this IP, please try again later" }
 }));
-
-// JSON body size limit
-app.use(express.json({ limit: '20mb' }));
-app.use(express.urlencoded({ extended: false, limit: '20mb' }));
+app.use('/api', express.json({ limit: '20mb' }));
+app.use('/api', express.urlencoded({ extended: false, limit: '20mb' }));
 
 // 🚀 PERFORMANCE: Integrate all performance optimization middleware
 import { 
@@ -133,9 +138,9 @@ import {
 } from "./middleware/performanceOptimization";
 import { smartCacheHeaders } from "./cache/enhancedCacheService";
 
-// Apply performance middleware stack for optimal request processing
+// Apply performance middleware stack to /api routes
 console.log('🚀 Applying performance optimizations...');
-app.use(performanceMiddlewareStack);
+app.use('/api', performanceMiddlewareStack);
 console.log('✅ Performance middleware integrated successfully');
 
 // Security-hardened request logging middleware (enhanced with performance tracking)
@@ -189,25 +194,47 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    // Validate critical environment variables
-    const requiredEnvVars = ['DATABASE_URL'];
-    const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
-    
-    if (missingEnvVars.length > 0) {
-      console.error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
-      process.exit(1);
+    // Validate critical environment variables (production only)
+    if (isProduction) {
+      const requiredEnvVars = ['DATABASE_URL'];
+      const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+      
+      if (missingEnvVars.length > 0) {
+        console.error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+        process.exit(1);
+      }
     }
 
     console.log('Starting server initialization...');
     
-    const server = await registerRoutes(app);
+    // Create the server first (needed for Vite setup)
+    const server = createServer(app);
+    
+    // CRITICAL: In development, mount Vite FIRST before any API middleware
+    if (isDevelopment) {
+      console.log('Setting up Vite for development...');
+      const { setupVite } = await import('./vite');
+      await setupVite(app, server);
+    }
+    
+    // Register routes on the main app
+    await registerRoutes(app);
     console.log('Routes registered successfully');
 
     // Initialize idempotency system for data integrity
     console.log('Initializing idempotency system...');
     const { initializeIdempotencyTable, cleanupExpiredKeys } = await import('./utils/idempotencyHandler');
-    await initializeIdempotencyTable();
-    console.log('Idempotency system initialized successfully');
+    
+    // Initialize idempotency table (non-blocking in development)
+    if (process.env.NODE_ENV === 'production') {
+      await initializeIdempotencyTable();
+      console.log('Idempotency system initialized successfully');
+    } else {
+      // In development, don't block server startup if idempotency initialization fails
+      initializeIdempotencyTable()
+        .then(() => console.log('Idempotency system initialized successfully'))
+        .catch(error => console.warn('⚠️ Idempotency initialization failed (non-blocking in development):', error.message));
+    }
 
     // Start scheduled cleanup for expired idempotency keys
     console.log('Starting idempotency cleanup scheduler...');
@@ -234,29 +261,21 @@ app.use((req, res, next) => {
     cleanupIntervalId = setInterval(runCleanup, CLEANUP_INTERVAL_MS);
     console.log('✅ Idempotency cleanup scheduler started (every 6 hours)');
 
-    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    // API error handler - scoped to /api routes
+    app.use('/api', (err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
       
       // Log the error for debugging
-      console.error(`Error ${status}: ${message}`, err.stack);
+      console.error(`API Error ${status}: ${message}`, err.stack);
       
       res.status(status).json({ message });
     });
 
-    // importantly only setup vite in development and after
-    // setting up all the other routes so the catch-all route
-    // doesn't interfere with the other routes
-    if (app.get("env") === "development") {
-      console.log('Setting up Vite for development...');
-      // Serve static assets from public folder BEFORE Vite setup
-      const path = await import('path');
-      const publicPath = path.resolve(import.meta.dirname, '..', 'public');
-      app.use(express.static(publicPath));
-      console.log('Static assets served from:', publicPath);
-      await setupVite(app, server);
-    } else {
+    // Setup static file serving for production (Vite already set up in dev)
+    if (!isDevelopment) {
       console.log('Setting up static file serving for production...');
+      const { serveStatic } = await import('./vite');
       serveStatic(app);
     }
 

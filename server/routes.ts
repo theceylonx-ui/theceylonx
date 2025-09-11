@@ -136,26 +136,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const isDevelopment = process.env.NODE_ENV === 'development';
   const replitDomains = process.env.REPLIT_DOMAINS; // Auto-detected current Replit domain
   
-  const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS 
-    ? process.env.CORS_ALLOWED_ORIGINS.split(',')
-    : [
-      'https://www.theceylonx.com',
-      'https://theceylonx.com',
-      // SECURITY: Only allow specific development origins, not wildcards
-      ...(isDevelopment ? [
-        'http://localhost:5173', 
-        'http://localhost:5000',
-        'http://127.0.0.1:5173',
-        'http://127.0.0.1:5000',
-        // SECURITY: Only allow current specific Replit domain in development
-        ...(replitDomains ? [`https://${replitDomains}`] : [])
-      ] : [])
-    ].filter(Boolean);
+  console.log('🔧 CORS Debug:', { 
+    NODE_ENV: process.env.NODE_ENV,
+    isDevelopment,
+    APP_URL: process.env.APP_URL,
+    replitDomains
+  });
 
-  // Automatically include APP_URL in allowed origins if set
-  if (process.env.APP_URL && !allowedOrigins.includes(process.env.APP_URL)) {
-    allowedOrigins.push(process.env.APP_URL);
+  let baseOrigins = [
+    'https://www.theceylonx.com',
+    'https://theceylonx.com'
+  ];
+
+  // Add development origins when in development mode
+  if (isDevelopment) {
+    baseOrigins.push(
+      'http://localhost:5173', 
+      'http://localhost:5000',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:5000'
+    );
+    
+    // Add current Replit domain in development
+    if (replitDomains) {
+      baseOrigins.push(`https://${replitDomains}`);
+    }
   }
+
+  // Start with base origins (production + development if needed)
+  let allowedOrigins = [...baseOrigins];
+
+  // If CORS_ALLOWED_ORIGINS is set, ADD to the list instead of replacing
+  if (process.env.CORS_ALLOWED_ORIGINS) {
+    const envOrigins = process.env.CORS_ALLOWED_ORIGINS
+      .split(',')
+      .map(url => url.trim())
+      .filter(url => url.length > 0)
+      .map(url => {
+        // Fix any malformed URLs with double protocols
+        return url.replace(/^https:\/\/https:\/\//, 'https://').replace(/^http:\/\/http:\/\//, 'http://');
+      });
+    
+    // Add unique origins from environment
+    envOrigins.forEach(origin => {
+      if (!allowedOrigins.includes(origin)) {
+        allowedOrigins.push(origin);
+      }
+    });
+  }
+
+  // Clean and include APP_URL if set (skip if already added above)
+  if (process.env.APP_URL) {
+    let cleanAppUrl = process.env.APP_URL.trim();
+    // Fix any malformed URLs with double protocols
+    cleanAppUrl = cleanAppUrl.replace(/^https:\/\/https:\/\//, 'https://');
+    cleanAppUrl = cleanAppUrl.replace(/^http:\/\/http:\/\//, 'http://');
+    
+    if (!allowedOrigins.includes(cleanAppUrl)) {
+      allowedOrigins.push(cleanAppUrl);
+    }
+  }
+
+  console.log('🔧 CORS Final allowed origins:', allowedOrigins);
     
   app.use(cors({
     origin: (origin, callback) => {
@@ -230,8 +272,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const { setupSuperadmin } = await import('./middleware/adminAuth');
   const adminRoutes = await import('./routes/adminRoutes');
   
-  // Initialize admin system
-  await adminService.initializeAdminSystem();
+  // Initialize admin system (non-blocking in development)
+  if (process.env.NODE_ENV === 'production') {
+    await adminService.initializeAdminSystem();
+  } else {
+    // In development, don't block server startup if admin initialization fails
+    adminService.initializeAdminSystem().catch(error => {
+      console.warn('⚠️ Admin system initialization failed (non-blocking in development):', error.message);
+    });
+  }
   
   // Setup superadmin middleware (runs after auth)
   app.use(setupSuperadmin);
@@ -4254,7 +4303,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get trip info for context (include userId for proper organizer data)  
-      const trip = await storage.getTrip(thread.tripId, userId || undefined);
+      const trip = await storage.getTrip(thread.tripId, userId);
       
       // Log chat API access for monitoring
       if (process.env.NODE_ENV === 'development') {
@@ -4477,7 +4526,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get trip contact info
-      const trip = await storage.getTrip(thread.tripId, undefined);
+      const trip = await storage.getTrip(thread.tripId);
       if (!trip) {
         return res.status(404).json({ message: 'Trip not found' });
       }

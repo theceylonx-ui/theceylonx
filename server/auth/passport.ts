@@ -14,11 +14,16 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   const isReplitDeployment = process.env.REPL_SLUG || process.env.REPLIT_DEPLOYMENT || process.env.REPLIT_DOMAINS;
   
   let googleCallbackURL;
-  // Dynamic base URL detection for any deployment environment
-  const baseUrl = process.env.APP_URL ?? 
-    (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}` : 
-      (isDevelopment && !isReplitDeployment ? 'http://localhost:5000' : 'https://www.theceylonx.com'));
-  googleCallbackURL = `${baseUrl}/api/auth/google/callback`;
+  // Use development domain for Replit development environment
+  if (isDevelopment && isReplitDeployment && process.env.REPLIT_DOMAINS) {
+    googleCallbackURL = `https://${process.env.REPLIT_DOMAINS}/api/auth/google/callback`;
+  } else if (process.env.APP_URL) {
+    googleCallbackURL = `${process.env.APP_URL}/api/auth/google/callback`;
+  } else if (isDevelopment && !isReplitDeployment) {
+    googleCallbackURL = 'http://localhost:5000/api/auth/google/callback';
+  } else {
+    googleCallbackURL = 'https://www.theceylonx.com/api/auth/google/callback';
+  }
   
   console.log('🔧 OAuth Configuration:', {
     isDevelopment,
@@ -37,12 +42,13 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   async (accessToken, refreshToken, profile, done) => {
     try {
       // Check if user already exists
-      const [existingUser] = await db.select().from(users).where(
+      const existingUsers = await db.select().from(users).where(
         or(
           eq(users.googleId, profile.id),
           eq(users.email, profile.emails?.[0]?.value || '')
         )
       );
+      const existingUser = existingUsers[0];
 
       if (existingUser) {
         // Update Google ID if not set
@@ -63,14 +69,15 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       }
 
       // Create new user
-      const [newUser] = await db.insert(users).values({
+      const newUsers = await db.insert(users).values({
         email: profile.emails?.[0]?.value,
         name: profile.displayName,
         image: profile.photos?.[0]?.value,
         provider: 'google',
         googleId: profile.id,
         emailVerified: true,
-      }).returning();
+      }).returning() as any[];
+      const newUser = newUsers[0];
 
       const jwtUser: JWTUser = {
         id: newUser.id,
@@ -93,11 +100,16 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
   const isReplitDeployment = process.env.REPL_SLUG || process.env.REPLIT_DEPLOYMENT || process.env.REPLIT_DOMAINS;
   
   let facebookCallbackURL;
-  // Dynamic base URL detection for any deployment environment (same as Google)
-  const baseUrl = process.env.APP_URL ?? 
-    (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}` : 
-      (isDevelopment && !isReplitDeployment ? 'http://localhost:5000' : 'https://www.theceylonx.com'));
-  facebookCallbackURL = `${baseUrl}/api/auth/facebook/callback`;
+  // Use development domain for Replit development environment (same as Google)
+  if (isDevelopment && isReplitDeployment && process.env.REPLIT_DOMAINS) {
+    facebookCallbackURL = `https://${process.env.REPLIT_DOMAINS}/api/auth/facebook/callback`;
+  } else if (process.env.APP_URL) {
+    facebookCallbackURL = `${process.env.APP_URL}/api/auth/facebook/callback`;
+  } else if (isDevelopment && !isReplitDeployment) {
+    facebookCallbackURL = 'http://localhost:5000/api/auth/facebook/callback';
+  } else {
+    facebookCallbackURL = 'https://www.theceylonx.com/api/auth/facebook/callback';
+  }
   
   console.log('🔧 Facebook OAuth Configuration:', {
     isDevelopment,
@@ -114,9 +126,10 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
   async (accessToken, refreshToken, profile, done) => {
     try {
       // Check if user already exists by Facebook ID
-      const [existingUser] = await db.select().from(users).where(
+      const existingUsers = await db.select().from(users).where(
         eq(users.facebookId, profile.id)
       );
+      const existingUser = existingUsers[0];
 
       if (existingUser) {
         // Update Facebook ID if not set
@@ -137,14 +150,15 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
       }
 
       // Create new user
-      const [newUser] = await db.insert(users).values({
+      const newUsers = await db.insert(users).values({
         email: null, // Facebook no longer provides email by default
         name: profile.displayName,
         image: profile.photos?.[0]?.value,
         provider: 'facebook',
         facebookId: profile.id,
         emailVerified: false,
-      }).returning();
+      }).returning() as any[];
+      const newUser = newUsers[0];
 
       const jwtUser: JWTUser = {
         id: newUser.id,
