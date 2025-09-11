@@ -5,6 +5,8 @@ import { storage } from "./storage";
 import { authRouter, authGuard } from "./auth/routes";
 import { JWTUser } from "./auth/jwt";
 import { clerkHealth } from "./routes/clerkHealth";
+import { healthCheck, readinessCheck, livenessCheck, systemMetrics, performanceMetrics } from "./health/healthCheck";
+import { requireAdmin } from "./middleware/adminAuth";
 
 import { logAuthSuccess, logAuthFailure, sanitizeRequestForLogging } from './utils/secureLogging';
 
@@ -4601,6 +4603,234 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user profile:", error);
       res.status(500).json({ message: "Failed to fetch user profile" });
+    }
+  });
+
+  // 🚀 MONITORING DASHBOARD ENDPOINTS
+  
+  // Health check endpoints (used by load balancers and monitoring systems)
+  app.get("/api/health", healthCheck);
+  app.get("/api/health/readiness", readinessCheck);
+  app.get("/api/health/liveness", livenessCheck);
+  
+  // 🔒 SECURED: Detailed monitoring endpoints require admin authentication
+  app.get("/api/health/system", unifiedAuthGuard, requireAdmin, systemMetrics);
+  app.get("/api/health/performance", unifiedAuthGuard, requireAdmin, performanceMetrics);
+
+  // 🔒 SECURED: Comprehensive monitoring dashboard endpoint - requires admin authentication
+  app.get("/api/monitoring/dashboard", unifiedAuthGuard, requireAdmin, async (req: any, res: any) => {
+    try {
+      const { apmService } = await import('./monitoring/apmService');
+      const { enhancedErrorService } = await import('./monitoring/enhancedErrorService');
+      const { infrastructureService } = await import('./monitoring/infrastructureService');
+      const { businessMetricsService } = await import('./monitoring/businessMetricsService');
+      const { loggingService } = await import('./monitoring/loggingService');
+
+      // Aggregate all monitoring data
+      const dashboardData = {
+        timestamp: new Date().toISOString(),
+        overview: {
+          systemHealth: 'healthy', // TODO: Calculate from all services
+          totalRequests: 0,
+          errorRate: 0,
+          averageResponseTime: 0,
+          activeUsers: 0
+        },
+        health: {
+          database: true,
+          cache: true,
+          auth: true,
+          externalServices: true
+        },
+        performance: {
+          apm: apmService.getMetricsSummary(),
+          infrastructure: infrastructureService.getCurrentSnapshot(),
+          trends: infrastructureService.getResourceTrends(24)
+        },
+        errors: {
+          stats: enhancedErrorService.getErrorStats(),
+          recentSummary: enhancedErrorService.getRecentErrorsSummary(24)
+        },
+        business: {
+          realTime: businessMetricsService.getRealTimeStats(),
+          summary: businessMetricsService.getMetricsSummary('daily'),
+          conversions: businessMetricsService.getConversionFunnelAnalysis(),
+          healthScore: businessMetricsService.calculateBusinessHealthScore()
+        },
+        logging: {
+          metrics: loggingService.getLoggingMetrics(),
+          recentTraces: loggingService.getRecentTraces(10)
+        }
+      };
+
+      res.json(dashboardData);
+    } catch (error) {
+      console.error("Error fetching monitoring dashboard data:", error);
+      res.status(500).json({ message: "Failed to fetch monitoring data" });
+    }
+  });
+
+  // 🔒 SECURED: APM metrics endpoint - requires admin authentication
+  app.get("/api/monitoring/apm", unifiedAuthGuard, requireAdmin, async (req: any, res: any) => {
+    try {
+      const { apmService } = await import('./monitoring/apmService');
+      const metrics = apmService.getCurrentMetrics();
+      const summary = apmService.getMetricsSummary();
+      
+      res.json({
+        currentMetrics: metrics,
+        summary: summary,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error fetching APM metrics:", error);
+      res.status(500).json({ message: "Failed to fetch APM metrics" });
+    }
+  });
+
+  // 🔒 SECURED: Error monitoring endpoint - requires admin authentication
+  app.get("/api/monitoring/errors", unifiedAuthGuard, requireAdmin, async (req: any, res: any) => {
+    try {
+      const { enhancedErrorService } = await import('./monitoring/enhancedErrorService');
+      const hours = parseInt(req.query.hours as string) || 24;
+      
+      const errorData = {
+        stats: enhancedErrorService.getErrorStats(),
+        recentSummary: enhancedErrorService.getRecentErrorsSummary(hours),
+        timestamp: new Date().toISOString()
+      };
+      
+      res.json(errorData);
+    } catch (error) {
+      console.error("Error fetching error metrics:", error);
+      res.status(500).json({ message: "Failed to fetch error metrics" });
+    }
+  });
+
+  // 🔒 SECURED: Infrastructure monitoring endpoint - requires admin authentication
+  app.get("/api/monitoring/infrastructure", unifiedAuthGuard, requireAdmin, async (req: any, res: any) => {
+    try {
+      const { infrastructureService } = await import('./monitoring/infrastructureService');
+      const hours = parseInt(req.query.hours as string) || 1;
+      
+      const infraData = {
+        currentSnapshot: infrastructureService.getCurrentSnapshot(),
+        history: infrastructureService.getMetricsHistory(hours),
+        trends: infrastructureService.getResourceTrends(24),
+        timestamp: new Date().toISOString()
+      };
+      
+      res.json(infraData);
+    } catch (error) {
+      console.error("Error fetching infrastructure metrics:", error);
+      res.status(500).json({ message: "Failed to fetch infrastructure metrics" });
+    }
+  });
+
+  // 🔒 SECURED: Business metrics endpoint - requires admin authentication
+  app.get("/api/monitoring/business", unifiedAuthGuard, requireAdmin, async (req: any, res: any) => {
+    try {
+      const { businessMetricsService } = await import('./monitoring/businessMetricsService');
+      const period = (req.query.period as 'hourly' | 'daily') || 'daily';
+      
+      const businessData = {
+        realTimeStats: businessMetricsService.getRealTimeStats(),
+        summary: businessMetricsService.getMetricsSummary(period),
+        conversions: businessMetricsService.getConversionFunnelAnalysis(),
+        healthScore: businessMetricsService.calculateBusinessHealthScore(),
+        timestamp: new Date().toISOString()
+      };
+      
+      res.json(businessData);
+    } catch (error) {
+      console.error("Error fetching business metrics:", error);
+      res.status(500).json({ message: "Failed to fetch business metrics" });
+    }
+  });
+
+  // 🔒 SECURED: Logging and tracing endpoint - requires admin authentication
+  app.get("/api/monitoring/logs", unifiedAuthGuard, requireAdmin, async (req: any, res: any) => {
+    try {
+      const { loggingService } = await import('./monitoring/loggingService');
+      const limit = parseInt(req.query.limit as string) || 100;
+      const level = req.query.level as any;
+      const traceId = req.query.traceId as string;
+      
+      const query = {
+        level,
+        traceId,
+        limit,
+        timeRange: req.query.start && req.query.end ? {
+          start: new Date(req.query.start as string),
+          end: new Date(req.query.end as string)
+        } : undefined
+      };
+      
+      const logsData = {
+        logs: loggingService.searchLogs(query),
+        metrics: loggingService.getLoggingMetrics(),
+        recentTraces: loggingService.getRecentTraces(20),
+        timestamp: new Date().toISOString()
+      };
+      
+      res.json(logsData);
+    } catch (error) {
+      console.error("Error fetching logs:", error);
+      res.status(500).json({ message: "Failed to fetch logs" });
+    }
+  });
+
+  // 🔒 SECURED: Get specific trace details - requires admin authentication
+  app.get("/api/monitoring/traces/:traceId", unifiedAuthGuard, requireAdmin, async (req: any, res: any) => {
+    try {
+      const { loggingService } = await import('./monitoring/loggingService');
+      const trace = loggingService.getTrace(req.params.traceId);
+      
+      if (!trace) {
+        return res.status(404).json({ message: "Trace not found" });
+      }
+      
+      res.json({
+        trace,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error fetching trace:", error);
+      res.status(500).json({ message: "Failed to fetch trace" });
+    }
+  });
+
+  // 🔒 SECURED: Real-time metrics endpoint for live updates - requires admin authentication
+  app.get("/api/monitoring/realtime", unifiedAuthGuard, requireAdmin, async (req: any, res: any) => {
+    try {
+      const { apmService } = await import('./monitoring/apmService');
+      const { enhancedErrorService } = await import('./monitoring/enhancedErrorService');
+      const { infrastructureService } = await import('./monitoring/infrastructureService');
+      const { businessMetricsService } = await import('./monitoring/businessMetricsService');
+
+      const realTimeData = {
+        timestamp: new Date().toISOString(),
+        performance: {
+          currentCPU: infrastructureService.getCurrentSnapshot()?.cpu.usage || 0,
+          currentMemory: infrastructureService.getCurrentSnapshot()?.memory.percentage || 0,
+          activeRequests: 0, // TODO: Track active requests
+          cacheHitRate: infrastructureService.getCurrentSnapshot()?.cache.hitRate || 0
+        },
+        business: businessMetricsService.getRealTimeStats(),
+        errors: {
+          errorRate: enhancedErrorService.getErrorStats().errorRate,
+          criticalErrors: enhancedErrorService.getRecentErrorsSummary(1).bySeverity.critical
+        },
+        health: {
+          overall: infrastructureService.getCurrentSnapshot()?.health.overall || 'unknown',
+          issues: infrastructureService.getCurrentSnapshot()?.health.issues || []
+        }
+      };
+      
+      res.json(realTimeData);
+    } catch (error) {
+      console.error("Error fetching real-time metrics:", error);
+      res.status(500).json({ message: "Failed to fetch real-time metrics" });
     }
   });
 

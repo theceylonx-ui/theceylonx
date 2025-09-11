@@ -54,7 +54,7 @@ router.get('/dashboard', async (req, res) => {
 });
 
 // Users management endpoints
-router.get('/users', requirePermission('canManageUsers'), async (req, res) => {
+router.get('/users', requirePermission('users.view'), async (req, res) => {
   try {
     const { search = '', page = '1', limit = '20' } = req.query;
     const result = await adminService.getUsers(
@@ -69,7 +69,7 @@ router.get('/users', requirePermission('canManageUsers'), async (req, res) => {
   }
 });
 
-router.get('/users/:id', requirePermission('canManageUsers'), async (req, res) => {
+router.get('/users/:id', requirePermission('users.view'), async (req, res) => {
   try {
     const { id } = req.params;
     const user = await adminService.getUserWithRole(id);
@@ -85,7 +85,7 @@ router.get('/users/:id', requirePermission('canManageUsers'), async (req, res) =
   }
 });
 
-router.put('/users/:id/role', requirePermission('canManageUsers'), async (req, res) => {
+router.put('/users/:id/role', requirePermission('users.edit'), async (req, res) => {
   try {
     const { id } = req.params;
     const { roleId } = req.body;
@@ -108,7 +108,7 @@ router.put('/users/:id/role', requirePermission('canManageUsers'), async (req, r
 });
 
 // Content management endpoints
-router.post('/media', requirePermission('canManageContent'), upload.single('file'), async (req, res) => {
+router.post('/media', requirePermission('media.upload'), upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
@@ -150,7 +150,7 @@ router.post('/media', requirePermission('canManageContent'), upload.single('file
   }
 });
 
-router.get('/media', requirePermission('canManageContent'), async (req, res) => {
+router.get('/media', requirePermission('media.view'), async (req, res) => {
   try {
     const { type = 'image', page = '1', limit = '20' } = req.query;
     const result = await adminService.getMediaAssets(
@@ -166,7 +166,7 @@ router.get('/media', requirePermission('canManageContent'), async (req, res) => 
 });
 
 // Roles management endpoints
-router.get('/roles', requirePermission('canManageRoles'), async (req, res) => {
+router.get('/roles', requirePermission('roles.view'), async (req, res) => {
   try {
     const roles = await adminService.getRoles();
     res.json(roles);
@@ -176,7 +176,7 @@ router.get('/roles', requirePermission('canManageRoles'), async (req, res) => {
   }
 });
 
-router.post('/roles', requirePermission('canManageRoles'), async (req, res) => {
+router.post('/roles', requirePermission('roles.create_custom'), async (req, res) => {
   try {
     const roleData = insertRoleSchema.parse(req.body);
     const newRole = await adminService.createRole(roleData, req.adminUser!.id);
@@ -189,10 +189,10 @@ router.post('/roles', requirePermission('canManageRoles'), async (req, res) => {
   } catch (error) {
     console.error('❌ Admin role creation error:', error);
     
-    if (error.name === 'ZodError') {
+    if (error instanceof Error && error.name === 'ZodError') {
       return res.status(400).json({ 
         message: 'Invalid role data', 
-        errors: error.errors 
+        errors: (error as any).errors 
       });
     }
     
@@ -200,7 +200,7 @@ router.post('/roles', requirePermission('canManageRoles'), async (req, res) => {
   }
 });
 
-router.put('/roles/:id', requirePermission('canManageRoles'), async (req, res) => {
+router.put('/roles/:id', requirePermission('roles.assign'), async (req, res) => {
   try {
     const { id } = req.params;
     const { permissions } = req.body;
@@ -223,7 +223,7 @@ router.put('/roles/:id', requirePermission('canManageRoles'), async (req, res) =
 });
 
 // Audit logs endpoint
-router.get('/logs', requirePermission('canViewLogs'), async (req, res) => {
+router.get('/logs', requirePermission('logs.view'), async (req, res) => {
   try {
     const { page = '1', limit = '50' } = req.query;
     const result = await adminService.getAuditLogs(
@@ -287,14 +287,14 @@ router.post('/settings', requirePermission('settings.edit'), async (req, res) =>
     const setting = await storage.setSiteSetting(
       settingData.key,
       settingData.value || '',
-      settingData.description,
-      settingData.category
+      settingData.description || undefined,
+      settingData.category || undefined
     );
     res.status(201).json(setting);
   } catch (error) {
     console.error('❌ Admin create setting error:', error);
-    if (error.name === 'ZodError') {
-      res.status(400).json({ message: 'Invalid setting data', errors: error.errors });
+    if (error instanceof Error && error.name === 'ZodError') {
+      res.status(400).json({ message: 'Invalid setting data', errors: (error as any).errors });
     } else {
       res.status(500).json({ message: 'Failed to create setting' });
     }
@@ -349,7 +349,11 @@ router.post('/validate-roles', requireAdmin, async (req, res) => {
     const { roles } = await import('@shared/schema');
     
     const existingRoles = await db.select().from(roles);
-    const isValid = await validateRolePermissions(existingRoles);
+    const rolesForValidation = existingRoles.map(role => ({
+      name: role.name,
+      permissions: role.permissions
+    }));
+    const isValid = await validateRolePermissions(rolesForValidation);
     
     res.json({
       status: 'success',
@@ -363,7 +367,7 @@ router.post('/validate-roles', requireAdmin, async (req, res) => {
     res.status(500).json({
       status: 'error', 
       message: 'Failed to validate roles',
-      error: error.message || 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
@@ -403,7 +407,7 @@ router.post('/seed-data', requireAdmin, async (req, res) => {
     res.status(500).json({ 
       status: 'error',
       message: 'Failed to seed sample data',
-      error: error.message || 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
