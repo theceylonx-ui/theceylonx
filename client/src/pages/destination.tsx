@@ -269,7 +269,7 @@ export default function DestinationPage() {
                           <div className="flex items-center justify-between text-sm text-gray-500">
                             <div className="flex items-center space-x-4">
                               <span>{question.user?.displayName || 'Anonymous'}</span>
-                              <span>{formatDistanceToNow(new Date(question.createdAt || new Date()), { addSuffix: true })}</span>
+                              <span>{question.createdAt && !isNaN(new Date(question.createdAt).getTime()) ? formatDistanceToNow(new Date(question.createdAt), { addSuffix: true }) : 'Recently'}</span>
                             </div>
                             <div className="flex items-center space-x-2">
                               <div className="flex items-center">
