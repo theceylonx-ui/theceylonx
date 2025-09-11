@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🚀 Ceylon Expand - Pre-commit Quality Checks"
+
+# Run lint-staged for staged files only
+npx lint-staged
+
+# Additional custom checks
+echo "📋 Running TypeScript type checking..."
+npx tsc --noEmit
+
+echo "✅ All pre-commit checks passed!"
