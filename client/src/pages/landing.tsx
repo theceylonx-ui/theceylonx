@@ -39,90 +39,156 @@ export default function Landing() {
       />
       <div className="min-h-screen bg-ui-bg">
       {/* Navigation Header */}
-      <nav className="bg-ui-bg shadow-sm sticky top-0 z-50 border-b border-ui-line">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <img src={logoImage} alt="Ceylon Expand Logo" className="h-8 w-8" data-testid="logo-icon" />
-              <span className="text-xl font-bold text-text-primary" data-testid="logo-text">Ceylon Expand</span>
+      <header role="banner">
+        <nav 
+          className="bg-ui-bg shadow-sm sticky top-0 z-50 border-b border-ui-line" 
+          role="navigation" 
+          aria-label="Main navigation"
+          id="navigation"
+          data-testid="main-navigation"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center space-x-2">
+                <Link href="/">
+                  <div 
+                    className="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-ui-bg rounded-md p-1"
+                    role="link"
+                    aria-label="Ceylon Expand homepage"
+                    data-testid="header-logo-link"
+                  >
+                    <img src={logoImage} alt="Ceylon Expand Logo" className="h-8 w-8" data-testid="logo-icon" />
+                    <span className="text-xl font-bold text-text-primary" data-testid="logo-text">Ceylon Expand</span>
+                  </div>
+                </Link>
+              </div>
+              <div className="hidden md:flex items-center space-x-6" role="menubar">
+                <Link href="/browse-trips">
+                  <span 
+                    className="text-text-secondary hover:text-brand transition-colors font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-ui-bg rounded-md px-2 py-1" 
+                    data-testid="nav-browse"
+                    role="menuitem"
+                    tabIndex={0}
+                    aria-label="Browse available trips"
+                  >
+                    Browse Trips
+                  </span>
+                </Link>
+                <Link href="/post">
+                  <span 
+                    className="text-text-secondary hover:text-brand transition-colors font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-ui-bg rounded-md px-2 py-1" 
+                    data-testid="nav-post"
+                    role="menuitem"
+                    tabIndex={0}
+                    aria-label="Post a new trip"
+                  >
+                    Post a Trip
+                  </span>
+                </Link>
+                <Link href="/community">
+                  <span 
+                    className="text-text-secondary hover:text-brand transition-colors font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-ui-bg rounded-md px-2 py-1" 
+                    data-testid="nav-community"
+                    role="menuitem"
+                    tabIndex={0}
+                    aria-label="Join CeylonX travel community"
+                  >
+                    CeylonX Tribes
+                  </span>
+                </Link>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Button 
+                  variant="ghost" 
+                  onClick={handleLogin} 
+                  className="text-text-secondary hover:text-brand transition-colors touch-target"
+                  data-testid="button-signin"
+                  aria-label="Sign in to your account"
+                >
+                  Sign In
+                </Button>
+                <Button 
+                  onClick={handleSignUp} 
+                  className="bg-brand text-white hover:bg-brand-hover shadow-sm touch-target"
+                  data-testid="button-signup"
+                  aria-label="Create a new account"
+                >
+                  Sign Up
+                </Button>
+              </div>
             </div>
-            <div className="hidden md:flex items-center space-x-6">
+          </div>
+        </nav>
+      </header>
+      {/* Hero Section */}
+      <main role="main" id="main-content" tabIndex={-1}>
+        <section 
+          className="relative bg-gradient-to-br from-brand to-info min-h-[500px] flex items-center"
+          aria-label="Hero section - Find travel companions in Sri Lanka"
+          data-testid="hero-section"
+        >
+          <div className="absolute inset-0 bg-black opacity-60" aria-hidden="true"></div>
+          <div 
+            className="absolute inset-0" 
+            style={{
+              backgroundImage: `url(${backgroundImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
+            aria-hidden="true"
+            role="img"
+            aria-label="Beautiful landscape of Sri Lanka showing travel destinations"
+          ></div>
+          
+          <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center text-white">
+            <h1 
+              className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 mt-4 drop-shadow-2xl" 
+              style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }} 
+              data-testid="hero-title"
+              id="page-title"
+            >
+              Travel Together.<br />Share the Journey.
+            </h1>
+            
+            {/* Free to Use Badge */}
+            <div className="mb-6 flex justify-center" role="banner" aria-label="Free service announcement">
+              <Badge 
+                className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 text-sm font-semibold shadow-lg border-0 hover:from-green-600 hover:to-emerald-700 transition-all duration-200" 
+                data-testid="free-badge"
+                role="status"
+                aria-live="polite"
+              >
+                🎉 100% Free to Use - No Hidden Fees
+              </Badge>
+            </div>
+            
+            <p 
+              className="text-lg sm:text-xl md:text-2xl mb-8 max-w-3xl mx-auto px-4 drop-shadow-lg" 
+              style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8), 0px 0px 2px rgba(0,0,0,0.6)' }} 
+              data-testid="hero-subtitle"
+              role="text"
+              aria-describedby="page-title"
+            >
+              Find rides, buddies, and unique experiences across Sri Lanka. Post your trip or join one today.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center px-4" role="group" aria-label="Main action buttons">
               <Link href="/browse-trips">
-                <span className="text-text-secondary hover:text-brand transition-colors font-medium cursor-pointer" data-testid="nav-browse">Browse Trips</span>
+                <Button 
+                  size="lg"
+                  className="bg-brand text-white hover:bg-brand-hover text-base sm:text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:scale-105 px-6 py-3 touch-target"
+                  data-testid="button-browse-trips"
+                  aria-label="Browse available trips and find travel companions"
+                >
+                  Browse Trips
+                </Button>
               </Link>
               <Link href="/post">
-                <span className="text-text-secondary hover:text-brand transition-colors font-medium cursor-pointer" data-testid="nav-post">Post a Trip</span>
-              </Link>
-              <Link href="/community">
-                <span className="text-text-secondary hover:text-brand transition-colors font-medium cursor-pointer" data-testid="nav-community">CeylonX Tribes</span>
-              </Link>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Button 
-                variant="ghost" 
-                onClick={handleLogin} 
-                className="text-text-secondary hover:text-brand transition-colors"
-                data-testid="button-signin"
-              >
-                Sign In
-              </Button>
-              <Button 
-                onClick={handleSignUp} 
-                className="bg-brand text-white hover:bg-brand-hover shadow-sm"
-                data-testid="button-signup"
-              >
-                Sign Up
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-brand to-info min-h-[500px] flex items-center">
-        <div className="absolute inset-0 bg-black opacity-60"></div>
-        <div 
-          className="absolute inset-0" 
-          style={{
-            backgroundImage: `url(${backgroundImage})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-        ></div>
-        
-        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center text-white">
-          <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 mt-4 drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }} data-testid="hero-title">
-            Travel Together.<br />Share the Journey.
-          </h1>
-          
-          {/* Free to Use Badge */}
-          <div className="mb-6 flex justify-center">
-            <Badge 
-              className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 text-sm font-semibold shadow-lg border-0 hover:from-green-600 hover:to-emerald-700 transition-all duration-200" 
-              data-testid="free-badge"
-            >
-              🎉 100% Free to Use - No Hidden Fees
-            </Badge>
-          </div>
-          
-          <p className="text-lg sm:text-xl md:text-2xl mb-8 max-w-3xl mx-auto px-4 drop-shadow-lg" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8), 0px 0px 2px rgba(0,0,0,0.6)' }} data-testid="hero-subtitle">
-            Find rides, buddies, and unique experiences across Sri Lanka. Post your trip or join one today.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
-            <Link href="/browse-trips">
-              <Button 
-                size="lg"
-                className="bg-brand text-white hover:bg-brand-hover text-base sm:text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:scale-105 px-6 py-3"
-                data-testid="button-browse-trips"
-              >
-                Browse Trips
-              </Button>
-            </Link>
-            <Link href="/post">
-              <Button 
-                size="lg"
-                className="bg-info text-white hover:bg-info/90 text-base sm:text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:scale-105 px-6 py-3"
-                data-testid="button-post-trip"
-              >
+                <Button 
+                  size="lg"
+                  className="bg-info text-white hover:bg-info/90 text-base sm:text-lg font-semibold transition-all duration-300 hover:shadow-2xl hover:scale-105 px-6 py-3 touch-target"
+                  data-testid="button-post-trip"
+                  aria-label="Post your trip and find travel companions"
+                >
                 Post a Trip
               </Button>
             </Link>

@@ -11,6 +11,10 @@ import { NetworkError } from "@/components/common/NetworkError";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 // 🚀 PERFORMANCE: Import performance monitoring for development
 import { PerformanceMonitor } from "@/components/PerformanceMonitor";
+import { AccessibilityProvider } from "@/components/accessibility/AccessibilityProvider";
+import { SkipLinks } from "@/components/accessibility/SkipLink";
+import MobileNavigation from "@/components/mobile/MobileNavigation";
+import { usePWA } from "@/hooks/usePWA";
 
 // 🚀 PHASE 3 PERFORMANCE: Lazy load all components for better initial load time
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -184,6 +188,19 @@ function Router() {
   );
 }
 
+// PWA Initialization Component
+function PWAInitializer() {
+  const { capabilities } = usePWA();
+  
+  // PWA hook automatically registers service worker and handles installation
+  // Just log PWA capabilities for monitoring
+  if (typeof window !== 'undefined' && import.meta.env.DEV) {
+    console.log('🔧 PWA Capabilities:', capabilities);
+  }
+  
+  return null; // This component only initializes PWA, renders nothing
+}
+
 function App() {
   // Temporarily disable Clerk until properly configured
   // const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -203,14 +220,20 @@ function App() {
         });
       }}
     >
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-          {/* 🚀 PERFORMANCE: Add performance monitor for development */}
-          <PerformanceMonitor />
-        </TooltipProvider>
-      </QueryClientProvider>
+      <AccessibilityProvider>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <SkipLinks />
+            <Toaster />
+            <Router />
+            <MobileNavigation />
+            {/* 🚀 PWA: Initialize service worker and PWA functionality */}
+            <PWAInitializer />
+            {/* 🚀 PERFORMANCE: Add performance monitor for development */}
+            <PerformanceMonitor />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </AccessibilityProvider>
     </ErrorBoundary>
   );
 }
