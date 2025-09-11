@@ -22,19 +22,91 @@ const app = express();
 // Trust proxy for proper IP detection (required for rate limiting in production)
 app.set('trust proxy', 1);
 
-// Security hardening
+// SECURITY: Enterprise-grade unified CSP policy with minimal permissions
+const isDevelopment = process.env.NODE_ENV === 'development';
+const isProduction = process.env.NODE_ENV === 'production';
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "*.clerk.dev", "*.clerk.com", "js.stripe.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com", "*.clerk.dev", "*.clerk.com"],
-      fontSrc: ["'self'", "fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "*.unsplash.com", "*.googleusercontent.com", "*.facebook.com", "api.dicebear.com", "*.clerk.dev", "*.clerk.com"],
-      connectSrc: ["'self'", "wss:", "ws:", "*.clerk.dev", "*.clerk.com", "api.clerk.dev", "api.clerk.com"],
-      frameSrc: ["'self'", "*.clerk.dev", "*.clerk.com", "js.stripe.com"],
+      // SECURITY: Strict script sources - no wildcards or unsafe directives in production
+      scriptSrc: [
+        "'self'",
+        // SECURITY: Only specific trusted domains - no wildcards
+        "https://js.stripe.com", // Stripe payments (specific URL)
+        // SECURITY: Clerk domains only if configured
+        ...(process.env.CLERK_PUBLISHABLE_KEY ? ["https://clerk.ceylonx.com"] : []),
+        // SECURITY: Only allow unsafe-eval in development for HMR
+        ...(isDevelopment ? ["'unsafe-eval'"] : []),
+      ].filter(Boolean),
+      // SECURITY: Strict style sources with minimal inline permissions
+      styleSrc: [
+        "'self'",
+        "https://fonts.googleapis.com", // Google Fonts styles
+        // SECURITY: Specific style hashes for critical inline styles only
+        "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='", // Empty style hash
+        // SECURITY: Allow unsafe-inline only in development for hot reload
+        ...(isDevelopment ? ["'unsafe-inline'"] : []),
+        // SECURITY: Clerk styles only if configured
+        ...(process.env.CLERK_PUBLISHABLE_KEY ? ["https://clerk.ceylonx.com"] : []),
+      ].filter(Boolean),
+      fontSrc: [
+        "'self'",
+        "https://fonts.gstatic.com", // Google Fonts
+        "https://fonts.googleapis.com" // Google Fonts fallback
+      ],
+      // SECURITY: Tightened image sources - removed wildcards
+      imgSrc: [
+        "'self'",
+        "data:", // Data URLs for inline images
+        "blob:", // Blob URLs for user uploads
+        // SECURITY: Specific image domains only - no wildcards
+        "https://images.unsplash.com", // Unsplash (specific subdomain)
+        "https://lh3.googleusercontent.com", // Google profile images (specific subdomain)
+        "https://graph.facebook.com", // Facebook profile images (specific API endpoint)
+        "https://api.dicebear.com", // Avatar service
+        // SECURITY: Clerk assets only if configured
+        ...(process.env.CLERK_PUBLISHABLE_KEY ? ["https://clerk.ceylonx.com"] : []),
+      ].filter(Boolean),
+      // SECURITY: Strict connection sources - removed broad wss:// and ws:// wildcards
+      connectSrc: [
+        "'self'",
+        // SECURITY: Specific WebSocket endpoints only
+        ...(isDevelopment ? [
+          "ws://localhost:*", // Local development WebSocket
+          "wss://localhost:*", // Local development secure WebSocket
+        ] : []),
+        // SECURITY: Specific API endpoints only
+        "https://api.clerk.com", // Clerk API
+        "https://api.stripe.com", // Stripe API
+        // SECURITY: Clerk domains only if configured
+        ...(process.env.CLERK_PUBLISHABLE_KEY ? ["https://clerk.ceylonx.com"] : []),
+      ].filter(Boolean),
+      frameSrc: [
+        "'self'",
+        "https://js.stripe.com", // Stripe iframe
+        // SECURITY: Clerk iframe only if configured
+        ...(process.env.CLERK_PUBLISHABLE_KEY ? ["https://clerk.ceylonx.com"] : []),
+      ].filter(Boolean),
+      objectSrc: ["'none'"], // SECURITY: Disable object/embed for security  
+      baseUri: ["'self'"], // SECURITY: Prevent base tag injection
+      formAction: ["'self'"], // SECURITY: Restrict form submissions
+      frameAncestors: ["'none'"], // SECURITY: Prevent embedding in iframes
     },
   },
+  // SECURITY: Additional production security headers
+  hsts: {
+    maxAge: 31536000, // 1 year
+    includeSubDomains: true,
+    preload: true
+  },
+  noSniff: true,
+  frameguard: { action: 'deny' },
+  referrerPolicy: { policy: ['strict-origin-when-cross-origin'] }, // SECURITY: Stricter referrer policy
+  crossOriginEmbedderPolicy: isProduction, // SECURITY: Enable COEP in production
+  crossOriginOpenerPolicy: isProduction, // SECURITY: Enable COOP in production
+  crossOriginResourcePolicy: { policy: 'same-origin' } // SECURITY: Restrict cross-origin resources
 }));
 
 // Global rate limiting
@@ -48,9 +120,12 @@ app.use(rateLimit({
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: false, limit: '20mb' }));
 
+// Security-hardened request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
+  
+  // SECURITY: Import secure logging utilities dynamically
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
   const originalResJson = res.json;
@@ -63,12 +138,21 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+      
+      // SECURITY: Sanitize response body to prevent PII leakage
       if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+        // Avoid logging response bodies that might contain PII
+        const hasUserData = capturedJsonResponse.email || capturedJsonResponse.name || capturedJsonResponse.user || capturedJsonResponse.users;
+        if (!hasUserData && typeof capturedJsonResponse === 'object') {
+          const sanitized = capturedJsonResponse.error || capturedJsonResponse.message ? 
+            { error: capturedJsonResponse.error, message: capturedJsonResponse.message } : 
+            '[RESPONSE_OMITTED]';
+          logLine += ` :: ${JSON.stringify(sanitized)}`;
+        }
       }
 
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
+      if (logLine.length > 100) {
+        logLine = logLine.slice(0, 99) + "…";
       }
 
       log(logLine);

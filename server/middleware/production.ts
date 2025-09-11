@@ -8,22 +8,12 @@ export const productionSecurityMiddleware = () => {
   const middlewares: any[] = [];
   
   if (isProduction()) {
-    // Security headers for production
+    // SECURITY: Removed duplicate CSP - unified CSP is handled in server/index.ts
+    // Only add production-specific non-CSP security headers here
     middlewares.push(
       helmet({
-        contentSecurityPolicy: {
-          directives: {
-            defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https:", "data:"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-            imgSrc: ["'self'", "data:", "https:", "blob:"],
-            connectSrc: ["'self'", "https:", "wss:"],
-            fontSrc: ["'self'", "https:", "data:"],
-            objectSrc: ["'none'"],
-            mediaSrc: ["'self'", "https:", "blob:"],
-            frameSrc: ["'self'"],
-          },
-        },
+        // SECURITY: Disable CSP here to avoid conflicts with main CSP in index.ts
+        contentSecurityPolicy: false,
         hsts: {
           maxAge: 31536000,
           includeSubDomains: true,

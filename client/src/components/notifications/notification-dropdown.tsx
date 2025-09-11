@@ -15,6 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
 import { getDisplayName } from "@/lib/profileUtils";
+import { safeNavigate, validateActionUrl } from "@/lib/urlValidation";
 import type { Notification } from "@shared/schema";
 
 export function NotificationDropdown() {
@@ -71,10 +72,12 @@ export function NotificationDropdown() {
     if (!notification.isRead) {
       markAsReadMutation.mutate(notification.id);
     }
-    // Try primary action URL first, then fallback to actionUrl
+    // SECURITY: Safe navigation with URL validation
     const targetUrl = notification.primaryActionUrl || notification.actionUrl;
-    if (targetUrl) {
-      window.location.href = targetUrl;
+    if (targetUrl && validateActionUrl(targetUrl)) {
+      safeNavigate(targetUrl);
+    } else if (targetUrl) {
+      console.warn('🔒 Blocked unsafe notification URL:', targetUrl.substring(0, 50));
     }
   };
 
@@ -196,8 +199,10 @@ export function NotificationDropdown() {
                             className="bg-ceylon-green hover:bg-ceylon-green/90 text-white text-xs px-3 py-1"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (notification.primaryActionUrl) {
-                                window.location.href = notification.primaryActionUrl;
+                              if (notification.primaryActionUrl && validateActionUrl(notification.primaryActionUrl)) {
+                                safeNavigate(notification.primaryActionUrl);
+                              } else if (notification.primaryActionUrl) {
+                                console.warn('🔒 Blocked unsafe primary action URL:', notification.primaryActionUrl.substring(0, 50));
                               }
                             }}
                             data-testid={`button-primary-action-${notification.id}`}
@@ -212,8 +217,10 @@ export function NotificationDropdown() {
                             className="text-ceylon-blue border-ceylon-blue hover:bg-ceylon-blue hover:text-white text-xs px-3 py-1"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (notification.secondaryActionUrl) {
-                                window.location.href = notification.secondaryActionUrl;
+                              if (notification.secondaryActionUrl && validateActionUrl(notification.secondaryActionUrl)) {
+                                safeNavigate(notification.secondaryActionUrl);
+                              } else if (notification.secondaryActionUrl) {
+                                console.warn('🔒 Blocked unsafe secondary action URL:', notification.secondaryActionUrl.substring(0, 50));
                               }
                             }}
                             data-testid={`button-secondary-action-${notification.id}`}

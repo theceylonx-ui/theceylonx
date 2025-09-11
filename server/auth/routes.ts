@@ -14,6 +14,7 @@ import { sendMagicLink, verifyMagicLink, isEmailConfigured } from './email';
 import { sendPhoneOtp, verifyPhoneOtp, isPhoneConfigured } from './phone';
 import { emailAuthSchema, phoneStartSchema, phoneVerifySchema } from '@shared/schema';
 import './passport'; // Initialize passport strategies
+import { logAuthSuccess, logAuthFailure, sanitizeRequestForLogging } from '../utils/secureLogging';
 
 const router = Router();
 
@@ -64,10 +65,10 @@ router.get('/google/callback',
     }
 
     try {
-      console.log('✅ Google OAuth success for user:', req.user.email || req.user.id);
+      logAuthSuccess('google-oauth', { userId: req.user.id, provider: 'google', ip: req.ip });
       const tokens = await generateAuthTokens(req.user);
       setAuthCookies(res, tokens);
-      console.log('🍪 Auth cookies set, redirecting to callback page');
+      // Security: Auth cookies set, redirecting
       res.redirect(`${baseUrl}/auth/callback?success=1`);
     } catch (error) {
       console.error('❌ Google OAuth callback error:', error);
@@ -105,10 +106,10 @@ router.get('/facebook/callback',
     }
 
     try {
-      console.log('✅ Facebook OAuth success for user:', req.user.name || req.user.id);
+      logAuthSuccess('facebook-oauth', { userId: req.user.id, provider: 'facebook', ip: req.ip });
       const tokens = await generateAuthTokens(req.user);
       setAuthCookies(res, tokens);
-      console.log('🍪 Auth cookies set, redirecting to callback page');
+      // Security: Auth cookies set, redirecting
       res.redirect(`${baseUrl}/auth/callback?success=1`);
     } catch (error) {
       console.error('❌ Facebook OAuth callback error:', error);
@@ -227,11 +228,7 @@ router.get('/me', async (req: Request, res: Response) => {
     updatedAt: freshUser.updatedAt,
   };
   
-  console.log("🔄 /api/auth/me returning fresh user data:", { 
-    username: responseUser.username, 
-    bio: responseUser.bio ? responseUser.bio.substring(0, 30) : null,
-    updatedAt: responseUser.updatedAt 
-  });
+  // Security: User data refresh completed without logging PII
   
   // Add cache-busting headers to prevent browser caching
   res.set({
