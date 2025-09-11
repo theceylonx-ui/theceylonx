@@ -180,7 +180,7 @@ export interface IStorage {
   // Trip interest request operations
   createTripInterestRequest(request: InsertTripInterestRequest): Promise<TripInterestRequest>;
   getTripInterestRequestByUserAndTrip(userId: string, tripId: string): Promise<TripInterestRequest | undefined>;
-  getTripInterestRequests(tripId: string): Promise<TripInterestRequest[]>;
+  getTripInterestRequests(tripId: string): Promise<any[]>;
   updateTripInterestRequestStatus(requestId: string, status: 'accepted' | 'rejected'): Promise<TripInterestRequest>;
   
   // Rating operations
@@ -348,22 +348,22 @@ export class DatabaseStorage implements IStorage {
   // User operations
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    return user as User | undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
+    return user as User | undefined;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user;
+    return user as User | undefined;
   }
 
   async getUserByGoogleId(googleId: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.googleId, googleId));
-    return user;
+    return user as User | undefined;
   }
 
   async getUserProfile(userId: string, requesterId?: string): Promise<User | undefined> {
@@ -372,12 +372,12 @@ export class DatabaseStorage implements IStorage {
     if (!user) return undefined;
     
     // Return user data - privacy filtering will be handled at the API level
-    return user;
+    return user as User;
   }
 
   async createUser(userData: Partial<UpsertUser>): Promise<User> {
-    const [user] = await db.insert(users).values(userData as any).returning();
-    return user;
+    const result = await db.insert(users).values(userData as any).returning() as any[];
+    return result[0] as User;
   }
 
   async updateUser(id: string, userData: Partial<UpsertUser>): Promise<User> {
@@ -386,11 +386,11 @@ export class DatabaseStorage implements IStorage {
       .set({ ...userData, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
-    return user;
+    return user as User;
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
+    const result = await db
       .insert(users)
       .values(userData)
       .onConflictDoUpdate({
@@ -400,8 +400,8 @@ export class DatabaseStorage implements IStorage {
           updatedAt: new Date(),
         },
       })
-      .returning();
-    return user;
+      .returning() as any[];
+    return result[0] as User;
   }
 
   async deleteUser(id: string): Promise<void> {
@@ -605,8 +605,8 @@ export class DatabaseStorage implements IStorage {
       price: typeof trip.price === 'number' ? trip.price.toString() : trip.price,
       status: (trip.status as any) || 'active'
     };
-    const [newTrip] = await db.insert(trips).values(tripData).returning();
-    return newTrip;
+    const result = await db.insert(trips).values(tripData as any).returning();
+    return result[0];
   }
 
   async getTrip(id: string, requestingUserId?: string): Promise<TripWithOrganizer | undefined> {
@@ -685,7 +685,7 @@ export class DatabaseStorage implements IStorage {
       
       return { 
         ...redactedTrip, 
-        organizer: redactedOrganizer,
+        organizer: redactedOrganizer as any,
         // Include metadata fields if available
         duration: metadata?.duration || null,
         difficulty: metadata?.difficulty || null,
@@ -693,8 +693,7 @@ export class DatabaseStorage implements IStorage {
         seasonality: metadata?.seasonality || null,
         safetyFlags: metadata?.safety_flags || null,
         tags: metadata?.tags || null,
-        notes: metadata?.notes || null,
-      };
+      } as TripWithOrganizer;
     } catch (error) {
       console.error("Error in getTrip:", error);
       throw error;
@@ -705,15 +704,17 @@ export class DatabaseStorage implements IStorage {
     const tripData = {
       ...trip,
       price: trip.price !== undefined ? (typeof trip.price === 'number' ? trip.price.toString() : trip.price) : undefined,
+      priceMin: (trip as any).priceMin !== undefined ? ((trip as any).priceMin ? (trip as any).priceMin.toString() : null) : undefined,
+      priceMax: (trip as any).priceMax !== undefined ? ((trip as any).priceMax ? (trip as any).priceMax.toString() : null) : undefined,
       status: trip.status as any,
       updatedAt: new Date()
     };
-    const [updatedTrip] = await db
+    const result = await db
       .update(trips)
-      .set(tripData)
+      .set(tripData as any)
       .where(eq(trips.id, id))
       .returning();
-    return updatedTrip;
+    return result[0];
   }
 
   async deleteTrip(id: string): Promise<void> {
@@ -865,7 +866,9 @@ export class DatabaseStorage implements IStorage {
         sql`LOWER(${trips.fromLocation}) LIKE ${searchTerm}`,
         sql`LOWER(${trips.toLocation}) LIKE ${searchTerm}`
       );
-      conditions.push(searchCondition);
+      if (searchCondition) {
+        conditions.push(searchCondition);
+      }
     }
 
     // 🚀 PERFORMANCE: Single optimized query with explicit field selection
@@ -918,12 +921,12 @@ export class DatabaseStorage implements IStorage {
     // 🚀 PERFORMANCE: Streamlined data transformation
     const tripsWithOrganizers = dataResult.map(({ trip, organizer }) => ({
       ...trip,
-      organizer: organizer ? normalizeUserForUI(organizer) : null,
+      organizer: organizer ? normalizeUserForUI(organizer as any) : null,
       // Default redaction for public search results
       organizerPhone: null,
       organizerEmail: null,
       organizerCountryCode: null,
-    }));
+    } as unknown as TripWithOrganizer));
     
     return { trips: tripsWithOrganizers, total };
   }
@@ -1075,8 +1078,8 @@ export class DatabaseStorage implements IStorage {
 
     return {
       ...thread,
-      admin: admin!,
-      organizer: organizer!,
+      admin: admin! as any,
+      organizer: organizer! as any,
       report: report!,
       messageCount: messageCountResult.count,
       lastMessage,
@@ -2212,12 +2215,31 @@ export class DatabaseStorage implements IStorage {
     return request;
   }
 
-  async getTripInterestRequests(tripId: string): Promise<TripInterestRequest[]> {
+  async getTripInterestRequests(tripId: string): Promise<any[]> {
     const requests = await db
-      .select()
+      .select({
+        id: tripInterestRequests.id,
+        tripId: tripInterestRequests.tripId,
+        userId: tripInterestRequests.userId,
+        message: tripInterestRequests.message,
+        status: tripInterestRequests.status,
+        createdAt: tripInterestRequests.createdAt,
+        updatedAt: tripInterestRequests.updatedAt,
+        chatThreadId: tripInterestRequests.chatThreadId,
+        user: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          profileImageUrl: users.profileImageUrl,
+          phone: users.phone
+        }
+      })
       .from(tripInterestRequests)
+      .leftJoin(users, eq(tripInterestRequests.userId, users.id))
       .where(eq(tripInterestRequests.tripId, tripId))
       .orderBy(desc(tripInterestRequests.createdAt));
+    
     return requests;
   }
 
@@ -3037,7 +3059,7 @@ export class DatabaseStorage implements IStorage {
 
   // Admin helper methods
   async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users);
+    return await db.select().from(users) as User[];
   }
 
   async getAllTrips(): Promise<Trip[]> {

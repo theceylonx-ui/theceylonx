@@ -91,7 +91,7 @@ function TravelQuote() {
 
 export default function ProfilePage() {
   const { user, isLoading: authLoading } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
   
   // Check URL parameters for tab selection
@@ -1048,6 +1048,7 @@ function TravelPreferences({ preferences, onUpdate }: any) {
 // Saved Trips Component
 function SavedTrips() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [activeSubTab, setActiveSubTab] = useState("all");
   
   // Get all saved trips (optimized - single query)
@@ -1197,6 +1198,7 @@ function SavedTrips() {
 // User Activity Component
 function UserActivity() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [activeSubTab, setActiveSubTab] = useState("questions");
   
   const { data: questions = [], isLoading: questionsLoading } = useQuery<any>({

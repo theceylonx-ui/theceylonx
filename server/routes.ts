@@ -1218,21 +1218,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       const { tripId } = req.params;
       
-      // Verify user is the trip organizer
+      log.info(`Fetching interest requests for trip ${tripId} by user ${userId}`, { 
+        userId, 
+        feature: 'trip-interest-requests',
+        action: 'getTripInterestRequests',
+        userAgent: req.headers['user-agent'],
+        metadata: { tripId }
+      });
+      
+      // Verify trip exists
       const trip = await storage.getTrip(tripId);
       if (!trip) {
-        return res.status(404).json({ message: "Trip not found" });
+        log.warn(`Trip not found: ${tripId}`, { userId, feature: 'trip-interest-requests', action: 'tripNotFound', metadata: { tripId } });
+        return res.status(404).json({ 
+          message: "Trip not found",
+          error: "TRIP_NOT_FOUND",
+          tripId 
+        });
       }
       
+      log.info(`Trip found - ID: ${tripId}, Organizer: ${trip.organizerId}, Requesting User: ${userId}`, {
+        userId,
+        feature: 'trip-interest-requests',
+        action: 'tripFound',
+        metadata: {
+          tripId,
+          organizerId: trip.organizerId,
+          requestingUserId: userId,
+          tripTitle: trip.title
+        }
+      });
+      
+      // Verify user is the trip organizer
       if (trip.organizerId !== userId) {
-        return res.status(403).json({ message: "Not authorized to view requests for this trip" });
+        log.warn(`Authorization failed - user ${userId} is not organizer of trip ${tripId} (organizer: ${trip.organizerId})`, {
+          userId,
+          feature: 'trip-interest-requests',
+          action: 'authorizationFailed',
+          errorCode: 'UNAUTHORIZED_ACCESS',
+          metadata: {
+            tripId,
+            organizerId: trip.organizerId
+          }
+        });
+        return res.status(403).json({ 
+          message: "Not authorized to view requests for this trip",
+          error: "UNAUTHORIZED_ACCESS",
+          tripId,
+          organizerId: trip.organizerId
+        });
       }
       
+      // Fetch interest requests with user data
       const requests = await storage.getTripInterestRequests(tripId);
+      
+      log.info(`Successfully fetched ${requests.length} interest requests for trip ${tripId}`, {
+        userId,
+        feature: 'trip-interest-requests',
+        action: 'fetchSuccess',
+        metadata: {
+          tripId,
+          requestCount: requests.length,
+          requestStatuses: requests.reduce((acc: any, req: any) => {
+            acc[req.status] = (acc[req.status] || 0) + 1;
+            return acc;
+          }, {})
+        }
+      });
+      
       res.json(requests);
-    } catch (error) {
+    } catch (error: any) {
+      log.error(`Failed to fetch trip interest requests for trip ${req.params.tripId}`, {
+        userId: req.user?.id,
+        feature: 'trip-interest-requests',
+        action: 'fetchError',
+        errorCode: 'FETCH_FAILED',
+        metadata: {
+          errorMessage: error.message,
+          stack: error.stack,
+          tripId: req.params.tripId
+        }
+      });
       console.error("Error fetching trip interest requests:", error);
-      res.status(500).json({ message: "Failed to fetch trip interest requests" });
+      res.status(500).json({ 
+        message: "Failed to fetch trip interest requests",
+        error: "INTERNAL_SERVER_ERROR",
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 
@@ -4431,7 +4503,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get trip info for context (include userId for proper organizer data)  
-      const trip = await storage.getTrip(thread.tripId, userId);
+      const trip = thread.tripId ? await storage.getTrip(thread.tripId, userId) : null;
       
       // Log chat API access for monitoring
       if (process.env.NODE_ENV === 'development') {
@@ -4654,7 +4726,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get trip contact info
-      const trip = await storage.getTrip(thread.tripId);
+      const trip = thread.tripId ? await storage.getTrip(thread.tripId) : null;
       if (!trip) {
         return res.status(404).json({ message: 'Trip not found' });
       }
