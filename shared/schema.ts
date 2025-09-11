@@ -1183,6 +1183,36 @@ export const insertTripSchema = z.object({
     return val;
   }),
   region: z.string().min(1, "Region is required"),
+  
+  // Pricing variants
+  priceMin: z.union([z.number(), z.string(), z.null(), z.undefined()]).optional().transform(val => {
+    if (val === null || val === undefined || val === '') return null;
+    if (typeof val === 'string') {
+      const parsed = parseFloat(val);
+      return isNaN(parsed) ? null : parsed;
+    }
+    return val;
+  }),
+  priceMax: z.union([z.number(), z.string(), z.null(), z.undefined()]).optional().transform(val => {
+    if (val === null || val === undefined || val === '') return null;
+    if (typeof val === 'string') {
+      const parsed = parseFloat(val);
+      return isNaN(parsed) ? null : parsed;
+    }
+    return val;
+  }),
+  
+  // Additional trip details
+  duration: z.string().optional(),
+  difficulty: z.enum(['easy', 'moderate', 'challenging']).optional(),
+  buddyFriendly: z.boolean().default(false).optional(),
+  safetyFlags: z.array(z.string()).optional(),
+  seasonality: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  
+  // Category field
+  category: z.enum(['roadtrip', 'hiking', 'beach', 'culture', 'wellness', 'festival', 'workshop', 'wildlife', 'food', 'adventure_sport', 'unknown']).optional(),
+  
   // Legacy contact field - kept for backward compatibility, now optional
   contactInfo: z.string().optional(),
   // New separate contact fields
@@ -1193,12 +1223,21 @@ export const insertTripSchema = z.object({
   organizerId: z.string(),
   status: z.string().optional(),
   imageUrl: z.string().optional(),
+  
   // User uploaded images from trip creation form
   mediaUrls: z.array(z.string().refine((url) => {
     // Allow data URLs (base64) and regular URLs
     return url.startsWith('data:') || z.string().url().safeParse(url).success;
   }, "Invalid image URL or data format")).max(12, "Maximum 12 images allowed").optional(),
   coverImageIndex: z.number().min(0).default(0).optional(),
+  mediaMetadata: z.array(z.object({
+    url: z.string().url(),
+    alt: z.string().optional(),
+    caption: z.string().optional(),
+  })).optional(),
+  
+  // Form-specific field (not stored in database)
+  termsAccepted: z.boolean().optional(),
 }).refine((data) => {
   // Custom validation: require at least phone OR email contact information
   const hasPhone = data.organizerPhone && data.organizerPhone.length >= 9;

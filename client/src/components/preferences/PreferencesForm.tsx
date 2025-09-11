@@ -143,7 +143,7 @@ export function PreferencesForm() {
     }
   }, [preferences, form]);
 
-  // Save preferences mutation with optimistic updates
+  // Save preferences mutation with improved error handling
   const savePreferencesMutation = useMutation({
     mutationFn: async (data: PreferencesFormData) => {
       // Get the latest preferences to ensure we have the most current version
@@ -171,10 +171,14 @@ export function PreferencesForm() {
       queryClient.setQueryData(["/api/preferences"], data.preferences);
       setIsOptimistic(false);
       
-      // CRITICAL: Invalidate user profile queries to update completion status
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/me"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/user/preferences"] });
+      // Invalidate related queries to update completion status
+      // Use a single batch invalidation to avoid race conditions
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0] as string;
+          return key.includes('/api/me') || key.includes('/api/auth/me') || key.includes('/api/user/preferences');
+        }
+      });
       
       toast({
         title: "Preferences saved",
@@ -193,57 +197,28 @@ export function PreferencesForm() {
       
       console.error("Failed to save preferences:", error);
       
-      // Check if it's a version conflict error (409)
+      // Handle version conflict with clear user feedback
       if (error instanceof Error && error.message.includes("409")) {
-        // Version conflict - refetch latest and retry automatically
-        try {
-          // Refetch the latest preferences
-          await queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
-          await queryClient.refetchQueries({ queryKey: ["/api/preferences"] });
-          
-          // Retry the save with latest version
-          const latestPreferences = queryClient.getQueryData<UserPreferences>(["/api/preferences"]);
-          const response = await apiRequest("PUT", "/api/preferences", {
-            ...variables,
-            version: latestPreferences?.version || 1
-          });
-          
-          // If retry succeeds, update the data
-          const data = await response.json();
-          queryClient.setQueryData(["/api/preferences"], data.preferences);
-          
-          // CRITICAL: Invalidate user profile queries to update completion status
-          queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/me"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/user/preferences"] });
-          
-          toast({
-            title: "Preferences saved",
-            description: "Your travel preferences have been updated successfully. Redirecting to recommendations...",
-          });
-
-          // Redirect to home page to see personalized recommendations after a brief delay
-          setTimeout(() => {
-            setLocation('/');
-          }, 1500);
-          
-          return; // Exit early on successful retry
-        } catch (retryError) {
-          console.error("Retry failed:", retryError);
-          toast({
-            title: "Failed to save preferences",
-            description: "Version conflict occurred. Please refresh the page and try again.",
-            variant: "destructive",
-          });
-          return;
-        }
+        toast({
+          title: "Preferences were updated by another session",
+          description: "Please refresh the page and try saving again to avoid conflicts.",
+          variant: "destructive",
+          duration: 7000,
+        });
+        
+        // Refresh preferences to get latest version for next attempt
+        queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
+        return;
       }
       
-      // Handle other errors normally
+      // Handle other errors with specific feedback
+      const errorMessage = error instanceof Error ? error.message : "Please try again later.";
+      
       toast({
         title: "Failed to save preferences",
-        description: error instanceof Error ? error.message : "Please try again later.",
+        description: errorMessage,
         variant: "destructive",
+        duration: 5000,
       });
     },
   });
