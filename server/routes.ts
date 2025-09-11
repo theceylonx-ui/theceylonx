@@ -1044,11 +1044,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update interest request status (accept/reject)
-  app.put('/api/interest-requests/:requestId', isAuthenticated, async (req, res) => {
+  app.put('/api/interest-requests/:requestId', unifiedAuthGuard, async (req, res) => {
     try {
       const { requestId } = req.params;
       const { status } = req.body;
-      const userId = (req.user as any)?.claims?.sub;
+      const userId = req.user!.id;
 
       if (!userId) {
         return res.status(401).json({ message: "Not authenticated" });

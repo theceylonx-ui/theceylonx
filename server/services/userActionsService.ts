@@ -117,11 +117,11 @@ export class UserActionsService {
           await storage.createNotification({
             userId: trip.organizerId,
             tripId: tripId,
-            type: null,
+            type: 'interest_renewed',
             category: 'trips',
             priority: 'normal',
             title: 'Trip Interest Renewed',
-            content: `Someone renewed their interest in your trip "${trip.title}"`,
+            message: `Someone renewed their interest in your trip "${trip.title}"`,
             actionUrl: `/trips/${tripId}/requests`,
             isRead: false
           });
@@ -170,11 +170,11 @@ export class UserActionsService {
       await storage.createNotification({
         userId: trip.organizerId,
         tripId: tripId,
-        type: null, // Will use enum value
+        type: 'interest_request',
         category: 'trips',
         priority: 'normal',
         title: 'New Trip Interest',
-        content: `Someone is interested in your trip "${trip.title}"`,
+        message: `Someone is interested in your trip "${trip.title}"`,
         actionUrl: `/trips/${tripId}/requests`,
         isRead: false
       });
