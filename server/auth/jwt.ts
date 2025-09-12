@@ -289,7 +289,7 @@ export async function getCurrentUser(req: Request, res?: Response): Promise<JWTU
         try {
           const decoded = jwt.decode(accessToken);
           console.log("🔍 Token decode result:", decoded ? "success" : "failed");
-          if (decoded && typeof decoded === 'object' && 'exp' in decoded) {
+          if (decoded && typeof decoded === 'object' && 'exp' in decoded && typeof decoded.exp === 'number') {
             const now = Math.floor(Date.now() / 1000);
             console.log("🔍 Token expiry check:", { exp: decoded.exp, now, expired: decoded.exp < now });
           }
