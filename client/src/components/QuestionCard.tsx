@@ -2,12 +2,11 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, ThumbsUp, Eye, Edit, Trash2, Clock, User } from "lucide-react";
 import { UpvoteButton } from '@/components/UpvoteButton';
 import { formatDistanceToNow } from "date-fns";
-import { getDisplayName, getInitials } from "@/lib/profileUtils";
+import { UserDisplay } from "@/components/ui/user-display";
 import type { QuestionWithDetails } from "@shared/schema";
 import { NeonBadge } from "@/components/ui/neon-badge";
 
@@ -23,8 +22,17 @@ export function QuestionCard({ question, onEdit, onDelete, currentUserId, showPr
   const [isHovered, setIsHovered] = useState(false);
   
   const isAuthor = currentUserId === question.userId;
-  const displayName = question.isAnonymous ? "Anonymous" : getDisplayName(question.user);
-  const userInitials = question.isAnonymous ? "A" : getInitials(question.user);
+  
+  // Prepare user data for UserDisplay component
+  const displayUser = question.isAnonymous 
+    ? { id: "anonymous", displayName: "Anonymous", username: null, avatarUrl: null, initials: "A" }
+    : question.user ? {
+        id: question.user.id || 'unknown',
+        displayName: question.user.displayName,
+        username: question.user.username,
+        avatarUrl: question.user.profileImageUrl,
+        initials: question.user.initials || 'U'
+      } : null;
   
   // Truncate body for preview (2 lines ~ 120 characters)
   const bodyPreview = question.body.length > 120 
@@ -105,17 +113,14 @@ export function QuestionCard({ question, onEdit, onDelete, currentUserId, showPr
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4 text-text-muted">
               {/* Author */}
-              <div className="flex items-center gap-2">
-                <Avatar className="h-6 w-6">
-                  {!question.isAnonymous && question.user?.profileImageUrl && (
-                    <AvatarImage src={question.user.profileImageUrl} alt={displayName} />
-                  )}
-                  <AvatarFallback className="text-xs bg-ui-surface text-text-muted">
-                    {userInitials}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="caption">{displayName}</span>
-              </div>
+              <UserDisplay 
+                user={displayUser}
+                showAvatar={true}
+                avatarSize="sm"
+                className="gap-2"
+                nameClassName="caption"
+                clickable={!question.isAnonymous && !!question.user?.id}
+              />
               
               {/* Time */}
               <div className="flex items-center gap-1">

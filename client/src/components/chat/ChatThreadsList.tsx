@@ -2,11 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageCircle, Clock, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { EmptyState } from "@/components/EmptyState";
-import { getDisplayName } from "@/lib/profileUtils";
+import { UserDisplay } from "@/components/ui/user-display";
 
 interface ChatThread {
   id: string;
@@ -122,17 +121,21 @@ export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
               data-testid={`chat-thread-${thread.id}`}
             >
               <div className="flex items-center space-x-4">
-                {/* Other User Avatar */}
+                {/* Other User Avatar with unread count */}
                 <div className="relative">
-                  <Avatar className="w-12 h-12">
-                    <AvatarImage 
-                      src={thread.otherUser?.avatarUrl} 
-                      alt={getDisplayName(thread.otherUser) || "User"} 
-                    />
-                    <AvatarFallback>
-                      {thread.otherUser?.initials || "U"}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserDisplay 
+                    user={thread.otherUser ? {
+                      id: thread.otherUser.id,
+                      displayName: thread.otherUser.displayName,
+                      username: thread.otherUser.username,
+                      avatarUrl: thread.otherUser.avatarUrl,
+                      initials: thread.otherUser.initials
+                    } : null}
+                    showAvatar={true}
+                    avatarSize="lg"
+                    className="gap-0"
+                    clickable={!!thread.otherUser?.id}
+                  />
                   {thread.unreadCount > 0 && (
                     <Badge 
                       className="absolute -top-1 -right-1 w-5 h-5 text-xs flex items-center justify-center p-0"
@@ -146,12 +149,18 @@ export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
                 {/* Chat Details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <p className="font-medium text-sm truncate">
-                      {getDisplayName(thread.otherUser)}
-                      {thread.otherUser?.username && (
-                        <span className="text-gray-500 ml-1">@{thread.otherUser.username}</span>
-                      )}
-                    </p>
+                    <UserDisplay 
+                      user={thread.otherUser ? {
+                        id: thread.otherUser.id,
+                        displayName: thread.otherUser.displayName,
+                        username: thread.otherUser.username,
+                        avatarUrl: thread.otherUser.avatarUrl,
+                        initials: thread.otherUser.initials
+                      } : null}
+                      showAvatar={false}
+                      nameClassName="font-medium text-sm truncate"
+                      clickable={!!thread.otherUser?.id}
+                    />
                     <div className="flex items-center text-xs text-gray-500 ml-2">
                       <Clock className="w-3 h-3 mr-1" />
                       {format(new Date(thread.updatedAt), "MMM d")}

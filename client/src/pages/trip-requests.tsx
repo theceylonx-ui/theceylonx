@@ -7,12 +7,11 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
-import { getDisplayName, getInitials } from "@/lib/profileUtils";
+import { UserDisplay } from "@/components/ui/user-display";
 import type { TripInterestRequest, User as UserType } from "@shared/schema";
 
 interface TripInterestRequestWithUser extends TripInterestRequest {
@@ -270,16 +269,21 @@ export default function TripRequestsPage({ params }: TripRequestsPageProps) {
                     {/* Request Header */}
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarImage src={request.user.profileImageUrl || undefined} />
-                          <AvatarFallback>
-                            {getInitials(request.user)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h3 className="font-semibold">
-                            {getDisplayName(request.user)}
-                          </h3>
+                        <UserDisplay 
+                          user={request.user ? {
+                            id: request.user.id,
+                            displayName: request.user.displayName,
+                            username: request.user.username,
+                            avatarUrl: request.user.profileImageUrl,
+                            initials: request.user.initials || 'U'
+                          } : null}
+                          showAvatar={true}
+                          avatarSize="md"
+                          className="gap-3"
+                          nameClassName="font-semibold"
+                          clickable={!!request.user?.id}
+                        />
+                        <div className="flex-1">
                           <p className="text-sm text-gray-600">
                             Requested {request.createdAt ? new Date(request.createdAt).toLocaleDateString() : 'Date unknown'}
                           </p>

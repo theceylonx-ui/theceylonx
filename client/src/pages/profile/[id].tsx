@@ -6,13 +6,13 @@ import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
+import { UserDisplay } from "@/components/ui/user-display";
 import { VerificationBadges } from "@/components/ui/verification-badges";
 import { FollowButton } from "@/components/ui/follow-button";
 import { ReportButton } from "@/components/ui/report-button";
-import { getDisplayName, getInitials } from "@/lib/profileUtils";
+import { getDisplayName } from "@/lib/profileUtils";
 import ProfilePage from "@/pages/me"; // Fallback to own profile
 
 interface UserProfile {
@@ -232,19 +232,24 @@ export default function UserProfilePage() {
             <div className="flex flex-col md:flex-row items-start gap-6">
               {/* Avatar and Basic Info */}
               <div className="flex flex-col items-center text-center">
-                <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
-                  <AvatarImage src={profile.profileImageUrl || undefined} />
-                  <AvatarFallback className="text-2xl font-semibold bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                    {getInitials(profile)}
-                  </AvatarFallback>
-                </Avatar>
-                
-                <div className="mt-4">
-                  <h1 className="text-2xl font-bold text-gray-900">{displayName}</h1>
-                  {profile.username && (
-                    <p className="text-gray-600">@{profile.username}</p>
-                  )}
-                </div>
+                <UserDisplay 
+                  user={{
+                    id: profile.id,
+                    displayName: profile.displayName,
+                    username: profile.username,
+                    avatarUrl: profile.profileImageUrl,
+                    initials: profile.initials || 'U'
+                  }}
+                  showAvatar={true}
+                  avatarSize="xl"
+                  layout="vertical"
+                  className="gap-4"
+                  nameClassName="text-2xl font-bold text-gray-900"
+                  clickable={false}
+                />
+                {profile.username && (
+                  <p className="text-gray-600 -mt-2">@{profile.username}</p>
+                )}
 
                 {/* Verification Badges */}
                 <div className="mt-3">
