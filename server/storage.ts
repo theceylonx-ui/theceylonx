@@ -879,7 +879,6 @@ export class DatabaseStorage implements IStorage {
         trip: {
           id: trips.id,
           title: trips.title,
-          description: trips.description,
           fromLocation: trips.fromLocation,
           toLocation: trips.toLocation,
           date: trips.date,
