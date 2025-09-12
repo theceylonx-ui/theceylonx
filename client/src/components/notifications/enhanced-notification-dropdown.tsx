@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
 import { getDisplayName } from "@/lib/profileUtils";
 import { safeNavigate, validateActionUrl } from "@/lib/urlValidation";
@@ -26,6 +27,7 @@ type NotificationPriority = "critical" | "normal" | "info";
 export function EnhancedNotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<NotificationCategory | "all">("all");
+  const { isAuthenticated } = useAuth();
   
   // Initialize WebSocket for real-time notifications
   const { isConnected, connectionState } = useWebSocket({
@@ -84,10 +86,11 @@ export function EnhancedNotificationDropdown() {
 
   // Notifications loaded successfully
 
-  // Fetch unread count with development fallback
+  // Fetch unread count with development fallback - only when authenticated
   const { data: unreadCountData } = useQuery<{ count: number }>({
     queryKey: ["/api/notifications/unread-count"],
-    refetchInterval: 30000, // Refetch every 30 seconds
+    enabled: isAuthenticated, // Only run query when authenticated
+    refetchInterval: isAuthenticated ? 30000 : false, // Only refetch when authenticated
     retry: (failureCount, error) => {
       // If we get 401 (Unauthorized) and we're in development, try fallback
       if (error instanceof Error && error.message.includes('401') && failureCount === 0) {
