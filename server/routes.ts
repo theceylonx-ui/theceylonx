@@ -1336,8 +1336,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const updatedRequest = await storage.updateInterestRequestStatus(requestId, status, userId);
       
+      console.log('🔔 Creating notification for interest request update:', {
+        requestId,
+        status,
+        userId: updatedRequest.userId
+      });
+      
       // Create notification for the requester
-      await storage.createNotification({
+      const notification = await storage.createNotification({
         userId: updatedRequest.userId,
         type: status === 'accepted' ? 'interest_accepted' : 'interest_declined',
         category: 'trips',
@@ -1353,6 +1359,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
           : `/trips/${updatedRequest.tripId}`,
         isRead: false
       });
+
+      console.log('✅ Notification created:', notification.id);
+
+      // Broadcast notification via WebSocket for real-time updates
+      const { websocketService } = await import('./services/websocketService');
+      if (notification) {
+        console.log('📡 Broadcasting notification via WebSocket');
+        websocketService.broadcastNotification({
+          type: 'notification',
+          data: {
+            id: notification.id,
+            userId: updatedRequest.userId,
+            type: status === 'accepted' ? 'interest_accepted' : 'interest_declined',
+            title: status === 'accepted' ? 'Interest Request Accepted!' : 'Interest Request Update',
+            message: status === 'accepted' 
+              ? 'Your interest request has been accepted. You can now chat with the organizer!'
+              : 'Your interest request was not accepted for this trip.',
+            category: 'trips',
+            priority: 'high',
+            isRead: false,
+            createdAt: new Date().toISOString(),
+            actionUrl: status === 'accepted' && updatedRequest.chatThreadId 
+              ? `/chat/${updatedRequest.chatThreadId}` 
+              : `/trips/${updatedRequest.tripId}`
+          }
+        });
+        console.log('📡 WebSocket notification sent');
+      }
 
       res.json(updatedRequest);
     } catch (error) {
