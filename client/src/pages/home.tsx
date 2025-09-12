@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import type { TripWithOrganizer } from "@shared/schema";
-import backgroundImage from "@assets/11_1756417976014.png";
+import backgroundImage from "@assets/landing-hero-bg.png";
 import { RecommendedTrips } from "@/components/RecommendedTrips";
 import { PreferencesCompletionBanner } from "@/components/PreferencesCompletionBanner";
 import { useAuth } from "@/hooks/useAuth";

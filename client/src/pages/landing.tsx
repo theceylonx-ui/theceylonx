@@ -6,7 +6,6 @@ import Footer from "@/components/Footer";
 import { Link } from "wouter";
 import { UserPlus, MapPin, Handshake, PiggyBank, Users, Compass, Heart, Shield, Flag, Star, UserCheck, Route } from "lucide-react";
 import logoImage from "@assets/5_1756417819316.png";
-import defaultBackgroundImage from "@assets/2_1757396354796.png";
 import { SEO, SEOConfigs } from "@/components/SEO";
 
 export default function Landing() {
@@ -31,7 +30,7 @@ export default function Landing() {
     enabled: !backgroundSetting?.value, // Only fetch if primary setting is not available
   });
 
-  const backgroundImage = backgroundSetting?.value || fallbackBackgroundSetting?.value || defaultBackgroundImage;
+  const backgroundImage = backgroundSetting?.value || fallbackBackgroundSetting?.value;
 
   const handleLogin = () => {
     window.location.href = '/auth/signin';
@@ -46,7 +45,7 @@ export default function Landing() {
       <SEO 
         {...SEOConfigs.home}
         ogUrl={typeof window !== 'undefined' ? window.location.href : 'https://www.theceylonx.com'}
-        ogImage={backgroundImage}
+        ogImage={backgroundImage || undefined}
       />
       <div className="min-h-screen bg-ui-bg">
       {/* Navigation Header */}
@@ -139,17 +138,19 @@ export default function Landing() {
           data-testid="hero-section"
         >
           <div className="absolute inset-0 bg-black opacity-60" aria-hidden="true"></div>
-          <div 
-            className="absolute inset-0" 
-            style={{
-              backgroundImage: `url(${backgroundImage})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center'
-            }}
-            aria-hidden="true"
-            role="img"
-            aria-label="Beautiful landscape of Sri Lanka showing travel destinations"
-          ></div>
+          {backgroundImage && (
+            <div 
+              className="absolute inset-0" 
+              style={{
+                backgroundImage: `url(${backgroundImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}
+              aria-hidden="true"
+              role="img"
+              aria-label="Beautiful landscape of Sri Lanka showing travel destinations"
+            ></div>
+          )}
           
           <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center text-white">
             <h1 
