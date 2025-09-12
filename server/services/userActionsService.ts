@@ -187,6 +187,13 @@ export class UserActionsService {
 
     // Create notification for the trip organizer
     if (trip.organizerId !== userId) { // Don't notify yourself
+      console.log('🔔 Creating trip interest notification for organizer:', {
+        organizerId: trip.organizerId,
+        tripId,
+        tripTitle: trip.title,
+        requesterId: userId
+      });
+
       const notification = await storage.createNotification({
         userId: trip.organizerId,
         tripId: tripId,
@@ -199,8 +206,11 @@ export class UserActionsService {
         isRead: false
       });
       
+      console.log('✅ Trip interest notification created:', notification.id);
+      
       // Broadcast notification in real-time
       if (notification) {
+        console.log('📡 Broadcasting trip interest notification via WebSocket');
         websocketService.broadcastNotification({
           type: 'notification',
           data: {
@@ -216,7 +226,12 @@ export class UserActionsService {
             actionUrl: `/trips/${tripId}/requests`
           }
         });
+        console.log('📡 Trip interest WebSocket notification sent');
+      } else {
+        console.error('❌ Failed to create trip interest notification');
       }
+    } else {
+      console.log('ℹ️ Skipping self-notification for trip organizer');
     }
 
     return { 
