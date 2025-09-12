@@ -275,11 +275,14 @@ export const contentTypeOptimization = (req: Request, res: Response, next: NextF
   const originalJson = res.json.bind(res);
   
   res.json = function(data: any) {
-    // Set optimized content type
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    
-    // Add security headers
-    res.setHeader('X-Content-Type-Options', 'nosniff');
+    // Only set headers if they haven't been sent yet
+    if (!res.headersSent) {
+      // Set optimized content type
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      
+      // Add security headers
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+    }
     
     return originalJson(data);
   };

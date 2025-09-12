@@ -68,12 +68,23 @@ export async function getAuthenticatedUser(req: any, res?: any): Promise<Unified
 
 // Unified auth guard middleware
 const unifiedAuthGuard = async (req: any, res: any, next: any) => {
-  const user = await getAuthenticatedUser(req, res);
-  if (!user) {
-    return res.status(401).json({ message: "Unauthorized" });
+  try {
+    const user = await getAuthenticatedUser(req, res);
+    if (!user) {
+      // Check if headers have already been sent to prevent "Cannot set headers" error
+      if (!res.headersSent) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      return; // Exit silently if headers already sent
+    }
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error("Error in unifiedAuthGuard:", error);
+    if (!res.headersSent) {
+      return res.status(500).json({ message: "Authentication error" });
+    }
   }
-  req.user = user;
-  next();
 };
 import { setupAuth, isAuthenticated } from "./auth";
 import cookieParser from 'cookie-parser';
