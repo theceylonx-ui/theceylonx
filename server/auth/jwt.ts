@@ -283,6 +283,20 @@ export async function getCurrentUser(req: Request, res?: Response): Promise<JWTU
     // SECURITY: Only log user ID in development - no email/PII
     if (user) {
       console.log("✅ JWT user details:", { id: user.id, provider: user.provider });
+    } else {
+      console.log("🔍 Debug: accessToken present:", !!accessToken, "refreshToken present:", !!refreshToken);
+      if (accessToken) {
+        try {
+          const decoded = jwt.decode(accessToken);
+          console.log("🔍 Token decode result:", decoded ? "success" : "failed");
+          if (decoded && typeof decoded === 'object' && 'exp' in decoded) {
+            const now = Math.floor(Date.now() / 1000);
+            console.log("🔍 Token expiry check:", { exp: decoded.exp, now, expired: decoded.exp < now });
+          }
+        } catch (e) {
+          console.log("🔍 Token decode error:", e instanceof Error ? e.message : 'unknown');
+        }
+      }
     }
   }
   return user;
