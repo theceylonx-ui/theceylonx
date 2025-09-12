@@ -641,7 +641,7 @@ export class DatabaseStorage implements IStorage {
         description: tripRow.description,
         fromLocation: tripRow.from_location,
         toLocation: tripRow.to_location,
-        date: tripRow.date,
+        date: tripRow.date ? tripRow.date.toISOString() : null,
         time: tripRow.time,
         price: tripRow.price,
         priceMin: tripRow.price_min,
@@ -659,9 +659,9 @@ export class DatabaseStorage implements IStorage {
         mediaUrls: tripRow.media_urls,
         coverImageIndex: tripRow.cover_image_index,
         isDeleted: tripRow.is_deleted,
-        createdAt: tripRow.created_at,
-        updatedAt: tripRow.updated_at,
-        deletedAt: tripRow.deleted_at,
+        createdAt: tripRow.created_at ? tripRow.created_at.toISOString() : null,
+        updatedAt: tripRow.updated_at ? tripRow.updated_at.toISOString() : null,
+        deletedAt: tripRow.deleted_at ? tripRow.deleted_at.toISOString() : null,
       };
       
       // Construct organizer object if found
@@ -923,6 +923,9 @@ export class DatabaseStorage implements IStorage {
     // 🚀 PERFORMANCE: Streamlined data transformation
     const tripsWithOrganizers = dataResult.map(({ trip, organizer }) => ({
       ...trip,
+      // Convert dates to ISO strings for JSON serialization
+      date: trip.date ? trip.date.toISOString() : null,
+      createdAt: trip.createdAt ? trip.createdAt.toISOString() : null,
       organizer: organizer ? normalizeUserForUI(organizer as any) : null,
       // Default redaction for public search results
       organizerPhone: null,
