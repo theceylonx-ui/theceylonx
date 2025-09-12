@@ -153,19 +153,30 @@ router.post('/dev-login', async (req: Request, res: Response) => {
   }
   
   try {
-    console.log('🔧 Development login attempt');
+    const { userType } = req.body;
+    console.log('🔧 Development login attempt for userType:', userType);
     
     // Import storage here to avoid circular dependencies
     const { storage } = await import('../storage');
     
+    // Define different test users
+    const testUsers = {
+      'user1': { email: 'test@example.com', name: 'Test User 1' },
+      'user2': { email: 'user2@example.com', name: 'Test User 2' },
+      'organizer': { email: 'organizer@example.com', name: 'Trip Organizer' },
+      'system-user': { email: 'system@example.com', name: 'System User' }
+    };
+    
+    const selectedUser = testUsers[userType as keyof typeof testUsers] || testUsers.user1;
+    
     // Create or get test user
-    let testUser = await storage.getUserByEmail('test@example.com');
+    let testUser = await storage.getUserByEmail(selectedUser.email);
     
     if (!testUser) {
-      console.log('🔧 Creating test user');
+      console.log('🔧 Creating test user:', selectedUser.name);
       testUser = await storage.createUser({
-        email: 'test@example.com',
-        name: 'Test User',
+        email: selectedUser.email,
+        name: selectedUser.name,
         provider: 'dev',
         emailVerified: true,
       });
@@ -185,7 +196,7 @@ router.post('/dev-login', async (req: Request, res: Response) => {
     setAuthCookies(res, tokens);
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔧 Development login successful, tokens set');
+      console.log('🔧 Development login successful, tokens set for:', selectedUser.name);
     }
     res.json({ success: true, user: { id: testUser.id, email: testUser.email, name: testUser.name } });
   } catch (error) {

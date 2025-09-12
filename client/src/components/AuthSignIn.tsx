@@ -37,32 +37,128 @@ export function AuthSignIn({ onSuccess }: AuthSignInProps) {
       <CardContent className="space-y-4">
         {/* OAuth Providers */}
         <div className="space-y-3">
-          {/* Development Login Button - Only show in dev mode */}
+          {/* Development Login Buttons - Only show in dev mode */}
           {import.meta.env.DEV && (
-            <Button
-              onClick={async () => {
-                setIsLoading(true);
-                try {
-                  const response = await fetch('/api/auth/dev-login', { method: 'POST' });
-                  if (response.ok) {
-                    toast({ title: "Development login successful!" });
-                    if (onSuccess) onSuccess();
-                    else window.location.href = '/';
-                  } else {
-                    toast({ title: "Development login failed", variant: "destructive" });
-                  }
-                } catch (error) {
-                  toast({ title: "Development login failed", variant: "destructive" });
-                } finally {
-                  setIsLoading(false);
-                }
-              }}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-              disabled={isLoading}
-              data-testid="button-dev-signin"
-            >
-              🔧 Quick Dev Login (Test Mode)
-            </Button>
+            <div className="space-y-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
+              <h4 className="text-sm font-semibold text-purple-700 text-center">🔧 Test Users (Dev Mode)</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  onClick={async () => {
+                    setIsLoading(true);
+                    try {
+                      const response = await fetch('/api/auth/dev-login', { 
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userType: 'user1' })
+                      });
+                      if (response.ok) {
+                        toast({ title: "Logged in as Test User 1" });
+                        if (onSuccess) onSuccess();
+                        else window.location.href = '/';
+                      } else {
+                        toast({ title: "Login failed", variant: "destructive" });
+                      }
+                    } catch (error) {
+                      toast({ title: "Login failed", variant: "destructive" });
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
+                  disabled={isLoading}
+                  data-testid="button-user1-signin"
+                >
+                  👤 User 1
+                </Button>
+                
+                <Button
+                  onClick={async () => {
+                    setIsLoading(true);
+                    try {
+                      const response = await fetch('/api/auth/dev-login', { 
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userType: 'user2' })
+                      });
+                      if (response.ok) {
+                        toast({ title: "Logged in as Test User 2" });
+                        if (onSuccess) onSuccess();
+                        else window.location.href = '/';
+                      } else {
+                        toast({ title: "Login failed", variant: "destructive" });
+                      }
+                    } catch (error) {
+                      toast({ title: "Login failed", variant: "destructive" });
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
+                  disabled={isLoading}
+                  data-testid="button-user2-signin"
+                >
+                  👤 User 2
+                </Button>
+                
+                <Button
+                  onClick={async () => {
+                    setIsLoading(true);
+                    try {
+                      const response = await fetch('/api/auth/dev-login', { 
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userType: 'organizer' })
+                      });
+                      if (response.ok) {
+                        toast({ title: "Logged in as Trip Organizer" });
+                        if (onSuccess) onSuccess();
+                        else window.location.href = '/';
+                      } else {
+                        toast({ title: "Login failed", variant: "destructive" });
+                      }
+                    } catch (error) {
+                      toast({ title: "Login failed", variant: "destructive" });
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  className="bg-green-600 hover:bg-green-700 text-white text-xs"
+                  disabled={isLoading}
+                  data-testid="button-organizer-signin"
+                >
+                  🎯 Organizer
+                </Button>
+                
+                <Button
+                  onClick={async () => {
+                    setIsLoading(true);
+                    try {
+                      const response = await fetch('/api/auth/dev-login', { 
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userType: 'system-user' })
+                      });
+                      if (response.ok) {
+                        toast({ title: "Logged in as System User" });
+                        if (onSuccess) onSuccess();
+                        else window.location.href = '/';
+                      } else {
+                        toast({ title: "Login failed", variant: "destructive" });
+                      }
+                    } catch (error) {
+                      toast({ title: "Login failed", variant: "destructive" });
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  className="bg-gray-600 hover:bg-gray-700 text-white text-xs"
+                  disabled={isLoading}
+                  data-testid="button-system-signin"
+                >
+                  ⚙️ System
+                </Button>
+              </div>
+            </div>
           )}
           
           <Button 
