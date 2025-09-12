@@ -2020,7 +2020,7 @@ export class DatabaseStorage implements IStorage {
     if (threadIds.length > 0) {
       const lastMessagesQuery = sql`
         SELECT DISTINCT ON (thread_id) 
-          id, thread_id, sender_id, text, kind, meta, created_at, updated_at
+          id, thread_id, sender_id, text, kind, meta, created_at
         FROM chat_messages 
         WHERE thread_id = ANY(${sql.raw(`ARRAY[${threadIds.map(id => `'${id}'`).join(',')}]`)})
         ORDER BY thread_id, created_at DESC

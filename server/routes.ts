@@ -4542,8 +4542,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Chat thread not found' });
       }
 
-      // Verify user is a participant
-      if (thread.organizerId !== userId && thread.userId !== userId) {
+      // Verify user is a participant in the thread
+      const isParticipant = await storage.isUserInThread(threadId, userId);
+      if (!isParticipant) {
+        console.warn(`🚨 Access denied for user ${userId} to thread ${threadId} - not a participant`);
         return res.status(403).json({ message: 'Access denied' });
       }
 
