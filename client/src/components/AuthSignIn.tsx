@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FaGoogle, FaFacebook } from "react-icons/fa";
+import { queryClient } from "@/lib/queryClient";
 
 interface AuthSignInProps {
   onSuccess?: () => void;
@@ -52,6 +53,9 @@ export function AuthSignIn({ onSuccess }: AuthSignInProps) {
                         body: JSON.stringify({ userType: 'user1' })
                       });
                       if (response.ok) {
+                        // Clear cache and force refresh user data
+                        queryClient.removeQueries({ queryKey: ["/api/auth/me"] });
+                        queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
                         toast({ title: "Logged in as Test User 1" });
                         if (onSuccess) onSuccess();
                         else window.location.href = '/';
@@ -81,6 +85,9 @@ export function AuthSignIn({ onSuccess }: AuthSignInProps) {
                         body: JSON.stringify({ userType: 'user2' })
                       });
                       if (response.ok) {
+                        // Clear cache and force refresh user data
+                        queryClient.removeQueries({ queryKey: ["/api/auth/me"] });
+                        queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
                         toast({ title: "Logged in as Test User 2" });
                         if (onSuccess) onSuccess();
                         else window.location.href = '/';
@@ -110,6 +117,9 @@ export function AuthSignIn({ onSuccess }: AuthSignInProps) {
                         body: JSON.stringify({ userType: 'organizer' })
                       });
                       if (response.ok) {
+                        // Clear cache and force refresh user data
+                        queryClient.removeQueries({ queryKey: ["/api/auth/me"] });
+                        queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
                         toast({ title: "Logged in as Trip Organizer" });
                         if (onSuccess) onSuccess();
                         else window.location.href = '/';
@@ -139,6 +149,9 @@ export function AuthSignIn({ onSuccess }: AuthSignInProps) {
                         body: JSON.stringify({ userType: 'system-user' })
                       });
                       if (response.ok) {
+                        // Clear cache and force refresh user data
+                        queryClient.removeQueries({ queryKey: ["/api/auth/me"] });
+                        queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
                         toast({ title: "Logged in as System User" });
                         if (onSuccess) onSuccess();
                         else window.location.href = '/';
