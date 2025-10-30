@@ -48,50 +48,22 @@ export default function Home() {
           }}
         ></div>
         
-        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center text-white">
-          <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-4 mt-4 drop-shadow-2xl" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }} data-testid="hero-welcome">
-            {user ? (isNewUser ? "Welcome to Ceylon Expand!" : "Welcome back, Explorer!") : "Discover Sri Lanka Together"}
+        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center text-white py-12 sm:py-20">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 drop-shadow-2xl tracking-tight" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }} data-testid="hero-welcome">
+            {user ? "Welcome back, Explorer!" : "Discover Sri Lanka Together"}
           </h1>
           
-          {/* Free to Use Badge */}
-          <div className="mb-6 flex justify-center">
-            <Badge 
-              className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 text-sm font-semibold shadow-lg border-0 hover:from-green-600 hover:to-emerald-700 transition-all duration-200" 
-              data-testid="free-badge"
-            >
-              {user ? (isNewUser ? "Welcome! Everything is 100% free to use." : "Enjoy every feature, at zero cost.") : "Create your account — enjoy every feature, at zero cost."}
-            </Badge>
-          </div>
-          
-          <p className="text-base sm:text-lg md:text-xl mb-8 max-w-2xl mx-auto px-4 drop-shadow-lg" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8), 0px 0px 2px rgba(0,0,0,0.6)' }} data-testid="hero-subtitle">
+          <p className="text-lg sm:text-xl md:text-2xl mb-12 max-w-3xl mx-auto font-light opacity-95 drop-shadow-lg" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8)' }} data-testid="hero-subtitle">
             {user 
-              ? (isNewUser 
-                  ? "Great to have you here! Start by browsing trips or posting your own adventure. Need help getting started?" 
-                  : "Ready for your next adventure? Discover new trips or share your journey with fellow travelers."
-                )
-              : "Join our community of travelers and explore the beauty of Sri Lanka with like-minded adventurers."
+              ? "Find your next adventure or share your journey with fellow travelers"
+              : "Join travelers exploring the beauty of Sri Lanka"
             }
           </p>
           
-          {/* FAQ Link for New Users */}
-          {user && isNewUser && (
-            <div className="mb-6 flex justify-center">
-              <Link href="/faq">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="bg-white/20 text-white border-white/40 hover:bg-white/30 hover:border-white/60 transition-all duration-200 backdrop-blur-sm"
-                  data-testid="button-faq-newuser"
-                >
-                  📚 How to Use Ceylon Expand - Quick Guide
-                </Button>
-              </Link>
-            </div>
-          )}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button 
               size="lg"
-              className="bg-white text-ceylon-green hover:bg-gray-100 text-base sm:text-lg font-semibold w-full sm:w-auto shadow-lg px-6 py-3"
+              className="bg-white text-ceylon-green hover:bg-gray-100 text-lg font-semibold w-full sm:w-auto shadow-2xl px-8 py-6 rounded-full transition-all hover:scale-105"
               onClick={() => setLocation("/browse-trips")}
               data-testid="button-browse-trips"
             >
@@ -100,7 +72,7 @@ export default function Home() {
             {user ? (
               <Button 
                 size="lg"
-                className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-base sm:text-lg font-semibold w-full sm:w-auto px-6 py-3"
+                className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-lg font-semibold w-full sm:w-auto shadow-2xl px-8 py-6 rounded-full transition-all hover:scale-105"
                 onClick={() => window.location.href = "/post"}
                 data-testid="button-post-trip"
               >
@@ -109,7 +81,7 @@ export default function Home() {
             ) : (
               <Button 
                 size="lg"
-                className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-base sm:text-lg font-semibold w-full sm:w-auto px-6 py-3"
+                className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-lg font-semibold w-full sm:w-auto shadow-2xl px-8 py-6 rounded-full transition-all hover:scale-105"
                 onClick={() => window.location.href = "/auth/signin"}
                 data-testid="button-get-started"
               >
@@ -117,6 +89,17 @@ export default function Home() {
               </Button>
             )}
           </div>
+          
+          {/* Subtle help link for new users */}
+          {user && isNewUser && (
+            <div className="mt-8">
+              <Link href="/faq">
+                <span className="text-white/80 hover:text-white text-sm underline underline-offset-4 cursor-pointer transition-colors" data-testid="link-faq-newuser">
+                  New to Ceylon Expand? Learn how it works →
+                </span>
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
