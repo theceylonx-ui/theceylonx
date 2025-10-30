@@ -154,6 +154,15 @@ function ChatThreadsListView() {
 }
 
 export default function ChatBuddy() {
+  // Get tripId from URL params first (before any hooks)
+  const urlParams = new URLSearchParams(window.location.search);
+  const tripId = urlParams.get('tripId');
+
+  // Early return if no tripId - BEFORE any hooks are called
+  if (!tripId) {
+    return <ChatThreadsListView />;
+  }
+
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -162,10 +171,6 @@ export default function ChatBuddy() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  // Get tripId from URL params  
-  const urlParams = new URLSearchParams(window.location.search);
-  const tripId = urlParams.get('tripId');
 
   // Fetch trip data and status for current user
   const { data: tripData, isLoading: tripLoading } = useQuery<any>({
@@ -266,10 +271,6 @@ export default function ChatBuddy() {
   const insertCannedMessage = (message: string) => {
     setMessageText(message);
   };
-
-  if (!tripId) {
-    return <ChatThreadsListView />;
-  }
 
   // Check if trip is deleted or unavailable
   if (tripData && ['deleted', 'cancelled', 'inactive'].includes(tripData.status)) {
