@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -93,6 +93,7 @@ export default function ProfilePage() {
   const { user, isLoading: authLoading } = useAuth();
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // Check URL parameters for tab selection
   const getTabFromUrl = () => {
@@ -153,6 +154,15 @@ export default function ProfilePage() {
     queryKey: ["/api/me/privacy"],
     enabled: !!user,
   });
+
+  // Comprehensive refresh function that invalidates ALL user-related caches
+  const refreshAllUserData = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["/api/me"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] }),
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id}/follow-stats`] }),
+    ]);
+  };
 
   if (authLoading || isLoading) {
     return (
@@ -313,7 +323,7 @@ export default function ProfilePage() {
 
           {/* Profile Tab */}
           <TabsContent value="profile" className="space-y-6">
-            <ProfileEditor profile={profile} onUpdate={refetch} />
+            <ProfileEditor profile={profile} onUpdate={refreshAllUserData} />
           </TabsContent>
 
           {/* Preferences Tab */}
@@ -660,6 +670,8 @@ function ProfileEditor({ profile, onUpdate }: any) {
                             title: "Profile picture updated!",
                             description: "Your new profile picture has been saved.",
                           });
+                          // Invalidate all user caches to refresh everywhere
+                          onUpdate();
                         }).catch((error) => {
                           console.error('Profile update error:', error);
                           toast({
@@ -800,6 +812,8 @@ function ProfileEditor({ profile, onUpdate }: any) {
                                     title: "Avatar updated!",
                                     description: `Your new ${selectedAvatarStyle?.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} avatar has been saved.`,
                                   });
+                                  // Invalidate all user caches to refresh everywhere
+                                  onUpdate();
                                 }
                               } catch (error) {
                                 console.error('Avatar update error:', error);
