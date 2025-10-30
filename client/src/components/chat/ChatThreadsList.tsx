@@ -163,7 +163,7 @@ export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
                     />
                     <div className="flex items-center text-xs text-gray-500 ml-2">
                       <Clock className="w-3 h-3 mr-1" />
-                      {format(new Date(thread.updatedAt), "MMM d")}
+                      {thread.updatedAt ? format(new Date(thread.updatedAt), "MMM d") : "Recent"}
                     </div>
                   </div>
                   
@@ -182,7 +182,7 @@ export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
                           {thread.trip.fromLocation} → {thread.trip.toLocation}
                         </span>
                         <span className="mx-2">•</span>
-                        <span>{format(new Date(thread.trip.date), "MMM d, yyyy")}</span>
+                        <span>{thread.trip.date ? format(new Date(thread.trip.date), "MMM d, yyyy") : "Date TBD"}</span>
                       </div>
                     </div>
                   ) : (
