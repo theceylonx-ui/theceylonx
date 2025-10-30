@@ -14,9 +14,36 @@
     <meta name="apple-mobile-web-app-title" content="Ceylon Expand" />
     
     <!-- Preload critical resources -->
+    <!-- DNS prefetch and preconnect for faster font loading -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    
+    <!-- Preload critical Inter font (regular 400 weight) - most commonly used -->
+    <link rel="preload" as="font" type="font/woff2" href="https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2" crossorigin>
+    
+    <!-- Load Google Fonts asynchronously to prevent render blocking -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+    
+    <!-- Fallback for browsers without JavaScript -->
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    </noscript>
+    
+    <!-- Font loading optimization script -->
+    <script>
+      // Ensure font stylesheet loads properly for older browsers
+      (function() {
+        var fontLink = document.querySelector('link[media="print"]');
+        if (fontLink) {
+          fontLink.addEventListener('load', function() {
+            this.media = 'all';
+          });
+        }
+      })();
+    </script>
     
     <!-- Accessibility improvements -->
     <meta name="color-scheme" content="light dark" />
