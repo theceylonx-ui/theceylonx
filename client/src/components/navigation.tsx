@@ -1,7 +1,10 @@
 import { Link, useLocation } from "wouter";
 import { Menu, X, MessageSquare, Calendar } from "lucide-react";
 import { useState } from "react";
-import logoImage from "@assets/5_1756417819316.png";
+import logoImage56 from "@assets/logo-56.png";
+import logoImage112 from "@assets/logo-112.png";
+import logoWebp56 from "@assets/logo-56.webp";
+import logoWebp112 from "@assets/logo-112.webp";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { EnhancedNotificationDropdown } from "@/components/notifications/enhanced-notification-dropdown";
@@ -36,8 +39,23 @@ export default function Navigation() {
           {/* Logo */}
           <Link href="/">
             <div className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-all duration-200" data-testid="nav-logo">
-              <img src={logoImage} alt="Ceylon Expand Logo" className="h-8 w-8" />
-              <span className={`text-xl font-semibold ${user ? 'text-white' : 'text-text-primary'} transition-colors duration-300`}>Ceylon Expand</span>
+              <picture>
+                <source 
+                  type="image/webp" 
+                  srcSet={`${logoWebp56} 1x, ${logoWebp112} 2x`}
+                />
+                <img 
+                  src={logoImage56} 
+                  srcSet={`${logoImage56} 1x, ${logoImage112} 2x`}
+                  alt="Ceylon Expand Logo" 
+                  className="h-8 w-8"
+                  width="32"
+                  height="32"
+                  loading="eager"
+                  data-testid="logo-icon"
+                />
+              </picture>
+              <span className={`text-xl font-semibold ${user ? 'text-white' : 'text-text-primary'} transition-colors duration-300`} data-testid="logo-text">Ceylon Expand</span>
             </div>
           </Link>
 

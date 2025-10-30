@@ -2,7 +2,10 @@ import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthSignIn } from "@/components/AuthSignIn";
-import logoImage from "@assets/5_1756417819316.png";
+import logoImage56 from "@assets/logo-56.png";
+import logoImage112 from "@assets/logo-112.png";
+import logoWebp56 from "@assets/logo-56.webp";
+import logoWebp112 from "@assets/logo-112.webp";
 
 export default function AuthSignInPage() {
   const [, navigate] = useLocation();
@@ -38,11 +41,18 @@ export default function AuthSignInPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img 
-            src={logoImage} 
-            alt="Ceylon Expand" 
-            className="h-16 w-auto mx-auto mb-4"
-          />
+          <picture>
+            <source type="image/webp" srcSet={`${logoWebp56} 1x, ${logoWebp112} 2x`} />
+            <img 
+              src={logoImage56} 
+              srcSet={`${logoImage56} 1x, ${logoImage112} 2x`}
+              alt="Ceylon Expand" 
+              className="h-16 w-auto mx-auto mb-4"
+              width="64"
+              height="64"
+              loading="eager"
+            />
+          </picture>
           <h1 className="text-3xl font-bold text-gray-900">Ceylon Expand</h1>
           <p className="text-gray-600">Your travel companion in Sri Lanka</p>
         </div>

@@ -3,7 +3,10 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
-import logoImage from "@assets/5_1756417819316.png";
+import logoImage56 from "@assets/logo-56.png";
+import logoImage112 from "@assets/logo-112.png";
+import logoWebp56 from "@assets/logo-56.webp";
+import logoWebp112 from "@assets/logo-112.webp";
 
 export default function AuthMagicPage() {
   const [, navigate] = useLocation();
@@ -58,11 +61,18 @@ export default function AuthMagicPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img 
-            src={logoImage} 
-            alt="Ceylon Expand" 
-            className="h-16 w-auto mx-auto mb-4"
-          />
+          <picture>
+            <source type="image/webp" srcSet={`${logoWebp56} 1x, ${logoWebp112} 2x`} />
+            <img 
+              src={logoImage56} 
+              srcSet={`${logoImage56} 1x, ${logoImage112} 2x`}
+              alt="Ceylon Expand" 
+              className="h-16 w-auto mx-auto mb-4"
+              width="64"
+              height="64"
+              loading="eager"
+            />
+          </picture>
           <h1 className="text-3xl font-bold text-gray-900">Ceylon Expand</h1>
         </div>
 
