@@ -672,6 +672,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Image assignment completed
       
       const trip = await storage.createTrip(tripWithImage);
+      
+      // Notify all followers about the new trip
+      try {
+        const followers = await storage.getUserFollowers(userId);
+        
+        if (followers && followers.length > 0) {
+          // Get organizer details for the notification
+          const organizer = await storage.getUser(userId);
+          const organizerName = organizer?.displayName || organizer?.username || 'Someone you follow';
+          
+          // Import WebSocket service for real-time notifications
+          const { websocketService } = await import('./services/websocketService');
+          
+          // Create notifications for all followers
+          const notificationPromises = followers.map(async (follow) => {
+            try {
+              const notification = await storage.createNotification({
+                userId: follow.followerId,
+                tripId: trip.id,
+                type: 'new_trip_from_following',
+                category: 'social',
+                priority: 'normal',
+                title: 'New Trip Posted',
+                message: `${organizerName} just posted a new trip: "${trip.title}"`,
+                actionUrl: `/trips/${trip.id}`,
+                metadata: {
+                  organizerId: userId,
+                  organizerName,
+                  tripTitle: trip.title,
+                  tripDate: trip.date,
+                  fromLocation: trip.fromLocation,
+                  toLocation: trip.toLocation
+                }
+              });
+              
+              // Send real-time notification via WebSocket
+              websocketService.sendNotification(follow.followerId, notification);
+            } catch (notifError) {
+              console.error('Error creating follower notification:', notifError);
+              // Don't fail trip creation if notification fails
+            }
+          });
+          
+          // Wait for all notifications to be sent
+          await Promise.all(notificationPromises);
+          console.log(`✅ Notified ${followers.length} followers about new trip: ${trip.title}`);
+        }
+      } catch (notificationError) {
+        // Log but don't fail trip creation if notifications fail
+        console.error('Error notifying followers:', notificationError);
+      }
+      
       res.json(trip);
     } catch (error) {
       if (error instanceof z.ZodError) {

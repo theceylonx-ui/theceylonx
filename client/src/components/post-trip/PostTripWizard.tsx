@@ -255,24 +255,35 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({ message: 'Failed to create trip' }));
+        throw new Error(errorData.message || `Server error: ${response.status}`);
       }
       
       const result = await response.json();
       
+      // Show success message with more details
       toast({
-        title: "Trip published successfully!",
-        description: "Your trip is now live and visible to other travelers.",
+        title: "✅ Trip Published Successfully!",
+        description: "Your trip is now live! Your followers have been notified and it's visible to all travelers.",
+        duration: 5000,
       });
       
-      // Navigate to the specific trip that was just created
-      setLocation(`/trips/${result.id}`);
+      // Clear any unsaved changes flag
+      setHasUnsavedChanges(false);
+      
+      // Navigate to the specific trip that was just created after a short delay
+      setTimeout(() => {
+        setLocation(`/trips/${result.id}`);
+      }, 1000);
     } catch (error) {
       console.error('Publishing error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
       toast({
-        title: "Publishing failed",
-        description: "Please try again or contact support if the problem persists.",
+        title: "❌ Publishing Failed",
+        description: errorMessage || "Please check your connection and try again. If the problem persists, contact support.",
         variant: "destructive",
+        duration: 7000,
       });
     }
   };

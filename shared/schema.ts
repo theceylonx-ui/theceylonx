@@ -28,7 +28,7 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   // Legacy saved trip notifications  
   'save_removed',
   // Social
-  'new_follower', 'trip_liked',
+  'new_follower', 'new_trip_from_following', 'trip_liked',
   // System
   'weather_alert', 'system_update',
   // Q&A Community
@@ -1270,6 +1270,7 @@ export const notificationTypeSchema = z.enum([
   
   // Social Interactions
   "new_follower",             // Someone followed you
+  "new_trip_from_following",  // Someone you follow posted a new trip
   "trip_liked",               // Someone liked/saved your trip
   "direct_message",           // Direct message received
   
