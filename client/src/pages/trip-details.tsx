@@ -780,13 +780,6 @@ export default function TripDetails({ params }: TripDetailsProps) {
               </div>
             </div>
 
-            {/* Trip Notes */}
-            {trip.notes && (
-              <div className="mt-6" data-testid="trip-notes">
-                <h3 className="font-semibold text-gray-800 mb-2">Additional Notes</h3>
-                <p className="text-gray-700 whitespace-pre-wrap">{trip.notes}</p>
-              </div>
-            )}
           </CardContent>
         </Card>
 
@@ -868,12 +861,12 @@ export default function TripDetails({ params }: TripDetailsProps) {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Additional Trip Information</h3>
                     
-                    {/* Trip Description */}
-                    {trip.description && (
-                      <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
-                        <h4 className="font-medium text-gray-700 mb-3">Trip Description</h4>
+                    {/* Trip Notes/Description */}
+                    {trip.notes && (
+                      <div className="mb-6 p-4 bg-gray-50 rounded-lg border" data-testid="trip-notes">
+                        <h4 className="font-medium text-gray-700 mb-3">Trip Details & Notes</h4>
                         <div className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-                          {trip.description}
+                          {trip.notes}
                         </div>
                       </div>
                     )}
@@ -976,7 +969,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
                     )}
 
                     {/* Show message if no additional info */}
-                    {!(trip.description || (trip as any).duration || (trip as any).difficulty || (trip as any).priceMin || (trip as any).priceMax || 
+                    {!(trip.notes || (trip as any).duration || (trip as any).difficulty || (trip as any).priceMin || (trip as any).priceMax || 
                         (trip as any).buddyFriendly !== undefined || (trip.tags && trip.tags.length > 0) || 
                         ((trip as any).safetyFlags && (trip as any).safetyFlags.length > 0) || 
                         ((trip as any).seasonality && (trip as any).seasonality.length > 0)) && (
