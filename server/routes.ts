@@ -2629,10 +2629,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       
       // Get user profile
-      const profile = await storage.getUser(userId);
-      if (!profile) {
+      const rawProfile = await storage.getUser(userId);
+      if (!rawProfile) {
         return res.status(404).json({ message: "User not found" });
       }
+      
+      // Normalize profile object to ensure camelCase properties (Drizzle compatibility fix)
+      const profile = {
+        ...rawProfile,
+        // Ensure these critical properties are in camelCase for frontend
+        displayName: rawProfile.displayName || (rawProfile as any).display_name || null,
+        profileImageUrl: rawProfile.profileImageUrl || (rawProfile as any).profile_image_url || rawProfile.image || null,
+      };
       
       // Get preferences (existing)
       const preferences = await storage.getUserPreferences(userId);
