@@ -789,8 +789,28 @@ export default function TripDetails({ params }: TripDetailsProps) {
             <Tabs value={activeTabState} onValueChange={handleTabChange}>
               <div className="px-6 py-4 border-b">
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="details">Comments & Questions</TabsTrigger>
-                  <TabsTrigger value="more">Show More</TabsTrigger>
+                  <TabsTrigger value="details">
+                    <span className="flex items-center gap-2">
+                      Comments & Questions
+                      {comments && comments.length > 0 && (
+                        <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                          {comments.length}
+                        </Badge>
+                      )}
+                    </span>
+                  </TabsTrigger>
+                  <TabsTrigger value="more">
+                    <span className="flex items-center gap-2">
+                      Show More
+                      {(trip.notes || (trip as any).duration || (trip as any).difficulty || 
+                        (trip as any).priceMin || (trip as any).priceMax || 
+                        (trip as any).buddyFriendly !== undefined || (trip.tags && trip.tags.length > 0) || 
+                        ((trip as any).safetyFlags && (trip as any).safetyFlags.length > 0) || 
+                        ((trip as any).seasonality && (trip as any).seasonality.length > 0)) && (
+                        <span className="ml-1 w-2 h-2 bg-ceylon-green rounded-full animate-pulse" title="Additional details available"></span>
+                      )}
+                    </span>
+                  </TabsTrigger>
                 </TabsList>
               </div>
 
