@@ -8,10 +8,10 @@ export function useAuth() {
   const { data: user, isLoading, error } = useQuery({
     queryKey: ["/api/auth/me"],
     retry: false,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true, // Refetch when window regains focus
     refetchOnMount: true,
     refetchInterval: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0, // Always fetch fresh data (important for profile updates!)
     gcTime: 10 * 60 * 1000, // 10 minutes
     queryFn: async () => {
       const timestamp = Date.now();
