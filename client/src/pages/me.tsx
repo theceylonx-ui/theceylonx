@@ -158,9 +158,39 @@ export default function ProfilePage() {
   // Comprehensive refresh function that invalidates ALL user-related caches
   const refreshAllUserData = async () => {
     await Promise.all([
+      // Core user data
       queryClient.invalidateQueries({ queryKey: ["/api/me"] }),
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] }),
       queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id}/follow-stats`] }),
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id}`] }),
+      
+      // User profile pages (by username or ID)
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] }),
+      
+      // Trip-related caches (organizer info appears here)
+      queryClient.invalidateQueries({ queryKey: ["/api/trips"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/user/pins"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/user/history"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/pinned-trips"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/interested-trips"] }),
+      
+      // Community/Questions (author info appears here)
+      queryClient.invalidateQueries({ queryKey: ["/api/questions"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/threads"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/topics"] }),
+      
+      // Chat/Messages (user info appears here)
+      queryClient.invalidateQueries({ queryKey: ["/api/chat"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/threads"] }),
+      
+      // Notifications (user info may appear here)
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] }),
+      
+      // Calendar (user trips appear here)
+      queryClient.invalidateQueries({ queryKey: ["/api/calendar"] }),
+      
+      // Follow system
+      queryClient.invalidateQueries({ queryKey: ["/api/follow"] }),
     ]);
   };
 
