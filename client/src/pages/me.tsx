@@ -599,9 +599,13 @@ function ProfileEditor({ profile, onUpdate }: any) {
       if (response.ok) {
         toast({
           title: "Profile Updated",
-          description: "Your profile has been successfully updated.",
+          description: "Refreshing to show your changes...",
         });
-        onUpdate();
+        await onUpdate();
+        // Force page reload to clear all caches and show updated profile
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
       }
     } catch (error) {
       toast({
@@ -609,7 +613,6 @@ function ProfileEditor({ profile, onUpdate }: any) {
         description: "Failed to update profile. Please try again.",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -692,16 +695,20 @@ function ProfileEditor({ profile, onUpdate }: any) {
                         // Update profile with uploaded image URL directly
                         apiRequest('PUT', '/api/profile/picture', {
                           profileImageUrl: uploadUrl
-                        }).then(() => {
+                        }).then(async () => {
                           setFormData({...formData, profileImageUrl: uploadUrl});
                           setShowAvatarPicker(false);
                           setSelectedAvatarStyle(null);
                           toast({
                             title: "Profile picture updated!",
-                            description: "Your new profile picture has been saved.",
+                            description: "Refreshing to show your changes...",
                           });
                           // Invalidate all user caches to refresh everywhere
-                          onUpdate();
+                          await onUpdate();
+                          // Force page reload to clear all caches
+                          setTimeout(() => {
+                            window.location.reload();
+                          }, 500);
                         }).catch((error) => {
                           console.error('Profile update error:', error);
                           toast({
@@ -840,10 +847,14 @@ function ProfileEditor({ profile, onUpdate }: any) {
                                   setPreviewAvatarUrl(null);
                                   toast({
                                     title: "Avatar updated!",
-                                    description: `Your new ${selectedAvatarStyle?.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} avatar has been saved.`,
+                                    description: "Refreshing to show your changes...",
                                   });
                                   // Invalidate all user caches to refresh everywhere
-                                  onUpdate();
+                                  await onUpdate();
+                                  // Force page reload to clear all caches
+                                  setTimeout(() => {
+                                    window.location.reload();
+                                  }, 500);
                                 }
                               } catch (error) {
                                 console.error('Avatar update error:', error);
