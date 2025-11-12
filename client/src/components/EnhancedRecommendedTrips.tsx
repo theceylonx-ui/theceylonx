@@ -119,7 +119,7 @@ export function EnhancedRecommendedTrips() {
         });
       }, 5000); // 5 second throttle
       
-      return apiRequest('POST', '/api/kpi/events', data);
+      return apiRequest('POST', '/api/kpi/event', data);
     },
   });
 
