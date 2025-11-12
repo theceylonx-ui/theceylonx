@@ -753,6 +753,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         minPrice: req.query.minPrice ? Number(req.query.minPrice) : undefined,
         maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
         search: req.query.search as string,
+        // New advanced filters
+        duration: req.query.duration as string, // e.g., "half-day", "full-day", "multi-day"
+        difficulty: req.query.difficulty as string | string[], // e.g., "easy", "moderate", "challenging"
+        interests: req.query.interests as string | string[], // Array of interests
+        groupSizeMin: req.query.groupSizeMin ? Number(req.query.groupSizeMin) : undefined,
+        groupSizeMax: req.query.groupSizeMax ? Number(req.query.groupSizeMax) : undefined,
+        daysRange: req.query.daysRange ? Number(req.query.daysRange) : undefined, // e.g., 7 for "next 7 days"
         limit,
         offset,
       };

@@ -162,10 +162,20 @@ export interface IStorage {
     from?: string;
     to?: string;
     date?: string;
+    startDate?: string;
+    endDate?: string;
     region?: string;
+    category?: string;
     minPrice?: number;
     maxPrice?: number;
     search?: string;
+    // New advanced filters
+    duration?: string;
+    difficulty?: string | string[];
+    interests?: string | string[];
+    groupSizeMin?: number;
+    groupSizeMax?: number;
+    daysRange?: number;
     limit?: number;
     offset?: number;
   }): Promise<{ trips: TripWithOrganizer[], total: number }>;
@@ -812,6 +822,13 @@ export class DatabaseStorage implements IStorage {
     minPrice?: number;
     maxPrice?: number;
     search?: string;
+    // New advanced filters
+    duration?: string;
+    difficulty?: string | string[];
+    interests?: string | string[];
+    groupSizeMin?: number;
+    groupSizeMax?: number;
+    daysRange?: number;
     limit?: number;
     offset?: number;
   }): Promise<{ trips: TripWithOrganizer[], total: number }> {
@@ -831,7 +848,15 @@ export class DatabaseStorage implements IStorage {
     }
     
     // Date filtering (high selectivity for future dates)
-    if (filters.date) {
+    if (filters.daysRange) {
+      // Flexible date range filter (e.g., "next 7 days")
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const futureDate = new Date(today);
+      futureDate.setDate(futureDate.getDate() + filters.daysRange);
+      conditions.push(gte(trips.date, today));
+      conditions.push(lte(trips.date, futureDate));
+    } else if (filters.date) {
       conditions.push(gte(trips.date, new Date(filters.date)));
     } else if (filters.startDate || filters.endDate) {
       if (filters.startDate) {
@@ -850,6 +875,63 @@ export class DatabaseStorage implements IStorage {
     }
     if (filters.maxPrice !== undefined) {
       conditions.push(lte(trips.price, filters.maxPrice.toString()));
+    }
+    
+    // New advanced filters (high selectivity)
+    if (filters.difficulty) {
+      const difficulties = Array.isArray(filters.difficulty) ? filters.difficulty : [filters.difficulty];
+      conditions.push(inArray(trips.difficulty, difficulties));
+    }
+    
+    if (filters.duration) {
+      conditions.push(eq(trips.duration, filters.duration));
+    }
+    
+    // Group size filtering (medium selectivity)
+    if (filters.groupSizeMin !== undefined || filters.groupSizeMax !== undefined) {
+      // Find trips where the trip's group size range overlaps with the user's preference
+      if (filters.groupSizeMin !== undefined && filters.groupSizeMax !== undefined) {
+        // User wants a specific range - find trips that can accommodate it
+        conditions.push(
+          or(
+            // Trip has no size restrictions, or...
+            and(
+              sql`${trips.groupSizeMin} IS NULL`,
+              sql`${trips.groupSizeMax} IS NULL`
+            ),
+            // Trip's max size is >= user's min AND trip's min size is <= user's max
+            and(
+              sql`(${trips.groupSizeMax} IS NULL OR ${trips.groupSizeMax} >= ${filters.groupSizeMin})`,
+              sql`(${trips.groupSizeMin} IS NULL OR ${trips.groupSizeMin} <= ${filters.groupSizeMax})`
+            )
+          )!
+        );
+      } else if (filters.groupSizeMin !== undefined) {
+        // User wants at least this many people
+        conditions.push(
+          or(
+            sql`${trips.groupSizeMax} IS NULL`,
+            gte(trips.groupSizeMax, filters.groupSizeMin)
+          )!
+        );
+      } else if (filters.groupSizeMax !== undefined) {
+        // User wants at most this many people
+        conditions.push(
+          or(
+            sql`${trips.groupSizeMin} IS NULL`,
+            lte(trips.groupSizeMin, filters.groupSizeMax)
+          )!
+        );
+      }
+    }
+    
+    // Interests array filtering (uses GIN index)
+    if (filters.interests) {
+      const interests = Array.isArray(filters.interests) ? filters.interests : [filters.interests];
+      // Match trips that have at least one of the selected interests
+      conditions.push(
+        sql`${trips.interests} && ARRAY[${sql.join(interests.map(i => sql`${i}`), sql`, `)}]::text[]`
+      );
     }
     
     // Location and text search (lower selectivity, more expensive)
