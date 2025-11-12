@@ -6,6 +6,21 @@ Ceylon Expand is a travel buddy and trip-sharing platform specifically designed 
 
 ## Recent Changes
 
+- **Phase 6: Trip Lifecycle Management (Nov 12, 2025)**:
+  - ✅ **Auto-Archive System**: Daily cron job auto-archives trips past their date+time
+    - Combines date and time columns using SQL for accurate archival timing
+    - Only archives 'active' and 'inactive' trips, preserves completed/cancelled/deleted
+    - Archived trips visible only to trip creator on dashboard
+    - Manual archive endpoint for organizers
+  - ✅ **Trip Completion & Notifications**: Organizers can mark trips as completed/occupied
+    - Real-time WebSocket notifications to all interested users (pending/accepted status)
+    - Reopen functionality to make completed trips active again
+    - Uses existing tripInterestRequests table for notification targeting
+    - Added 'trip_completed' notification type with category and priority
+  - ✅ **Database Schema Updates**: Added 'archived' status, archivedAt timestamp field
+  - ✅ **Service Architecture**: TripArchiverService and TripCompletionService with cron scheduler
+  - 🎯 **Status**: Architect-approved, production-ready
+
 - **Phase 5: Performance Optimization (Oct 30, 2025)**:
   - ✅ **Font Optimization**: Async Google Fonts loading with DNS prefetch/preconnect, eliminates render-blocking CSS
   - ✅ **Logo Image Optimization**: 98% size reduction (~22KB → <1KB) with WebP/PNG formats, retina display support
