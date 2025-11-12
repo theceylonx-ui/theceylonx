@@ -105,7 +105,7 @@ export default function AdvancedFilters() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Any duration</SelectItem>
-                  <SelectItem value="half-day">Half Day (< 6 hours)</SelectItem>
+                  <SelectItem value="half-day">Half Day (&lt; 6 hours)</SelectItem>
                   <SelectItem value="full-day">Full Day (6-12 hours)</SelectItem>
                   <SelectItem value="multi-day">Multi-Day (2+ days)</SelectItem>
                   <SelectItem value="overnight">Overnight</SelectItem>
