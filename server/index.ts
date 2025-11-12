@@ -273,6 +273,29 @@ app.use((req, res, next) => {
     cleanupIntervalId = setInterval(runCleanup, CLEANUP_INTERVAL_MS);
     console.log('✅ Idempotency cleanup scheduler started (every 6 hours)');
 
+    // Start scheduled trip archiver (auto-archive outdated trips daily)
+    console.log('Starting trip auto-archiver scheduler...');
+    const { TripArchiverService } = await import('./services/tripArchiver');
+    
+    const runTripArchiver = async () => {
+      try {
+        const archivedCount = await TripArchiverService.archiveOutdatedTrips();
+        if (archivedCount > 0) {
+          console.log(`🗄️  Auto-archived ${archivedCount} outdated trip(s)`);
+        }
+      } catch (error) {
+        console.error('❌ Trip archiver failed:', error);
+      }
+    };
+    
+    // Run initial archive check after 1 minute
+    setTimeout(runTripArchiver, 60 * 1000);
+    
+    // Schedule trip archiver to run daily at 2 AM
+    const DAILY_ARCHIVE_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
+    setInterval(runTripArchiver, DAILY_ARCHIVE_INTERVAL);
+    console.log('✅ Trip auto-archiver started (runs daily)');
+
     // API error handler - scoped to /api routes
     app.use('/api', (err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;

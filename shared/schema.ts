@@ -24,7 +24,7 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   // Trip participation
   'trip_interest_request', 'trip_join_request', 'interest_accepted', 'interest_declined',
   // Trip updates
-  'trip_updated', 'trip_removed', 'trip_commented', 'trip_viewed',
+  'trip_updated', 'trip_removed', 'trip_commented', 'trip_viewed', 'trip_completed',
   // Legacy saved trip notifications  
   'save_removed',
   // Social
@@ -269,6 +269,7 @@ export const trips = pgTable("trips", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   isDeleted: boolean("is_deleted").default(false).notNull(),
   deletedAt: timestamp("deleted_at"),
+  archivedAt: timestamp("archived_at"), // When trip was auto-archived (past date)
 }, (table) => [
   // CHECK constraints for data validation
   sql`CONSTRAINT check_seats_positive CHECK (seats_available > 0 AND seats_available <= 100)`,
@@ -278,7 +279,7 @@ export const trips = pgTable("trips", {
   sql`CONSTRAINT check_time_format CHECK (time ~* '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$')`,
   sql`CONSTRAINT check_organizer_email_format CHECK (organizer_email IS NULL OR organizer_email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')`,
   sql`CONSTRAINT check_organizer_phone_format CHECK (organizer_phone IS NULL OR organizer_phone ~* '^[0-9]{9}$')`,
-  sql`CONSTRAINT check_status_valid CHECK (status IN ('active', 'inactive', 'cancelled', 'completed'))`,
+  sql`CONSTRAINT check_status_valid CHECK (status IN ('active', 'inactive', 'cancelled', 'completed', 'archived'))`,
   sql`CONSTRAINT check_country_code_format CHECK (organizer_country_code ~* '^[+][0-9]{1,4}$')`,
   sql`CONSTRAINT check_contact_required CHECK (organizer_phone IS NOT NULL OR organizer_email IS NOT NULL OR contact_info IS NOT NULL)`,
   // Performance indexes for core fields only

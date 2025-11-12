@@ -944,6 +944,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Trip completion endpoints
+  app.post('/api/trips/:id/complete', unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const tripId = req.params.id;
+      
+      // Initialize completion service
+      const { TripCompletionService } = await import('./services/tripCompletion');
+      const { websocketService } = await import('./services/websocketService');
+      const completionService = new TripCompletionService(websocketService);
+      
+      // Complete the trip and notify interested users
+      const result = await completionService.completeTrip(tripId, userId);
+      
+      if (!result.success) {
+        return res.status(403).json({ message: "Not authorized or trip not found" });
+      }
+      
+      res.json({
+        message: "Trip marked as completed successfully",
+        notifiedUsers: result.notifiedUsers
+      });
+    } catch (error) {
+      console.error("Error completing trip:", error);
+      res.status(500).json({ message: "Failed to complete trip" });
+    }
+  });
+
+  app.post('/api/trips/:id/reopen', unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const tripId = req.params.id;
+      
+      const { TripCompletionService } = await import('./services/tripCompletion');
+      const { websocketService } = await import('./services/websocketService');
+      const completionService = new TripCompletionService(websocketService);
+      
+      const success = await completionService.reopenTrip(tripId, userId);
+      
+      if (!success) {
+        return res.status(403).json({ message: "Not authorized or trip not found" });
+      }
+      
+      res.json({ message: "Trip reopened successfully" });
+    } catch (error) {
+      console.error("Error reopening trip:", error);
+      res.status(500).json({ message: "Failed to reopen trip" });
+    }
+  });
+
+  // Get archived trips for current user
+  app.get('/api/me/trips/archived', unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      const { TripArchiverService } = await import('./services/tripArchiver');
+      const archivedTrips = await TripArchiverService.getArchivedTripsForOrganizer(userId);
+      
+      res.json(archivedTrips);
+    } catch (error) {
+      console.error("Error fetching archived trips:", error);
+      res.status(500).json({ message: "Failed to fetch archived trips" });
+    }
+  });
+
+  // Manually archive a trip
+  app.post('/api/trips/:id/archive', unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const tripId = req.params.id;
+      
+      const { TripArchiverService } = await import('./services/tripArchiver');
+      const success = await TripArchiverService.manualArchiveTrip(tripId, userId);
+      
+      if (!success) {
+        return res.status(403).json({ message: "Not authorized or trip cannot be archived" });
+      }
+      
+      res.json({ message: "Trip archived successfully" });
+    } catch (error) {
+      console.error("Error archiving trip:", error);
+      res.status(500).json({ message: "Failed to archive trip" });
+    }
+  });
+
   // Saved trips management endpoints
   // Upsert saved trip (pin or mark as interested)
   app.post('/api/trips/:tripId/save', unifiedAuthGuard, async (req, res) => {
