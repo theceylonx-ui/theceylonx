@@ -11,6 +11,13 @@ const DEFAULTS: TripsFilters = {
   startDate: null,
   endDate: null,
   maxPrice: null,
+  // Advanced filters
+  duration: null,
+  difficulty: [],
+  interests: [],
+  groupSizeMin: null,
+  groupSizeMax: null,
+  daysRange: null,
 };
 
 type State = {

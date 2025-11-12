@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import QuickDateChips from "./QuickDateChips";
 import PriceRangeSlider from "./PriceRangeSlider";
+import AdvancedFilters from "./AdvancedFilters";
 import { motion } from "framer-motion";
 import { Search, MapPin, Globe, Calendar as CalendarIcon, DollarSign, X } from "lucide-react";
 
@@ -275,6 +276,9 @@ export default function BrowseTripsFilters({
           <PriceRangeSlider />
         </div>
       </div>
+
+      {/* Advanced Filters Section */}
+      <AdvancedFilters />
 
       {/* Mobile sticky actions (desktop can rely on live updates) */}
       <div className="mt-6 flex items-center justify-between">

@@ -49,6 +49,13 @@ export default function BrowseTrips() {
       if (filters.startDate) params.set('startDate', filters.startDate);
       if (filters.endDate) params.set('endDate', filters.endDate);
       if (filters.maxPrice) params.set('maxPrice', filters.maxPrice.toString());
+      // Advanced filters
+      if (filters.duration) params.set('duration', filters.duration);
+      if (filters.difficulty && filters.difficulty.length > 0) params.set('difficulty', filters.difficulty.join(','));
+      if (filters.interests && filters.interests.length > 0) params.set('interests', filters.interests.join(','));
+      if (filters.groupSizeMin != null) params.set('groupSizeMin', filters.groupSizeMin.toString());
+      if (filters.groupSizeMax != null) params.set('groupSizeMax', filters.groupSizeMax.toString());
+      if (filters.daysRange != null) params.set('daysRange', filters.daysRange.toString());
       
       params.set('page', currentPage.toString());
       params.set('limit', '8');
