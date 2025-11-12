@@ -259,6 +259,9 @@ export const trips = pgTable("trips", {
   safetyFlags: text("safety_flags").array().default(sql`'{}'::text[]`), // Safety requirements/warnings
   seasonality: varchar("seasonality"), // Best season for this trip
   tags: text("tags").array().default(sql`'{}'::text[]`), // Hashtag-style tags
+  interests: text("interests").array().default(sql`'{}'::text[]`), // Trip interests/activities for filtering
+  groupSizeMin: integer("group_size_min"), // Minimum preferred group size
+  groupSizeMax: integer("group_size_max"), // Maximum preferred group size
   
   // Image fields for trip photos
   imageUrl: varchar("image_url"), // Single fallback image URL
@@ -295,6 +298,11 @@ export const trips = pgTable("trips", {
   index("trips_category_idx").on(table.category), // Category filtering
   index("trips_price_range_idx").on(table.price), // Price filtering
   index("trips_active_listing_idx").on(table.status, table.isDeleted, table.region, table.date), // Full active listing optimization
+  // 🚀 PHASE 6 PERFORMANCE: Advanced filtering indexes
+  index("trips_interests_gin").using("gin", table.interests), // Array-based interest filtering
+  index("trips_group_size_idx").on(table.groupSizeMin, table.groupSizeMax), // Group size filtering
+  index("trips_difficulty_idx").on(table.difficulty), // Difficulty filtering
+  index("trips_duration_idx").on(table.duration), // Duration filtering
 ]);
 
 // Trip metadata table (moved from trips for better performance)
