@@ -94,8 +94,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             .where(eq(users.id, existingUser.id));
         }
         
-        // Auto-assign superadmin role if email is designated
-        if (userEmail && isSuperadminEmail(userEmail) && !existingUser.roleId) {
+        // Auto-assign superadmin role if email is designated (always ensure correct role)
+        if (userEmail && isSuperadminEmail(userEmail)) {
           await assignSuperadminRole(existingUser.id);
         }
         
