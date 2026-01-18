@@ -6,6 +6,7 @@ import { db } from '../db';
 import { users, roles } from '@shared/schema';
 import { eq, or } from 'drizzle-orm';
 import { JWTUser } from './jwt';
+import { ALL_PERMS } from '../admin/permissions';
 
 // Helper to check if email is a designated superadmin
 const isSuperadminEmail = (email: string): boolean => {
@@ -18,27 +19,27 @@ const assignSuperadminRole = async (userId: string): Promise<void> => {
   try {
     console.log(`🔐 Attempting to assign superadmin role to user ${userId}`);
     
-    // Find or create superadmin role
+    // Find or create superadmin role with ALL permissions (not just '*')
     let [superadminRole] = await db.select().from(roles).where(eq(roles.name, 'superadmin'));
     
     if (!superadminRole) {
       // Create superadmin role with all permissions
-      console.log('🔐 Creating new superadmin role');
+      console.log('🔐 Creating new superadmin role with all permissions');
       const [newRole] = await db.insert(roles).values({
         name: 'superadmin',
         description: 'Full system access',
-        permissions: ['*'], // Full permissions
+        permissions: ALL_PERMS, // Full permissions array
         isSystem: true,
       }).returning();
       superadminRole = newRole;
     } else {
-      // Ensure superadmin role has correct permissions format (array with '*')
+      // Ensure superadmin role has ALL permissions (not legacy format or '*')
       const perms = superadminRole.permissions;
-      const needsUpdate = !Array.isArray(perms) || !perms.includes('*');
-      if (needsUpdate) {
-        console.log('🔐 Updating superadmin role permissions to correct format');
+      const hasAllPerms = Array.isArray(perms) && ALL_PERMS.every(p => perms.includes(p));
+      if (!hasAllPerms) {
+        console.log('🔐 Updating superadmin role with all permissions');
         await db.update(roles)
-          .set({ permissions: ['*'] })
+          .set({ permissions: ALL_PERMS })
           .where(eq(roles.id, superadminRole.id));
       }
     }
