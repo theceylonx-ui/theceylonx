@@ -46,7 +46,7 @@ export function isDestructivePermission(permission: string): boolean {
 export function useAdminAuth() {
   const { user, isLoading: authLoading, isAuthenticated } = useAuth();
   
-  const { data: adminUser, isLoading: adminLoading, error } = useQuery({
+  const { data: adminUser, isLoading: adminLoading, error } = useQuery<AdminUser>({
     queryKey: ['/api/admin/me'],
     enabled: !!isAuthenticated && !!user,
     retry: false,

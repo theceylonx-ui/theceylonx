@@ -95,12 +95,12 @@ function StatCard({
 export default function AdminOverviewPage() {
   const { adminUser } = useAdminAuth();
 
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ['/api/admin/dashboard'],
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  const dashboardStats: DashboardStats = stats || {
+  const dashboardStats: DashboardStats = stats ?? {
     users: { total: 0, active24h: 0, newToday: 0 },
     trips: { total: 0, active: 0, pending: 0 },
     reports: { total: 0, open: 0, resolved24h: 0 },
