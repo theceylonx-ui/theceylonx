@@ -115,11 +115,11 @@ const helmetConfig = {
     preload: true
   },
   noSniff: true,
-  frameguard: { action: 'deny' },
-  referrerPolicy: { policy: ['strict-origin-when-cross-origin'] }, // SECURITY: Stricter referrer policy
+  frameguard: { action: 'deny' as const },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' as const }, // SECURITY: Stricter referrer policy
   crossOriginEmbedderPolicy: isProduction, // SECURITY: Disable COEP in development for Vite
   crossOriginOpenerPolicy: isProduction, // SECURITY: Disable COOP in development for Vite
-  crossOriginResourcePolicy: { policy: 'same-origin' } // SECURITY: Restrict cross-origin resources
+  crossOriginResourcePolicy: { policy: 'same-origin' as const } // SECURITY: Restrict cross-origin resources
 };
 
 // Apply security and API middleware scoped to /api routes

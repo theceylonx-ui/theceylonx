@@ -169,8 +169,8 @@ export class WebSocketService {
       const now = Date.now();
       const timeoutThreshold = 60000; // 1 minute
 
-      for (const [userId, clients] of this.clients.entries()) {
-        const activeClients = clients.filter(client => {
+      for (const [userId, clients] of Array.from(this.clients.entries())) {
+        const activeClients = clients.filter((client: WebSocketClient) => {
           if (!client.isAlive || (now - client.lastHeartbeat) > timeoutThreshold) {
             if (client.ws.readyState === WebSocket.OPEN) {
               client.ws.close(4002, 'Heartbeat timeout');
@@ -236,8 +236,8 @@ export class WebSocketService {
     const jsonMessage = JSON.stringify(message);
     let totalSent = 0;
 
-    for (const [userId, clients] of this.clients.entries()) {
-      clients.forEach(client => {
+    for (const [userId, clients] of Array.from(this.clients.entries())) {
+      clients.forEach((client: WebSocketClient) => {
         if (client.ws.readyState === WebSocket.OPEN) {
           try {
             client.ws.send(jsonMessage);
@@ -259,8 +259,8 @@ export class WebSocketService {
     const connectionsByUser: Record<string, number> = {};
     let totalConnections = 0;
 
-    for (const [userId, clients] of this.clients.entries()) {
-      const activeClients = clients.filter(c => c.ws.readyState === WebSocket.OPEN).length;
+    for (const [userId, clients] of Array.from(this.clients.entries())) {
+      const activeClients = clients.filter((c: WebSocketClient) => c.ws.readyState === WebSocket.OPEN).length;
       if (activeClients > 0) {
         connectionsByUser[userId] = activeClients;
         totalConnections += activeClients;
@@ -279,8 +279,8 @@ export class WebSocketService {
    */
   private getTotalConnections(): number {
     let total = 0;
-    for (const clients of this.clients.values()) {
-      total += clients.filter(c => c.ws.readyState === WebSocket.OPEN).length;
+    for (const clients of Array.from(this.clients.values())) {
+      total += clients.filter((c: WebSocketClient) => c.ws.readyState === WebSocket.OPEN).length;
     }
     return total;
   }
@@ -297,8 +297,8 @@ export class WebSocketService {
     }
 
     // Close all client connections
-    for (const clients of this.clients.values()) {
-      clients.forEach(client => {
+    for (const clients of Array.from(this.clients.values())) {
+      clients.forEach((client: WebSocketClient) => {
         if (client.ws.readyState === WebSocket.OPEN) {
           client.ws.close(4000, 'Server shutting down');
         }
