@@ -5256,31 +5256,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('🌱 Production seeding initiated...');
       
-      // Setup admin user first
-      const { db } = await import('./db');
-      const { users, roles } = await import('../shared/schema');
-      const { eq } = await import('drizzle-orm');
+      let adminSetupResult = 'skipped';
       
-      // Get superadmin role
-      const [superadminRole] = await db.select().from(roles).where(eq(roles.name, 'superadmin'));
-      
-      if (superadminRole) {
-        // Create or update admin user
-        const adminEmail = 'theceylonx@gmail.com';
-        const [existingUser] = await db.select().from(users).where(eq(users.email, adminEmail));
+      // Setup admin user (wrapped in try/catch to not block other seeding)
+      try {
+        const { db } = await import('./db');
+        const { users, roles } = await import('../shared/schema');
+        const { eq } = await import('drizzle-orm');
         
-        if (existingUser) {
-          await db.update(users).set({ roleId: superadminRole.id }).where(eq(users.email, adminEmail));
-          console.log('✅ Admin user updated with superadmin role');
+        // Get superadmin role
+        const superadminResults = await db.select().from(roles).where(eq(roles.name, 'superadmin'));
+        const superadminRole = superadminResults[0];
+        
+        if (superadminRole) {
+          const adminEmail = 'theceylonx@gmail.com';
+          const existingUsers = await db.select().from(users).where(eq(users.email, adminEmail));
+          
+          if (existingUsers.length > 0) {
+            await db.update(users).set({ roleId: superadminRole.id }).where(eq(users.email, adminEmail));
+            console.log('✅ Admin user updated with superadmin role');
+            adminSetupResult = 'updated';
+          } else {
+            await db.insert(users).values({
+              id: 'admin-theceylonx',
+              email: adminEmail,
+              name: 'CeylonX Admin',
+              roleId: superadminRole.id
+            });
+            console.log('✅ Admin user created with superadmin role');
+            adminSetupResult = 'created';
+          }
         } else {
-          await db.insert(users).values({
-            id: 'admin-theceylonx',
-            email: adminEmail,
-            name: 'CeylonX Admin',
-            roleId: superadminRole.id
-          });
-          console.log('✅ Admin user created with superadmin role');
+          console.log('⚠️ Superadmin role not found - admin setup skipped');
+          adminSetupResult = 'role_not_found';
         }
+      } catch (adminError) {
+        console.error('⚠️ Admin setup failed (continuing with seeding):', adminError);
+        adminSetupResult = 'failed: ' + (adminError instanceof Error ? adminError.message : 'unknown');
       }
       
       // Seed trips
@@ -5297,9 +5309,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ 
         status: 'success',
-        message: 'Sample data and admin user seeded successfully',
+        message: 'Sample data seeded successfully',
         timestamp: new Date().toISOString(),
-        admin: 'theceylonx@gmail.com granted superadmin access'
+        adminSetup: adminSetupResult,
+        data: {
+          trips: 'seeded',
+          questions: 'seeded'
+        }
       });
     } catch (error) {
       console.error('❌ Production seed error:', error);
