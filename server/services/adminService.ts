@@ -7,6 +7,7 @@ import {
   mediaAssets, 
   trips, 
   reports,
+  roleAssignments,
   type User,
   type Role,
   type AuditLog,
@@ -404,6 +405,127 @@ export class AdminService {
       await db.insert(auditLogs).values(logData);
     } catch (error) {
       console.error('❌ Failed to log action:', error);
+    }
+  }
+
+  // Get role assignments
+  async getRoleAssignments(): Promise<any[]> {
+    try {
+      const assignments = await db
+        .select({
+          id: roleAssignments.id,
+          userId: roleAssignments.userId,
+          roleId: roleAssignments.roleId,
+          assignedBy: roleAssignments.assignedBy,
+          assignedAt: roleAssignments.assignedAt,
+          isActive: roleAssignments.isActive,
+          user: users,
+          role: roles,
+        })
+        .from(roleAssignments)
+        .leftJoin(users, eq(roleAssignments.userId, users.id))
+        .leftJoin(roles, eq(roleAssignments.roleId, roles.id))
+        .where(eq(roleAssignments.isActive, true))
+        .orderBy(desc(roleAssignments.assignedAt));
+
+      return assignments.map(a => ({
+        id: a.id,
+        userId: a.userId,
+        roleId: a.roleId,
+        user: a.user ? {
+          id: a.user.id,
+          email: a.user.email,
+          displayName: a.user.displayName,
+          username: a.user.username,
+        } : null,
+        role: a.role,
+        assignedBy: a.assignedBy,
+        assignedAt: a.assignedAt,
+        isActive: a.isActive,
+      }));
+    } catch (error) {
+      console.error('❌ Failed to get role assignments:', error);
+      return [];
+    }
+  }
+
+  // Get reports for moderation
+  async getReports(
+    priority?: string,
+    status?: string,
+    search?: string,
+    page: number = 1,
+    limit: number = 20
+  ): Promise<{ reports: any[]; total: number; pages: number }> {
+    try {
+      const offset = (page - 1) * limit;
+      
+      let whereConditions = [];
+      if (status && status !== 'all') {
+        whereConditions.push(eq(reports.status, status as any));
+      }
+
+      const reportResults = await db
+        .select({
+          report: reports,
+          reporter: users,
+        })
+        .from(reports)
+        .leftJoin(users, eq(reports.reporterId, users.id))
+        .orderBy(desc(reports.createdAt))
+        .offset(offset)
+        .limit(limit);
+
+      const [{ total }] = await db.select({ total: count() }).from(reports);
+
+      return {
+        reports: reportResults.map(r => ({
+          ...r.report,
+          reporter: r.reporter ? {
+            id: r.reporter.id,
+            email: r.reporter.email,
+            displayName: r.reporter.displayName,
+            username: r.reporter.username,
+          } : null,
+        })),
+        total: total || 0,
+        pages: Math.ceil((total || 0) / limit),
+      };
+    } catch (error) {
+      console.error('❌ Failed to get reports:', error);
+      return { reports: [], total: 0, pages: 0 };
+    }
+  }
+
+  // Update report status
+  async updateReport(
+    reportId: string,
+    status: string,
+    resolution: string,
+    notes: string,
+    actorId: string
+  ): Promise<boolean> {
+    try {
+      await db.update(reports)
+        .set({
+          status: status as any,
+          resolutionNotes: notes,
+          resolvedAt: status === 'resolved' ? new Date() : undefined,
+        })
+        .where(eq(reports.id, reportId));
+
+      await this.logAction({
+        actorUserId: actorId,
+        action: 'report_update',
+        targetType: 'report',
+        targetId: reportId,
+        meta: { status, resolution, notes },
+      });
+
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to update report:', error);
+      return false;
     }
   }
 }
