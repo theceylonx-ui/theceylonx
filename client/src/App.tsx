@@ -48,6 +48,15 @@ const AccountSettingsPage = lazy(() => import("@/pages/settings/account"));
 const MeRedirect = lazy(() => import("@/pages/me-redirect"));
 const TripRequestsPage = lazy(() => import("@/pages/trip-requests"));
 
+// Admin pages
+const AdminDashboard = lazy(() => import("@/pages/admin/index"));
+const AdminRoles = lazy(() => import("@/pages/admin/roles"));
+const AdminAuditLogs = lazy(() => import("@/pages/admin/audit-logs"));
+const AdminAIModeration = lazy(() => import("@/pages/admin/ai-moderation"));
+const AdminAPIDocs = lazy(() => import("@/pages/admin/api-docs"));
+const AdminModeration = lazy(() => import("@/pages/admin/moderation"));
+const AdminMobile = lazy(() => import("@/pages/admin/mobile-admin"));
+
 // Performance loading component with error boundary
 const PageLoader = () => (
   <div className="min-h-screen bg-gradient-to-br from-ceylon-green/10 to-ceylon-orange/10 flex items-center justify-center">
@@ -177,6 +186,15 @@ function Router() {
           <Route path="/help/faq" component={handleRoute(HelpFAQPage)} />
           <Route path="/settings/account" component={handleRoute(AccountSettingsPage)} />
           <Route path="/user/delete" component={handleRoute(UserDeletion)} />
+          
+          {/* Admin Routes */}
+          <Route path="/admin" component={handleRoute(AdminDashboard)} />
+          <Route path="/admin/roles" component={handleRoute(AdminRoles)} />
+          <Route path="/admin/audit-logs" component={handleRoute(AdminAuditLogs)} />
+          <Route path="/admin/ai-moderation" component={handleRoute(AdminAIModeration)} />
+          <Route path="/admin/api-docs" component={handleRoute(AdminAPIDocs)} />
+          <Route path="/admin/moderation" component={handleRoute(AdminModeration)} />
+          <Route path="/admin/mobile" component={handleRoute(AdminMobile)} />
         </>
       )}
       
