@@ -24,6 +24,11 @@ export function QuestionCard({ question, onEdit, onDelete, currentUserId, showPr
   const isAuthor = currentUserId === question.userId;
   
   // Prepare user data for UserDisplay component
+  const getInitials = (name: string | null | undefined): string => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
+  };
+  
   const displayUser = question.isAnonymous 
     ? { id: "anonymous", displayName: "Anonymous", username: null, avatarUrl: null, initials: "A" }
     : question.user ? {
@@ -31,7 +36,7 @@ export function QuestionCard({ question, onEdit, onDelete, currentUserId, showPr
         displayName: question.user.displayName,
         username: question.user.username,
         avatarUrl: question.user.profileImageUrl,
-        initials: question.user.initials || 'U'
+        initials: getInitials(question.user.displayName || question.user.name)
       } : null;
   
   // Truncate body for preview (2 lines ~ 120 characters)
