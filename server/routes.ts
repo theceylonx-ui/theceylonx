@@ -5256,6 +5256,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('🌱 Production seeding initiated...');
       
+      // Setup admin user first
+      const { db } = await import('./db');
+      const { users, roles } = await import('../shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      // Get superadmin role
+      const [superadminRole] = await db.select().from(roles).where(eq(roles.name, 'superadmin'));
+      
+      if (superadminRole) {
+        // Create or update admin user
+        const adminEmail = 'theceylonx@gmail.com';
+        const [existingUser] = await db.select().from(users).where(eq(users.email, adminEmail));
+        
+        if (existingUser) {
+          await db.update(users).set({ roleId: superadminRole.id }).where(eq(users.email, adminEmail));
+          console.log('✅ Admin user updated with superadmin role');
+        } else {
+          await db.insert(users).values({
+            id: 'admin-theceylonx',
+            email: adminEmail,
+            name: 'CeylonX Admin',
+            roleId: superadminRole.id
+          });
+          console.log('✅ Admin user created with superadmin role');
+        }
+      }
+      
       // Seed trips
       const { seedSampleTrips } = await import('../scripts/seed-trips');
       await seedSampleTrips();
@@ -5270,8 +5297,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ 
         status: 'success',
-        message: 'Sample data seeded successfully',
-        timestamp: new Date().toISOString()
+        message: 'Sample data and admin user seeded successfully',
+        timestamp: new Date().toISOString(),
+        admin: 'theceylonx@gmail.com granted superadmin access'
       });
     } catch (error) {
       console.error('❌ Production seed error:', error);
