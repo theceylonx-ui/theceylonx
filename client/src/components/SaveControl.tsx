@@ -152,7 +152,7 @@ export function SaveControl({ tripId, variant = 'default', className = '' }: Sav
         size={isCompact ? 'sm' : 'default'}
         onClick={() => handleSave('pinned')}
         disabled={isPending}
-        className={`${isCompact ? 'h-9 w-9 p-0' : 'h-10 w-10 p-0'} transition-all duration-200 ${
+        className={`${isCompact ? 'h-11 w-11 p-0 min-h-[44px] min-w-[44px]' : 'h-11 w-11 p-0 min-h-[44px] min-w-[44px]'} transition-all duration-200 ${
           isPinned 
             ? 'bg-orange-500 text-white hover:bg-orange-600 border-orange-500 shadow-md' 
             : 'border-ui-line text-text-muted hover:bg-ui-surface hover:border-orange-400'

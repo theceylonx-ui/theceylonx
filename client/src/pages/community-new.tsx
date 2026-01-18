@@ -92,7 +92,7 @@ export default function CommunityPage() {
           variant={i === currentPage ? "default" : "outline"}
           size="sm"
           onClick={() => handlePageChange(i)}
-          className="h-9 w-9 p-0"
+          className="h-11 w-11 p-0 min-h-[44px] min-w-[44px]"
         >
           {i}
         </Button>

@@ -73,7 +73,7 @@ export function QuestionCard({ question, onEdit, onDelete, currentUserId, showPr
                       e.preventDefault();
                       onEdit(question.id);
                     }}
-                    className="h-8 w-8 p-0 text-text-muted hover:text-brand"
+                    className="h-11 w-11 p-0 min-h-[44px] min-w-[44px] text-text-muted hover:text-brand"
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
@@ -86,7 +86,7 @@ export function QuestionCard({ question, onEdit, onDelete, currentUserId, showPr
                       e.preventDefault();
                       onDelete(question.id);
                     }}
-                    className="h-8 w-8 p-0 text-text-muted hover:text-danger"
+                    className="h-11 w-11 p-0 min-h-[44px] min-w-[44px] text-text-muted hover:text-danger"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

@@ -38,7 +38,7 @@ export function ActionsMenu({
         <Button
           variant="ghost"
           size={size}
-          className={`h-9 w-9 p-0 ${className}`}
+          className={`h-11 w-11 p-0 min-h-[44px] min-w-[44px] ${className}`}
           data-testid="button-actions-menu"
         >
           <MoreHorizontal className="w-4 h-4" />
