@@ -41,3 +41,8 @@ waitForPort = 5000
 
 [agent]
 integrations = ["javascript_sendgrid:1.0.0", "javascript_websocket:1.0.0", "javascript_database:1.0.0", "javascript_log_in_with_replit:1.0.0", "javascript_object_storage:1.0.0"]
+
+[userenv]
+
+[userenv.production]
+SEED_SECRET_KEY = "52ee6c297feeb0f080f3193128ccff17"

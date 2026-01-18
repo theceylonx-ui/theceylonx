@@ -5238,6 +5238,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health/system", unifiedAuthGuard, requireAdmin, systemMetrics);
   app.get("/api/health/performance", unifiedAuthGuard, requireAdmin, performanceMetrics);
 
+  // 🌱 One-time seed endpoint for production - uses secret key authorization
+  app.post("/api/setup/seed-production", async (req: any, res: any) => {
+    try {
+      const { seedKey } = req.body;
+      const expectedKey = process.env.SEED_SECRET_KEY;
+      
+      if (!expectedKey) {
+        return res.status(503).json({ 
+          message: 'Seed endpoint not configured. Set SEED_SECRET_KEY environment variable.' 
+        });
+      }
+      
+      if (!seedKey || seedKey !== expectedKey) {
+        return res.status(401).json({ message: 'Invalid seed key' });
+      }
+      
+      console.log('🌱 Production seeding initiated...');
+      
+      // Seed trips
+      const { seedSampleTrips } = await import('../scripts/seed-trips');
+      await seedSampleTrips();
+      console.log('✅ Sample trips seeded');
+      
+      // Seed community questions
+      const { seedSimpleQuestions } = await import('../scripts/seed-simple-questions');
+      await seedSimpleQuestions();
+      console.log('✅ Sample questions seeded');
+      
+      console.log('🎉 Production seeding completed!');
+      
+      res.json({ 
+        status: 'success',
+        message: 'Sample data seeded successfully',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('❌ Production seed error:', error);
+      res.status(500).json({ 
+        status: 'error',
+        message: 'Failed to seed data',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // 🔒 SECURED: Comprehensive monitoring dashboard endpoint - requires admin authentication
   app.get("/api/monitoring/dashboard", unifiedAuthGuard, requireAdmin, async (req: any, res: any) => {
     try {
