@@ -45,4 +45,3 @@ integrations = ["javascript_sendgrid:1.0.0", "javascript_websocket:1.0.0", "java
 [userenv]
 
 [userenv.production]
-SEED_SECRET_KEY = "52ee6c297feeb0f080f3193128ccff17"
