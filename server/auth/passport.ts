@@ -3,9 +3,43 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as FacebookStrategy } from 'passport-facebook';
 // Microsoft and Apple strategies removed - using only Google and Facebook
 import { db } from '../db';
-import { users } from '@shared/schema';
+import { users, roles } from '@shared/schema';
 import { eq, or } from 'drizzle-orm';
 import { JWTUser } from './jwt';
+
+// Helper to check if email is a designated superadmin
+const isSuperadminEmail = (email: string): boolean => {
+  const superadminEmails = process.env.SUPERADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) || [];
+  return superadminEmails.includes(email.toLowerCase());
+};
+
+// Helper to assign superadmin role to a user
+const assignSuperadminRole = async (userId: string): Promise<void> => {
+  try {
+    // Find or create superadmin role
+    let [superadminRole] = await db.select().from(roles).where(eq(roles.name, 'superadmin'));
+    
+    if (!superadminRole) {
+      // Create superadmin role with all permissions
+      const [newRole] = await db.insert(roles).values({
+        name: 'superadmin',
+        description: 'Full system access',
+        permissions: ['*'], // Full permissions
+        isSystem: true,
+      }).returning();
+      superadminRole = newRole;
+    }
+    
+    // Update user with superadmin role
+    await db.update(users)
+      .set({ roleId: superadminRole.id })
+      .where(eq(users.id, userId));
+      
+    console.log(`✅ Superadmin role assigned to user ${userId}`);
+  } catch (error) {
+    console.error('❌ Failed to assign superadmin role:', error);
+  }
+};
 
 // Google OAuth Strategy
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
@@ -50,12 +84,19 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       );
       const existingUser = existingUsers[0];
 
+      const userEmail = profile.emails?.[0]?.value || '';
+      
       if (existingUser) {
         // Update Google ID if not set
         if (!existingUser.googleId) {
           await db.update(users)
             .set({ googleId: profile.id })
             .where(eq(users.id, existingUser.id));
+        }
+        
+        // Auto-assign superadmin role if email is designated
+        if (userEmail && isSuperadminEmail(userEmail) && !existingUser.roleId) {
+          await assignSuperadminRole(existingUser.id);
         }
         
         const jwtUser: JWTUser = {
@@ -70,7 +111,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 
       // Create new user
       const newUsers = await db.insert(users).values({
-        email: profile.emails?.[0]?.value,
+        email: userEmail,
         name: profile.displayName,
         image: profile.photos?.[0]?.value,
         provider: 'google',
@@ -78,6 +119,11 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         emailVerified: true,
       }).returning() as any[];
       const newUser = newUsers[0];
+      
+      // Auto-assign superadmin role if email is designated
+      if (userEmail && isSuperadminEmail(userEmail)) {
+        await assignSuperadminRole(newUser.id);
+      }
 
       const jwtUser: JWTUser = {
         id: newUser.id,

@@ -45,3 +45,6 @@ integrations = ["javascript_sendgrid:1.0.0", "javascript_websocket:1.0.0", "java
 [userenv]
 
 [userenv.production]
+
+[userenv.shared]
+SUPERADMIN_EMAILS = "theceylonx@gmail.com"
