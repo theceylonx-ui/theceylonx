@@ -16,11 +16,14 @@ const isSuperadminEmail = (email: string): boolean => {
 // Helper to assign superadmin role to a user
 const assignSuperadminRole = async (userId: string): Promise<void> => {
   try {
+    console.log(`🔐 Attempting to assign superadmin role to user ${userId}`);
+    
     // Find or create superadmin role
     let [superadminRole] = await db.select().from(roles).where(eq(roles.name, 'superadmin'));
     
     if (!superadminRole) {
       // Create superadmin role with all permissions
+      console.log('🔐 Creating new superadmin role');
       const [newRole] = await db.insert(roles).values({
         name: 'superadmin',
         description: 'Full system access',
@@ -28,6 +31,16 @@ const assignSuperadminRole = async (userId: string): Promise<void> => {
         isSystem: true,
       }).returning();
       superadminRole = newRole;
+    } else {
+      // Ensure superadmin role has correct permissions format (array with '*')
+      const perms = superadminRole.permissions;
+      const needsUpdate = !Array.isArray(perms) || !perms.includes('*');
+      if (needsUpdate) {
+        console.log('🔐 Updating superadmin role permissions to correct format');
+        await db.update(roles)
+          .set({ permissions: ['*'] })
+          .where(eq(roles.id, superadminRole.id));
+      }
     }
     
     // Update user with superadmin role
@@ -85,8 +98,11 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       const existingUser = existingUsers[0];
 
       const userEmail = profile.emails?.[0]?.value || '';
+      console.log(`🔐 Google OAuth callback for email: ${userEmail}`);
+      console.log(`🔐 Is superadmin email: ${isSuperadminEmail(userEmail)}`);
       
       if (existingUser) {
+        console.log(`🔐 Existing user found: ${existingUser.id}, roleId: ${existingUser.roleId}`);
         // Update Google ID if not set
         if (!existingUser.googleId) {
           await db.update(users)
