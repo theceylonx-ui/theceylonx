@@ -8,7 +8,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import type { TripWithOrganizer } from "@shared/schema";
-import backgroundImage from "@assets/landing-hero-bg.png";
 import { RecommendedTrips } from "@/components/RecommendedTrips";
 import { PreferencesCompletionBanner } from "@/components/PreferencesCompletionBanner";
 import { useAuth } from "@/hooks/useAuth";
@@ -38,16 +37,6 @@ export default function Home() {
       
       {/* Hero Section - conditional content based on authentication */}
       <section className="relative bg-gradient-to-br from-ceylon-green to-ceylon-blue py-16">
-        <div className="absolute inset-0 bg-black opacity-50"></div>
-        <div 
-          className="absolute inset-0" 
-          style={{
-            backgroundImage: `url(${backgroundImage})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-        ></div>
-        
         <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center text-white py-12 sm:py-20">
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 drop-shadow-2xl tracking-tight" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }} data-testid="hero-welcome">
             {user ? "Welcome back, Explorer!" : "Discover Sri Lanka Together"}
