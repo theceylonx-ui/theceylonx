@@ -5296,13 +5296,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Seed trips
-      const { seedSampleTrips } = await import('../scripts/seed-trips');
+      const { seedSampleTrips, seedSampleQuestions } = await import('./services/seedService');
       await seedSampleTrips();
       console.log('✅ Sample trips seeded');
       
       // Seed community questions
-      const { seedSimpleQuestions } = await import('../scripts/seed-simple-questions');
-      await seedSimpleQuestions();
+      await seedSampleQuestions();
       console.log('✅ Sample questions seeded');
       
       console.log('🎉 Production seeding completed!');
