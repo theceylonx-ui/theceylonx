@@ -15,7 +15,7 @@ export default function TermsOfService() {
             Terms of Service
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400">
-            Last updated: September 2025
+            Last updated: January 2026
           </p>
         </div>
 
