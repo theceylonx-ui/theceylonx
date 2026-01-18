@@ -129,38 +129,64 @@ export class AdminService {
     }
   }
 
-  // Get dashboard summary
+  // Get dashboard summary - matches frontend DashboardStats interface
   async getDashboardSummary(): Promise<{
-    totalUsers: number;
-    totalTrips: number;
-    flaggedReports: number;
+    users: { total: number; active24h: number; newToday: number };
+    trips: { total: number; active: number; pending: number };
+    reports: { total: number; open: number; resolved24h: number };
+    chat: { activeThreads: number; flaggedMessages: number };
     recentActions: AuditLog[];
   }> {
     try {
+      const now = new Date();
+      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
       const [
         [{ totalUsers }],
         [{ totalTrips }],
-        [{ flaggedReports }],
+        [{ activeTrips }],
+        [{ pendingReports }],
+        [{ totalReports }],
         recentActions,
       ] = await Promise.all([
-        db.select({ totalUsers: count() }).from(users),
+        db.select({ totalUsers: count() }).from(users).where(eq(users.isDeleted, false)),
         db.select({ totalTrips: count() }).from(trips),
-        db.select({ flaggedReports: count() }).from(reports).where(eq(reports.status, 'pending')),
+        db.select({ activeTrips: count() }).from(trips).where(eq(trips.status, 'published')),
+        db.select({ pendingReports: count() }).from(reports).where(eq(reports.status, 'pending')),
+        db.select({ totalReports: count() }).from(reports),
         db.select().from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(20),
       ]);
 
       return {
-        totalUsers: totalUsers || 0,
-        totalTrips: totalTrips || 0,
-        flaggedReports: flaggedReports || 0,
+        users: {
+          total: totalUsers || 0,
+          active24h: 0,
+          newToday: 0,
+        },
+        trips: {
+          total: totalTrips || 0,
+          active: activeTrips || 0,
+          pending: 0,
+        },
+        reports: {
+          total: totalReports || 0,
+          open: pendingReports || 0,
+          resolved24h: 0,
+        },
+        chat: {
+          activeThreads: 0,
+          flaggedMessages: 0,
+        },
         recentActions,
       };
     } catch (error) {
       console.error('❌ Failed to get dashboard summary:', error);
       return {
-        totalUsers: 0,
-        totalTrips: 0,
-        flaggedReports: 0,
+        users: { total: 0, active24h: 0, newToday: 0 },
+        trips: { total: 0, active: 0, pending: 0 },
+        reports: { total: 0, open: 0, resolved24h: 0 },
+        chat: { activeThreads: 0, flaggedMessages: 0 },
         recentActions: [],
       };
     }
