@@ -210,44 +210,44 @@ export default function Footer() {
             <nav aria-label="Social media links">
               <div className="flex justify-center items-center space-x-6" role="list">
                 <button 
-                  className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 touch-target"
+                  className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 touch-target flex items-center justify-center"
                   aria-label="Follow Ceylon Expand on Facebook"
                   data-testid="social-facebook"
                   onClick={() => window.open('https://facebook.com/theceylonx', '_blank', 'noopener,noreferrer')}
                 >
-                  <Facebook className="h-5 w-5 text-gray-300 group-hover:text-blue-400" aria-hidden="true" />
+                  <Facebook className="h-5 w-5 text-gray-300 group-hover:text-blue-400 flex-shrink-0" aria-hidden="true" />
                 </button>
                 <button 
-                  className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 touch-target"
+                  className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 touch-target flex items-center justify-center"
                   aria-label="Follow Ceylon Expand on Instagram"
                   data-testid="social-instagram"
                   onClick={() => window.open('https://instagram.com/theceylonx', '_blank', 'noopener,noreferrer')}
                 >
-                  <Instagram className="h-5 w-5 text-gray-300 group-hover:text-pink-400" aria-hidden="true" />
+                  <Instagram className="h-5 w-5 text-gray-300 group-hover:text-pink-400 flex-shrink-0" aria-hidden="true" />
                 </button>
                 <button 
-                  className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 touch-target"
+                  className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 touch-target flex items-center justify-center"
                   aria-label="Follow Ceylon Expand on Twitter"
                   data-testid="social-twitter"
                   onClick={() => window.open('https://twitter.com/theceylonx', '_blank', 'noopener,noreferrer')}
                 >
-                  <Twitter className="h-5 w-5 text-gray-300 group-hover:text-blue-400" aria-hidden="true" />
+                  <Twitter className="h-5 w-5 text-gray-300 group-hover:text-blue-400 flex-shrink-0" aria-hidden="true" />
                 </button>
                 <button 
-                  className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 touch-target"
+                  className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 touch-target flex items-center justify-center"
                   aria-label="Follow Ceylon Expand on TikTok"
                   data-testid="social-tiktok"
                   onClick={() => window.open('https://tiktok.com/@theceylonx', '_blank', 'noopener,noreferrer')}
                 >
-                  <SiTiktok className="h-5 w-5 text-gray-300 group-hover:text-red-400" aria-hidden="true" />
+                  <SiTiktok className="h-5 w-5 text-gray-300 group-hover:text-red-400 flex-shrink-0" aria-hidden="true" />
                 </button>
                 <button 
-                  className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 touch-target"
+                  className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 touch-target flex items-center justify-center"
                   aria-label="Follow Ceylon Expand on YouTube"
                   data-testid="social-youtube"
                   onClick={() => window.open('https://youtube.com/@theceylonx', '_blank', 'noopener,noreferrer')}
                 >
-                  <Youtube className="h-5 w-5 text-gray-300 group-hover:text-red-500" aria-hidden="true" />
+                  <Youtube className="h-5 w-5 text-gray-300 group-hover:text-red-500 flex-shrink-0" aria-hidden="true" />
                 </button>
               </div>
             </nav>
