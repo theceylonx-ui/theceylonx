@@ -190,14 +190,13 @@ export default function Landing() {
             </div>
             
             <p 
-              className="text-lg sm:text-xl md:text-2xl mb-8 max-w-3xl mx-auto px-4 drop-shadow-lg" 
+              className="sm:text-xl md:text-2xl mb-8 max-w-3xl mx-auto px-4 drop-shadow-lg text-[27px]" 
               style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8), 0px 0px 2px rgba(0,0,0,0.6)' }} 
               data-testid="hero-subtitle"
               role="text"
               aria-describedby="page-title"
-            >
-              Find rides, buddies, and unique experiences across Sri Lanka. Post your trip or join one today.
-            </p>
+            >Find rides, buddies, and unique experiences across Sri Lanka.
+            Post your trip or join one today.</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center px-4" role="group" aria-label="Main action buttons">
               <Link href="/browse-trips">
                 <Button 
