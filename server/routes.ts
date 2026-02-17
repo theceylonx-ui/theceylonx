@@ -5763,6 +5763,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // TEMPORARY: One-time data cleanup endpoint (remove after use)
+  app.post('/api/admin/cleanup-sample-data', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const superadminEmails = (process.env.SUPERADMIN_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase());
+      const userEmail = req.user?.email?.toLowerCase();
+      if (!superadminEmails.includes(userEmail)) {
+        return res.status(403).json({ message: 'Superadmin only' });
+      }
+      const { db } = await import('./db');
+      const { sql } = await import('drizzle-orm');
+      const results: Record<string, number> = {};
+      const tables = ['answers', 'questions', 'chat_messages', 'chat_threads', 'kpi_events', 'pinned_trips', 'user_history', 'trip_interest_requests', 'quick_trip_interest_requests', 'trip_metadata', 'trip_stats', 'trip_views', 'notifications', 'trips', 'quick_trips'];
+      for (const table of tables) {
+        const r = await db.execute(sql.raw(`DELETE FROM ${table}`));
+        results[table] = (r as any).rowCount || 0;
+      }
+      res.json({ message: 'Sample data cleared', results });
+    } catch (error: any) {
+      console.error('Cleanup error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // 🚀 PHASE 4: Production error handling (after all routes)
   app.use(errorTrackingMiddleware);
   // Enhanced comprehensive error handler for all routes (before production handler)
