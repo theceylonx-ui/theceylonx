@@ -1,6 +1,6 @@
 import { useRoute } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import { BackLink } from "@/components/common/BackLink";
@@ -12,7 +12,7 @@ import { UserDisplay } from "@/components/ui/user-display";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { MapPin, Calendar, Clock, Users, Zap, Heart, Send, CheckCircle2, X, Check, MessageCircle } from "lucide-react";
+import { MapPin, Calendar, Clock, Users, Zap, Heart, Send, CheckCircle2, X, Check, MessageCircle, BellRing } from "lucide-react";
 
 function useCountdownHours(expiresAt: string | Date | null | undefined): number | null {
   const [hoursLeft, setHoursLeft] = useState<number | null>(null);
@@ -37,6 +37,7 @@ export default function QuickTripDetailPage() {
   const queryClient = useQueryClient();
   const [interestMessage, setInterestMessage] = useState("");
   const [showMessageInput, setShowMessageInput] = useState(false);
+  const interestsSectionRef = useRef<HTMLDivElement>(null);
 
   const { data: trip, isLoading, error } = useQuery<any>({
     queryKey: ["/api/quick-trips", tripId],
@@ -55,7 +56,7 @@ export default function QuickTripDetailPage() {
     enabled: !!isAuthenticated && !!user && !!tripId,
   });
 
-  const { data: interestRequests = [] } = useQuery<any[]>({
+  const { data: interestRequests, isLoading: isLoadingRequests } = useQuery<any[]>({
     queryKey: ["/api/quick-trips", tripId, "interest-requests"],
     queryFn: async () => {
       const response = await fetch(`/api/quick-trips/${tripId}/interest-requests`);
@@ -63,11 +64,22 @@ export default function QuickTripDetailPage() {
       if (!response.ok) throw new Error("Failed to fetch requests");
       return response.json();
     },
-    enabled: !!isAuthenticated && !!user && !!tripId && trip?.organizerId === user?.id,
+    enabled: !!isAuthenticated && !!user && !!tripId,
   });
 
+  const isOrganizer = isAuthenticated && !!trip && user?.id === trip?.organizerId;
+  const hasInterestData = Array.isArray(interestRequests) && interestRequests.length > 0;
+  const showOrganizerSection = isOrganizer || hasInterestData;
+
   const hoursLeft = useCountdownHours(trip?.expiresAt);
-  const isOrganizer = isAuthenticated && user?.id === trip?.organizerId;
+
+  useEffect(() => {
+    if (showOrganizerSection && !isLoadingRequests && window.location.hash === '#interests') {
+      setTimeout(() => {
+        interestsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    }
+  }, [isOrganizer, isLoadingRequests]);
 
   const sendInterestMutation = useMutation({
     mutationFn: async () => {
@@ -149,8 +161,9 @@ export default function QuickTripDetailPage() {
 
   const hasExistingInterest = !!existingInterest;
   const interestStatus = existingInterest?.status;
-  const pendingRequests = interestRequests.filter((r: any) => r.status === 'pending');
-  const acceptedRequests = interestRequests.filter((r: any) => r.status === 'accepted');
+  const safeRequests = interestRequests || [];
+  const pendingRequests = safeRequests.filter((r: any) => r.status === 'pending');
+  const acceptedRequests = safeRequests.filter((r: any) => r.status === 'accepted');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -158,6 +171,126 @@ export default function QuickTripDetailPage() {
       
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <BackLink to="/trips" label="Back to Browse" className="mb-6" />
+
+        {/* ORGANIZER: Interest Requests Section - Shown FIRST at the top */}
+        {showOrganizerSection && (
+          <div ref={interestsSectionRef} id="interests" className="mb-6">
+            <Card className="shadow-lg border-2 border-orange-300 overflow-hidden">
+              <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-4 text-white">
+                <h2 className="text-lg font-bold flex items-center gap-2">
+                  <BellRing className="w-5 h-5" />
+                  Interest Requests for Your Trip
+                  {pendingRequests.length > 0 && (
+                    <Badge className="bg-white text-orange-600 ml-2">{pendingRequests.length} new</Badge>
+                  )}
+                </h2>
+                <p className="text-sm text-orange-100 mt-1">People who want to join "{trip.title}"</p>
+              </div>
+              <CardContent className="p-5 space-y-4">
+                {isLoadingRequests ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500 mr-3"></div>
+                    <p className="text-gray-500">Loading interest requests...</p>
+                  </div>
+                ) : pendingRequests.length === 0 && acceptedRequests.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Users className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500 font-medium">No interest requests yet</p>
+                    <p className="text-sm text-gray-400 mt-1">Share your trip to find travel companions!</p>
+                  </div>
+                ) : (
+                  <>
+                    {pendingRequests.length > 0 && (
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-semibold text-orange-700 uppercase tracking-wide">
+                          Pending Requests ({pendingRequests.length})
+                        </h3>
+                        {pendingRequests.map((request: any) => (
+                          <Card key={request.id} className="border-2 border-orange-200 bg-orange-50/70 shadow-sm">
+                            <CardContent className="p-4">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  <div
+                                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => {
+                                      window.location.href = `/profile/${request.user?.username || request.user?.id}`;
+                                    }}
+                                  >
+                                    <UserDisplay user={request.user} avatarSize="md" />
+                                  </div>
+                                </div>
+                                {request.message && (
+                                  <div className="bg-white rounded-lg p-3 border border-orange-100 w-full sm:w-auto sm:max-w-[250px]">
+                                    <p className="text-sm text-gray-600 italic">"{request.message}"</p>
+                                  </div>
+                                )}
+                                <div className="flex gap-2 sm:ml-auto flex-shrink-0">
+                                  <Button
+                                    size="sm"
+                                    className="bg-green-600 hover:bg-green-700 text-white flex-1 sm:flex-none"
+                                    disabled={updateRequestMutation.isPending}
+                                    onClick={() => updateRequestMutation.mutate({ requestId: request.id, status: 'accepted' })}
+                                  >
+                                    <Check className="w-4 h-4 mr-1" /> Accept
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-red-300 text-red-600 hover:bg-red-50 flex-1 sm:flex-none"
+                                    disabled={updateRequestMutation.isPending}
+                                    onClick={() => updateRequestMutation.mutate({ requestId: request.id, status: 'rejected' })}
+                                  >
+                                    <X className="w-4 h-4 mr-1" /> Decline
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+
+                    {acceptedRequests.length > 0 && (
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-semibold text-green-700 uppercase tracking-wide">
+                          Accepted ({acceptedRequests.length})
+                        </h3>
+                        {acceptedRequests.map((request: any) => (
+                          <Card key={request.id} className="border border-green-200 bg-green-50/50">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3 flex-1">
+                                  <div
+                                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => {
+                                      window.location.href = `/profile/${request.user?.username || request.user?.id}`;
+                                    }}
+                                  >
+                                    <UserDisplay user={request.user} avatarSize="md" />
+                                  </div>
+                                  <Badge className="bg-green-100 text-green-700 border-green-300">Accepted</Badge>
+                                </div>
+                                {request.chatThreadId && (
+                                  <Button
+                                    size="sm"
+                                    className="bg-green-600 hover:bg-green-700"
+                                    onClick={() => { window.location.href = `/chat/${request.chatThreadId}`; }}
+                                  >
+                                    <MessageCircle className="w-4 h-4 mr-1" /> Chat
+                                  </Button>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
         
         <Card className="shadow-lg overflow-hidden">
           <div className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-600 p-6 text-white">
@@ -327,84 +460,6 @@ export default function QuickTripDetailPage() {
                     I'm Interested - Notify Organizer
                   </Button>
                 )}
-              </div>
-            )}
-
-            {/* Organizer view: Interest Requests */}
-            {isOrganizer && (pendingRequests.length > 0 || acceptedRequests.length > 0) && (
-              <div className="border-t pt-6 space-y-4">
-                <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-orange-500" />
-                  Interest Requests
-                  {pendingRequests.length > 0 && (
-                    <Badge className="bg-orange-500 text-white">{pendingRequests.length} pending</Badge>
-                  )}
-                </h3>
-
-                {pendingRequests.map((request: any) => (
-                  <Card key={request.id} className="border border-orange-200 bg-orange-50/50">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 flex-1">
-                          <UserDisplay user={request.user} avatarSize="md" />
-                          {request.message && (
-                            <p className="text-sm text-gray-600 italic ml-2">"{request.message}"</p>
-                          )}
-                        </div>
-                        <div className="flex gap-2 ml-3">
-                          <Button
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                            disabled={updateRequestMutation.isPending}
-                            onClick={() => updateRequestMutation.mutate({ requestId: request.id, status: 'accepted' })}
-                          >
-                            <Check className="w-4 h-4 mr-1" /> Accept
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-red-300 text-red-600 hover:bg-red-50"
-                            disabled={updateRequestMutation.isPending}
-                            onClick={() => updateRequestMutation.mutate({ requestId: request.id, status: 'rejected' })}
-                          >
-                            <X className="w-4 h-4 mr-1" /> Decline
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-
-                {acceptedRequests.map((request: any) => (
-                  <Card key={request.id} className="border border-green-200 bg-green-50/50">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 flex-1">
-                          <UserDisplay user={request.user} avatarSize="md" />
-                          <Badge className="bg-green-100 text-green-700 border-green-300">Accepted</Badge>
-                        </div>
-                        {request.chatThreadId && (
-                          <Button
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700"
-                            onClick={() => { window.location.href = `/chat/${request.chatThreadId}`; }}
-                          >
-                            <MessageCircle className="w-4 h-4 mr-1" /> Chat
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-
-            {isOrganizer && pendingRequests.length === 0 && acceptedRequests.length === 0 && (
-              <div className="border-t pt-6">
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500">No interest requests yet. Share your trip to get companions!</p>
-                </div>
               </div>
             )}
           </CardContent>

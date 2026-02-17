@@ -902,7 +902,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         priority: 'high',
         title: 'Someone is interested in your Quick Trip!',
         message: `${displayName} is interested in your quick trip "${trip.title}"${message ? `: "${message}"` : ''}`,
-        actionUrl: `/quick-trips/${quickTripId}`,
+        actionUrl: `/quick-trips/${quickTripId}#interests`,
         isRead: false
       });
 
@@ -920,7 +920,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             priority: 'high',
             isRead: false,
             createdAt: new Date().toISOString(),
-            actionUrl: `/quick-trips/${quickTripId}`
+            actionUrl: `/quick-trips/${quickTripId}#interests`
           }
         });
       }
