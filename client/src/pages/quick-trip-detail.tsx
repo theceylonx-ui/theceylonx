@@ -12,7 +12,7 @@ import { UserDisplay } from "@/components/ui/user-display";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { MapPin, Calendar, Clock, Users, Zap, Heart, Send, CheckCircle2, X, Check, MessageCircle, BellRing } from "lucide-react";
+import { MapPin, Calendar, Clock, Users, Zap, Heart, Send, CheckCircle2, X, Check, MessageCircle, BellRing, DollarSign } from "lucide-react";
 
 function useCountdownHours(expiresAt: string | Date | null | undefined): number | null {
   const [hoursLeft, setHoursLeft] = useState<number | null>(null);
@@ -356,6 +356,17 @@ export default function QuickTripDetailPage() {
                 <div>
                   <p className="text-xs text-gray-500">Category</p>
                   <Badge variant="secondary">{CATEGORIES[trip.category] || trip.category}</Badge>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <DollarSign className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                <div>
+                  <p className="text-xs text-gray-500">Pricing</p>
+                  {trip.isFree === false && trip.seatPrice ? (
+                    <p className="font-medium text-orange-600">LKR {Number(trip.seatPrice).toLocaleString()} / seat</p>
+                  ) : (
+                    <Badge className="bg-green-100 text-green-700 border-green-300">Free</Badge>
+                  )}
                 </div>
               </div>
             </div>

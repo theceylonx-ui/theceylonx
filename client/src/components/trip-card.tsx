@@ -561,7 +561,19 @@ export default function TripCard({ trip, badges }: TripCardProps) {
             </div>
             
             <div className="flex items-center" data-testid={`trip-price-${trip.id}`}>
-              {!trip.price || Number(trip.price) === 0 ? (
+              {isQuickTrip ? (
+                (trip as any).isFree === false && (trip as any).seatPrice ? (
+                  <>
+                    <DollarSign className="h-4 w-4 mr-2 text-brand flex-shrink-0" />
+                    <span className="font-semibold text-brand">LKR {Number((trip as any).seatPrice).toLocaleString()}/seat</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-lg mr-2">💚</span>
+                    <span className="font-semibold text-brand">Free Trip</span>
+                  </>
+                )
+              ) : !trip.price || Number(trip.price) === 0 ? (
                 <>
                   <span className="text-lg mr-2">💚</span>
                   <span className="font-semibold text-brand">Free Trip</span>

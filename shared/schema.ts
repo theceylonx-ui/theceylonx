@@ -10,6 +10,7 @@ import {
   integer,
   boolean,
   decimal,
+  real,
   pgEnum,
   unique,
   foreignKey,
@@ -1874,6 +1875,8 @@ export const quickTrips = pgTable("quick_trips", {
   date: timestamp("date").notNull(),
   time: varchar("time", { length: 10 }).notNull(),
   seatsAvailable: integer("seats_available").notNull(),
+  isFree: boolean("is_free").default(true).notNull(),
+  seatPrice: real("seat_price"),
   status: varchar("status", { length: 20 }).default("active").notNull(),
   imageUrl: varchar("image_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -1937,7 +1940,7 @@ export type QuickTripWithOrganizer = QuickTrip & {
   };
 };
 
-export const QuickTripFormSchema = z.object({
+const QuickTripBaseSchema = z.object({
   fromLocation: z.string().min(1, "Departure location is required"),
   toLocation: z.string().min(1, "Destination is required"),
   region: z.string().min(1, "Region is required"),
@@ -1958,9 +1961,21 @@ export const QuickTripFormSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters").max(500, "Description must be less than 500 characters"),
   category: z.enum(['roadtrip', 'hiking', 'beach', 'culture', 'wellness', 'festival', 'workshop', 'wildlife', 'food', 'adventure_sport', 'unknown']).refine(val => val !== 'unknown', "Please select a trip category"),
   seatsAvailable: z.number().min(1, "At least 1 seat required").max(50, "Maximum 50 seats"),
+  isFree: z.boolean().default(true),
+  seatPrice: z.number().min(0).max(100000).nullable().optional(),
 });
 
-export const QuickTripStep1Schema = QuickTripFormSchema.pick({
+export const QuickTripFormSchema = QuickTripBaseSchema.refine((data) => {
+  if (!data.isFree && (!data.seatPrice || data.seatPrice <= 0)) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Please enter a seat price for paid trips",
+  path: ["seatPrice"],
+});
+
+export const QuickTripStep1Schema = QuickTripBaseSchema.pick({
   fromLocation: true,
   toLocation: true,
   region: true,
@@ -1968,11 +1983,21 @@ export const QuickTripStep1Schema = QuickTripFormSchema.pick({
   time: true,
 });
 
-export const QuickTripStep2Schema = QuickTripFormSchema.pick({
+export const QuickTripStep2Schema = QuickTripBaseSchema.pick({
   title: true,
   description: true,
   category: true,
   seatsAvailable: true,
+  isFree: true,
+  seatPrice: true,
+}).refine((data) => {
+  if (!data.isFree && (!data.seatPrice || data.seatPrice <= 0)) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Please enter a seat price for paid trips",
+  path: ["seatPrice"],
 });
 
 export type QuickTripFormData = z.infer<typeof QuickTripFormSchema>;

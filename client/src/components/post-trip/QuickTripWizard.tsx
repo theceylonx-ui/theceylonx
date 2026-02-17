@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { DestinationSelect } from "./DestinationSelect";
-import { ChevronLeft, ChevronRight, Send, MapPin, Calendar, Clock, Users, Zap, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Send, MapPin, Calendar, Clock, Users, Zap, Check, DollarSign } from "lucide-react";
 import {
   QuickTripFormSchema,
   QuickTripStep1Schema,
@@ -57,6 +57,8 @@ export function QuickTripWizard() {
       description: "",
       category: "adventure_sport",
       seatsAvailable: 1,
+      isFree: true,
+      seatPrice: null,
     },
     mode: "onBlur",
   });
@@ -91,14 +93,14 @@ export function QuickTripWizard() {
     try {
       const fields = currentStep === 1
         ? { fromLocation: formData.fromLocation, toLocation: formData.toLocation, region: formData.region, date: formData.date, time: formData.time }
-        : { title: formData.title, description: formData.description, category: formData.category, seatsAvailable: formData.seatsAvailable };
+        : { title: formData.title, description: formData.description, category: formData.category, seatsAvailable: formData.seatsAvailable, isFree: formData.isFree, seatPrice: formData.seatPrice };
       await schema.parseAsync(fields);
       return true;
     } catch {
       if (currentStep === 1) {
         await form.trigger(["fromLocation", "toLocation", "region", "date", "time"]);
       } else {
-        await form.trigger(["title", "description", "category", "seatsAvailable"]);
+        await form.trigger(["title", "description", "category", "seatsAvailable", "seatPrice"]);
       }
       return false;
     }
@@ -351,6 +353,76 @@ export function QuickTripWizard() {
                     )}
                   />
                 </div>
+
+                <div>
+                  <FormLabel className="flex items-center gap-1 mb-3">
+                    <DollarSign className="w-4 h-4" /> Seat Pricing <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div
+                      className={`cursor-pointer border-2 rounded-lg p-4 text-center transition-all ${
+                        formData.isFree
+                          ? "border-green-500 bg-green-50 ring-2 ring-green-200"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                      onClick={() => {
+                        form.setValue("isFree", true);
+                        form.setValue("seatPrice", null);
+                        form.clearErrors("seatPrice");
+                      }}
+                    >
+                      <div className="text-2xl mb-1">🆓</div>
+                      <p className="font-semibold text-gray-800">Free</p>
+                      <p className="text-xs text-gray-500">No charge per seat</p>
+                    </div>
+                    <div
+                      className={`cursor-pointer border-2 rounded-lg p-4 text-center transition-all ${
+                        !formData.isFree
+                          ? "border-orange-500 bg-orange-50 ring-2 ring-orange-200"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                      onClick={() => {
+                        form.setValue("isFree", false);
+                      }}
+                    >
+                      <div className="text-2xl mb-1">💰</div>
+                      <p className="font-semibold text-gray-800">Paid</p>
+                      <p className="text-xs text-gray-500">Set a price per seat</p>
+                    </div>
+                  </div>
+                </div>
+
+                {!formData.isFree && (
+                  <FormField
+                    control={form.control}
+                    name="seatPrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Price per Seat (LKR) <span className="text-red-500">*</span></FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">LKR</span>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={100000}
+                              step={50}
+                              placeholder="e.g., 500"
+                              className="pl-12"
+                              value={field.value ?? ""}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                field.onChange(val === "" ? null : Number(val));
+                              }}
+                            />
+                          </div>
+                        </FormControl>
+                        <p className="text-xs text-gray-500">Enter the cost per seat in Sri Lankan Rupees</p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </CardContent>
             </Card>
           )}
@@ -417,6 +489,14 @@ export function QuickTripWizard() {
                       <p className="text-sm text-gray-500">Seats</p>
                       <p className="font-medium">{formData.seatsAvailable}</p>
                     </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Pricing</p>
+                    {formData.isFree ? (
+                      <Badge className="bg-green-100 text-green-700 border-green-300">Free</Badge>
+                    ) : (
+                      <p className="font-medium text-orange-600">LKR {formData.seatPrice?.toLocaleString()} per seat</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
