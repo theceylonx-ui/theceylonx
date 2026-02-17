@@ -568,14 +568,80 @@ export default function TripCard({ trip, badges }: TripCardProps) {
             
             {/* Row 2: Action Buttons - Well Spaced */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {user && !isOwner && (
+              <div className="flex items-center gap-2">
+                {user && !isOwner && !isQuickTrip && (
                   <SaveControl 
                     tripId={trip.id} 
                     variant="compact" 
                     className=""
                     data-testid={`save-control-${trip.id}`}
                   />
+                )}
+
+                {!isOwner && !isQuickTrip && (
+                  <Button
+                    variant={trip.isInterested ? "default" : "outline"}
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!user) {
+                        window.location.href = '/auth/signin';
+                        return;
+                      }
+                      handleInterest(e);
+                    }}
+                    disabled={interestMutation.isPending}
+                    className={`h-11 min-h-[44px] px-3 transition-all duration-200 ${
+                      trip.isInterested
+                        ? 'bg-pink-500 text-white hover:bg-pink-600 border-pink-500 shadow-md'
+                        : 'border-ui-line text-text-muted hover:bg-ui-surface hover:border-pink-400'
+                    }`}
+                    data-testid={`interest-button-${trip.id}`}
+                    title={trip.isInterested ? "Withdraw interest" : "Show interest"}
+                  >
+                    {interestMutation.isPending ? (
+                      <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    ) : trip.isInterested ? (
+                      <StarOff className="w-3.5 h-3.5 mr-1" />
+                    ) : (
+                      <Star className="w-3.5 h-3.5 mr-1" />
+                    )}
+                    <span className="text-xs">{trip.isInterested ? "Interested" : "Interest"}</span>
+                  </Button>
+                )}
+
+                {!isOwner && !isQuickTrip && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled
+                    className="h-11 min-h-[44px] px-3 border-ui-line text-text-muted opacity-60 cursor-not-allowed"
+                    data-testid={`contact-button-${trip.id}`}
+                    title="Contact is locked until the organizer accepts your interest"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  >
+                    <Lock className="w-3.5 h-3.5 mr-1" />
+                    <span className="text-xs">Contact</span>
+                  </Button>
+                )}
+
+                {!isOwner && isQuickTrip && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-11 min-h-[44px] px-3 border-ui-line text-orange-600 hover:bg-orange-50 hover:border-orange-400 transition-all duration-200"
+                    data-testid={`quick-interest-button-${trip.id}`}
+                    title="Show interest in this quick trip"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      window.location.href = user ? `/quick-trips/${trip.id}` : '/auth/signin';
+                    }}
+                  >
+                    <Star className="w-3.5 h-3.5 mr-1" />
+                    <span className="text-xs">I'm Interested</span>
+                  </Button>
                 )}
                 
                 {/* Owner-only actions */}
