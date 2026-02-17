@@ -403,15 +403,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(setupSuperadmin);
   
   // Enhanced Admin routes (new permission-based system)
-  // IMPORTANT: Authentication middleware must run BEFORE requireAdmin to populate req.user
+  // Chain: 1) Populate req.user → 2) Auto-assign superadmin if eligible → 3) Check admin role
   app.use('/api/admin', async (req: any, res: any, next: any) => {
-    // Populate req.user from JWT/Clerk auth before admin middleware
     const user = await getAuthenticatedUser(req, res);
     if (user) {
       req.user = user;
     }
     next();
-  }, adminRoutes.default);
+  }, setupSuperadmin, adminRoutes.default);
   
   // Preferences routes
   const { registerPreferencesRoutes } = await import('./modules/preferences/routes');
