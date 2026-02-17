@@ -1,10 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Menu, X, MessageSquare, Calendar } from "lucide-react";
 import { useState } from "react";
-import logoImage56 from "@assets/logo-56.png";
-import logoImage112 from "@assets/logo-112.png";
-import logoWebp56 from "@assets/logo-56.webp";
-import logoWebp112 from "@assets/logo-112.webp";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { EnhancedNotificationDropdown } from "@/components/notifications/enhanced-notification-dropdown";

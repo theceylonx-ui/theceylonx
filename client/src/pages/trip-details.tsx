@@ -28,6 +28,7 @@ import { EditContentDialog } from "@/components/EditContentDialog";
 import { TripEditDialog } from "@/components/TripEditDialog";
 import { ActionsMenu } from "@/components/ActionsMenu";
 import { TripBreadcrumbs } from "@/components/TripBreadcrumbs";
+import newLogo from "@assets/Copy of CEY  X Letter Digital Company Logo.png";
 
 interface TripDetailsProps {
   params: { id: string };
@@ -107,7 +108,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
   }, [isAuthenticated, user, trip, existingInterestRequest]);
 
   const getTripImage = () => {
-    if (!trip) return '/assets/logo-56.png';
+    if (!trip) return newLogo;
     
     // Priority 1: Use user-uploaded images from mediaUrls
     if (trip.mediaUrls && trip.mediaUrls.length > 0) {
@@ -126,7 +127,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
     }
     
     // Priority 3: Ceylon Expand logo as fallback
-    return '/assets/logo-56.png';
+    return newLogo;
   };
 
   const deleteCommentMutation = useMutation({
@@ -529,7 +530,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
 
             {/* Trip Image */}
             <div className="mt-6">
-              {getTripImage() === '/assets/logo-56.png' && !trip.mediaUrls?.length && !trip.imageUrl ? (
+              {getTripImage() === newLogo && !trip.mediaUrls?.length && !trip.imageUrl ? (
                 // Beautiful Ceylon Expand fallback design
                 <div className="w-full h-64 bg-gradient-to-br from-ceylon-green via-ceylon-blue to-purple-600 flex flex-col items-center justify-center relative overflow-hidden rounded-lg">
                   {/* Background pattern */}

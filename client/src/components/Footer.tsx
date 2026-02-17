@@ -1,9 +1,6 @@
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import logoImage56 from "@assets/logo-56.png";
-import logoImage112 from "@assets/logo-112.png";
-import logoWebp56 from "@assets/logo-56.webp";
-import logoWebp112 from "@assets/logo-112.webp";
+import newLogo from "@assets/Copy of CEY  X Letter Digital Company Logo.png";
 import { Facebook, Instagram, Twitter, Youtube } from "lucide-react";
 import { SiTiktok } from "react-icons/si";
 
@@ -30,21 +27,14 @@ export default function Footer() {
                 aria-label="Ceylon Expand homepage"
                 data-testid="footer-logo-link"
               >
-                <picture>
-                  <source 
-                    type="image/webp" 
-                    srcSet={`${logoWebp56} 1x, ${logoWebp112} 2x`}
-                  />
-                  <img 
-                    src={logoImage56} 
-                    srcSet={`${logoImage56} 1x, ${logoImage112} 2x`}
-                    alt="Ceylon Expand Logo" 
-                    className="h-6 w-6"
-                    width="24"
-                    height="24"
-                    loading="lazy"
-                  />
-                </picture>
+                <img 
+                  src={newLogo} 
+                  alt="Ceylon Expand Logo" 
+                  className="h-6 w-6"
+                  width="24"
+                  height="24"
+                  loading="lazy"
+                />
                 <span className="text-xl font-bold">Ceylon Expand</span>
               </div>
             </Link>

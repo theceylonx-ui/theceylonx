@@ -17,6 +17,7 @@ import { createTripDetailLink } from "@/utils/searchParams";
 import { useState, useCallback, useEffect } from "react";
 import { NeonBadge } from "@/components/ui/neon-badge";
 import { LazyImage } from "@/components/common/LazyImage";
+import newLogo from "@assets/Copy of CEY  X Letter Digital Company Logo.png";
 
 function useCountdownHours(expiresAt: string | Date | null | undefined): number | null {
   const [hoursLeft, setHoursLeft] = useState<number | null>(null);
@@ -421,7 +422,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
     
     // Priority 3: Ceylon Expand logo as fallback
     console.log('Using fallback image');
-    return '/assets/logo-56.png';
+    return newLogo;
   };
 
   const tripDetailLink = isQuickTrip 
@@ -432,7 +433,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
     <Link href={tripDetailLink}>
       <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group border-0 shadow-sm" data-testid={`trip-card-${trip.id}`}>
         <div className="relative">
-          {getTripImage() === '/assets/logo-56.png' && !trip.mediaUrls?.length && !trip.imageUrl ? (
+          {getTripImage() === newLogo && !trip.mediaUrls?.length && !trip.imageUrl ? (
             // Beautiful Ceylon Expand fallback design
             <div className="w-full h-48 bg-gradient-to-br from-ceylon-green via-ceylon-blue to-purple-600 flex flex-col items-center justify-center relative overflow-hidden">
               {/* Background pattern */}
@@ -466,7 +467,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
               alt={`${trip.region} travel photo of Sri Lanka - ${trip.fromLocation} to ${trip.toLocation}`}
               className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
               loading="lazy"
-              fallback="/assets/logo-56.png"
+              fallback={newLogo}
               onError={() => {
                 console.log('LazyImage failed to load:', getTripImage());
                 // Fallback handled by LazyImage component automatically
