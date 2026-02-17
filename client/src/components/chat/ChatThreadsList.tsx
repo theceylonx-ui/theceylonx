@@ -3,8 +3,27 @@ import { Link, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MessageCircle, Clock, MapPin } from "lucide-react";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { EmptyState } from "@/components/EmptyState";
+
+function safeFormat(dateValue: any, formatStr: string, fallback = ""): string {
+  try {
+    const d = new Date(dateValue);
+    if (!isValid(d)) return fallback;
+    return format(d, formatStr);
+  } catch {
+    return fallback;
+  }
+}
+
+function safeGetTime(dateValue: any): number {
+  try {
+    const d = new Date(dateValue);
+    return isValid(d) ? d.getTime() : 0;
+  } catch {
+    return 0;
+  }
+}
 import { UserDisplay } from "@/components/ui/user-display";
 
 interface ChatThread {
@@ -47,7 +66,7 @@ export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
 
   // Sort threads by updatedAt (WhatsApp style - newest conversations first)
   const threads = threadsData ? [...threadsData].sort((a, b) => 
-    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    safeGetTime(b.updatedAt) - safeGetTime(a.updatedAt)
   ) : [];
 
   const handleThreadClick = (threadId: string) => {
@@ -163,7 +182,7 @@ export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
                     />
                     <div className="flex items-center text-xs text-gray-500 ml-2">
                       <Clock className="w-3 h-3 mr-1" />
-                      {thread.updatedAt ? format(new Date(thread.updatedAt), "MMM d") : "Recent"}
+                      {safeFormat(thread.updatedAt, "MMM d", "Recent")}
                     </div>
                   </div>
                   
@@ -182,7 +201,7 @@ export function ChatThreadsList({ onThreadSelect }: ChatThreadsListProps = {}) {
                           {thread.trip.fromLocation} → {thread.trip.toLocation}
                         </span>
                         <span className="mx-2">•</span>
-                        <span>{thread.trip.date ? format(new Date(thread.trip.date), "MMM d, yyyy") : "Date TBD"}</span>
+                        <span>{safeFormat(thread.trip.date, "MMM d, yyyy", "Date TBD")}</span>
                       </div>
                     </div>
                   ) : (

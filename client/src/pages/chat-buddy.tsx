@@ -605,9 +605,18 @@ export default function ChatBuddy() {
                     ) : (
                       <div className="space-y-4">
                         {chatData.messages
-                          .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+                          .sort((a, b) => {
+                            const ta = new Date(a.createdAt);
+                            const tb = new Date(b.createdAt);
+                            return (isNaN(ta.getTime()) ? 0 : ta.getTime()) - (isNaN(tb.getTime()) ? 0 : tb.getTime());
+                          })
                           .map((message) => {
                           const isOwnMessage = message.senderId === user?.id;
+                          const msgDate = new Date(message.createdAt);
+                          const timeStr = isNaN(msgDate.getTime()) ? "--:--" : msgDate.toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          });
                           return (
                             <div
                               key={message.id}
@@ -627,10 +636,7 @@ export default function ChatBuddy() {
                                   }`}
                                 >
                                   <Clock className="h-3 w-3 inline mr-1" />
-                                  {new Date(message.createdAt).toLocaleTimeString([], {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  })}
+                                  {timeStr}
                                 </p>
                               </div>
                             </div>

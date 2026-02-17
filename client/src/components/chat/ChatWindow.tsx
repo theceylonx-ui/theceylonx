@@ -20,8 +20,27 @@ import {
   Eye,
   EyeOff
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { Link } from "wouter";
+
+function safeFormat(dateValue: any, formatStr: string, fallback = ""): string {
+  try {
+    const d = new Date(dateValue);
+    if (!isValid(d)) return fallback;
+    return format(d, formatStr);
+  } catch {
+    return fallback;
+  }
+}
+
+function safeGetTime(dateValue: any): number {
+  try {
+    const d = new Date(dateValue);
+    return isValid(d) ? d.getTime() : 0;
+  } catch {
+    return 0;
+  }
+}
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "./ImageUpload";
@@ -156,7 +175,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
 
   // Sort messages chronologically like WhatsApp (oldest to newest)
   const messages = (messagesData?.messages || []).sort((a: ChatMessage, b: ChatMessage) => 
-    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    safeGetTime(a.createdAt) - safeGetTime(b.createdAt)
   );
 
   // Auto-scroll to bottom when new messages arrive (optimized)
@@ -602,7 +621,7 @@ function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
               
               <div className="flex items-center justify-between mt-2">
                 <span className={`text-xs ${isOwn ? 'text-primary-foreground/70' : 'text-gray-500'}`}>
-                  {format(new Date(message.createdAt), "HH:mm")}
+                  {safeFormat(message.createdAt, "HH:mm", "--:--")}
                 </span>
                 {isEphemeral && !consumed && (
                   <div className="flex items-center gap-1 text-xs">
