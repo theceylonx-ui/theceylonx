@@ -198,6 +198,17 @@ export default function Footer() {
                     </span>
                   </Link>
                 </li>
+                <li>
+                  <Link href="/about">
+                    <span 
+                      className="hover:text-ceylon-green transition-colors cursor-pointer focus:outline-none focus:underline focus:text-ceylon-green"
+                      data-testid="footer-link-about"
+                      tabIndex={0}
+                    >
+                      About Us
+                    </span>
+                  </Link>
+                </li>
               </ul>
             </nav>
           </div>

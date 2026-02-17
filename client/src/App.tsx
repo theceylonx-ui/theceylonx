@@ -29,6 +29,7 @@ const SafetyGuidelines = lazy(() => import("@/pages/safety-guidelines"));
 const TermsOfService = lazy(() => import("@/pages/terms-of-service"));
 const PrivacyPolicy = lazy(() => import("@/pages/privacy-policy"));
 const ContactUs = lazy(() => import("@/pages/contact-us"));
+const AboutPage = lazy(() => import("@/pages/about"));
 const SignInRequired = lazy(() => import("@/pages/signin-required"));
 const AuthSignInPage = lazy(() => import("@/pages/auth-signin"));
 const AuthMagicPage = lazy(() => import("@/pages/auth-magic"));
@@ -135,6 +136,7 @@ function Router() {
           <Route path="/terms-of-service" component={handleRoute(TermsOfService)} />
           <Route path="/privacy-policy" component={handleRoute(PrivacyPolicy)} />
           <Route path="/contact-us" component={handleRoute(ContactUs)} />
+          <Route path="/about" component={handleRoute(AboutPage)} />
           <Route path="/faq" component={handleRoute(HelpFAQPage)} />
           <Route path="/help/faq" component={handleRoute(HelpFAQPage)} />
           <Route path="/auth/signin" component={handleRoute(AuthSignInPage)} />
@@ -176,6 +178,7 @@ function Router() {
           <Route path="/terms-of-service" component={handleRoute(TermsOfService)} />
           <Route path="/privacy-policy" component={handleRoute(PrivacyPolicy)} />
           <Route path="/contact-us" component={handleRoute(ContactUs)} />
+          <Route path="/about" component={handleRoute(AboutPage)} />
           <Route path="/faq" component={handleRoute(HelpFAQPage)} />
           <Route path="/help/faq" component={handleRoute(HelpFAQPage)} />
           <Route path="/auth/signin" component={handleRoute(AuthSignInPage)} />
