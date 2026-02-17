@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { MapPin, Calendar, Users, DollarSign, Mail, Lock, Pin, PinOff, Star, StarOff, Zap, Clock } from "lucide-react";
+import { MapPin, Calendar, Users, DollarSign, Mail, Lock, Pin, PinOff, Star, StarOff, Zap, Clock, Heart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -219,6 +219,36 @@ export default function TripCard({ trip, badges }: TripCardProps) {
         description: error.message || 'Failed to update interest status',
         variant: 'destructive',
       });
+    },
+  });
+
+  const [quickInterestSent, setQuickInterestSent] = useState(false);
+
+  const quickTripInterestMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('POST', `/api/quick-trips/${trip.id}/interest`, {});
+    },
+    onSuccess: () => {
+      setQuickInterestSent(true);
+      toast({
+        title: 'Interest Sent!',
+        description: 'The trip organizer has been notified.',
+      });
+    },
+    onError: (error: any) => {
+      if (error?.status === 409) {
+        setQuickInterestSent(true);
+        toast({
+          title: 'Already Interested',
+          description: 'You have already shown interest in this trip.',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to send interest',
+          variant: 'destructive',
+        });
+      }
     },
   });
 
@@ -569,7 +599,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
             {/* Row 2: Action Buttons - Well Spaced */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                {user && !isOwner && (
+                {user && !isOwner && !isQuickTrip && (
                   <SaveControl 
                     tripId={trip.id} 
                     variant="compact" 
@@ -577,9 +607,35 @@ export default function TripCard({ trip, badges }: TripCardProps) {
                     data-testid={`save-control-${trip.id}`}
                   />
                 )}
+
+                {isQuickTrip && user && !isOwner && (
+                  <Button
+                    size="sm"
+                    variant={quickInterestSent ? "outline" : "default"}
+                    className={quickInterestSent 
+                      ? "text-sm px-3 py-2 text-green-600 border-green-300 bg-green-50 h-9" 
+                      : "text-sm px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white h-9"}
+                    disabled={quickInterestSent || quickTripInterestMutation.isPending}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!quickInterestSent) {
+                        quickTripInterestMutation.mutate();
+                      }
+                    }}
+                  >
+                    {quickInterestSent ? (
+                      <><Heart className="w-3.5 h-3.5 mr-1 fill-green-600" /> Interested</>
+                    ) : quickTripInterestMutation.isPending ? (
+                      <><div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white mr-1" /> Sending...</>
+                    ) : (
+                      <><Heart className="w-3.5 h-3.5 mr-1" /> I'm Interested</>
+                    )}
+                  </Button>
+                )}
                 
                 {/* Owner-only actions */}
-                {isOwner && (
+                {isOwner && !isQuickTrip && (
                   <ActionsMenu
                     onEdit={handleEditTrip}
                     onDelete={handleDeleteTrip}

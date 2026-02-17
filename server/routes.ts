@@ -886,6 +886,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "You cannot show interest in your own trip" });
       }
 
+      const result = await storage.createQuickTripInterest(quickTripId, userId, message);
+
+      if (!result.isNew && !result.reactivated) {
+        return res.status(409).json({ message: "You already showed interest in this trip", status: result.status });
+      }
+
       const user = await storage.getUser(userId);
       const displayName = user?.displayName || user?.username || 'Someone';
 
@@ -919,10 +925,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      res.status(201).json({ message: "Interest sent! The trip organizer has been notified." });
+      res.status(201).json({ message: "Interest sent! The trip organizer has been notified.", requestId: result.id });
     } catch (error) {
       console.error("Error sending quick trip interest:", error);
       res.status(500).json({ message: "Failed to send interest" });
+    }
+  });
+
+  app.get('/api/quick-trips/:id/interest-request', unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const quickTripId = req.params.id;
+      const interest = await storage.getUserQuickTripInterest(quickTripId, userId);
+      if (!interest) return res.status(404).json({ message: "No interest request found" });
+      res.json(interest);
+    } catch (error) {
+      console.error("Error fetching quick trip interest:", error);
+      res.status(500).json({ message: "Failed to fetch interest status" });
+    }
+  });
+
+  app.get('/api/quick-trips/:id/interest-requests', unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const quickTripId = req.params.id;
+
+      const trip = await storage.getQuickTrip(quickTripId);
+      if (!trip) return res.status(404).json({ message: "Quick trip not found" });
+      if (trip.organizerId !== userId) return res.status(403).json({ message: "Not authorized" });
+
+      const requests = await storage.getQuickTripInterestRequests(quickTripId);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching quick trip interest requests:", error);
+      res.status(500).json({ message: "Failed to fetch interest requests" });
+    }
+  });
+
+  app.put('/api/quick-trip-interest-requests/:requestId', unifiedAuthGuard, async (req, res) => {
+    try {
+      const { requestId } = req.params;
+      const { status } = req.body;
+      const userId = req.user!.id;
+
+      if (!["accepted", "rejected"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+
+      const updatedRequest = await storage.updateQuickTripInterestStatus(requestId, status, userId);
+
+      const notification = await storage.createNotification({
+        userId: updatedRequest.userId,
+        type: status === 'accepted' ? 'interest_accepted' : 'interest_declined',
+        category: 'trips',
+        priority: 'high',
+        title: status === 'accepted' ? 'Interest Request Accepted!' : 'Interest Request Update',
+        message: status === 'accepted'
+          ? `Your interest in the quick trip "${updatedRequest.quickTrip?.title}" has been accepted! You can now chat with the organizer.`
+          : `Your interest request for "${updatedRequest.quickTrip?.title}" was not accepted.`,
+        actionUrl: status === 'accepted' && updatedRequest.chatThreadId
+          ? `/chat/${updatedRequest.chatThreadId}`
+          : `/quick-trips/${updatedRequest.quickTripId}`,
+        isRead: false
+      });
+
+      if (notification) {
+        const { websocketService } = await import('./services/websocketService');
+        websocketService.broadcastNotification({
+          type: 'notification',
+          data: {
+            id: notification.id,
+            userId: updatedRequest.userId,
+            type: status === 'accepted' ? 'interest_accepted' : 'interest_declined',
+            title: status === 'accepted' ? 'Interest Request Accepted!' : 'Interest Request Update',
+            message: status === 'accepted'
+              ? `Your interest in the quick trip "${updatedRequest.quickTrip?.title}" has been accepted! You can now chat with the organizer.`
+              : `Your interest request for "${updatedRequest.quickTrip?.title}" was not accepted.`,
+            category: 'trips',
+            priority: 'high',
+            isRead: false,
+            createdAt: new Date().toISOString(),
+            actionUrl: status === 'accepted' && updatedRequest.chatThreadId
+              ? `/chat/${updatedRequest.chatThreadId}`
+              : `/quick-trips/${updatedRequest.quickTripId}`
+          }
+        });
+      }
+
+      res.json(updatedRequest);
+    } catch (error: any) {
+      console.error("Error updating quick trip interest request:", error);
+      if (error.message?.includes('Not authorized')) {
+        return res.status(403).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to update interest request" });
     }
   });
 

@@ -1,5 +1,5 @@
 import { useRoute } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
@@ -12,7 +12,7 @@ import { UserDisplay } from "@/components/ui/user-display";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { MapPin, Calendar, Clock, Users, Zap, Heart, Send, CheckCircle2 } from "lucide-react";
+import { MapPin, Calendar, Clock, Users, Zap, Heart, Send, CheckCircle2, X, Check, MessageCircle } from "lucide-react";
 
 function useCountdownHours(expiresAt: string | Date | null | undefined): number | null {
   const [hoursLeft, setHoursLeft] = useState<number | null>(null);
@@ -34,16 +34,40 @@ export default function QuickTripDetailPage() {
   const tripId = params?.id;
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [interestMessage, setInterestMessage] = useState("");
   const [showMessageInput, setShowMessageInput] = useState(false);
-  const [interestSent, setInterestSent] = useState(false);
 
   const { data: trip, isLoading, error } = useQuery<any>({
     queryKey: ["/api/quick-trips", tripId],
     enabled: !!tripId,
   });
 
+  const { data: existingInterest } = useQuery<any>({
+    queryKey: ["/api/quick-trips", tripId, "interest-request"],
+    queryFn: async () => {
+      if (!isAuthenticated || !user) return null;
+      const response = await fetch(`/api/quick-trips/${tripId}/interest-request`);
+      if (response.status === 404) return null;
+      if (!response.ok) throw new Error("Failed to fetch interest");
+      return response.json();
+    },
+    enabled: !!isAuthenticated && !!user && !!tripId,
+  });
+
+  const { data: interestRequests = [] } = useQuery<any[]>({
+    queryKey: ["/api/quick-trips", tripId, "interest-requests"],
+    queryFn: async () => {
+      const response = await fetch(`/api/quick-trips/${tripId}/interest-requests`);
+      if (response.status === 403 || response.status === 404) return [];
+      if (!response.ok) throw new Error("Failed to fetch requests");
+      return response.json();
+    },
+    enabled: !!isAuthenticated && !!user && !!tripId && trip?.organizerId === user?.id,
+  });
+
   const hoursLeft = useCountdownHours(trip?.expiresAt);
+  const isOrganizer = isAuthenticated && user?.id === trip?.organizerId;
 
   const sendInterestMutation = useMutation({
     mutationFn: async () => {
@@ -52,20 +76,43 @@ export default function QuickTripDetailPage() {
       });
     },
     onSuccess: () => {
-      setInterestSent(true);
       setShowMessageInput(false);
+      setInterestMessage("");
+      queryClient.invalidateQueries({ queryKey: ["/api/quick-trips", tripId, "interest-request"] });
       toast({
         title: "Interest Sent!",
         description: "The trip organizer has been notified. They'll reach out to you soon!",
       });
     },
     onError: (error: any) => {
-      const msg = error?.message || "Failed to send interest";
-      toast({
-        title: "Could not send interest",
-        description: msg,
-        variant: "destructive",
-      });
+      if (error?.status === 409) {
+        queryClient.invalidateQueries({ queryKey: ["/api/quick-trips", tripId, "interest-request"] });
+        toast({ title: "Already Interested", description: "You've already shown interest in this trip." });
+      } else {
+        toast({ title: "Error", description: error.message || "Failed to send interest", variant: "destructive" });
+      }
+    },
+  });
+
+  const updateRequestMutation = useMutation({
+    mutationFn: async ({ requestId, status }: { requestId: string; status: string }) => {
+      return await apiRequest("PUT", `/api/quick-trip-interest-requests/${requestId}`, { status });
+    },
+    onSuccess: async (response) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/quick-trips", tripId, "interest-requests"] });
+      const data = await response.json();
+      if (data.chatThreadId) {
+        toast({
+          title: "Request Accepted!",
+          description: "A chat has been opened. You can now message the traveler.",
+        });
+        window.location.href = `/chat/${data.chatThreadId}`;
+      } else {
+        toast({ title: "Request Updated", description: "The request has been updated." });
+      }
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to update request", variant: "destructive" });
     },
   });
 
@@ -100,7 +147,10 @@ export default function QuickTripDetailPage() {
     food: "Food & Culinary", adventure_sport: "Adventure Sports",
   };
 
-  const isOrganizer = isAuthenticated && user?.id === trip.organizerId;
+  const hasExistingInterest = !!existingInterest;
+  const interestStatus = existingInterest?.status;
+  const pendingRequests = interestRequests.filter((r: any) => r.status === 'pending');
+  const acceptedRequests = interestRequests.filter((r: any) => r.status === 'accepted');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -191,14 +241,40 @@ export default function QuickTripDetailPage() {
               </div>
             )}
 
+            {/* Interest section for non-organizers */}
             {!isOrganizer && (
               <div className="border-t pt-6">
-                {interestSent ? (
+                {hasExistingInterest && interestStatus === 'accepted' ? (
                   <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
                     <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-green-800">Interest Accepted!</p>
+                      <p className="text-sm text-green-600">The organizer accepted your request. You can now chat with them.</p>
+                    </div>
+                    {existingInterest?.chatThreadId && (
+                      <Button
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700"
+                        onClick={() => { window.location.href = `/chat/${existingInterest.chatThreadId}`; }}
+                      >
+                        <MessageCircle className="w-4 h-4 mr-1" /> Open Chat
+                      </Button>
+                    )}
+                  </div>
+                ) : hasExistingInterest && interestStatus === 'pending' ? (
+                  <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <Clock className="w-6 h-6 text-amber-600 flex-shrink-0" />
                     <div>
-                      <p className="font-semibold text-green-800">Interest Sent!</p>
-                      <p className="text-sm text-green-600">The trip organizer has been notified and will reach out to you.</p>
+                      <p className="font-semibold text-amber-800">Interest Sent</p>
+                      <p className="text-sm text-amber-600">Waiting for the organizer to respond to your request.</p>
+                    </div>
+                  </div>
+                ) : hasExistingInterest && interestStatus === 'rejected' ? (
+                  <div className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <X className="w-6 h-6 text-gray-400 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-gray-700">Request Not Accepted</p>
+                      <p className="text-sm text-gray-500">The organizer did not accept your request for this trip.</p>
                     </div>
                   </div>
                 ) : !isAuthenticated ? (
@@ -251,6 +327,84 @@ export default function QuickTripDetailPage() {
                     I'm Interested - Notify Organizer
                   </Button>
                 )}
+              </div>
+            )}
+
+            {/* Organizer view: Interest Requests */}
+            {isOrganizer && (pendingRequests.length > 0 || acceptedRequests.length > 0) && (
+              <div className="border-t pt-6 space-y-4">
+                <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-orange-500" />
+                  Interest Requests
+                  {pendingRequests.length > 0 && (
+                    <Badge className="bg-orange-500 text-white">{pendingRequests.length} pending</Badge>
+                  )}
+                </h3>
+
+                {pendingRequests.map((request: any) => (
+                  <Card key={request.id} className="border border-orange-200 bg-orange-50/50">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 flex-1">
+                          <UserDisplay user={request.user} avatarSize="md" />
+                          {request.message && (
+                            <p className="text-sm text-gray-600 italic ml-2">"{request.message}"</p>
+                          )}
+                        </div>
+                        <div className="flex gap-2 ml-3">
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            disabled={updateRequestMutation.isPending}
+                            onClick={() => updateRequestMutation.mutate({ requestId: request.id, status: 'accepted' })}
+                          >
+                            <Check className="w-4 h-4 mr-1" /> Accept
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-red-300 text-red-600 hover:bg-red-50"
+                            disabled={updateRequestMutation.isPending}
+                            onClick={() => updateRequestMutation.mutate({ requestId: request.id, status: 'rejected' })}
+                          >
+                            <X className="w-4 h-4 mr-1" /> Decline
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+
+                {acceptedRequests.map((request: any) => (
+                  <Card key={request.id} className="border border-green-200 bg-green-50/50">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 flex-1">
+                          <UserDisplay user={request.user} avatarSize="md" />
+                          <Badge className="bg-green-100 text-green-700 border-green-300">Accepted</Badge>
+                        </div>
+                        {request.chatThreadId && (
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => { window.location.href = `/chat/${request.chatThreadId}`; }}
+                          >
+                            <MessageCircle className="w-4 h-4 mr-1" /> Chat
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {isOrganizer && pendingRequests.length === 0 && acceptedRequests.length === 0 && (
+              <div className="border-t pt-6">
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500">No interest requests yet. Share your trip to get companions!</p>
+                </div>
               </div>
             )}
           </CardContent>

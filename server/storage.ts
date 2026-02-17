@@ -95,6 +95,7 @@ import {
   type UserFollow,
   type InsertUserFollow,
   quickTrips,
+  quickTripInterestRequests,
   type QuickTrip,
   type InsertQuickTrip,
   type QuickTripWithOrganizer,
@@ -280,6 +281,12 @@ export interface IStorage {
     offset?: number;
   }): Promise<{ trips: QuickTripWithOrganizer[], total: number }>;
   deleteQuickTrip(id: string): Promise<void>;
+
+  // Quick Trip Interest Request operations
+  createQuickTripInterest(quickTripId: string, userId: string, message?: string): Promise<any>;
+  getQuickTripInterestRequests(quickTripId: string): Promise<any[]>;
+  getUserQuickTripInterest(quickTripId: string, userId: string): Promise<any>;
+  updateQuickTripInterestStatus(requestId: string, status: 'accepted' | 'rejected', organizerId: string): Promise<any>;
 
   // Trip view tracking operations
   createTripView(tripView: InsertTripView): Promise<TripView>;
@@ -3577,6 +3584,103 @@ export class DatabaseStorage implements IStorage {
 
   async deleteQuickTrip(id: string): Promise<void> {
     await db.delete(quickTrips).where(eq(quickTrips.id, id));
+  }
+
+  async createQuickTripInterest(quickTripId: string, userId: string, message?: string): Promise<any> {
+    const existing = await db
+      .select()
+      .from(quickTripInterestRequests)
+      .where(and(
+        eq(quickTripInterestRequests.quickTripId, quickTripId),
+        eq(quickTripInterestRequests.userId, userId)
+      ));
+
+    if (existing.length > 0) {
+      const req = existing[0];
+      if (req.status === 'withdrawn') {
+        const [updated] = await db
+          .update(quickTripInterestRequests)
+          .set({ status: 'pending', message: message || req.message, updatedAt: new Date() })
+          .where(eq(quickTripInterestRequests.id, req.id))
+          .returning();
+        return { ...updated, isNew: false, reactivated: true };
+      }
+      return { ...req, isNew: false, reactivated: false };
+    }
+
+    const [newRequest] = await db
+      .insert(quickTripInterestRequests)
+      .values({ quickTripId, userId, status: 'pending', message: message || null })
+      .returning();
+    return { ...newRequest, isNew: true };
+  }
+
+  async getQuickTripInterestRequests(quickTripId: string): Promise<any[]> {
+    const results = await db
+      .select({
+        request: quickTripInterestRequests,
+        user: users,
+      })
+      .from(quickTripInterestRequests)
+      .leftJoin(users, eq(quickTripInterestRequests.userId, users.id))
+      .where(eq(quickTripInterestRequests.quickTripId, quickTripId))
+      .orderBy(desc(quickTripInterestRequests.createdAt));
+
+    return results.map(r => ({
+      ...r.request,
+      user: r.user ? normalizeUserForUI(r.user) : null,
+    }));
+  }
+
+  async getUserQuickTripInterest(quickTripId: string, userId: string): Promise<any> {
+    const [result] = await db
+      .select()
+      .from(quickTripInterestRequests)
+      .where(and(
+        eq(quickTripInterestRequests.quickTripId, quickTripId),
+        eq(quickTripInterestRequests.userId, userId)
+      ));
+    return result || null;
+  }
+
+  async updateQuickTripInterestStatus(requestId: string, status: 'accepted' | 'rejected', organizerId: string): Promise<any> {
+    const [request] = await db
+      .select({
+        request: quickTripInterestRequests,
+        quickTrip: quickTrips,
+      })
+      .from(quickTripInterestRequests)
+      .leftJoin(quickTrips, eq(quickTripInterestRequests.quickTripId, quickTrips.id))
+      .where(eq(quickTripInterestRequests.id, requestId));
+
+    if (!request || !request.quickTrip) {
+      throw new Error("Interest request not found");
+    }
+
+    if (request.quickTrip.organizerId !== organizerId) {
+      throw new Error("Not authorized to update this request");
+    }
+
+    const requestData = request.request;
+    let chatThreadId = requestData.chatThreadId;
+
+    if (status === 'accepted' && !chatThreadId) {
+      const newThread = await this.createChatThread({
+        organizerId,
+        userId: requestData.userId,
+      });
+      chatThreadId = newThread.id;
+      await this.addUserToThread(organizerId, chatThreadId);
+      await this.addUserToThread(requestData.userId, chatThreadId);
+    }
+
+    const [updated] = await db
+      .update(quickTripInterestRequests)
+      .set({ status, chatThreadId: chatThreadId || requestData.chatThreadId, updatedAt: new Date() })
+      .where(eq(quickTripInterestRequests.id, requestId))
+      .returning();
+
+    return { ...updated, quickTrip: request.quickTrip };
   }
 }
 

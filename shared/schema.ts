@@ -1894,6 +1894,30 @@ export const quickTripsRelations = relations(quickTrips, ({ one }) => ({
   }),
 }));
 
+export const quickTripInterestRequests = pgTable("quick_trip_interest_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  quickTripId: varchar("quick_trip_id").notNull().references(() => quickTrips.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  status: varchar("status").notNull().default("pending"),
+  message: text("message"),
+  chatThreadId: varchar("chat_thread_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  uniqueUserQuickTrip: unique().on(table.quickTripId, table.userId),
+}));
+
+export const quickTripInterestRequestsRelations = relations(quickTripInterestRequests, ({ one }) => ({
+  quickTrip: one(quickTrips, {
+    fields: [quickTripInterestRequests.quickTripId],
+    references: [quickTrips.id],
+  }),
+  user: one(users, {
+    fields: [quickTripInterestRequests.userId],
+    references: [users.id],
+  }),
+}));
+
 export const insertQuickTripSchema = createInsertSchema(quickTrips).omit({
   id: true,
   createdAt: true,
@@ -1903,6 +1927,7 @@ export const insertQuickTripSchema = createInsertSchema(quickTrips).omit({
 
 export type QuickTrip = typeof quickTrips.$inferSelect;
 export type InsertQuickTrip = z.infer<typeof insertQuickTripSchema>;
+export type QuickTripInterestRequest = typeof quickTripInterestRequests.$inferSelect;
 export type QuickTripWithOrganizer = QuickTrip & {
   organizer: {
     id: string;
