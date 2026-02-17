@@ -56,6 +56,8 @@ export default function QuickTripDetailPage() {
     enabled: !!isAuthenticated && !!user && !!tripId,
   });
 
+  const isOrganizer = isAuthenticated && !!trip && user?.id === trip?.organizerId;
+
   const { data: interestRequests, isLoading: isLoadingRequests } = useQuery<any[]>({
     queryKey: ["/api/quick-trips", tripId, "interest-requests"],
     queryFn: async () => {
@@ -64,12 +66,10 @@ export default function QuickTripDetailPage() {
       if (!response.ok) throw new Error("Failed to fetch requests");
       return response.json();
     },
-    enabled: !!isAuthenticated && !!user && !!tripId,
+    enabled: !!isAuthenticated && !!user && !!tripId && isOrganizer,
   });
 
-  const isOrganizer = isAuthenticated && !!trip && user?.id === trip?.organizerId;
-  const hasInterestData = Array.isArray(interestRequests) && interestRequests.length > 0;
-  const showOrganizerSection = isOrganizer || hasInterestData;
+  const showOrganizerSection = isOrganizer;
 
   const hoursLeft = useCountdownHours(trip?.expiresAt);
 
@@ -339,8 +339,14 @@ export default function QuickTripDetailPage() {
                 <div>
                   <p className="text-xs text-gray-500">Date & Time</p>
                   <p className="font-medium text-gray-800">
-                    {trip.date ? new Date(trip.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "TBD"}
-                    {" "}{trip.time && new Date(`2000-01-01T${trip.time}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}
+                    {trip.date ? (() => {
+                      const d = new Date(trip.date);
+                      return !isNaN(d.getTime()) ? d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : trip.date;
+                    })() : "TBD"}
+                    {" "}{trip.time && (() => {
+                      const t = new Date(`2000-01-01T${trip.time}`);
+                      return !isNaN(t.getTime()) ? t.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }) : trip.time;
+                    })()}
                   </p>
                 </div>
               </div>
