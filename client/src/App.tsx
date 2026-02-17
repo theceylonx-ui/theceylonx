@@ -57,6 +57,13 @@ const AdminAIModeration = lazy(() => import("@/pages/admin/ai-moderation"));
 const AdminAPIDocs = lazy(() => import("@/pages/admin/api-docs"));
 const AdminModeration = lazy(() => import("@/pages/admin/moderation"));
 const AdminMobile = lazy(() => import("@/pages/admin/mobile-admin"));
+const AdminUsers = lazy(() => import("@/pages/admin/users"));
+const AdminTrips = lazy(() => import("@/pages/admin/trips"));
+const AdminReports = lazy(() => import("@/pages/admin/reports"));
+const AdminChat = lazy(() => import("@/pages/admin/chat"));
+const AdminTaxonomy = lazy(() => import("@/pages/admin/taxonomy"));
+const AdminNotifications = lazy(() => import("@/pages/admin/notifications"));
+const AdminSettings = lazy(() => import("@/pages/admin/settings"));
 
 // Performance loading component with error boundary
 const PageLoader = () => (
@@ -192,12 +199,19 @@ function Router() {
           
           {/* Admin Routes */}
           <Route path="/admin" component={handleRoute(AdminDashboard)} />
-          <Route path="/admin/roles" component={handleRoute(AdminRoles)} />
-          <Route path="/admin/audit-logs" component={handleRoute(AdminAuditLogs)} />
-          <Route path="/admin/ai-moderation" component={handleRoute(AdminAIModeration)} />
-          <Route path="/admin/api-docs" component={handleRoute(AdminAPIDocs)} />
+          <Route path="/admin/users" component={handleRoute(AdminUsers)} />
           <Route path="/admin/moderation" component={handleRoute(AdminModeration)} />
-          <Route path="/admin/mobile" component={handleRoute(AdminMobile)} />
+          <Route path="/admin/trips" component={handleRoute(AdminTrips)} />
+          <Route path="/admin/reports" component={handleRoute(AdminReports)} />
+          <Route path="/admin/chat" component={handleRoute(AdminChat)} />
+          <Route path="/admin/ai-moderation" component={handleRoute(AdminAIModeration)} />
+          <Route path="/admin/taxonomy" component={handleRoute(AdminTaxonomy)} />
+          <Route path="/admin/notifications" component={handleRoute(AdminNotifications)} />
+          <Route path="/admin/audit-logs" component={handleRoute(AdminAuditLogs)} />
+          <Route path="/admin/mobile-admin" component={handleRoute(AdminMobile)} />
+          <Route path="/admin/api-docs" component={handleRoute(AdminAPIDocs)} />
+          <Route path="/admin/roles" component={handleRoute(AdminRoles)} />
+          <Route path="/admin/settings" component={handleRoute(AdminSettings)} />
         </>
       )}
       
