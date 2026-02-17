@@ -94,6 +94,10 @@ import {
   userFollows,
   type UserFollow,
   type InsertUserFollow,
+  quickTrips,
+  type QuickTrip,
+  type InsertQuickTrip,
+  type QuickTripWithOrganizer,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, ilike, desc, asc, gte, lte, count, sql, isNull, ne } from "drizzle-orm";
@@ -260,6 +264,23 @@ export interface IStorage {
   getUnreadNotificationCount(userId: string): Promise<number>;
   deleteNotification(id: string): Promise<void>;
   
+  // Quick Trip operations
+  createQuickTrip(trip: InsertQuickTrip): Promise<QuickTrip>;
+  getQuickTrip(id: string): Promise<QuickTripWithOrganizer | undefined>;
+  getUserQuickTrips(userId: string): Promise<QuickTripWithOrganizer[]>;
+  deleteExpiredQuickTrips(): Promise<number>;
+  searchQuickTrips(filters: {
+    from?: string;
+    to?: string;
+    date?: string;
+    region?: string;
+    category?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ trips: QuickTripWithOrganizer[], total: number }>;
+  deleteQuickTrip(id: string): Promise<void>;
+
   // Trip view tracking operations
   createTripView(tripView: InsertTripView): Promise<TripView>;
   getTripViewCount(tripId: string): Promise<number>;
@@ -3417,8 +3438,145 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createAuditLog(log: any): Promise<any> {
-    // Placeholder implementation - in production this would be properly implemented
     return null;
+  }
+
+  async createQuickTrip(trip: InsertQuickTrip): Promise<QuickTrip> {
+    const expiresAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    const [newTrip] = await db
+      .insert(quickTrips)
+      .values({
+        ...trip,
+        expiresAt,
+        imageUrl: '/assets/5_1756417819316.png',
+      })
+      .returning();
+    return newTrip;
+  }
+
+  async getQuickTrip(id: string): Promise<QuickTripWithOrganizer | undefined> {
+    const results = await db
+      .select({
+        trip: quickTrips,
+        organizer: {
+          id: users.id,
+          displayName: users.displayName,
+          username: users.username,
+          profileImageUrl: users.profileImageUrl,
+        },
+      })
+      .from(quickTrips)
+      .leftJoin(users, eq(quickTrips.organizerId, users.id))
+      .where(and(
+        eq(quickTrips.id, id),
+        eq(quickTrips.status, 'active'),
+        gte(quickTrips.expiresAt, new Date()),
+      ));
+    
+    if (results.length === 0) return undefined;
+    const r = results[0];
+    return {
+      ...r.trip,
+      organizer: r.organizer as any,
+    };
+  }
+
+  async getUserQuickTrips(userId: string): Promise<QuickTripWithOrganizer[]> {
+    const results = await db
+      .select({
+        trip: quickTrips,
+        organizer: {
+          id: users.id,
+          displayName: users.displayName,
+          username: users.username,
+          profileImageUrl: users.profileImageUrl,
+        },
+      })
+      .from(quickTrips)
+      .leftJoin(users, eq(quickTrips.organizerId, users.id))
+      .where(eq(quickTrips.organizerId, userId))
+      .orderBy(desc(quickTrips.createdAt));
+    
+    return results.map(r => ({
+      ...r.trip,
+      organizer: r.organizer as any,
+    }));
+  }
+
+  async deleteExpiredQuickTrips(): Promise<number> {
+    const result = await db
+      .delete(quickTrips)
+      .where(lte(quickTrips.expiresAt, new Date()))
+      .returning();
+    return result.length;
+  }
+
+  async searchQuickTrips(filters: {
+    from?: string;
+    to?: string;
+    date?: string;
+    region?: string;
+    category?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ trips: QuickTripWithOrganizer[], total: number }> {
+    const conditions = [
+      eq(quickTrips.status, 'active'),
+      gte(quickTrips.expiresAt, new Date()),
+    ];
+
+    if (filters.from) conditions.push(ilike(quickTrips.fromLocation, `%${filters.from}%`));
+    if (filters.to) conditions.push(ilike(quickTrips.toLocation, `%${filters.to}%`));
+    if (filters.region) conditions.push(eq(quickTrips.region, filters.region));
+    if (filters.category) conditions.push(eq(quickTrips.category, filters.category as any));
+    if (filters.date) conditions.push(gte(quickTrips.date, new Date(filters.date)));
+    if (filters.search) {
+      conditions.push(
+        or(
+          ilike(quickTrips.title, `%${filters.search}%`),
+          ilike(quickTrips.description, `%${filters.search}%`),
+          ilike(quickTrips.fromLocation, `%${filters.search}%`),
+          ilike(quickTrips.toLocation, `%${filters.search}%`),
+        )!
+      );
+    }
+
+    const whereClause = and(...conditions);
+
+    const [totalResult] = await db
+      .select({ count: count() })
+      .from(quickTrips)
+      .where(whereClause);
+
+    const results = await db
+      .select({
+        trip: quickTrips,
+        organizer: {
+          id: users.id,
+          displayName: users.displayName,
+          username: users.username,
+          profileImageUrl: users.profileImageUrl,
+        },
+      })
+      .from(quickTrips)
+      .leftJoin(users, eq(quickTrips.organizerId, users.id))
+      .where(whereClause)
+      .orderBy(asc(quickTrips.date))
+      .limit(filters.limit || 20)
+      .offset(filters.offset || 0);
+
+    return {
+      trips: results.map(r => ({
+        ...r.trip,
+        organizer: r.organizer as any,
+      })),
+      total: totalResult.count,
+    };
+  }
+
+  async deleteQuickTrip(id: string): Promise<void> {
+    await db.delete(quickTrips).where(eq(quickTrips.id, id));
   }
 }
 

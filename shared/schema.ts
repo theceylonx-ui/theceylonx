@@ -1857,3 +1857,89 @@ export const upvoteToggleRequestSchema = z.object({
   itemType: z.enum(['question', 'answer']),
   itemId: z.string(),
 });
+
+// ==========================================
+// Quick Trips - Simplified 3-step trip posting
+// ==========================================
+
+export const quickTrips = pgTable("quick_trips", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizerId: varchar("organizer_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description").notNull(),
+  category: tripCategoryEnum("category").default("adventure_sport").notNull(),
+  fromLocation: varchar("from_location", { length: 100 }).notNull(),
+  toLocation: varchar("to_location", { length: 100 }).notNull(),
+  region: varchar("region", { length: 50 }).notNull(),
+  date: timestamp("date").notNull(),
+  time: varchar("time", { length: 10 }).notNull(),
+  seatsAvailable: integer("seats_available").notNull(),
+  status: varchar("status", { length: 20 }).default("active").notNull(),
+  imageUrl: varchar("image_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+}, (table) => [
+  sql`CONSTRAINT check_quick_seats_positive CHECK (seats_available > 0 AND seats_available <= 50)`,
+  sql`CONSTRAINT check_quick_status_valid CHECK (status IN ('active', 'expired'))`,
+  index("quick_trips_organizer_idx").on(table.organizerId),
+  index("quick_trips_status_expires_idx").on(table.status, table.expiresAt),
+  index("quick_trips_region_date_idx").on(table.region, table.date),
+  index("quick_trips_date_idx").on(table.date),
+]);
+
+export const quickTripsRelations = relations(quickTrips, ({ one }) => ({
+  organizer: one(users, {
+    fields: [quickTrips.organizerId],
+    references: [users.id],
+  }),
+}));
+
+export const insertQuickTripSchema = createInsertSchema(quickTrips).omit({
+  id: true,
+  createdAt: true,
+  expiresAt: true,
+  status: true,
+});
+
+export type QuickTrip = typeof quickTrips.$inferSelect;
+export type InsertQuickTrip = z.infer<typeof insertQuickTripSchema>;
+export type QuickTripWithOrganizer = QuickTrip & {
+  organizer: {
+    id: string;
+    displayName: string | null;
+    username: string | null;
+    profileImageUrl: string | null;
+  };
+};
+
+export const QuickTripFormSchema = z.object({
+  fromLocation: z.string().min(1, "Departure location is required"),
+  toLocation: z.string().min(1, "Destination is required"),
+  region: z.string().min(1, "Region is required"),
+  date: z.string().or(z.date()).refine((val) => {
+    const date = typeof val === 'string' ? new Date(val) : val;
+    return date > new Date();
+  }, "Date must be in the future"),
+  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
+  title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters").max(500, "Description must be less than 500 characters"),
+  category: z.enum(['roadtrip', 'hiking', 'beach', 'culture', 'wellness', 'festival', 'workshop', 'wildlife', 'food', 'adventure_sport', 'unknown']).refine(val => val !== 'unknown', "Please select a trip category"),
+  seatsAvailable: z.number().min(1, "At least 1 seat required").max(50, "Maximum 50 seats"),
+});
+
+export const QuickTripStep1Schema = QuickTripFormSchema.pick({
+  fromLocation: true,
+  toLocation: true,
+  region: true,
+  date: true,
+  time: true,
+});
+
+export const QuickTripStep2Schema = QuickTripFormSchema.pick({
+  title: true,
+  description: true,
+  category: true,
+  seatsAvailable: true,
+});
+
+export type QuickTripFormData = z.infer<typeof QuickTripFormSchema>;

@@ -47,6 +47,7 @@ const HelpFAQPage = lazy(() => import("@/pages/help/faq"));
 const AccountSettingsPage = lazy(() => import("@/pages/settings/account"));
 const MeRedirect = lazy(() => import("@/pages/me-redirect"));
 const TripRequestsPage = lazy(() => import("@/pages/trip-requests"));
+const QuickTripDetail = lazy(() => import("@/pages/quick-trip-detail"));
 
 // Admin pages
 const AdminDashboard = lazy(() => import("@/pages/admin/index"));
@@ -119,6 +120,7 @@ function Router() {
           <Route path="/trips" component={handleRoute(BrowseTrips)} />
           <Route path="/trips/new" component={() => { startTransition(() => setLocation("/post")); return null; }} />
           <Route path="/trips/:id" component={handleRoute(TripDetails)} />
+          <Route path="/quick-trips/:id" component={handleRoute(QuickTripDetail)} />
           <Route path="/community" component={handleRoute(CommunityNew)} />
           <Route path="/question/:id" component={handleRoute(QuestionDetail)} />
           <Route path="/calendar" component={handleRoute(CalendarPage)} />
@@ -157,6 +159,7 @@ function Router() {
           <Route path="/trips/new" component={() => { startTransition(() => setLocation("/post")); return null; }} />
           <Route path="/post-trip" component={handleRoute(PostTrip)} />
           <Route path="/trips/:id" component={handleRoute(TripDetails)} />
+          <Route path="/quick-trips/:id" component={handleRoute(QuickTripDetail)} />
           <Route path="/trips/:id/requests" component={handleRoute(TripRequestsPage)} />
           <Route path="/dashboard" component={() => { startTransition(() => setLocation("/me")); return null; }} />
           <Route path="/community" component={handleRoute(CommunityNew)} />

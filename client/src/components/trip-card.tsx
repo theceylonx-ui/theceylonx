@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { MapPin, Calendar, Users, DollarSign, Mail, Lock, Pin, PinOff, Star, StarOff } from "lucide-react";
+import { MapPin, Calendar, Users, DollarSign, Mail, Lock, Pin, PinOff, Star, StarOff, Zap, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,13 +14,34 @@ import { EditContentDialog } from "@/components/EditContentDialog";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { SaveControl } from "@/components/SaveControl";
 import { createTripDetailLink } from "@/utils/searchParams";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { NeonBadge } from "@/components/ui/neon-badge";
-// 🚀 PERFORMANCE: Import LazyImage for optimized image loading
 import { LazyImage } from "@/components/common/LazyImage";
 
+function useCountdownHours(expiresAt: string | Date | null | undefined): number | null {
+  const [hoursLeft, setHoursLeft] = useState<number | null>(null);
+  
+  useEffect(() => {
+    if (!expiresAt) {
+      setHoursLeft(null);
+      return;
+    }
+    
+    const calc = () => {
+      const diff = new Date(expiresAt).getTime() - Date.now();
+      return Math.max(0, Math.ceil(diff / (1000 * 60 * 60)));
+    };
+    
+    setHoursLeft(calc());
+    const interval = setInterval(() => setHoursLeft(calc()), 60 * 1000);
+    return () => clearInterval(interval);
+  }, [expiresAt]);
+  
+  return hoursLeft;
+}
+
 interface TripCardProps {
-  trip: TripWithOrganizer & { isPinned?: boolean; isInterested?: boolean };
+  trip: TripWithOrganizer & { isPinned?: boolean; isInterested?: boolean; tripType?: 'quick' | 'detailed'; expiresAt?: string | Date | null };
   badges?: string[];
 }
 
@@ -29,11 +50,12 @@ export default function TripCard({ trip, badges }: TripCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // State for edit and delete dialogs
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
-  // Check if this is a system-created sample trip
+  const isQuickTrip = (trip as any).tripType === 'quick';
+  const hoursLeft = useCountdownHours(isQuickTrip ? (trip as any).expiresAt : null);
+  
   const isSampleTrip = trip.id.startsWith('sample-') || trip.organizer?.email === 'system@ceylonexpand.com';
 
   const pinMutation = useMutation({
@@ -372,8 +394,9 @@ export default function TripCard({ trip, badges }: TripCardProps) {
     return '/assets/logo-56.png';
   };
 
-  // Create the trip detail link with preserved search state
-  const tripDetailLink = createTripDetailLink(trip.id, true);
+  const tripDetailLink = isQuickTrip 
+    ? `/quick-trips/${trip.id}` 
+    : createTripDetailLink(trip.id, true);
 
   return (
     <Link href={tripDetailLink}>
@@ -420,7 +443,12 @@ export default function TripCard({ trip, badges }: TripCardProps) {
               }}
             />
           )}
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-3 right-3 flex gap-1.5">
+            {isQuickTrip && (
+              <Badge className="bg-orange-500 text-white border-0 shadow-md">
+                <Zap className="w-3 h-3 mr-1" /> Quick
+              </Badge>
+            )}
             <Badge 
               className={`${getRegionColor(trip.region)} text-white border-0`}
               data-testid={`trip-region-${trip.id}`}
@@ -436,7 +464,16 @@ export default function TripCard({ trip, badges }: TripCardProps) {
               {trip.title}
             </h3>
             
-            {/* Sample badge for system-generated content */}
+            {isQuickTrip && hoursLeft !== null && (
+              <div className="mb-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-orange-500 flex-shrink-0" />
+                <span className="text-sm font-medium text-orange-700">
+                  {hoursLeft > 0 ? `Expires in ${hoursLeft}h` : 'Expiring soon'}
+                </span>
+                <span className="text-xs text-orange-500 ml-auto">Quick Trip</span>
+              </div>
+            )}
+            
             {isSampleTrip && (
               <div className="mb-2">
                 <NeonBadge text="🎯 Sample Trip" className="mb-1" />
@@ -562,7 +599,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  window.location.href = createTripDetailLink(trip.id);
+                  window.location.href = isQuickTrip ? `/quick-trips/${trip.id}` : createTripDetailLink(trip.id);
                 }}
               >
                 View Details

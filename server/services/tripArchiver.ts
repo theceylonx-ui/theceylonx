@@ -1,6 +1,6 @@
 import { db } from '../db';
-import { trips } from '@shared/schema';
-import { lt, and, inArray, sql } from 'drizzle-orm';
+import { trips, quickTrips } from '@shared/schema';
+import { lt, lte, and, inArray, sql } from 'drizzle-orm';
 
 /**
  * Auto-Archive Service for Outdated Trips
@@ -78,6 +78,26 @@ export class TripArchiverService {
   /**
    * Manually archive a trip (organizer action)
    */
+  static async deleteExpiredQuickTrips(): Promise<number> {
+    try {
+      console.log('🗑️  Running expired quick trips cleanup...');
+      const result = await db
+        .delete(quickTrips)
+        .where(lte(quickTrips.expiresAt, new Date()))
+        .returning({ id: quickTrips.id });
+      
+      if (result.length > 0) {
+        console.log(`✅ Deleted ${result.length} expired quick trip(s)`);
+      } else {
+        console.log('✅ No expired quick trips to delete');
+      }
+      return result.length;
+    } catch (error) {
+      console.error('❌ Error deleting expired quick trips:', error);
+      return 0;
+    }
+  }
+
   static async manualArchiveTrip(tripId: string, organizerId: string): Promise<boolean> {
     try {
       const result = await db

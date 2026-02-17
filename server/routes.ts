@@ -119,7 +119,9 @@ import {
   insertChatMessageSchema,
   insertSiteSettingSchema,
   travelStyleSettingsSchema,
-  type TravelStyleSettings
+  type TravelStyleSettings,
+  insertQuickTripSchema,
+  QuickTripFormSchema,
 } from "@shared/schema";
 import { enhancedRecommendationService } from "./ml/enhancedRecommendationService";
 import { z } from "zod";
@@ -771,52 +773,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
         offset,
       };
       
-      const result = await storage.searchTrips(filters);
+      const [detailedResult, quickResult] = await Promise.all([
+        storage.searchTrips(filters),
+        storage.searchQuickTrips({
+          from: filters.from,
+          to: filters.to,
+          date: filters.date,
+          region: filters.region,
+          category: filters.category,
+          search: filters.search,
+          limit: 100,
+          offset: 0,
+        }),
+      ]);
       
-      // For authenticated users, add flag status to each trip
-      let tripsWithFlags = result.trips;
-      if ((req as any).user?.id) {
-        const userId = (req as any).user.id;
-        tripsWithFlags = await Promise.all(
-          result.trips.map(async (trip) => {
-            // Trip flags functionality temporarily disabled  
-            return { 
-              ...trip, 
-              isPinned: false,
-              isInterested: false
-            };
-          })
-        );
-      } else {
-        // For non-authenticated users, set flags to false
-        tripsWithFlags = result.trips.map(trip => ({ 
-          ...trip, 
-          isPinned: false, 
-          isInterested: false 
-        }));
-      }
-      
-      // Normalize organizer data in all trips
-      const normalizedTrips = tripsWithFlags.map(trip => {
-        const normalizedOrganizer = normalizeUserForUI(trip.organizer);
-        return {
-          ...trip,
-          organizer: normalizedOrganizer
-        };
-      });
+      const detailedTrips = detailedResult.trips.map(trip => ({
+        ...trip,
+        tripType: 'detailed' as const,
+        isPinned: false,
+        isInterested: false,
+        organizer: normalizeUserForUI(trip.organizer),
+      }));
+
+      const quickTripsNormalized = quickResult.trips.map(trip => ({
+        ...trip,
+        tripType: 'quick' as const,
+        isPinned: false,
+        isInterested: false,
+        organizer: normalizeUserForUI(trip.organizer),
+      }));
+
+      const allTrips = [...detailedTrips, ...quickTripsNormalized]
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      const paginatedTrips = allTrips.slice(offset, offset + limit);
+      const totalCombined = detailedResult.total + quickResult.total;
 
       res.json({
-        trips: normalizedTrips,
+        trips: paginatedTrips,
         pagination: {
           page,
           limit,
-          total: result.total,
-          totalPages: Math.ceil(result.total / limit),
+          total: totalCombined,
+          totalPages: Math.ceil(totalCombined / limit),
         }
       });
     } catch (error) {
       console.error("Error fetching trips:", error);
       res.status(500).json({ message: "Failed to fetch trips" });
+    }
+  });
+
+  // ==========================================
+  // Quick Trip API Routes
+  // ==========================================
+
+  app.post('/api/quick-trips', tripCreationRateLimit, unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const parsed = QuickTripFormSchema.parse(req.body);
+      const tripData = insertQuickTripSchema.parse({
+        ...parsed,
+        organizerId: userId,
+        date: new Date(parsed.date as string),
+      });
+      const trip = await storage.createQuickTrip(tripData);
+      res.status(201).json(trip);
+    } catch (error: any) {
+      if (error?.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid trip data", errors: error.errors });
+      }
+      console.error("Error creating quick trip:", error);
+      res.status(500).json({ message: "Failed to create quick trip" });
+    }
+  });
+
+  app.get('/api/quick-trips/:id', async (req, res) => {
+    try {
+      const trip = await storage.getQuickTrip(req.params.id);
+      if (!trip) return res.status(404).json({ message: "Quick trip not found" });
+      res.json({ ...trip, tripType: 'quick' });
+    } catch (error) {
+      console.error("Error fetching quick trip:", error);
+      res.status(500).json({ message: "Failed to fetch quick trip" });
+    }
+  });
+
+  app.delete('/api/quick-trips/:id', unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const trip = await storage.getQuickTrip(req.params.id);
+      if (!trip) return res.status(404).json({ message: "Quick trip not found" });
+      if (trip.organizerId !== userId) return res.status(403).json({ message: "Not authorized" });
+      await storage.deleteQuickTrip(req.params.id);
+      res.json({ message: "Quick trip deleted" });
+    } catch (error) {
+      console.error("Error deleting quick trip:", error);
+      res.status(500).json({ message: "Failed to delete quick trip" });
+    }
+  });
+
+  app.get('/api/user/quick-trips', unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const trips = await storage.getUserQuickTrips(userId);
+      res.json(trips.map(t => ({ ...t, tripType: 'quick' as const })));
+    } catch (error) {
+      console.error("Error fetching user quick trips:", error);
+      res.status(500).json({ message: "Failed to fetch quick trips" });
     }
   });
 

@@ -6,6 +6,28 @@ Ceylon Expand is a travel buddy and trip-sharing platform specifically designed 
 
 ## Recent Changes
 
+- **Phase 8: Quick Trip Feature (Feb 17, 2026)**:
+  - ✅ **Quick Trip Posting**: 3-step wizard for spontaneous/last-minute trips
+    - Step 1: Where & When (from/to locations, date, time)
+    - Step 2: Trip Details (title, description, category, seats)
+    - Step 3: Review & Post with summary
+  - ✅ **Separate Database Table**: `quick_trips` table with minimal schema
+    - Auto-expiry via `expiresAt` timestamp (3 days after creation)
+    - No pricing, duration, difficulty, or media fields
+    - Essential fields only: title, description, category, locations, date, time, seats
+  - ✅ **Browse Integration**: Quick trips merged with detailed trips on browse page
+    - Discriminator field (`tripType: 'quick' | 'detailed'`) for unified card rendering
+    - Quick Trip badge with countdown timer showing hours until deletion
+    - Defensive filtering: `expiresAt > now` prevents expired trips from showing
+  - ✅ **Auto-Cleanup**: Hybrid expiry approach
+    - Background scheduler deletes expired quick trips (runs daily at 2 AM + initial check)
+    - Defensive lazy deletion via `expiresAt > now` filter in all queries
+    - Integrated into existing TripArchiverService
+  - ✅ **Trip Type Selector**: Post-trip page with Quick vs Detailed option cards
+  - ✅ **Quick Trip Detail Page**: Dedicated detail view with countdown, category, organizer info
+  - ✅ **API Routes**: POST create (auth + rate limited), GET by ID, DELETE by owner, GET user's quick trips
+  - 🎯 **Status**: Production-ready
+
 - **Phase 7: Advanced Trip Filtering (Nov 12, 2025)**:
   - ✅ **Enhanced Filter System**: Comprehensive trip filtering with 8 new filter criteria
     - Duration filter (half-day, full-day, multi-day options)

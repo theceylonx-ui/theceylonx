@@ -283,6 +283,7 @@ app.use((req, res, next) => {
         if (archivedCount > 0) {
           console.log(`🗄️  Auto-archived ${archivedCount} outdated trip(s)`);
         }
+        await TripArchiverService.deleteExpiredQuickTrips();
       } catch (error) {
         console.error('❌ Trip archiver failed:', error);
       }
