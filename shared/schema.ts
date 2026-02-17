@@ -1918,8 +1918,16 @@ export const QuickTripFormSchema = z.object({
   region: z.string().min(1, "Region is required"),
   date: z.string().or(z.date()).refine((val) => {
     const date = typeof val === 'string' ? new Date(val) : val;
-    return date > new Date();
-  }, "Date must be in the future"),
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date >= today;
+  }, "Date must be today or later").refine((val) => {
+    const date = typeof val === 'string' ? new Date(val) : val;
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 5);
+    maxDate.setHours(23, 59, 59, 999);
+    return date <= maxDate;
+  }, "Quick trips can only be scheduled within the next 5 days"),
   time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
   title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
   description: z.string().min(10, "Description must be at least 10 characters").max(500, "Description must be less than 500 characters"),

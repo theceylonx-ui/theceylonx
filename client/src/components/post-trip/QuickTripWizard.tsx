@@ -122,9 +122,11 @@ export function QuickTripWizard() {
     }
   };
 
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const minDate = tomorrow.toISOString().split("T")[0];
+  const today = new Date();
+  const minDate = today.toISOString().split("T")[0];
+  const maxDateObj = new Date();
+  maxDateObj.setDate(maxDateObj.getDate() + 5);
+  const maxDate = maxDateObj.toISOString().split("T")[0];
 
   const timeOptions: { value: string; label: string }[] = [];
   for (let hour = 0; hour < 24; hour++) {
@@ -227,8 +229,9 @@ export function QuickTripWizard() {
                           <Calendar className="w-4 h-4" /> Date <span className="text-red-500">*</span>
                         </FormLabel>
                         <FormControl>
-                          <Input type="date" min={minDate} {...field} value={typeof field.value === 'string' ? field.value : ''} />
+                          <Input type="date" min={minDate} max={maxDate} {...field} value={typeof field.value === 'string' ? field.value : ''} />
                         </FormControl>
+                        <p className="text-xs text-gray-500">Select a date from today up to 5 days ahead</p>
                         <FormMessage />
                       </FormItem>
                     )}

@@ -1,13 +1,18 @@
 import { useRoute } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import { BackLink } from "@/components/common/BackLink";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { UserDisplay } from "@/components/ui/user-display";
-import { MapPin, Calendar, Clock, Users, Zap } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { MapPin, Calendar, Clock, Users, Zap, Heart, Send, CheckCircle2 } from "lucide-react";
 
 function useCountdownHours(expiresAt: string | Date | null | undefined): number | null {
   const [hoursLeft, setHoursLeft] = useState<number | null>(null);
@@ -27,6 +32,11 @@ function useCountdownHours(expiresAt: string | Date | null | undefined): number 
 export default function QuickTripDetailPage() {
   const [, params] = useRoute("/quick-trips/:id");
   const tripId = params?.id;
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const [interestMessage, setInterestMessage] = useState("");
+  const [showMessageInput, setShowMessageInput] = useState(false);
+  const [interestSent, setInterestSent] = useState(false);
 
   const { data: trip, isLoading, error } = useQuery<any>({
     queryKey: ["/api/quick-trips", tripId],
@@ -34,6 +44,30 @@ export default function QuickTripDetailPage() {
   });
 
   const hoursLeft = useCountdownHours(trip?.expiresAt);
+
+  const sendInterestMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", `/api/quick-trips/${tripId}/interest`, {
+        message: interestMessage || undefined,
+      });
+    },
+    onSuccess: () => {
+      setInterestSent(true);
+      setShowMessageInput(false);
+      toast({
+        title: "Interest Sent!",
+        description: "The trip organizer has been notified. They'll reach out to you soon!",
+      });
+    },
+    onError: (error: any) => {
+      const msg = error?.message || "Failed to send interest";
+      toast({
+        title: "Could not send interest",
+        description: msg,
+        variant: "destructive",
+      });
+    },
+  });
 
   if (isLoading) {
     return (
@@ -65,6 +99,8 @@ export default function QuickTripDetailPage() {
     wellness: "Wellness", festival: "Festival", workshop: "Workshop", wildlife: "Wildlife",
     food: "Food & Culinary", adventure_sport: "Adventure Sports",
   };
+
+  const isOrganizer = isAuthenticated && user?.id === trip.organizerId;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -152,6 +188,69 @@ export default function QuickTripDetailPage() {
                 >
                   <UserDisplay user={trip.organizer} avatarSize="lg" />
                 </div>
+              </div>
+            )}
+
+            {!isOrganizer && (
+              <div className="border-t pt-6">
+                {interestSent ? (
+                  <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-green-800">Interest Sent!</p>
+                      <p className="text-sm text-green-600">The trip organizer has been notified and will reach out to you.</p>
+                    </div>
+                  </div>
+                ) : !isAuthenticated ? (
+                  <div className="text-center p-4 bg-gray-100 rounded-lg">
+                    <p className="text-gray-600 mb-3">Sign in to show your interest in this trip</p>
+                    <Button
+                      onClick={() => { window.location.href = "/auth/signin"; }}
+                      className="bg-orange-500 hover:bg-orange-600"
+                    >
+                      Sign In to Join
+                    </Button>
+                  </div>
+                ) : showMessageInput ? (
+                  <div className="space-y-3">
+                    <Textarea
+                      placeholder="Add a message for the organizer (optional) - e.g., 'I'd love to join! I'm an experienced hiker.'"
+                      value={interestMessage}
+                      onChange={(e) => setInterestMessage(e.target.value)}
+                      className="resize-none"
+                      rows={3}
+                      maxLength={300}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => sendInterestMutation.mutate()}
+                        disabled={sendInterestMutation.isPending}
+                        className="bg-orange-500 hover:bg-orange-600 flex-1"
+                      >
+                        {sendInterestMutation.isPending ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                        ) : (
+                          <Send className="w-4 h-4 mr-2" />
+                        )}
+                        Send Interest
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => { setShowMessageInput(false); setInterestMessage(""); }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={() => setShowMessageInput(true)}
+                    className="w-full bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white py-6 text-lg"
+                  >
+                    <Heart className="w-5 h-5 mr-2" />
+                    I'm Interested - Notify Organizer
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>

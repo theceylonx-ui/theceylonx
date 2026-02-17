@@ -873,6 +873,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/quick-trips/:id/interest', unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const quickTripId = req.params.id;
+      const { message } = req.body;
+
+      const trip = await storage.getQuickTrip(quickTripId);
+      if (!trip) return res.status(404).json({ message: "Quick trip not found or expired" });
+
+      if (trip.organizerId === userId) {
+        return res.status(400).json({ message: "You cannot show interest in your own trip" });
+      }
+
+      const user = await storage.getUser(userId);
+      const displayName = user?.displayName || user?.username || 'Someone';
+
+      const notification = await storage.createNotification({
+        userId: trip.organizerId,
+        type: 'trip_interest_request',
+        category: 'trips',
+        priority: 'high',
+        title: 'Someone is interested in your Quick Trip!',
+        message: `${displayName} is interested in your quick trip "${trip.title}"${message ? `: "${message}"` : ''}`,
+        actionUrl: `/quick-trips/${quickTripId}`,
+        isRead: false
+      });
+
+      if (notification) {
+        const { websocketService } = await import('./services/websocketService');
+        websocketService.broadcastNotification({
+          type: 'notification',
+          data: {
+            id: notification.id,
+            userId: trip.organizerId,
+            type: 'trip_interest_request',
+            title: 'Someone is interested in your Quick Trip!',
+            message: `${displayName} is interested in your quick trip "${trip.title}"${message ? `: "${message}"` : ''}`,
+            category: 'trips',
+            priority: 'high',
+            isRead: false,
+            createdAt: new Date().toISOString(),
+            actionUrl: `/quick-trips/${quickTripId}`
+          }
+        });
+      }
+
+      res.status(201).json({ message: "Interest sent! The trip organizer has been notified." });
+    } catch (error) {
+      console.error("Error sending quick trip interest:", error);
+      res.status(500).json({ message: "Failed to send interest" });
+    }
+  });
+
   app.get('/api/user/quick-trips', unifiedAuthGuard, async (req, res) => {
     try {
       const userId = req.user!.id;
