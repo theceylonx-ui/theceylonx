@@ -41,22 +41,15 @@ export default function Navigation() {
           {/* Logo */}
           <Link href="/">
             <div className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-all duration-200" data-testid="nav-logo">
-              <picture>
-                <source 
-                  type="image/webp" 
-                  srcSet={`${logoWebp56} 1x, ${logoWebp112} 2x`}
-                />
-                <img 
-                  src={Copy_of_CEY__X_Letter_Digital_Company_Logo} 
-                  srcSet={`${logoImage56} 1x, ${logoImage112} 2x`}
-                  alt="Ceylon Expand Logo" 
-                  className="h-8 w-8"
-                  width="32"
-                  height="32"
-                  loading="eager"
-                  data-testid="logo-icon"
-                />
-              </picture>
+              <img 
+                src={Copy_of_CEY__X_Letter_Digital_Company_Logo} 
+                alt="Ceylon Expand Logo" 
+                className="h-8 w-8"
+                width="32"
+                height="32"
+                loading="eager"
+                data-testid="logo-icon"
+              />
               <span className={`text-xl font-semibold ${user ? 'text-white' : 'text-text-primary'} transition-colors duration-300`} data-testid="logo-text">Ceylon Expand</span>
             </div>
           </Link>
