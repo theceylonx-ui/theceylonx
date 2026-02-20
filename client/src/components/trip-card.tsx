@@ -553,7 +553,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
             
             <div className="flex items-center" data-testid={`trip-datetime-${trip.id}`}>
               <Calendar className="h-4 w-4 mr-2 text-brand flex-shrink-0" />
-              <span className="text-text-secondary">{trip.date ? new Date(trip.date).toLocaleDateString() : 'Date TBD'} • {trip.time}</span>
+              <span className="text-text-secondary">{trip.date ? (() => { const d = new Date(trip.date); return isNaN(d.getTime()) ? 'Date TBD' : d.toLocaleDateString(); })() : 'Date TBD'} • {trip.time}</span>
             </div>
             
             <div className="flex items-center" data-testid={`trip-seats-${trip.id}`}>
