@@ -223,7 +223,7 @@ export interface IStorage {
     sort?: 'top' | 'new' | 'unanswered';
     limit?: number;
     offset?: number;
-  }): Promise<{questions: QuestionWithDetails[], total: number}>;
+  }): Promise<{questions: QuestionWithDetails[], total: number, totalAnswers: number}>;
   getQuestion(id: string): Promise<QuestionWithDetails | undefined>;
   updateQuestion(id: string, question: Partial<InsertQuestion>): Promise<Question>;
   deleteQuestion(id: string): Promise<void>;
@@ -1279,7 +1279,7 @@ export class DatabaseStorage implements IStorage {
     sort?: 'top' | 'new' | 'unanswered';
     limit?: number;
     offset?: number;
-  }): Promise<{questions: QuestionWithDetails[], total: number}> {
+  }): Promise<{questions: QuestionWithDetails[], total: number, totalAnswers: number}> {
     const limit = filters?.limit || 10;
     const offset = filters?.offset || 0;
     
@@ -1371,6 +1371,8 @@ export class DatabaseStorage implements IStorage {
     
     const [{ count: totalCount }] = await countQuery;
     
+    const [{ count: totalAnswersCount }] = await db.select({ count: count() }).from(answers);
+    
     const query = queryWithConditions
       .orderBy(...orderBy)
       .limit(limit)
@@ -1399,7 +1401,8 @@ export class DatabaseStorage implements IStorage {
     
     return {
       questions: questionsWithAnswers as QuestionWithDetails[],
-      total: totalCount
+      total: totalCount,
+      totalAnswers: totalAnswersCount
     };
   }
 

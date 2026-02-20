@@ -40,7 +40,7 @@ export default function CommunityPage() {
     return a.name.localeCompare(b.name);
   }) : [];
 
-  const { data: questionsResponse, isLoading } = useQuery<{questions: QuestionWithDetails[], total: number}>({
+  const { data: questionsResponse, isLoading } = useQuery<{questions: QuestionWithDetails[], total: number, totalAnswers: number}>({
     queryKey: ['/api/questions', searchQuery, selectedTopic, sortBy, currentPage],
     queryFn: () => {
       const params = new URLSearchParams();
@@ -183,7 +183,7 @@ export default function CommunityPage() {
             <div className="flex items-center gap-8 px-6 py-4 bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100">
               <div className="flex items-center gap-2 text-purple-600">
                 <MessageSquare className="h-5 w-5" />
-                <span className="font-semibold text-lg">{questionsResponse?.total || 30}</span>
+                <span className="font-semibold text-lg">{questionsResponse?.total ?? 0}</span>
                 <span className="text-sm text-gray-600">Questions</span>
               </div>
               
@@ -193,7 +193,7 @@ export default function CommunityPage() {
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span className="font-semibold text-lg">24</span>
+                <span className="font-semibold text-lg">{questionsResponse?.totalAnswers ?? 0}</span>
                 <span className="text-sm text-gray-600">Answers</span>
               </div>
               
@@ -203,7 +203,7 @@ export default function CommunityPage() {
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
                 </svg>
-                <span className="font-semibold text-lg">{topics.length || 12}</span>
+                <span className="font-semibold text-lg">{topics.length}</span>
                 <span className="text-sm text-gray-600">Topics</span>
               </div>
             </div>
