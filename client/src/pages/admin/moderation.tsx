@@ -268,7 +268,7 @@ function ModerationQueue() {
   const queryClient = useQueryClient();
 
   // Fetch reports with filtering
-  const { data: reports = [], isLoading } = useQuery<Report[]>({
+  const { data: reportsData, isLoading } = useQuery<{ reports: Report[]; total: number; pages: number }>({
     queryKey: ['/api/admin/reports', { priority: selectedPriority, status: selectedStatus, search: searchTerm }],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -281,6 +281,8 @@ function ModerationQueue() {
       return response.json();
     },
   });
+
+  const reports = reportsData?.reports || [];
 
   // Assign report mutation
   const assignMutation = useMutation({

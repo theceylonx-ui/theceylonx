@@ -717,7 +717,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
               
               // Send real-time notification via WebSocket
-              websocketService.sendNotification(follow.followerId, notification);
+              if (notification) {
+                websocketService.broadcastNotification({
+                  type: 'notification',
+                  data: {
+                    id: notification.id,
+                    userId: follow.followerId,
+                    type: notification.type,
+                    title: notification.title,
+                    message: notification.message,
+                    category: notification.category || 'social',
+                    priority: notification.priority || 'normal',
+                    isRead: false,
+                    createdAt: new Date().toISOString(),
+                  }
+                });
+              }
             } catch (notifError) {
               console.error('Error creating follower notification:', notifError);
               // Don't fail trip creation if notification fails

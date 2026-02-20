@@ -61,6 +61,22 @@ interface AISettings {
   batchProcessing: boolean;
 }
 
+interface AIModerationStats {
+  totalAnalyzed: number;
+  analyzedToday: number;
+  autoFlagged: number;
+  flaggedRate: number;
+  autoResolved: number;
+  automationRate: number;
+  accuracy: number;
+  riskDistribution: {
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+  };
+}
+
 export default function AIModerationPage() {
   const [testContent, setTestContent] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -69,13 +85,13 @@ export default function AIModerationPage() {
   const { toast } = useToast();
 
   // Fetch AI moderation stats
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats, isLoading: statsLoading } = useQuery<AIModerationStats>({
     queryKey: ['/api/admin/ai-moderation/stats'],
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 
   // Fetch AI settings
-  const { data: settings } = useQuery({
+  const { data: settings } = useQuery<AISettings>({
     queryKey: ['/api/admin/ai-moderation/settings']
   });
 
@@ -92,10 +108,11 @@ export default function AIModerationPage() {
 
     setIsAnalyzing(true);
     try {
-      const result = await apiRequest('/api/admin/ai-moderation/analyze', 'POST', {
+      const response = await apiRequest('POST', '/api/admin/ai-moderation/analyze', {
         content: testContent,
         context: 'test'
       });
+      const result = await response.json() as ModerationResult;
       setAnalysisResult(result);
       toast({
         title: "Analysis Complete",
@@ -115,8 +132,11 @@ export default function AIModerationPage() {
 
   // Batch processing mutation
   const batchProcessMutation = useMutation({
-    mutationFn: () => apiRequest('/api/admin/ai-moderation/batch-process', 'POST'),
-    onSuccess: (result) => {
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/admin/ai-moderation/batch-process');
+      return await response.json();
+    },
+    onSuccess: (result: any) => {
       toast({
         title: "Batch Processing Complete",
         description: `Processed ${result.processed} items, flagged ${result.flagged}`
@@ -134,8 +154,10 @@ export default function AIModerationPage() {
 
   // Update settings mutation
   const updateSettingsMutation = useMutation({
-    mutationFn: (newSettings: Partial<AISettings>) => 
-      apiRequest('/api/admin/ai-moderation/settings', 'PUT', newSettings),
+    mutationFn: async (newSettings: Partial<AISettings>) => {
+      const response = await apiRequest('POST', '/api/admin/ai-moderation/settings', newSettings);
+      return await response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Settings Updated",
@@ -281,7 +303,7 @@ export default function AIModerationPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {['critical', 'high', 'medium', 'low'].map((level) => (
+                  {(['critical', 'high', 'medium', 'low'] as const).map((level) => (
                     <div key={level} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className={`w-3 h-3 rounded-full ${getRiskColor(level)}`} />

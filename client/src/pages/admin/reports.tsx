@@ -26,7 +26,7 @@ export default function AdminReportsPage() {
   const [page, setPage] = useState(1);
   const limit = 20;
 
-  const { data: reports, isLoading } = useQuery<Report[]>({
+  const { data, isLoading } = useQuery<{ reports: Report[]; total: number; pages: number }>({
     queryKey: ["/api/admin/reports", { status: statusFilter !== "all" ? statusFilter : "", page, limit }],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -41,8 +41,9 @@ export default function AdminReportsPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case "open":
       case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-700"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-700"><Clock className="h-3 w-3 mr-1" />Open</Badge>;
       case "investigating":
         return <Badge className="bg-blue-100 text-blue-700"><AlertTriangle className="h-3 w-3 mr-1" />Investigating</Badge>;
       case "resolved":
@@ -54,7 +55,7 @@ export default function AdminReportsPage() {
     }
   };
 
-  const reportList = Array.isArray(reports) ? reports : [];
+  const reportList = data?.reports || [];
 
   return (
     <AdminLayout>
@@ -72,7 +73,7 @@ export default function AdminReportsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="open">Open</SelectItem>
                 <SelectItem value="investigating">Investigating</SelectItem>
                 <SelectItem value="resolved">Resolved</SelectItem>
                 <SelectItem value="dismissed">Dismissed</SelectItem>

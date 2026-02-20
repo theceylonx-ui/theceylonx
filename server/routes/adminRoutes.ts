@@ -439,6 +439,56 @@ router.put('/reports/:id', requirePermission('reports.edit'), async (req, res) =
   }
 });
 
+router.patch('/reports/:id/assign', requirePermission('reports.edit'), async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const { moderatorId } = req.body;
+    if (!moderatorId) {
+      return res.status(400).json({ message: 'Moderator ID is required' });
+    }
+    const success = await adminService.updateReport(id, 'investigating', '', '', req.adminUser?.id || moderatorId);
+    if (success) {
+      res.json({ success: true, message: 'Report assigned successfully' });
+    } else {
+      res.status(500).json({ message: 'Failed to assign report' });
+    }
+  } catch (error) {
+    console.error('❌ Admin report assign error:', error);
+    res.status(500).json({ message: 'Failed to assign report' });
+  }
+});
+
+router.patch('/reports/:id/escalate', requirePermission('reports.edit'), async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const success = await adminService.updateReport(id, 'investigating', 'escalated', '', req.adminUser?.id || '');
+    if (success) {
+      res.json({ success: true, message: 'Report escalated successfully' });
+    } else {
+      res.status(500).json({ message: 'Failed to escalate report' });
+    }
+  } catch (error) {
+    console.error('❌ Admin report escalate error:', error);
+    res.status(500).json({ message: 'Failed to escalate report' });
+  }
+});
+
+router.patch('/reports/:id/resolve', requirePermission('reports.edit'), async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const { resolution, notes } = req.body;
+    const success = await adminService.updateReport(id, resolution || 'resolved', resolution || 'resolved', notes || '', req.adminUser?.id || '');
+    if (success) {
+      res.json({ success: true, message: 'Report resolved successfully' });
+    } else {
+      res.status(500).json({ message: 'Failed to resolve report' });
+    }
+  } catch (error) {
+    console.error('❌ Admin report resolve error:', error);
+    res.status(500).json({ message: 'Failed to resolve report' });
+  }
+});
+
 // Audit logs endpoint (maps to /logs internally)
 router.get('/audit-logs', requirePermission('logs.view'), async (req, res) => {
   try {
@@ -497,11 +547,18 @@ router.get('/ai-moderation/stats', requirePermission('reports.view'), async (req
   try {
     res.json({
       totalAnalyzed: 0,
-      flaggedContent: 0,
+      analyzedToday: 0,
+      autoFlagged: 0,
+      flaggedRate: 0,
       autoResolved: 0,
+      automationRate: 0,
       accuracy: 0,
-      avgConfidence: 0,
-      processingTime: 0
+      riskDistribution: {
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0
+      }
     });
   } catch (error) {
     console.error('❌ Admin AI moderation stats error:', error);
@@ -559,6 +616,15 @@ router.post('/ai-moderation/analyze', requirePermission('reports.view'), async (
   } catch (error) {
     console.error('❌ Admin AI analysis error:', error);
     res.status(500).json({ message: 'Failed to analyze content' });
+  }
+});
+
+router.post('/ai-moderation/batch-process', requirePermission('reports.view'), async (req, res) => {
+  try {
+    res.json({ processed: 0, flagged: 0 });
+  } catch (error) {
+    console.error('❌ Admin AI batch process error:', error);
+    res.status(500).json({ message: 'Failed to batch process' });
   }
 });
 

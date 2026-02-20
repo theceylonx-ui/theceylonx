@@ -282,8 +282,8 @@ export default function AuditLogsPage() {
                           initialFocus
                           mode="range"
                           defaultMonth={dateRange.from}
-                          selected={dateRange}
-                          onSelect={setDateRange}
+                          selected={dateRange as any}
+                          onSelect={(range: any) => setDateRange(range || {})}
                           numberOfMonths={2}
                         />
                       </PopoverContent>
