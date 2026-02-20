@@ -1,7 +1,6 @@
 // Ceylon Expand Service Worker - Progressive Web App
-const CACHE_NAME = 'ceylon-expand-v2.0.0';
+const CACHE_NAME = 'ceylon-expand-v2.1.0';
 const OFFLINE_URL = '/offline.html';
-const API_CACHE_NAME = 'ceylon-expand-api-v2.0.0';
 
 // Define which URLs to cache
 const urlsToCache = [
@@ -61,7 +60,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME && cacheName !== API_CACHE_NAME) {
+          if (cacheName !== CACHE_NAME) {
             console.log('[ServiceWorker] Removing old cache:', cacheName);
             return caches.delete(cacheName);
           }
@@ -89,15 +88,17 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Never cache API calls - always go to network
+  if (url.pathname.startsWith('/api/')) {
+    return;
+  }
+
   // Determine cache strategy based on request
   const strategy = getCacheStrategy(request);
 
   switch (strategy) {
     case 'static':
       event.respondWith(cacheFirst(request));
-      break;
-    case 'api':
-      event.respondWith(networkFirstWithCacheFallback(request, API_CACHE_NAME));
       break;
     case 'pages':
       event.respondWith(networkFirstWithOfflineFallback(request));
