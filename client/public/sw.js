@@ -1,7 +1,7 @@
 // Ceylon Expand Service Worker - Progressive Web App
-const CACHE_NAME = 'ceylon-expand-v1.1.0';
+const CACHE_NAME = 'ceylon-expand-v2.0.0';
 const OFFLINE_URL = '/offline.html';
-const API_CACHE_NAME = 'ceylon-expand-api-v1.0.0';
+const API_CACHE_NAME = 'ceylon-expand-api-v2.0.0';
 
 // Define which URLs to cache
 const urlsToCache = [
