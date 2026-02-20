@@ -107,6 +107,28 @@ router.put('/users/:id/role', requirePermission('users.edit'), async (req, res) 
   }
 });
 
+// Trip management endpoints
+router.get('/trips', requirePermission('users.view'), async (req, res) => {
+  try {
+    const { status = '', page = '1', limit = '20' } = req.query;
+    const result = await adminService.getTrips(
+      status as string,
+      parseInt(page as string),
+      parseInt(limit as string)
+    );
+    res.json({
+      trips: result.trips,
+      total: result.total,
+      page: parseInt(page as string),
+      limit: parseInt(limit as string),
+      totalPages: result.pages,
+    });
+  } catch (error) {
+    console.error('❌ Admin trips list error:', error);
+    res.status(500).json({ message: 'Failed to load trips' });
+  }
+});
+
 // Content management endpoints
 router.post('/media', requirePermission('media.upload'), upload.single('file'), async (req, res) => {
   try {

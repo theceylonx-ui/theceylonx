@@ -46,8 +46,8 @@ router.get('/me', async (req: any, res) => {
     res.json({
       id: userData.id,
       email: userData.email,
-      role: userData.role || 'admin',
-      permissions: userData.adminPermissions || [],
+      role: (userData as any).roleId || 'admin',
+      permissions: [],
       legacyPermissions: {
         canManageUsers: true,
         canManageContent: true,
@@ -84,18 +84,17 @@ router.get('/dashboard', async (req: any, res) => {
     // Get basic stats from existing data
     const [allUsers, allTrips, allReports] = await Promise.all([
       storage.getAllUsers(),
-      storage.getTrips({}),
+      storage.getAllTrips(),
       storage.getReports()
     ]);
 
-    // Calculate stats
     const users = {
       total: allUsers.length,
-      active24h: allUsers.filter(u => {
+      active24h: allUsers.filter((u: any) => {
         const lastSeen = new Date(u.updatedAt || u.createdAt);
         return Date.now() - lastSeen.getTime() < 24 * 60 * 60 * 1000;
       }).length,
-      newToday: allUsers.filter(u => {
+      newToday: allUsers.filter((u: any) => {
         const created = new Date(u.createdAt);
         return Date.now() - created.getTime() < 24 * 60 * 60 * 1000;
       }).length
@@ -103,14 +102,14 @@ router.get('/dashboard', async (req: any, res) => {
 
     const trips = {
       total: allTrips.length,
-      active: allTrips.filter(t => t.status === 'active').length,
-      pending: allTrips.filter(t => t.status === 'pending').length
+      active: allTrips.filter((t: any) => t.status === 'active').length,
+      pending: allTrips.filter((t: any) => t.status === 'pending').length
     };
 
     const reports = {
       total: allReports.length,
-      open: allReports.filter(r => r.status === 'pending').length,
-      resolved24h: allReports.filter(r => {
+      open: allReports.filter((r: any) => r.status === 'open').length,
+      resolved24h: allReports.filter((r: any) => {
         const updated = new Date(r.updatedAt || r.createdAt);
         return r.status === 'resolved' && Date.now() - updated.getTime() < 24 * 60 * 60 * 1000;
       }).length
@@ -156,7 +155,7 @@ router.get('/users', async (req: any, res) => {
     }
     
     if (role) {
-      users = users.filter(u => u.role === role);
+      users = users.filter((u: any) => u.roleId === role);
     }
     
     // Pagination
@@ -203,15 +202,14 @@ router.get('/trips', async (req: any, res) => {
     const { status, organizer } = req.query;
     
     // Get all trips and filter
-    let trips = await storage.getTrips({});
+    let trips = await storage.getAllTrips();
     
-    // Apply filters
     if (status) {
-      trips = trips.filter(t => t.status === status);
+      trips = trips.filter((t: any) => t.status === status);
     }
     
     if (organizer) {
-      trips = trips.filter(t => t.organizerId === organizer);
+      trips = trips.filter((t: any) => t.organizerId === organizer);
     }
     
     // Pagination

@@ -151,10 +151,10 @@ export class AdminService {
         [{ totalReports }],
         recentActions,
       ] = await Promise.all([
-        db.select({ totalUsers: count() }).from(users).where(eq(users.isDeleted, false)),
+        db.select({ totalUsers: count() }).from(users),
         db.select({ totalTrips: count() }).from(trips),
-        db.select({ activeTrips: count() }).from(trips).where(eq(trips.status, 'published')),
-        db.select({ pendingReports: count() }).from(reports).where(eq(reports.status, 'pending')),
+        db.select({ activeTrips: count() }).from(trips).where(eq(trips.status, 'active')),
+        db.select({ pendingReports: count() }).from(reports).where(eq(reports.status, 'open')),
         db.select({ totalReports: count() }).from(reports),
         db.select().from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(20),
       ]);
@@ -203,11 +203,8 @@ export class AdminService {
       const offset = (page - 1) * limit;
       
       const whereClause = search 
-        ? and(
-            eq(users.isDeleted, false),
-            like(users.email, `%${search}%`)
-          )
-        : eq(users.isDeleted, false);
+        ? like(users.email, `%${search}%`)
+        : undefined;
 
       const [userResults, [{ total }]] = await Promise.all([
         db
@@ -237,6 +234,40 @@ export class AdminService {
     } catch (error) {
       console.error('❌ Failed to get users:', error);
       return { users: [], total: 0, pages: 0 };
+    }
+  }
+
+  async getTrips(status: string = '', page: number = 1, limit: number = 20): Promise<{
+    trips: any[];
+    total: number;
+    pages: number;
+  }> {
+    try {
+      const offset = (page - 1) * limit;
+      
+      const whereClause = status 
+        ? eq(trips.status, status)
+        : undefined;
+
+      const [tripResults, [{ total }]] = await Promise.all([
+        db
+          .select()
+          .from(trips)
+          .where(whereClause)
+          .orderBy(desc(trips.createdAt))
+          .offset(offset)
+          .limit(limit),
+        db.select({ total: count() }).from(trips).where(whereClause),
+      ]);
+
+      return {
+        trips: tripResults,
+        total: total || 0,
+        pages: Math.ceil((total || 0) / limit),
+      };
+    } catch (error) {
+      console.error('❌ Failed to get trips:', error);
+      return { trips: [], total: 0, pages: 0 };
     }
   }
 
