@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "Lrbyhn-ppBdGWCtX3MxR3"
+uri = "file://ceylon-expand-blueprint.docx"
+type = "word_document"
+title = "Ceylon Expand — Owner's Complete Blueprint"
