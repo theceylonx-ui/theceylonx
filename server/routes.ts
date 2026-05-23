@@ -517,30 +517,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User deletion confirmation page (for OAuth providers)
-  app.post('/api/user/deletion-request', async (req, res) => {
-    try {
-      const { userId, confirmationToken } = req.body;
-      
-      if (!userId || !confirmationToken) {
-        return res.status(400).json({ message: "Missing required parameters" });
-      }
-      
-      // This endpoint is for OAuth providers to request user deletion
-      // In a production environment, you might want to add additional verification
-      
-      await storage.deleteUser(userId);
-      
-      res.json({ 
-        message: "User data deletion completed successfully",
-        status: "deleted",
-        deleted_at: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error("Error processing deletion request:", error);
-      res.status(500).json({ message: "Failed to process deletion request" });
-    }
-  });
 
   // Legacy endpoint - no longer needed since we removed Sri Lanka images
   app.post('/api/trips/migrate-to-categories', unifiedAuthGuard, async (req, res) => {
