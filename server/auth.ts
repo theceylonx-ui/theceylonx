@@ -34,14 +34,20 @@ export function getSession() {
     ttl: sessionTtl,
     tableName: "sessions",
   });
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (isProduction && !process.env.SESSION_SECRET) {
+    throw new Error('SESSION_SECRET environment variable is required in production. Set it in Replit Secrets.');
+  }
+
   return session({
-    secret: process.env.SESSION_SECRET || 'dev-session-secret-change-in-production',
+    secret: process.env.SESSION_SECRET || 'dev-session-secret-do-not-use-in-production',
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false, // Set to false for development 
+      secure: isProduction,
       maxAge: sessionTtl,
     },
   });

@@ -35,7 +35,6 @@ const AuthSignInPage = lazy(() => import("@/pages/auth-signin"));
 const AuthMagicPage = lazy(() => import("@/pages/auth-magic"));
 const AuthCallbackPage = lazy(() => import("@/pages/auth-callback"));
 const DestinationPage = lazy(() => import("@/pages/destination"));
-const ChatDemoPage = lazy(() => import("@/pages/chat-demo"));
 const UserDeletion = lazy(() => import("@/pages/user-deletion"));
 const CalendarPage = lazy(() => import("@/pages/calendar"));
 const TravelStyleSettings = lazy(() => import("@/pages/travel-style-settings"));
@@ -144,7 +143,6 @@ function Router() {
           <Route path="/auth/callback" component={handleRoute(AuthCallbackPage)} />
           <Route path="/auth-test" component={handleRoute(ClerkSmoke)} />
           <Route path="/destination/:city" component={handleRoute(DestinationPage)} />
-          <Route path="/chat-demo" component={handleRoute(ChatDemoPage)} />
           <Route path="/user/delete" component={handleRoute(UserDeletion)} />
           <Route path="/post" component={handleRoute(SignInRequired)} />
           <Route path="/dashboard" component={handleRoute(SignInRequired)} />
@@ -191,7 +189,6 @@ function Router() {
           <Route path="/users/:id/trips" component={handleRoute(UserTripsPage)} />
           
           {/* Chat Routes */}
-          <Route path="/chat-demo" component={handleRoute(ChatDemoPage)} />
           <Route path="/chat-buddy" component={handleRoute(ChatBuddy)} />
           <Route path="/chat-buddy/:threadId" component={handleRoute(ChatBuddy)} />
           

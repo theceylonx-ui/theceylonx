@@ -6,6 +6,14 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { checkClerkEnv } from "./utils/checkClerk";
 
+// Suppress verbose console.log in production to prevent internal stack trace leakage.
+// console.error and console.warn remain active for critical production messages.
+if (process.env.NODE_ENV === 'production') {
+  const noop = () => {};
+  console.log = noop;
+  console.debug = noop;
+}
+
 // Log startup information
 console.log('Environment:', process.env.NODE_ENV || 'development');
 
