@@ -1,414 +1,154 @@
 // Ceylon Expand Service Worker - Progressive Web App
-const CACHE_NAME = 'ceylon-expand-v2.2.0';
+const CACHE_NAME = 'ceylon-expand-v2.3.0';
 const OFFLINE_URL = '/offline.html';
 
-// Define which URLs to cache
+// Only cache true binary/static assets — never HTML or JS.
+// HTML pages in a Vite SPA reference chunk hashes that change on every rebuild.
+// Caching HTML or JS causes "Importing a module script failed" crashes after rebuilds.
 const urlsToCache = [
-  '/',
   '/offline.html',
-  '/browse-trips',
-  '/community',
   '/manifest.json',
-  '/assets/5_1756417819316.png', // Logo
+  '/assets/5_1756417819316.png',
   '/pwa-icon-192x192.png',
   '/pwa-icon-512x512.png'
 ];
 
-// Vite dev-mode paths that must NEVER be cached (they change on every rebuild)
+// Vite dev-mode paths — always bypass the SW entirely
 const VITE_DEV_PATHS = [
-  /^\/@fs\//,         // Vite filesystem paths
-  /^\/@vite\//,       // Vite runtime
-  /^\/@id\//,         // Vite module IDs
-  /^\/src\//,         // Vite source transforms
-  /\/node_modules\//  // node_modules served by Vite
+  /^\/@fs\//,
+  /^\/@vite\//,
+  /^\/@id\//,
+  /^\/src\//,
+  /\/node_modules\//
 ];
 
-// Cache strategies for different types of requests
-const cacheStrategies = {
-  // Static assets - Cache first (production built assets only)
-  static: [
-    /\/assets\/.*\.(png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico)$/,
-    /\/assets\/generated_images\//,
-    /manifest\.json$/
-  ],
-  
-  // API calls - Network first with cache fallback
-  api: [
-    /\/api\//
-  ],
-  
-  // Pages - Network first with cache fallback
-  pages: [
-    /\/(browse-trips|community|post|auth|profile|help)/
-  ]
-};
-
-// Install event - Cache static resources
+// Install — cache only binary assets, skip waiting immediately
 self.addEventListener('install', (event) => {
-  console.log('[ServiceWorker] Install');
-  
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('[ServiceWorker] Caching app shell');
-        return cache.addAll(urlsToCache);
-      })
-      .then(() => {
-        // Skip waiting to activate immediately
+      .then((cache) => cache.addAll(urlsToCache))
+      .then(() => self.skipWaiting())
+      .catch((err) => {
+        // Don't block install if an asset is missing
+        console.warn('[SW] Install cache error (non-fatal):', err);
         return self.skipWaiting();
       })
   );
 });
 
-// Activate event - Clean up old caches
+// Activate — delete ALL old caches, claim all clients immediately
 self.addEventListener('activate', (event) => {
-  console.log('[ServiceWorker] Activate');
-  
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('[ServiceWorker] Removing old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => {
-      // Take control of all pages immediately
-      return self.clients.claim();
-    })
+    caches.keys()
+      .then((cacheNames) =>
+        Promise.all(
+          cacheNames
+            .filter((name) => name !== CACHE_NAME)
+            .map((name) => caches.delete(name))
+        )
+      )
+      .then(() => self.clients.claim())
   );
 });
 
-// Fetch event - Handle different caching strategies
+// Fetch — conservative strategy: only cache binary assets, pass everything else through
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
-  if (request.method !== 'GET') {
+  // Skip non-GET
+  if (request.method !== 'GET') return;
+
+  // Skip cross-origin
+  if (url.origin !== location.origin) return;
+
+  // Skip Vite dev paths
+  if (VITE_DEV_PATHS.some((p) => p.test(url.pathname))) return;
+
+  // Skip API calls
+  if (url.pathname.startsWith('/api/')) return;
+
+  // Skip anything with Vite cache-busting params (dep chunks)
+  if (url.searchParams.has('t') || url.searchParams.has('v')) return;
+
+  // CRITICAL: Never cache HTML documents or JavaScript — they contain/reference
+  // Vite chunk hashes that change on every rebuild. Serving stale ones causes
+  // "Importing a module script failed" crashes.
+  if (
+    request.destination === 'document' ||
+    request.destination === 'script' ||
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.ts') ||
+    url.pathname.endsWith('.tsx') ||
+    url.pathname.endsWith('.jsx') ||
+    url.pathname.endsWith('.html')
+  ) {
+    return; // Let the browser handle it directly — no SW interception
+  }
+
+  // Only use cache-first for true binary assets: images, fonts, icons, manifest
+  const isBinaryAsset =
+    /\.(png|jpg|jpeg|gif|webp|svg|ico|woff|woff2|ttf|eot)$/.test(url.pathname) ||
+    url.pathname === '/manifest.json' ||
+    url.pathname === '/offline.html';
+
+  if (isBinaryAsset) {
+    event.respondWith(cacheFirst(request));
     return;
   }
 
-  // Skip cross-origin requests
-  if (url.origin !== location.origin) {
-    return;
-  }
-
-  // Never cache Vite dev-mode paths — they change on every rebuild
-  if (VITE_DEV_PATHS.some(pattern => pattern.test(url.pathname))) {
-    return;
-  }
-
-  // Never cache API calls - always go to network
-  if (url.pathname.startsWith('/api/')) {
-    return;
-  }
-
-  // Never cache files with Vite cache-busting query params
-  if (url.searchParams.has('t') || url.searchParams.has('v')) {
-    return;
-  }
-
-  // Determine cache strategy based on request
-  const strategy = getCacheStrategy(request);
-
-  switch (strategy) {
-    case 'static':
-      event.respondWith(cacheFirst(request));
-      break;
-    case 'pages':
-      event.respondWith(networkFirstWithOfflineFallback(request));
-      break;
-    default:
-      event.respondWith(networkFirst(request));
-  }
+  // Everything else: network only (no caching)
 });
 
-// Cache strategies implementation
-
-// Cache first - for static assets
+// Cache-first for binary assets only
 function cacheFirst(request) {
-  return caches.match(request)
-    .then((response) => {
-      if (response) {
+  return caches.match(request).then((cached) => {
+    if (cached) return cached;
+
+    return fetch(request).then((response) => {
+      if (!response || response.status !== 200 || response.type !== 'basic') {
         return response;
       }
-      
-      return fetch(request).then((response) => {
-        // Don't cache if not a valid response
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
-        }
-
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME)
-          .then((cache) => {
-            cache.put(request, responseToCache);
-          });
-
-        return response;
-      });
-    });
-}
-
-// Network first with cache fallback - for API calls
-function networkFirstWithCacheFallback(request, cacheName) {
-  return fetch(request)
-    .then((response) => {
-      // Cache successful API responses
-      if (response.status === 200) {
-        const responseToCache = response.clone();
-        caches.open(cacheName)
-          .then((cache) => {
-            cache.put(request, responseToCache);
-          });
-      }
-      
+      const clone = response.clone();
+      caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
       return response;
-    })
-    .catch(() => {
-      // Network failed, try cache
-      return caches.match(request)
-        .then((response) => {
-          if (response) {
-            return response;
-          }
-          
-          // If it's a critical API call, return a JSON error response
-          if (request.url.includes('/api/')) {
-            return new Response(JSON.stringify({
-              error: 'Network unavailable',
-              message: 'This feature is not available offline',
-              offline: true
-            }), {
-              status: 503,
-              statusText: 'Service Unavailable',
-              headers: { 'Content-Type': 'application/json' }
-            });
-          }
-          
-          throw new Error('No cached response available');
-        });
     });
-}
-
-// Network first with offline page fallback - for navigation
-function networkFirstWithOfflineFallback(request) {
-  return fetch(request)
-    .then((response) => {
-      // Cache successful page responses
-      if (response.status === 200) {
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME)
-          .then((cache) => {
-            cache.put(request, responseToCache);
-          });
-      }
-      
-      return response;
-    })
-    .catch(() => {
-      // Network failed, try cache first
-      return caches.match(request)
-        .then((response) => {
-          if (response) {
-            return response;
-          }
-          
-          // For navigation requests, show offline page
-          if (request.mode === 'navigate') {
-            return caches.match(OFFLINE_URL);
-          }
-          
-          throw new Error('No cached response available');
-        });
-    });
-}
-
-// Network first - default strategy
-function networkFirst(request) {
-  return fetch(request)
-    .catch(() => {
-      return caches.match(request);
-    });
-}
-
-// Determine cache strategy based on request
-function getCacheStrategy(request) {
-  const url = new URL(request.url);
-  
-  // Check for static assets
-  for (const pattern of cacheStrategies.static) {
-    if (pattern.test(url.pathname)) {
-      return 'static';
-    }
-  }
-  
-  // Check for API calls
-  for (const pattern of cacheStrategies.api) {
-    if (pattern.test(url.pathname)) {
-      return 'api';
-    }
-  }
-  
-  // Check for pages
-  for (const pattern of cacheStrategies.pages) {
-    if (pattern.test(url.pathname)) {
-      return 'pages';
-    }
-  }
-  
-  return 'default';
-}
-
-// Background sync for offline actions
-self.addEventListener('sync', (event) => {
-  console.log('[ServiceWorker] Background sync:', event.tag);
-  
-  switch (event.tag) {
-    case 'trip-post':
-      event.waitUntil(syncTripPosts());
-      break;
-    case 'user-actions':
-      event.waitUntil(syncUserActions());
-      break;
-    default:
-      console.log('[ServiceWorker] Unknown sync tag:', event.tag);
-  }
-});
-
-// Sync offline trip posts
-async function syncTripPosts() {
-  try {
-    const cache = await caches.open('offline-actions');
-    const requests = await cache.keys();
-    
-    for (const request of requests) {
-      if (request.url.includes('offline-trip-post')) {
-        const response = await cache.match(request);
-        const data = await response.json();
-        
-        // Attempt to post the trip
-        try {
-          await fetch('/api/trips', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-          });
-          
-          // Remove from offline cache on success
-          await cache.delete(request);
-          
-          // Notify user of successful sync
-          self.registration.showNotification('Trip Posted!', {
-            body: 'Your trip has been posted successfully.',
-            icon: '/pwa-icon-192x192.png',
-            badge: '/pwa-icon-96x96.png',
-            tag: 'trip-posted'
-          });
-        } catch (error) {
-          console.log('[ServiceWorker] Failed to sync trip post:', error);
-        }
-      }
-    }
-  } catch (error) {
-    console.log('[ServiceWorker] Background sync failed:', error);
-  }
-}
-
-// Sync other user actions
-async function syncUserActions() {
-  try {
-    // Implementation for syncing other offline actions
-    console.log('[ServiceWorker] Syncing user actions...');
-  } catch (error) {
-    console.log('[ServiceWorker] Failed to sync user actions:', error);
-  }
+  });
 }
 
 // Push notification handler
 self.addEventListener('push', (event) => {
-  console.log('[ServiceWorker] Push Received.');
-  
-  let notificationData = {
+  let data = {
     title: 'Ceylon Expand',
     body: 'You have a new notification',
     icon: '/pwa-icon-192x192.png',
     badge: '/pwa-icon-96x96.png',
     tag: 'general',
-    requireInteraction: false,
-    actions: [
-      {
-        action: 'view',
-        title: 'View'
-      },
-      {
-        action: 'dismiss',
-        title: 'Dismiss'
-      }
-    ]
   };
 
   if (event.data) {
-    try {
-      const data = event.data.json();
-      notificationData = { ...notificationData, ...data };
-    } catch (error) {
-      console.log('[ServiceWorker] Error parsing push data:', error);
-    }
+    try { data = { ...data, ...event.data.json() }; } catch (_) {}
   }
 
-  event.waitUntil(
-    self.registration.showNotification(notificationData.title, notificationData)
-  );
+  event.waitUntil(self.registration.showNotification(data.title, data));
 });
 
-// Notification click handler
+// Notification click
 self.addEventListener('notificationclick', (event) => {
-  console.log('[ServiceWorker] Notification click received.');
-  
   event.notification.close();
+  if (event.action === 'dismiss') return;
 
-  const action = event.action;
-  const notification = event.notification;
-  
-  if (action === 'dismiss') {
-    return;
-  }
-
-  // Handle notification click
   event.waitUntil(
-    clients.matchAll({ type: 'window' }).then((clientList) => {
-      // Try to focus existing window
-      for (const client of clientList) {
-        if (client.url === '/' && 'focus' in client) {
-          return client.focus();
-        }
+    clients.matchAll({ type: 'window' }).then((list) => {
+      for (const client of list) {
+        if ('focus' in client) return client.focus();
       }
-      
-      // Open new window if no existing window found
-      if (clients.openWindow) {
-        return clients.openWindow('/');
-      }
+      if (clients.openWindow) return clients.openWindow('/');
     })
   );
 });
 
-// Message handler for communication with main thread
+// Allow main thread to trigger skipWaiting
 self.addEventListener('message', (event) => {
-  console.log('[ServiceWorker] Message received:', event.data);
-  
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
-
-// Handle unhandled promise rejections
-self.addEventListener('unhandledrejection', (event) => {
-  console.log('[ServiceWorker] Unhandled promise rejection:', event.reason);
-  event.preventDefault();
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
