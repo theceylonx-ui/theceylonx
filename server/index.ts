@@ -370,12 +370,39 @@ app.use((req, res, next) => {
 
 // Handle uncaught exceptions and unhandled rejections
 process.on('uncaughtException', (error) => {
+  // Known recoverable database/WebSocket errors - log but don't crash the server
+  const recoverableMessages = [
+    'Cannot set property message of #<ErrorEvent>',  // ws 8.21 + Neon bug
+    'terminating connection due to administrator command', // Postgres admin restart
+    'Connection terminated unexpectedly',
+    'write EPIPE',
+    'read ECONNRESET',
+  ];
+
+  if (recoverableMessages.some(msg => error.message?.includes(msg))) {
+    console.warn('⚠️ Recoverable error (server continuing):', error.message);
+    return;
+  }
+
   console.error('Uncaught Exception:', error);
   console.error('Stack trace:', error.stack);
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
+  const msg = reason instanceof Error ? reason.message : String(reason);
+  const recoverableMessages = [
+    'terminating connection due to administrator command',
+    'Connection terminated unexpectedly',
+    'write EPIPE',
+    'read ECONNRESET',
+  ];
+
+  if (recoverableMessages.some(m => msg.includes(m))) {
+    console.warn('⚠️ Recoverable rejection (server continuing):', msg);
+    return;
+  }
+
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   process.exit(1);
 });

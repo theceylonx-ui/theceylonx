@@ -26,11 +26,15 @@ if (!process.env.DATABASE_URL) {
 
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  // Add connection pool configuration for stability
   ssl: true,
   connectionTimeoutMillis: 10000,
   idleTimeoutMillis: 30000,
   max: 10
+});
+
+// Prevent pool errors from becoming uncaught exceptions that crash the server
+pool.on('error', (err) => {
+  console.warn('⚠️ Database pool error (pool will reconnect):', err.message);
 });
 
 export const db = drizzle({ client: pool, schema });
