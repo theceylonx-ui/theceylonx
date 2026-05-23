@@ -64,7 +64,8 @@ async function checkDatabase(): Promise<HealthStatus> {
     const complexResponseTime = Date.now() - complexStart;
     
     // Check database version and basic stats
-    const [versionResult] = await db.execute('SELECT version() as version');
+    const versionResultSet = await db.execute('SELECT version() as version');
+    const versionResult = (versionResultSet as any)?.rows?.[0] ?? (Array.isArray(versionResultSet) ? versionResultSet[0] : null);
     const dbVersion = (versionResult as any)?.version || 'Unknown';
     
     const avgResponseTime = (basicResponseTime + complexResponseTime) / 2;
@@ -552,7 +553,8 @@ export async function readinessCheck(req: Request, res: Response) {
       checkAuth(),
     ]);
     
-    const essentialServices = [dbHealth, cacheHealth, authHealth];
+    // Only DB is truly essential — cache is optional (degrades gracefully)
+    const essentialServices = [dbHealth, authHealth];
     const notReady = essentialServices.filter(service => service.status === 'fail');
     
     if (notReady.length > 0) {
@@ -569,6 +571,7 @@ export async function readinessCheck(req: Request, res: Response) {
       status: 'ready',
       timestamp: new Date().toISOString(),
       readyServices: essentialServices.length,
+      cacheStatus: cacheHealth.status,
       uptime: process.uptime(),
       message: 'Service ready to accept traffic'
     });
