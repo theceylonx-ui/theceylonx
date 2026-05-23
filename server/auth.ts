@@ -35,6 +35,12 @@ export function getSession() {
     tableName: "sessions",
   });
   const isProduction = process.env.NODE_ENV === 'production';
+  // Replit's load balancer terminates TLS and forwards HTTP internally.
+  // Setting secure:true based solely on NODE_ENV causes the browser to never
+  // send the session cookie (it only goes over HTTPS) → redirect loop.
+  // Only set secure:true when we are running as an actual Replit deployment
+  // (REPLIT_DEPLOYMENT=1), which confirms the LB is in front of us.
+  const isReplitDeployment = process.env.REPLIT_DEPLOYMENT === '1';
 
   if (isProduction && !process.env.SESSION_SECRET) {
     throw new Error('SESSION_SECRET environment variable is required in production. Set it in Replit Secrets.');
@@ -47,7 +53,8 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: isProduction,
+      secure: isProduction && isReplitDeployment,
+      sameSite: 'lax',
       maxAge: sessionTtl,
     },
   });
