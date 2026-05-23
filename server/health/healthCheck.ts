@@ -116,10 +116,12 @@ function checkCache(): HealthStatus {
     
     cache.delete(testKey); // Cleanup
     
+    // Cache is functional if set/get works — hit rate is low on fresh start (not a failure)
+    const functional = retrieved !== null && retrieved !== undefined;
     let status: 'pass' | 'warn' | 'fail';
-    if (hitRate > 0.8 && responseTime < 10) status = 'pass';
-    else if (hitRate > 0.5 && responseTime < 50) status = 'warn';
-    else status = 'fail';
+    if (!functional) status = 'fail'; // Cache is broken if set→get returns nothing
+    else if (responseTime > 50) status = 'warn'; // Slow cache
+    else status = 'pass'; // Working fine (hit rate is informational only)
     
     return {
       status,
@@ -163,9 +165,14 @@ function checkMemory(): HealthStatus {
     const heapPercentage = (heapUsedMB / heapTotalMB) * 100;
     const systemPercentage = (systemUsedMB / systemTotalMB) * 100;
     
+    // Use RSS vs system memory for meaningful threshold (heapTotal is V8's current committed
+    // heap, not the max — comparing heap% of heapTotal is misleading in containers)
+    const rssMB = memUsage.rss / 1024 / 1024;
+    const rssPercentage = (rssMB / (systemTotalMB || 1)) * 100;
+    
     let status: 'pass' | 'warn' | 'fail';
-    if (heapPercentage < 70 && systemPercentage < 80) status = 'pass';
-    else if (heapPercentage < 85 && systemPercentage < 90) status = 'warn';
+    if (rssPercentage < 30 && systemPercentage < 80) status = 'pass';
+    else if (rssPercentage < 50 && systemPercentage < 90) status = 'warn';
     else status = 'fail';
     
     return {
@@ -491,7 +498,8 @@ export async function healthCheck(req: Request, res: Response) {
     
     // Determine overall health status
     const allChecks = [dbHealth, cacheHealth, memoryHealth, diskHealth, authHealth, externalHealth, wsHealth, storageHealth];
-    const criticalChecks = [dbHealth, cacheHealth, memoryHealth]; // Critical for basic functionality
+    // Only DB is truly critical — cache, memory, and other checks are informational
+    const criticalChecks = [dbHealth];
     
     const criticalPassed = criticalChecks.every(check => check.status === 'pass');
     const anyFailed = allChecks.some(check => check.status === 'fail');
@@ -593,10 +601,15 @@ export function livenessCheck(req: Request, res: Response) {
     const heapUsedMB = memUsage.heapUsed / 1024 / 1024;
     const heapTotalMB = memUsage.heapTotal / 1024 / 1024;
     
-    // Simple liveness indicators
+    // Simple liveness indicators — memory pressure is NOT a liveness concern.
+    // V8's heapTotal is the current committed heap (not the max), so heapUsed/heapTotal
+    // is routinely >95% in containers without any OOM risk. Only check absolute RSS.
+    const rssMB = memUsage.rss / 1024 / 1024;
+    const systemTotalMB = os.totalmem() / 1024 / 1024;
+    const rssPercentage = (rssMB / (systemTotalMB || 1)) * 100;
     const isAlive = {
       processAlive: true,
-      memoryOk: heapUsedMB < (heapTotalMB * 0.95), // < 95% heap usage
+      memoryOk: rssPercentage < 80, // RSS > 80% of system = genuinely critical
       uptimeOk: process.uptime() > 0,
       responseOk: true
     };
