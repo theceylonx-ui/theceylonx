@@ -649,10 +649,11 @@ export class DatabaseStorage implements IStorage {
 
   async getTrip(id: string, requestingUserId?: string): Promise<TripWithOrganizer | undefined> {
     try {
-      // Use template literals to avoid parameter binding issues with Neon serverless
       const { pool } = await import("./db");
-      const simpleQuery = `SELECT * FROM trips WHERE id = '${id}' AND is_deleted = false`;
-      const result = await pool.query(simpleQuery);
+      const result = await pool.query(
+        `SELECT * FROM trips WHERE id = $1 AND is_deleted = false`,
+        [id]
+      );
       
       if (result.rows.length === 0) return undefined;
       
@@ -661,15 +662,19 @@ export class DatabaseStorage implements IStorage {
       // Get organizer separately if needed
       let organizer = null;
       if (tripRow.organizer_id) {
-        const organizerQuery = `SELECT * FROM users WHERE id = '${tripRow.organizer_id}'`;
-        const organizerResult = await pool.query(organizerQuery);
+        const organizerResult = await pool.query(
+          `SELECT * FROM users WHERE id = $1`,
+          [tripRow.organizer_id]
+        );
         organizer = organizerResult.rows[0] || null;
       }
       
       // Get metadata separately
       let metadata = null;
-      const metadataQuery = `SELECT * FROM trip_metadata WHERE trip_id = '${id}'`;
-      const metadataResult = await pool.query(metadataQuery);
+      const metadataResult = await pool.query(
+        `SELECT * FROM trip_metadata WHERE trip_id = $1`,
+        [id]
+      );
       metadata = metadataResult.rows[0] || null;
       
       // Construct trip object from result
