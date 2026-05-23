@@ -1,7 +1,5 @@
-import { createStorage } from "../server/storage";
+import { storage } from "../server/storage";
 import { nanoid } from "nanoid";
-
-const storage = createStorage();
 
 function slugify(text: string): string {
   return text
@@ -302,7 +300,7 @@ async function seedQA() {
     
     try {
       // Check if question already exists
-      const existingQuestions = await storage.getQuestions({ topicId: topic.id });
+      const { questions: existingQuestions } = await storage.getQuestions({ limit: 200 });
       const exists = existingQuestions.find(q => q.slug === slug);
       
       if (exists) {

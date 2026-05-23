@@ -118,6 +118,18 @@ export default function Navigation() {
                 CeylonX Tribes
               </span>
             </Link>
+            <Link href="/about">
+              <span 
+                className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${
+                  isActive('/about') 
+                    ? (user ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' : 'bg-brand-subtle text-brand font-semibold')
+                    : (user ? 'text-emerald-100 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
+                }`}
+                data-testid="nav-about"
+              >
+                About
+              </span>
+            </Link>
           </div>
 
           {/* User Menu */}
@@ -219,6 +231,19 @@ export default function Navigation() {
                   data-testid="mobile-nav-community"
                 >
                   CeylonX Tribes
+                </div>
+              </Link>
+              <Link href="/about">
+                <div 
+                  className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
+                    isActive('/about') 
+                      ? (user ? 'bg-white/20 text-white font-semibold' : 'bg-brand-subtle text-brand font-semibold')
+                      : (user ? 'text-emerald-100 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  data-testid="mobile-nav-about"
+                >
+                  About
                 </div>
               </Link>
             </div>

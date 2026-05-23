@@ -178,6 +178,13 @@ export function MobileNavigation() {
                     </Link>
                   )}
 
+                  <Link href="/about">
+                    <button className="w-full flex items-center space-x-3 px-3 py-3 rounded-lg transition-all duration-200 text-text-primary hover:bg-ui-surface focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2">
+                      <span className="text-xl flex-shrink-0" aria-hidden="true">ℹ️</span>
+                      <span className="font-medium">About</span>
+                    </button>
+                  </Link>
+
                   <Link href="/help/faq">
                     <button className="w-full flex items-center space-x-3 px-3 py-3 rounded-lg transition-all duration-200 text-text-primary hover:bg-ui-surface focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2">
                       <span className="text-xl flex-shrink-0" aria-hidden="true">❓</span>

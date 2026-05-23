@@ -1,30 +1,14 @@
-# 🚀 PHASE 4: SEO - Robots.txt for Ceylon Expand
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /api
+Disallow: /settings
+Disallow: /chat-buddy
+Disallow: /me
 
-# Important pages
-Allow: /browse
-Allow: /community
-Allow: /faq
-Allow: /about
-Allow: /privacy
-Allow: /terms
-
-# Sitemap location
 Sitemap: https://www.theceylonx.com/sitemap.xml
 
-# Block sensitive areas
-Disallow: /admin
-Disallow: /api/
-Disallow: /health
-Disallow: /_*
-Disallow: /node_modules
-Disallow: /*.json$
-
-# Crawl delay to be respectful
-Crawl-delay: 1
-
-# Block common bot patterns we don't want
+# Block AI training crawlers
 User-agent: CCBot
 Disallow: /
 

@@ -142,7 +142,7 @@ export const SEOConfigs = {
     title: 'Ceylon Expand - Connect with Travel Buddies in Sri Lanka',
     description: 'Find travel companions and share amazing journeys across Sri Lanka. Connect with like-minded travelers, split costs, and explore the pearl of the Indian Ocean together.',
     keywords: 'sri lanka travel, travel buddies, travel companions, car sharing, trip sharing, ceylon travel, sri lanka tourism',
-    ogImage: '/og-images/home.jpg',
+    ogImage: 'https://images.unsplash.com/photo-1562602833-0f4ab2fc46e3?w=1200&q=80',
     structuredData: {
       '@context': 'https://schema.org',
       '@type': 'WebSite',
@@ -164,7 +164,7 @@ export const SEOConfigs = {
     title: 'Browse Travel Opportunities - Ceylon Expand',
     description: 'Discover amazing travel opportunities across Sri Lanka. From Colombo to Kandy, beach trips to mountain adventures - find your perfect travel match.',
     keywords: 'browse trips sri lanka, travel opportunities, kandy trips, colombo travel, beach trips sri lanka',
-    ogImage: '/og-images/browse.jpg',
+    ogImage: 'https://images.unsplash.com/photo-1580477667995-2b94f01c9516?w=1200&q=80',
   },
   
   profile: (username: string) => ({
