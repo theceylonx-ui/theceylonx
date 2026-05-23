@@ -220,19 +220,20 @@ app.use((req, res, next) => {
       }
     }
 
-    console.log('Starting server initialization...');
+    console.warn('[startup] Starting server initialization...');
     
     // Create the server first (needed for Vite setup)
     const server = createServer(app);
     
     // Initialize WebSocket service for real-time notifications
-    console.log('Initializing WebSocket service...');
+    console.warn('[startup] Initializing WebSocket service...');
     const { websocketService } = await import('./services/websocketService');
     websocketService.initialize(server);
     
     // CRITICAL: Register API routes BEFORE Vite to prevent catch-all interception
+    console.warn('[startup] Registering routes (includes auth setup)...');
     await registerRoutes(app);
-    console.log('Routes registered successfully');
+    console.warn('[startup] Routes registered successfully');
     
     // Mount Vite AFTER routes are registered
     if (isDevelopment) {
@@ -335,8 +336,7 @@ app.use((req, res, next) => {
       reusePort: true,
     }, () => {
       log(`serving on port ${port}`);
-      console.log('Server startup completed successfully');
-      console.log('💡 To seed sample data, call POST /api/admin/seed-data after deployment');
+      console.warn(`[startup] ✅ Server listening on port ${port}`);
     });
     
     // Handle server errors

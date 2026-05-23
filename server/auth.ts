@@ -90,30 +90,41 @@ export async function setupAuth(app: Express) {
 
   // Only set up Replit auth if running in Replit environment
   if (isReplitEnvironment && process.env.REPLIT_DOMAINS) {
-    const config = await getOidcConfig();
-
-    const verify: VerifyFunction = async (
-      tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
-      verified: passport.AuthenticateCallback
-    ) => {
-      const user = {};
-      updateUserSession(user, tokens);
-      await upsertUser(tokens.claims());
-      verified(null, user);
-    };
-
-    for (const domain of process.env
-      .REPLIT_DOMAINS!.split(",")) {
-      const strategy = new Strategy(
-        {
-          name: `replitauth:${domain}`,
-          config,
-          scope: "openid email profile offline_access",
-          callbackURL: `https://${domain}/api/callback`,
-        },
-        verify,
+    try {
+      // Race OIDC discovery against an 8-second timeout.
+      // In Replit Autoscale deployments the outbound request to replit.com/oidc
+      // can hang indefinitely, blocking server.listen() and causing a 504.
+      // Google / Facebook OAuth remain fully functional without this.
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('OIDC discovery timed out after 8s')), 8000)
       );
-      passport.use(strategy);
+      const config = await Promise.race([getOidcConfig(), timeoutPromise]);
+
+      const verify: VerifyFunction = async (
+        tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
+        verified: passport.AuthenticateCallback
+      ) => {
+        const user = {};
+        updateUserSession(user, tokens);
+        await upsertUser(tokens.claims());
+        verified(null, user);
+      };
+
+      for (const domain of process.env.REPLIT_DOMAINS!.split(",")) {
+        const strategy = new Strategy(
+          {
+            name: `replitauth:${domain}`,
+            config,
+            scope: "openid email profile offline_access",
+            callbackURL: `https://${domain}/api/callback`,
+          },
+          verify,
+        );
+        passport.use(strategy);
+      }
+    } catch (error) {
+      // Non-fatal: Replit OAuth won't work but Google/Facebook JWT auth is unaffected.
+      console.error('⚠️ Replit auth setup skipped (OIDC discovery failed):', (error as Error).message);
     }
   }
   
