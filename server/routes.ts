@@ -161,6 +161,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     'https://theceylonx.com'
   ];
 
+  // Always add all Replit domains (covers both dev and production replit.app URLs)
+  if (replitDomains) {
+    replitDomains.split(',').map(d => d.trim()).filter(Boolean).forEach(domain => {
+      const origin = `https://${domain}`;
+      if (!baseOrigins.includes(origin)) {
+        baseOrigins.push(origin);
+      }
+    });
+  }
+
   // Add development origins when in development mode
   if (isDevelopment) {
     baseOrigins.push(
@@ -169,11 +179,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       'http://127.0.0.1:5173',
       'http://127.0.0.1:5000'
     );
-    
-    // Add current Replit domain in development
-    if (replitDomains) {
-      baseOrigins.push(`https://${replitDomains}`);
-    }
   }
 
   // Start with base origins (production + development if needed)
