@@ -1,5 +1,5 @@
 // Ceylon Expand Service Worker - Progressive Web App
-const CACHE_NAME = 'ceylon-expand-v2.1.0';
+const CACHE_NAME = 'ceylon-expand-v2.2.0';
 const OFFLINE_URL = '/offline.html';
 
 // Define which URLs to cache
@@ -14,13 +14,21 @@ const urlsToCache = [
   '/pwa-icon-512x512.png'
 ];
 
+// Vite dev-mode paths that must NEVER be cached (they change on every rebuild)
+const VITE_DEV_PATHS = [
+  /^\/@fs\//,         // Vite filesystem paths
+  /^\/@vite\//,       // Vite runtime
+  /^\/@id\//,         // Vite module IDs
+  /^\/src\//,         // Vite source transforms
+  /\/node_modules\//  // node_modules served by Vite
+];
+
 // Cache strategies for different types of requests
 const cacheStrategies = {
-  // Static assets - Cache first
+  // Static assets - Cache first (production built assets only)
   static: [
-    /\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/,
-    /\/assets\//,
-    /\/src\//,
+    /\/assets\/.*\.(png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico)$/,
+    /\/assets\/generated_images\//,
     /manifest\.json$/
   ],
   
@@ -88,8 +96,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Never cache Vite dev-mode paths — they change on every rebuild
+  if (VITE_DEV_PATHS.some(pattern => pattern.test(url.pathname))) {
+    return;
+  }
+
   // Never cache API calls - always go to network
   if (url.pathname.startsWith('/api/')) {
+    return;
+  }
+
+  // Never cache files with Vite cache-busting query params
+  if (url.searchParams.has('t') || url.searchParams.has('v')) {
     return;
   }
 
