@@ -6,3 +6,9 @@ id = "Lrbyhn-ppBdGWCtX3MxR3"
 uri = "file://ceylon-expand-blueprint.docx"
 type = "word_document"
 title = "Ceylon Expand — Owner's Complete Blueprint"
+
+[[outputs]]
+id = "XwYXaTR8elzZCeBIAD8w5"
+uri = "file://ceylon-expand-code.tar.gz"
+type = "unspecified"
+title = "Ceylon Expand — Full Source Code"
