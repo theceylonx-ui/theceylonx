@@ -24,3 +24,9 @@ id = "52MEPevCMtGCoMU2s7Br3"
 uri = "file://ceylonx-source-clean.tar.gz"
 type = "unspecified"
 title = "Ceylon Expand — Full Source Code"
+
+[[outputs]]
+id = "AlI0R6Sw9HHrwcpNUanr4"
+uri = "file://TECHNICAL_SUMMARY.docx"
+type = "word_document"
+title = "Ceylon Expand — Technical Summary (.docx)"
