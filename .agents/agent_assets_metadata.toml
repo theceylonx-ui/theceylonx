@@ -12,3 +12,15 @@ id = "XwYXaTR8elzZCeBIAD8w5"
 uri = "file://ceylon-expand-code.tar.gz"
 type = "unspecified"
 title = "Ceylon Expand — Full Source Code"
+
+[[outputs]]
+id = "hA5vh2nrk-Gf7HIOUYSZA"
+uri = "file://TECHNICAL_SUMMARY.md"
+type = "text"
+title = "Ceylon Expand — Technical Summary (for Claude audit)"
+
+[[outputs]]
+id = "52MEPevCMtGCoMU2s7Br3"
+uri = "file://ceylonx-source-clean.tar.gz"
+type = "unspecified"
+title = "Ceylon Expand — Full Source Code"
