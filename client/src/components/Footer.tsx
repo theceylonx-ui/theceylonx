@@ -256,7 +256,7 @@ export default function Footer() {
           
           {/* Copyright */}
           <div className="text-center">
-            <p className="text-gray-300">© 2025 Ceylon Expand. All rights reserved. Made with ❤️ for the tourists visiting Sri Lanka.</p>
+            <p className="text-gray-300">© 2026 Ceylon Expand. All rights reserved. Made with ❤️ for the tourists visiting Sri Lanka.</p>
           </div>
         </div>
       </div>
