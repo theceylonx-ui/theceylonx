@@ -1412,6 +1412,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== RATINGS =====
+
+  // Submit a rating — only participants of a completed trip can rate each other
+  app.post('/api/trips/:tripId/ratings', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const raterId = req.user.id;
+      const { tripId } = req.params;
+      const { ratedId, rating, review } = req.body;
+
+      if (!ratedId || !rating) {
+        return res.status(400).json({ message: 'ratedId and rating are required' });
+      }
+
+      if (typeof rating !== 'number' || rating < 1 || rating > 5) {
+        return res.status(400).json({ message: 'rating must be a number between 1 and 5' });
+      }
+
+      if (raterId === ratedId) {
+        return res.status(400).json({ message: 'You cannot rate yourself' });
+      }
+
+      // Verify the trip exists and is completed
+      const trip = await storage.getTrip(tripId);
+      if (!trip) {
+        return res.status(404).json({ message: 'Trip not found' });
+      }
+
+      if (trip.status !== 'completed') {
+        return res.status(403).json({ message: 'You can only rate after a trip is completed' });
+      }
+
+      // Verify rater was a participant (organiser or accepted interest request)
+      const isOrganiser = trip.organizerId === raterId;
+      const interestRequests = await storage.getTripInterestRequests(tripId);
+      const isParticipant = interestRequests.some(
+        (r: any) => r.userId === raterId && r.status === 'accepted'
+      );
+
+      if (!isOrganiser && !isParticipant) {
+        return res.status(403).json({ message: 'Only trip participants can submit ratings' });
+      }
+
+      const newRating = await storage.createRating({
+        tripId,
+        raterId,
+        ratedId,
+        rating,
+        review: review || null,
+      });
+
+      res.status(201).json({ rating: newRating });
+    } catch (error: any) {
+      if (error?.code === '23505') {
+        return res.status(409).json({ message: 'You have already rated this person for this trip' });
+      }
+      console.error('Error creating rating:', error);
+      res.status(500).json({ message: 'Failed to submit rating' });
+    }
+  });
+
+  // Get all ratings for a trip
+  app.get('/api/trips/:tripId/ratings', async (req, res) => {
+    try {
+      const { tripId } = req.params;
+      const ratings = await storage.getTripRatings(tripId);
+      res.json({ ratings });
+    } catch (error) {
+      console.error('Error fetching trip ratings:', error);
+      res.status(500).json({ message: 'Failed to fetch ratings' });
+    }
+  });
+
+  // Get all ratings received by a user (public profile display)
+  app.get('/api/users/:userId/ratings', async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const ratings = await storage.getUserRatings(userId);
+      const average = ratings.length
+        ? Math.round((ratings.reduce((sum: number, r: any) => sum + r.rating, 0) / ratings.length) * 10) / 10
+        : null;
+      res.json({ ratings, average, total: ratings.length });
+    } catch (error) {
+      console.error('Error fetching user ratings:', error);
+      res.status(500).json({ message: 'Failed to fetch ratings' });
+    }
+  });
+
+  // Check if current user has already rated someone for a trip
+  app.get('/api/trips/:tripId/my-rating', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const raterId = req.user.id;
+      const { tripId } = req.params;
+      const allRatings = await storage.getTripRatings(tripId);
+      const myRating = allRatings.find((r: any) => r.raterId === raterId) || null;
+      res.json({ rating: myRating });
+    } catch (error) {
+      console.error('Error fetching rating:', error);
+      res.status(500).json({ message: 'Failed to fetch rating' });
+    }
+  });
+
   // Interest request lifecycle endpoints
   app.post('/api/trips/:tripId/interest', unifiedAuthGuard, async (req, res) => {
     try {
