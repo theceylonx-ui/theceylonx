@@ -87,6 +87,17 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
               console.log('🔔 New notification received, refreshing data...');
               break;
             
+            case 'new_message': {
+              // Invalidate the specific thread's messages so ChatWindow updates instantly
+              const threadId = message.data?.threadId;
+              if (threadId) {
+                queryClient.invalidateQueries({ queryKey: [`/api/chat/threads/${threadId}/messages`] });
+              }
+              // Always refresh the thread list (unread counts, last message preview)
+              queryClient.invalidateQueries({ queryKey: ['/api/chat/threads'] });
+              break;
+            }
+
             case 'ping':
               // Respond to server ping
               if (wsRef.current?.readyState === WebSocket.OPEN) {

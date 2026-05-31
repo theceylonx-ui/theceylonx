@@ -20,6 +20,16 @@ export interface AuthTokens {
 }
 
 // JWT Configuration
+// In production, secrets MUST be set via environment variables — no fallback allowed.
+const _isProduction = process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT === '1';
+
+if (_isProduction && !process.env.JWT_ACCESS_SECRET) {
+  throw new Error('JWT_ACCESS_SECRET environment variable is required in production');
+}
+if (_isProduction && !process.env.JWT_REFRESH_SECRET) {
+  throw new Error('JWT_REFRESH_SECRET environment variable is required in production');
+}
+
 const ACCESS_TOKEN_SECRET = process.env.JWT_ACCESS_SECRET || 'dev-access-secret';
 const REFRESH_TOKEN_SECRET = process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret';
 const ACCESS_TOKEN_EXPIRY = '15m';

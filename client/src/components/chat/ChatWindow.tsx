@@ -155,22 +155,20 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
   // Apply consistent threadId fallback for ALL operations
   const finalThreadId = threadId || "thread-organizer-test-001";
 
-  // Fetch thread data with optimized caching
+  // Fetch thread data — no polling, WebSocket triggers invalidation on new messages
   const { data: threadData, isLoading: threadLoading } = useQuery<ChatThreadResponse>({
     queryKey: [`/api/chat/threads/${finalThreadId}`],
-    refetchInterval: 10000, // Less frequent for better performance
     enabled: !!finalThreadId,
-    staleTime: 30000, // Cache for 30 seconds
-    gcTime: 300000, // Keep in cache for 5 minutes
+    staleTime: 30000,
+    gcTime: 300000,
   });
 
-  // Fetch messages with optimized polling
+  // Fetch messages — WebSocket invalidates this query on new_message events
   const { data: messagesData, isLoading: messagesLoading } = useQuery<ChatMessagesResponse>({
     queryKey: [`/api/chat/threads/${finalThreadId}/messages`],
-    refetchInterval: 5000, // Balanced refresh rate
     enabled: !!finalThreadId,
-    staleTime: 1000, // Allow 1 second staleness
-    gcTime: 600000, // Keep messages cached for 10 minutes
+    staleTime: 1000,
+    gcTime: 600000,
   });
 
   // Sort messages chronologically like WhatsApp (oldest to newest)
@@ -520,7 +518,15 @@ interface MessageBubbleProps {
 
 function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
   const [showReportConfirm, setShowReportConfirm] = useState(false);
-  const [imageViewed, setImageViewed] = useState(false);
+  const queryClient = useQueryClient();
+
+  const consumeMutation = useMutation({
+    mutationFn: () => apiRequest("POST", `/api/chat/messages/${message.id}/consume`, {}),
+    onSuccess: () => {
+      // Invalidate thread messages so both sides see "Image consumed"
+      queryClient.invalidateQueries({ queryKey: [`/api/chat/threads/${message.threadId}/messages`] });
+    },
+  });
 
   // Handle contact share messages
   if (message.kind === 'contact_share') {
@@ -556,7 +562,7 @@ function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
   if (message.kind === 'media') {
     const isEphemeral = message.meta?.ephemeral;
     const attachmentUrl = message.meta?.attachmentId;
-    const consumed = imageViewed && isEphemeral;
+    const consumed = isEphemeral && (message.meta?.consumed === true);
 
     return (
       <>
@@ -596,8 +602,8 @@ function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
                         alt="Shared image"
                         className="max-w-full h-auto rounded-lg cursor-pointer"
                         onClick={() => {
-                          if (isEphemeral) {
-                            setImageViewed(true);
+                          if (isEphemeral && !isOwn && !consumed) {
+                            consumeMutation.mutate();
                           }
                         }}
                       />

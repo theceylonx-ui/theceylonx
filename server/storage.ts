@@ -355,8 +355,12 @@ export interface IStorage {
   executeRawQuery(query: string, params?: any[]): Promise<any[]>;
 
   // Admin helper methods
-  getAllUsers(): Promise<User[]>;
-  getAllTrips(): Promise<Trip[]>;
+  getUserCount(): Promise<number>;
+  getTripCount(): Promise<number>;
+  getUsersActive24h(): Promise<number>;
+  getUsersCreatedToday(): Promise<number>;
+  getAllUsers(options?: { search?: string; role?: string; page?: number; limit?: number }): Promise<{ users: User[]; total: number }>;
+  getAllTrips(options?: { status?: string; organizerId?: string; page?: number; limit?: number }): Promise<{ trips: Trip[]; total: number }>;
 
   // Site settings operations
   getSiteSetting(key: string): Promise<SiteSetting | undefined>;
@@ -3038,6 +3042,15 @@ export class DatabaseStorage implements IStorage {
     return message;
   }
 
+  async consumeChatMessage(messageId: string): Promise<void> {
+    const [msg] = await db.select().from(chatMessages).where(eq(chatMessages.id, messageId));
+    if (!msg) return;
+    const updatedMeta = { ...(msg.meta as Record<string, any> || {}), consumed: true };
+    await db.update(chatMessages)
+      .set({ meta: updatedMeta })
+      .where(eq(chatMessages.id, messageId));
+  }
+
   async muteChatThread(threadId: string, userId: string): Promise<void> {
     await db
       .update(chatParticipantState)
@@ -3180,12 +3193,76 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Admin helper methods
-  async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users) as User[];
+
+  // Counts only — used for dashboard stats without loading all rows
+  async getUserCount(): Promise<number> {
+    const [row] = await db.select({ count: count() }).from(users);
+    return Number(row?.count ?? 0);
   }
 
-  async getAllTrips(): Promise<Trip[]> {
-    return await db.select().from(trips);
+  async getTripCount(): Promise<number> {
+    const [row] = await db.select({ count: count() }).from(trips);
+    return Number(row?.count ?? 0);
+  }
+
+  async getUsersActive24h(): Promise<number> {
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const [row] = await db.select({ count: count() }).from(users).where(gte(users.updatedAt, cutoff));
+    return Number(row?.count ?? 0);
+  }
+
+  async getUsersCreatedToday(): Promise<number> {
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const [row] = await db.select({ count: count() }).from(users).where(gte(users.createdAt, cutoff));
+    return Number(row?.count ?? 0);
+  }
+
+  // Paginated user listing with optional search/role filter — runs filtering in DB
+  async getAllUsers(options?: { search?: string; role?: string; page?: number; limit?: number }): Promise<{ users: User[]; total: number }> {
+    const { search, page = 1, limit = 20 } = options || {};
+    const offset = (page - 1) * limit;
+
+    const conditions: any[] = [];
+    if (search) {
+      const term = `%${search}%`;
+      conditions.push(or(
+        ilike(users.email, term),
+        ilike(users.username, term),
+        ilike(users.firstName, term),
+        ilike(users.lastName, term),
+      ));
+    }
+
+    const where = conditions.length ? and(...conditions) : undefined;
+
+    const [totalRow] = await db.select({ count: count() }).from(users).where(where);
+    const rows = await db.select().from(users)
+      .where(where)
+      .orderBy(desc(users.createdAt))
+      .limit(limit)
+      .offset(offset) as User[];
+
+    return { users: rows, total: Number(totalRow?.count ?? 0) };
+  }
+
+  // Paginated trip listing with optional status/organizer filter — runs filtering in DB
+  async getAllTrips(options?: { status?: string; organizerId?: string; page?: number; limit?: number }): Promise<{ trips: Trip[]; total: number }> {
+    const { status, organizerId, page = 1, limit = 20 } = options || {};
+    const offset = (page - 1) * limit;
+
+    const conditions: any[] = [];
+    if (status) conditions.push(eq(trips.status, status));
+    if (organizerId) conditions.push(eq(trips.organizerId, organizerId));
+    const where = conditions.length ? and(...conditions) : undefined;
+
+    const [totalRow] = await db.select({ count: count() }).from(trips).where(where);
+    const rows = await db.select().from(trips)
+      .where(where)
+      .orderBy(desc(trips.createdAt))
+      .limit(limit)
+      .offset(offset) as Trip[];
+
+    return { trips: rows, total: Number(totalRow?.count ?? 0) };
   }
 
   // User preferences operations (from users table)

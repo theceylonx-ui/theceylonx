@@ -524,6 +524,11 @@ export const tripInterestRequests = pgTable("trip_interest_requests", {
 }, (table) => ({
   // Prevent duplicate interest requests for same user+trip
   uniqueUserTrip: unique().on(table.tripId, table.userId),
+  // Performance indexes for the most common query patterns
+  tripIdIdx: index("trip_interest_requests_trip_id_idx").on(table.tripId),
+  userIdIdx: index("trip_interest_requests_user_id_idx").on(table.userId),
+  statusIdx: index("trip_interest_requests_status_idx").on(table.status),
+  tripStatusIdx: index("trip_interest_requests_trip_status_idx").on(table.tripId, table.status),
 }));
 
 // Pinned trips table for user bookmarks

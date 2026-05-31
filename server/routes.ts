@@ -4618,17 +4618,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const { ObjectStorageService } = await import('./objectStorage');
     const objectStorageService = new ObjectStorageService();
 
-    // Get upload URL for profile picture
-    app.post('/api/profile/upload-url', unifiedAuthGuard, async (req: any, res) => {
-      try {
-        const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-        res.json({ uploadURL });
-      } catch (error) {
-        console.error("Error getting upload URL:", error);
-        res.status(500).json({ error: "Failed to get upload URL" });
-      }
-    });
-
     // Serve uploaded profile pictures
     app.get("/objects/:objectPath(*)", async (req, res) => {
       try {
@@ -4983,62 +4972,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Image Upload URL Generation for Chat (MUST BE BEFORE /:userId route)
   app.post('/api/chat-images/upload-url', unifiedAuthGuard, async (req: any, res) => {
     try {
-      const userId = req.user.id;
-      
-      // Generate a unique filename
-      const timestamp = Date.now();
-      const randomId = Math.random().toString(36).substring(2, 15);
-      const filename = `chat-image-${userId}-${timestamp}-${randomId}.jpg`;
-      
-      // For demo purposes, create a local storage URL that will work
-      const uploadUrl = `${req.protocol}://${req.get('host')}/api/chat-images/${filename}?upload=true`;
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log("Generated upload URL:", uploadUrl);
-      }
-      
-      res.json({ uploadUrl });
+      const { ObjectStorageService } = await import('./objectStorage');
+      const objectStorageService = new ObjectStorageService();
+      const { uploadUrl, storedUrl } = await objectStorageService.getChatImageUploadURL();
+      res.json({ uploadUrl, storedUrl });
     } catch (error) {
-      console.error('Error generating upload URL:', error);
+      console.error('Error generating chat image upload URL:', error);
       res.status(500).json({ message: 'Failed to generate upload URL' });
-    }
-  });
-
-  // Simple image storage endpoint for demo
-  app.put('/api/chat-images/:filename', unifiedAuthGuard, async (req: any, res) => {
-    try {
-      const { filename } = req.params;
-      if (process.env.NODE_ENV === 'development') {
-        console.log("Image upload received for:", filename);
-      }
-      
-      // For demo: just return success
-      // In production, this would save to actual object storage
-      res.status(200).json({ 
-        success: true, 
-        url: `${req.protocol}://${req.get('host')}/api/chat-images/${filename}`
-      });
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      res.status(500).json({ message: 'Failed to upload image' });
-    }
-  });
-
-  // Serve uploaded images (demo endpoint)
-  app.get('/api/chat-images/:filename', async (req, res) => {
-    try {
-      const { filename } = req.params;
-      if (process.env.NODE_ENV === 'development') {
-        console.log("Image request for:", filename);
-      }
-      
-      // For demo: return a placeholder image URL
-      // In production, this would fetch from object storage
-      const placeholderUrl = 'https://via.placeholder.com/400x300/4f46e5/ffffff?text=Image+Uploaded';
-      res.redirect(placeholderUrl);
-    } catch (error) {
-      console.error('Error serving image:', error);
-      res.status(404).json({ message: 'Image not found' });
     }
   });
 
@@ -5081,6 +5021,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const otherUserId = thread.organizerId === userId ? thread.userId : thread.organizerId;
       if (otherUserId) {
         await storage.incrementUnreadCount(threadId, otherUserId);
+      }
+
+      // Broadcast real-time new_message event to both participants
+      try {
+        const { websocketService } = await import('./services/websocketService');
+        const newMessageEvent = {
+          type: 'new_message',
+          data: { threadId, message, userId: otherUserId }
+        };
+        // Notify the other participant
+        if (otherUserId) {
+          websocketService.broadcastNotification({ type: 'new_message', data: { ...newMessageEvent.data, userId: otherUserId } });
+        }
+        // Also notify the sender so all their open tabs/devices update
+        websocketService.broadcastNotification({ type: 'new_message', data: { ...newMessageEvent.data, userId } });
+      } catch (wsError) {
+        // Non-fatal — message is already saved, WS is best-effort
+        console.error('WebSocket broadcast failed:', wsError);
       }
 
       res.json({ message });
@@ -5217,6 +5175,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error reporting chat message:', error);
       res.status(500).json({ message: 'Failed to report message' });
+    }
+  });
+
+  // Consume an ephemeral image — recipient calls this after viewing
+  app.post('/api/chat/messages/:id/consume', unifiedAuthGuard, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const messageId = req.params.id;
+
+      const message = await storage.getChatMessage(messageId);
+      if (!message) {
+        return res.status(404).json({ message: 'Message not found' });
+      }
+
+      const thread = await storage.getChatThread(message.threadId);
+      if (!thread || (thread.organizerId !== userId && thread.userId !== userId)) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Only the recipient (not the sender) can consume the image
+      if (message.senderId === userId) {
+        return res.status(403).json({ message: 'Sender cannot consume their own ephemeral image' });
+      }
+
+      const meta = message.meta as Record<string, any> || {};
+      if (!meta.ephemeral) {
+        return res.status(400).json({ message: 'Message is not ephemeral' });
+      }
+
+      if (meta.consumed) {
+        return res.json({ consumed: true }); // already consumed, no-op
+      }
+
+      // Mark consumed in DB
+      await storage.consumeChatMessage(messageId);
+
+      // Delete from object storage (best-effort)
+      if (meta.attachmentId?.startsWith('/objects/')) {
+        try {
+          const { ObjectStorageService } = await import('./objectStorage');
+          const objectStorageService = new ObjectStorageService();
+          await objectStorageService.deleteObject(meta.attachmentId);
+        } catch (storageErr) {
+          console.error('Failed to delete ephemeral image from storage:', storageErr);
+        }
+      }
+
+      // Notify both participants so their UI updates
+      try {
+        const { websocketService } = await import('./services/websocketService');
+        const event = { type: 'new_message', data: { threadId: message.threadId, userId: '' } };
+        websocketService.broadcastNotification({ ...event, data: { ...event.data, userId: message.senderId } });
+        websocketService.broadcastNotification({ ...event, data: { ...event.data, userId } });
+      } catch (_) {}
+
+      res.json({ consumed: true });
+    } catch (error) {
+      console.error('Error consuming ephemeral message:', error);
+      res.status(500).json({ message: 'Failed to consume message' });
     }
   });
 

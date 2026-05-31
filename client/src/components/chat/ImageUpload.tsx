@@ -35,7 +35,7 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
 
   // Get upload URL mutation
   const getUploadUrlMutation = useMutation({
-    mutationFn: async (): Promise<{ uploadUrl: string }> => {
+    mutationFn: async (): Promise<{ uploadUrl: string; storedUrl: string }> => {
       const response = await fetch('/api/chat-images/upload-url', {
         method: 'POST',
         credentials: 'include',
@@ -52,10 +52,7 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
 
   // Upload image to storage
   const uploadImageMutation = useMutation({
-    mutationFn: async ({ file, uploadUrl }: { file: File; uploadUrl: string }) => {
-      const formData = new FormData();
-      formData.append('file', file);
-
+    mutationFn: async ({ file, uploadUrl, storedUrl }: { file: File; uploadUrl: string; storedUrl: string }) => {
       const response = await fetch(uploadUrl, {
         method: 'PUT',
         body: file,
@@ -68,10 +65,7 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
         throw new Error('Failed to upload image');
       }
 
-      // Extract the base URL without query parameters for storage
-      const cleanUrl = uploadUrl.split('?')[0];
-      console.log("🔥 Upload successful, clean URL:", cleanUrl);
-      return { success: true, url: cleanUrl };
+      return { success: true, url: storedUrl };
     },
     onSuccess: (data) => {
       setUploadProgress(100);
@@ -201,16 +195,14 @@ export function ImageUpload({ threadId, onImageSent, disabled }: ImageUploadProp
       setUploadProgress(10);
       
       // Get upload URL
-      const { uploadUrl } = await getUploadUrlMutation.mutateAsync();
-      if (process.env.NODE_ENV === 'development') {
-        console.log("Got upload URL:", uploadUrl);
-      }
+      const { uploadUrl, storedUrl } = await getUploadUrlMutation.mutateAsync();
       setUploadProgress(30);
-      
-      // Upload the file
+
+      // Upload the file directly to object storage, store the normalized path
       await uploadImageMutation.mutateAsync({
         file: selectedFile,
-        uploadUrl: uploadUrl,
+        uploadUrl,
+        storedUrl,
       });
     } catch (error) {
       toast({

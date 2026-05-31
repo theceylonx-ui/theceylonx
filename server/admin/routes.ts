@@ -81,29 +81,27 @@ router.post('/refresh', async (req: any, res) => {
 // Admin dashboard statistics
 router.get('/dashboard', async (req: any, res) => {
   try {
-    // Get basic stats from existing data
-    const [allUsers, allTrips, allReports] = await Promise.all([
-      storage.getAllUsers(),
-      storage.getAllTrips(),
+    // Get stats via targeted count queries — no full table loads
+    const [userTotal, userActive24h, userNewToday, tripTotal, activeTrips, pendingTrips, allReports] = await Promise.all([
+      storage.getUserCount(),
+      storage.getUsersActive24h(),
+      storage.getUsersCreatedToday(),
+      storage.getTripCount(),
+      storage.getAllTrips({ status: 'active', page: 1, limit: 1 }).then(r => r.total),
+      storage.getAllTrips({ status: 'pending', page: 1, limit: 1 }).then(r => r.total),
       storage.getReports()
     ]);
 
     const users = {
-      total: allUsers.length,
-      active24h: allUsers.filter((u: any) => {
-        const lastSeen = new Date(u.updatedAt || u.createdAt);
-        return Date.now() - lastSeen.getTime() < 24 * 60 * 60 * 1000;
-      }).length,
-      newToday: allUsers.filter((u: any) => {
-        const created = new Date(u.createdAt);
-        return Date.now() - created.getTime() < 24 * 60 * 60 * 1000;
-      }).length
+      total: userTotal,
+      active24h: userActive24h,
+      newToday: userNewToday,
     };
 
     const trips = {
-      total: allTrips.length,
-      active: allTrips.filter((t: any) => t.status === 'active').length,
-      pending: allTrips.filter((t: any) => t.status === 'pending').length
+      total: tripTotal,
+      active: activeTrips,
+      pending: pendingTrips,
     };
 
     const reports = {
@@ -137,38 +135,23 @@ router.get('/dashboard', async (req: any, res) => {
 // List users with pagination and search
 router.get('/users', async (req: any, res) => {
   try {
-    const { page = 1, limit = 20 } = req.query;
-    const { search, role, status } = req.query;
-    
-    // Get all users and filter
-    let users = await storage.getAllUsers();
-    
-    // Apply filters
-    if (search) {
-      const searchLower = search.toLowerCase();
-      users = users.filter(u => 
-        u.email?.toLowerCase().includes(searchLower) ||
-        u.firstName?.toLowerCase().includes(searchLower) ||
-        u.lastName?.toLowerCase().includes(searchLower) ||
-        u.username?.toLowerCase().includes(searchLower)
-      );
-    }
-    
-    if (role) {
-      users = users.filter((u: any) => u.roleId === role);
-    }
-    
-    // Pagination
-    const total = users.length;
-    const offset = (parseInt(page) - 1) * parseInt(limit);
-    const paginatedUsers = users.slice(offset, offset + parseInt(limit));
-    
+    const { page = 1, limit = 20, search, role } = req.query;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+
+    const { users: paginatedUsers, total } = await storage.getAllUsers({
+      search: search as string | undefined,
+      role: role as string | undefined,
+      page: pageNum,
+      limit: limitNum,
+    });
+
     res.json({
       users: paginatedUsers,
       total,
-      page: parseInt(page),
-      limit: parseInt(limit),
-      totalPages: Math.ceil(total / parseInt(limit))
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
     });
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -198,31 +181,23 @@ router.get('/users/:id', async (req: any, res) => {
 // List trips with admin filters
 router.get('/trips', async (req: any, res) => {
   try {
-    const { page = 1, limit = 20 } = req.query;
-    const { status, organizer } = req.query;
-    
-    // Get all trips and filter
-    let trips = await storage.getAllTrips();
-    
-    if (status) {
-      trips = trips.filter((t: any) => t.status === status);
-    }
-    
-    if (organizer) {
-      trips = trips.filter((t: any) => t.organizerId === organizer);
-    }
-    
-    // Pagination
-    const total = trips.length;
-    const offset = (parseInt(page) - 1) * parseInt(limit);
-    const paginatedTrips = trips.slice(offset, offset + parseInt(limit));
-    
+    const { page = 1, limit = 20, status, organizer } = req.query;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+
+    const { trips: paginatedTrips, total } = await storage.getAllTrips({
+      status: status as string | undefined,
+      organizerId: organizer as string | undefined,
+      page: pageNum,
+      limit: limitNum,
+    });
+
     res.json({
       trips: paginatedTrips,
       total,
-      page: parseInt(page),
-      limit: parseInt(limit),
-      totalPages: Math.ceil(total / parseInt(limit))
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
     });
   } catch (error) {
     console.error('Error fetching trips:', error);

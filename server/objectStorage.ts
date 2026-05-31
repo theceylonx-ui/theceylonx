@@ -143,6 +143,51 @@ export class ObjectStorageService {
     });
   }
 
+  // Gets a signed upload URL for a chat image.
+  // Returns both the signed PUT URL (for direct client upload to GCS)
+  // and the normalized stored path (to save in the DB and serve via /objects/).
+  async getChatImageUploadURL(): Promise<{ uploadUrl: string; storedUrl: string }> {
+    const privateObjectDir = this.getPrivateObjectDir();
+    if (!privateObjectDir) {
+      throw new Error(
+        "PRIVATE_OBJECT_DIR not set. Create a bucket in 'Object Storage' " +
+          "tool and set PRIVATE_OBJECT_DIR env var."
+      );
+    }
+
+    const objectId = randomUUID();
+    const fullPath = `${privateObjectDir}/chat-images/${objectId}`;
+    const { bucketName, objectName } = parseObjectPath(fullPath);
+
+    const uploadUrl = await signObjectURL({
+      bucketName,
+      objectName,
+      method: "PUT",
+      ttlSec: 900,
+    });
+
+    // Normalised path that works with the existing /objects/* serving route
+    const storedUrl = `/objects/chat-images/${objectId}`;
+
+    return { uploadUrl, storedUrl };
+  }
+
+  // Deletes an object given its stored /objects/... path.
+  async deleteObject(storedPath: string): Promise<void> {
+    if (!storedPath.startsWith("/objects/")) return;
+    const entityId = storedPath.slice("/objects/".length);
+    let privateObjectDir = this.getPrivateObjectDir();
+    if (!privateObjectDir.endsWith("/")) privateObjectDir += "/";
+    const fullPath = `${privateObjectDir}${entityId}`;
+    const { bucketName, objectName } = parseObjectPath(fullPath);
+    const bucket = objectStorageClient.bucket(bucketName);
+    const file = bucket.file(objectName);
+    const [exists] = await file.exists();
+    if (exists) {
+      await file.delete();
+    }
+  }
+
   // Gets the object entity file from the object path.
   async getObjectEntityFile(objectPath: string): Promise<File> {
     if (!objectPath.startsWith("/objects/")) {
