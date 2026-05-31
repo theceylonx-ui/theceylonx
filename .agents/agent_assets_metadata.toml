@@ -5,7 +5,7 @@ generated = []
 id = "Lrbyhn-ppBdGWCtX3MxR3"
 uri = "file://ceylon-expand-blueprint.docx"
 type = "word_document"
-title = "Ceylon Expand — Owner's Complete Blueprint"
+title = "Blueprint (Word)"
 
 [[outputs]]
 id = "XwYXaTR8elzZCeBIAD8w5"
@@ -23,10 +23,22 @@ title = "Ceylon Expand — Technical Summary (for Claude audit)"
 id = "52MEPevCMtGCoMU2s7Br3"
 uri = "file://ceylonx-source-clean.tar.gz"
 type = "unspecified"
-title = "Ceylon Expand — Full Source Code"
+title = "Source Code — Full Project"
 
 [[outputs]]
 id = "AlI0R6Sw9HHrwcpNUanr4"
 uri = "file://TECHNICAL_SUMMARY.docx"
 type = "word_document"
-title = "Ceylon Expand — Technical Summary (.docx)"
+title = "Technical Summary (Word)"
+
+[[outputs]]
+id = "l5Fpny-RfKjo-qZcMdgYa"
+uri = "file://Ceylon_Expand_Supernova_Blueprint.md"
+type = "text"
+title = "Supernova Blueprint (Markdown)"
+
+[[outputs]]
+id = "NBLZ8P5iCXhIZIJHPBjTd"
+uri = "file://CEYLON_EXPAND_V6_BLUEPRINT.md"
+type = "text"
+title = "V6 Blueprint (Markdown)"
