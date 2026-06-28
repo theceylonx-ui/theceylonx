@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Footer from "@/components/Footer";
 import { Link } from "wouter";
-import { UserPlus, MapPin, Handshake, PiggyBank, Users, Compass, Heart, Shield, Flag, Star, UserCheck, Route } from "lucide-react";
+import { UserPlus, MapPin, Handshake, PiggyBank, Users, Compass, Heart, Shield, Flag, Star, UserCheck, Route, Menu, X } from "lucide-react";
 import newLogo from "@assets/Copy of CEY  X Letter Digital Company Logo.png";
 import { SEO, SEOConfigs } from "@/components/SEO";
 
@@ -30,7 +31,8 @@ export default function Landing() {
     enabled: !backgroundSetting?.value, // Only fetch if primary setting is not available
   });
 
-  const backgroundImage = backgroundSetting?.value || fallbackBackgroundSetting?.value;
+  const FALLBACK_HERO = 'https://images.unsplash.com/photo-1562602833-0f4ab2fc46e3?w=1600&q=80';
+  const backgroundImage = backgroundSetting?.value || fallbackBackgroundSetting?.value || FALLBACK_HERO;
 
   const handleLogin = () => {
     window.location.href = '/auth/signin';
@@ -39,6 +41,8 @@ export default function Landing() {
   const handleSignUp = () => {
     window.location.href = '/auth/signin';
   };
+
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
@@ -116,26 +120,54 @@ export default function Landing() {
                 </Link>
               </div>
               <div className="flex items-center space-x-3">
-                <Button 
-                  variant="ghost" 
-                  onClick={handleLogin} 
-                  className="text-text-secondary hover:text-brand transition-colors touch-target"
+                <Button
+                  variant="ghost"
+                  onClick={handleLogin}
+                  className="hidden md:inline-flex text-text-secondary hover:text-brand transition-colors touch-target"
                   data-testid="button-signin"
                   aria-label="Sign in to your account"
                 >
                   Sign In
                 </Button>
-                <Button 
-                  onClick={handleSignUp} 
-                  className="bg-brand text-white hover:bg-brand-hover shadow-sm touch-target"
+                <Button
+                  onClick={handleSignUp}
+                  className="hidden md:inline-flex bg-brand text-white hover:bg-brand-hover shadow-sm touch-target"
                   data-testid="button-signup"
                   aria-label="Create a new account"
                 >
                   Sign Up
                 </Button>
+                <button
+                  className="md:hidden p-2 text-text-secondary hover:text-brand transition-colors"
+                  onClick={() => setMobileOpen(!mobileOpen)}
+                  aria-label="Toggle mobile menu"
+                >
+                  {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </button>
               </div>
             </div>
           </div>
+          {/* Mobile menu */}
+          {mobileOpen && (
+            <div className="md:hidden border-t border-ui-line bg-ui-bg px-4 py-4 space-y-3">
+              <Link href="/browse-trips">
+                <div className="block py-2 text-text-secondary hover:text-brand font-medium" onClick={() => setMobileOpen(false)}>Browse Trips</div>
+              </Link>
+              <Link href="/post">
+                <div className="block py-2 text-text-secondary hover:text-brand font-medium" onClick={() => setMobileOpen(false)}>Post a Trip</div>
+              </Link>
+              <Link href="/community">
+                <div className="block py-2 text-text-secondary hover:text-brand font-medium" onClick={() => setMobileOpen(false)}>CeylonX Tribes</div>
+              </Link>
+              <Link href="/about">
+                <div className="block py-2 text-text-secondary hover:text-brand font-medium" onClick={() => setMobileOpen(false)}>About</div>
+              </Link>
+              <div className="pt-2 flex flex-col gap-2">
+                <Button variant="ghost" onClick={handleLogin} className="w-full justify-start text-text-secondary hover:text-brand">Sign In</Button>
+                <Button onClick={handleSignUp} className="w-full bg-brand text-white hover:bg-brand-hover">Sign Up</Button>
+              </div>
+            </div>
+          )}
         </nav>
       </header>
       {/* Hero Section */}
@@ -146,19 +178,17 @@ export default function Landing() {
           data-testid="hero-section"
         >
           <div className="absolute inset-0 bg-black opacity-60" aria-hidden="true"></div>
-          {backgroundImage && (
-            <div 
-              className="absolute inset-0" 
-              style={{
-                backgroundImage: `url(${backgroundImage})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-              }}
-              aria-hidden="true"
-              role="img"
-              aria-label="Beautiful landscape of Sri Lanka showing travel destinations"
-            ></div>
-          )}
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url(${backgroundImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
+            aria-hidden="true"
+            role="img"
+            aria-label="Beautiful landscape of Sri Lanka showing travel destinations"
+          ></div>
           
           <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center text-white">
             <h1 

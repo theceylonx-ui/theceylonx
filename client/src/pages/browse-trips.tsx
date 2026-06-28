@@ -183,7 +183,7 @@ export default function BrowseTrips() {
       <div className="page-container section-spacing">
         {/* Header Section */}
         <div className="mb-8">
-          <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 rounded-2xl p-8 text-white shadow-xl">
+          <div className="bg-gradient-to-r from-[#1E7A50] to-[#165c3c] rounded-2xl p-8 text-white shadow-xl">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center space-x-3 mb-4">

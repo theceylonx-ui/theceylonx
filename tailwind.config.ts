@@ -15,9 +15,14 @@ export default {
       colors: {
         // New Ceylon Expand design system
         brand: {
-          DEFAULT: "hsl(163 65% 31%)", // #0F8B6E - primary emerald/teal
-          hover: "hsl(163 65% 25%)",   // #0C6F59 - darker hover state
-          subtle: "hsl(163 65% 95%)",  // #E7F6F2 - light background
+          DEFAULT: "hsl(153 60% 30%)", // #1E7A50 - forest green
+          hover: "hsl(153 60% 23%)",   // darker hover
+          subtle: "hsl(153 60% 95%)",  // light background tint
+        },
+        accent: {
+          DEFAULT: "hsl(10 80% 78%)",  // #F4A99A - salmon pink
+          hover: "hsl(10 80% 70%)",    // darker salmon
+          subtle: "hsl(10 80% 97%)",   // light salmon tint
         },
         text: {
           primary: "hsl(0 0% 4%)",     // #0B0B0B - near-black

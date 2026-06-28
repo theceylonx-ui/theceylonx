@@ -39,10 +39,13 @@
   --text-secondary: hsl(0 0% 29%);
   --text-muted: hsl(0 0% 44%);
   
-  /* Vibrant accents */
-  --brand: hsl(163 65% 31%);
-  --brand-hover: hsl(163 65% 25%);
-  --brand-subtle: hsl(163 65% 95%);
+  /* Brand colors */
+  --brand: hsl(153 60% 30%);       /* #1E7A50 forest green */
+  --brand-hover: hsl(153 60% 23%);
+  --brand-subtle: hsl(153 60% 95%);
+  --accent: hsl(10 80% 78%);       /* #F4A99A salmon pink */
+  --accent-hover: hsl(10 80% 70%);
+  --accent-subtle: hsl(10 80% 97%);
   
   /* UI surfaces */
   --ui-bg: hsl(0 0% 100%);
@@ -81,10 +84,13 @@
   --text-secondary: hsl(0 0% 81%);
   --text-muted: hsl(0 0% 60%);
   
-  /* Vibrant accents - dark mode */
-  --brand: hsl(163 65% 45%);
-  --brand-hover: hsl(163 65% 40%);
-  --brand-subtle: hsl(163 65% 8%);
+  /* Brand colors - dark mode */
+  --brand: hsl(153 60% 45%);
+  --brand-hover: hsl(153 60% 38%);
+  --brand-subtle: hsl(153 60% 8%);
+  --accent: hsl(10 80% 72%);
+  --accent-hover: hsl(10 80% 62%);
+  --accent-subtle: hsl(10 80% 10%);
   
   /* UI surfaces - dark mode */
   --ui-bg: hsl(0 0% 4%);

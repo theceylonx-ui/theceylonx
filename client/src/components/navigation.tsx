@@ -28,8 +28,8 @@ export default function Navigation() {
 
   return (
     <nav className={`${
-      user 
-        ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 border-b border-emerald-500/30 shadow-lg shadow-emerald-500/20' 
+      user
+        ? 'bg-gradient-to-r from-[#1E7A50] to-[#165c3c] border-b border-[#1E7A50]/30 shadow-lg shadow-[#1E7A50]/20'
         : 'bg-ui-bg border-b border-ui-line/50'
     } sticky top-0 z-50 backdrop-blur-sm transition-all duration-300`}>
       <div className="page-container">

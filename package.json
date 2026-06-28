@@ -8,7 +8,10 @@
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "seed:tribes": "tsx scripts/seed-tribes.ts",
+    "seed:trips": "tsx scripts/seed-sample-trips.ts",
+    "seed:all": "tsx scripts/seed-tribes.ts && tsx scripts/seed-sample-trips.ts"
   },
   "dependencies": {
     "@clerk/backend": "^3.4.13",
