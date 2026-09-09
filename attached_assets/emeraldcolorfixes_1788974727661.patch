@@ -1,0 +1,339 @@
+From 93f0896b446d08242cc6edad530459a65f37c60f Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Wed, 9 Sep 2026 22:53:25 +0530
+Subject: [PATCH] Fix remaining old-brand-green color bugs (emerald wasn't in
+ earlier searches)
+
+Found while chasing a leftover green tint on the Calendar page title: my
+earlier color-audit passes searched for "green-" and "blue-" but not
+"emerald-", which is the specific Tailwind shade several old-brand
+elements were hardcoded to. That let a real one slip through, so I did a
+proper sweep this time.
+
+Fixed (all single-accent "this is the app's identity color" moments,
+same category as the earlier header bugs):
+- navigation.tsx: the authenticated nav bar background was hardcoded to
+  the literal old hex (#1E7A50/#165c3c), not even the ceylon-green alias
+  -- meaning every logged-in user has been seeing the old dark-green nav
+  bar this whole rebrand. Also fixed ~14 text-emerald-100 hover states
+  (designed for that green background) and the mobile menu panel.
+- Calendar's second "Calendar" section title (missed the first pass --
+  only the day-preview panel header got fixed then).
+- TipsBox.tsx (the "Pro Tips" boxes on Browse Trips and Calendar).
+- chat-buddy.tsx: page header, message-send button, and the sent-message
+  bubble color.
+- PreferencesForm.tsx: only the two generic "add option" affordances
+  reused across all sections, not the section headers themselves.
+
+Deliberately NOT changed: PreferencesForm's six section headers (each a
+different pastel color on purpose, for wayfinding in a long form), the
+three profile stat cards (same reasoning), and question-detail's
+accepted-answer highlight (a real status semantic, not a brand color).
+Consistent with leaving the per-province badge colors and Quick Trip
+urgency styling alone in the earlier pass.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ .../src/components/EnhancedEventCalendar.tsx  |  4 +--
+ client/src/components/TipsBox.tsx             | 22 +++++++-------
+ client/src/components/navigation.tsx          | 30 +++++++++----------
+ .../preferences/PreferencesForm.tsx           |  4 +--
+ client/src/pages/chat-buddy.tsx               | 14 ++++-----
+ 5 files changed, 37 insertions(+), 37 deletions(-)
+
+diff --git a/client/src/components/EnhancedEventCalendar.tsx b/client/src/components/EnhancedEventCalendar.tsx
+index ec90505..0382ff6 100644
+--- a/client/src/components/EnhancedEventCalendar.tsx
++++ b/client/src/components/EnhancedEventCalendar.tsx
+@@ -564,8 +564,8 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+         {/* Enhanced Calendar View */}
+         <Card className="overflow-hidden">
+-          <CardHeader className="bg-gradient-to-r from-emerald-50 to-blue-50 dark:from-emerald-950/30 dark:to-blue-950/30">
+-            <CardTitle className="text-xl font-semibold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Calendar</CardTitle>
++          <CardHeader className="bg-gradient-to-r from-brand-subtle to-accent-subtle dark:from-brand/20 dark:to-accent/20">
++            <CardTitle className="text-xl font-semibold bg-gradient-to-r from-brand to-accent bg-clip-text text-transparent">Calendar</CardTitle>
+           </CardHeader>
+           <CardContent className="p-2 sm:p-4">
+             <style>{`
+diff --git a/client/src/components/TipsBox.tsx b/client/src/components/TipsBox.tsx
+index 5cbe962..83ba649 100644
+--- a/client/src/components/TipsBox.tsx
++++ b/client/src/components/TipsBox.tsx
+@@ -14,15 +14,15 @@ export function TipsBox({ title, tips, className = "", defaultCollapsed = true }
+   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
+ 
+   return (
+-    <Card className={`bg-gradient-to-br from-emerald-50 to-blue-50 border-2 border-emerald-200 shadow-lg hover:shadow-xl transition-all duration-300 ${className}`} data-testid="tips-box">
+-      <CardHeader 
++    <Card className={`bg-gradient-to-br from-brand-subtle to-accent-subtle border-2 border-brand/20 shadow-lg hover:shadow-xl transition-all duration-300 ${className}`} data-testid="tips-box">
++      <CardHeader
+         className="pb-3 cursor-pointer hover:bg-white/40 transition-colors duration-200 rounded-t-lg"
+         onClick={() => setIsCollapsed(!isCollapsed)}
+       >
+         <div className="flex items-center justify-between">
+-          <CardTitle className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent flex items-center gap-3">
++          <CardTitle className="text-lg font-bold bg-gradient-to-r from-brand to-accent bg-clip-text text-transparent flex items-center gap-3">
+             <div className="relative">
+-              <Lightbulb className="h-6 w-6 text-emerald-500" />
++              <Lightbulb className="h-6 w-6 text-brand" />
+               <Sparkles className="h-3 w-3 text-yellow-400 absolute -top-1 -right-1 animate-pulse" />
+             </div>
+             {title}
+@@ -30,25 +30,25 @@ export function TipsBox({ title, tips, className = "", defaultCollapsed = true }
+           <Button
+             variant="ghost"
+             size="sm"
+-            className="h-10 w-10 p-0 rounded-full bg-emerald-100 hover:bg-emerald-200 border-2 border-emerald-300 hover:scale-110 transition-all duration-200"
++            className="h-10 w-10 p-0 rounded-full bg-brand-subtle hover:bg-brand/20 border-2 border-brand/30 hover:scale-110 transition-all duration-200"
+             data-testid="tips-toggle"
+           >
+-            {isCollapsed ? 
+-              <ChevronDown className="h-5 w-5 text-emerald-600" /> : 
+-              <ChevronUp className="h-5 w-5 text-emerald-600" />
++            {isCollapsed ?
++              <ChevronDown className="h-5 w-5 text-brand" /> :
++              <ChevronUp className="h-5 w-5 text-brand" />
+             }
+           </Button>
+         </div>
+-        <p className="text-sm text-emerald-700 opacity-80 mt-1">Click to {isCollapsed ? 'reveal' : 'hide'} helpful tips!</p>
++        <p className="text-sm text-text-secondary opacity-80 mt-1">Click to {isCollapsed ? 'reveal' : 'hide'} helpful tips!</p>
+       </CardHeader>
+-      
++
+       {!isCollapsed && (
+         <CardContent className="pt-0 animate-in slide-in-from-top-2 duration-300">
+           <div className="bg-white/70 rounded-lg p-4 backdrop-blur-sm">
+             <ul className="space-y-4" data-testid="tips-list">
+               {tips.map((tip, index) => (
+                 <li key={index} className="flex items-start gap-3 text-gray-700">
+-                  <div className="w-6 h-6 rounded-full bg-gradient-to-r from-emerald-400 to-blue-400 flex items-center justify-center flex-shrink-0 mt-0.5">
++                  <div className="w-6 h-6 rounded-full bg-gradient-to-r from-brand to-accent flex items-center justify-center flex-shrink-0 mt-0.5">
+                     <span className="text-white text-xs font-bold">{index + 1}</span>
+                   </div>
+                   <span className="text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: tip }} />
+diff --git a/client/src/components/navigation.tsx b/client/src/components/navigation.tsx
+index ef3c304..18b92ef 100644
+--- a/client/src/components/navigation.tsx
++++ b/client/src/components/navigation.tsx
+@@ -29,7 +29,7 @@ export default function Navigation() {
+   return (
+     <nav className={`${
+       user
+-        ? 'bg-gradient-to-r from-[#1E7A50] to-[#165c3c] border-b border-[#1E7A50]/30 shadow-lg shadow-[#1E7A50]/20'
++        ? 'bg-gradient-to-r from-brand to-brand-hover border-b border-brand/30 shadow-lg shadow-brand/20'
+         : 'bg-ui-bg border-b border-ui-line/50'
+     } sticky top-0 z-50 backdrop-blur-sm transition-all duration-300`}>
+       <div className="page-container">
+@@ -57,7 +57,7 @@ export default function Navigation() {
+                 className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${
+                   isActive('/browse-trips') 
+                     ? (user ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' : 'bg-brand-subtle text-brand font-semibold')
+-                    : (user ? 'text-emerald-100 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
++                    : (user ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
+                 }`}
+                 data-testid="nav-browse"
+               >
+@@ -69,7 +69,7 @@ export default function Navigation() {
+                 className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${
+                   isActive('/post') 
+                     ? (user ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' : 'bg-brand-subtle text-brand font-semibold')
+-                    : (user ? 'text-emerald-100 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
++                    : (user ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
+                 }`}
+                 data-testid="nav-post"
+               >
+@@ -82,7 +82,7 @@ export default function Navigation() {
+                   className={`transition-all duration-200 cursor-pointer flex items-center gap-2 relative px-4 py-2 rounded-lg ${
+                     isActive('/calendar') 
+                       ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' 
+-                      : 'text-emerald-100 hover:text-white hover:bg-white/10'
++                      : 'text-white/80 hover:text-white hover:bg-white/10'
+                   }`}
+                   data-testid="nav-calendar"
+                 >
+@@ -97,7 +97,7 @@ export default function Navigation() {
+                   className={`transition-all duration-200 cursor-pointer flex items-center gap-2 relative px-4 py-2 rounded-lg ${
+                     isActive('/chat-buddy') || location.startsWith('/chat-buddy/') 
+                       ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' 
+-                      : 'text-emerald-100 hover:text-white hover:bg-white/10'
++                      : 'text-white/80 hover:text-white hover:bg-white/10'
+                   }`}
+                   data-testid="nav-chat"
+                 >
+@@ -111,7 +111,7 @@ export default function Navigation() {
+                 className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${
+                   isActive('/community') 
+                     ? (user ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' : 'bg-brand-subtle text-brand font-semibold')
+-                    : (user ? 'text-emerald-100 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
++                    : (user ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
+                 }`}
+                 data-testid="nav-community"
+               >
+@@ -123,7 +123,7 @@ export default function Navigation() {
+                 className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${
+                   isActive('/about') 
+                     ? (user ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' : 'bg-brand-subtle text-brand font-semibold')
+-                    : (user ? 'text-emerald-100 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
++                    : (user ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
+                 }`}
+                 data-testid="nav-about"
+               >
+@@ -150,7 +150,7 @@ export default function Navigation() {
+               variant="ghost"
+               size="sm"
+               onClick={toggleMobileMenu}
+-              className={`md:hidden p-2 ${user ? 'text-emerald-100 hover:text-white hover:bg-emerald-500/20' : 'text-text-secondary hover:text-brand hover:bg-ui-surface'} transition-colors duration-200`}
++              className={`md:hidden p-2 ${user ? 'text-white/80 hover:text-white hover:bg-white/20' : 'text-text-secondary hover:text-brand hover:bg-ui-surface'} transition-colors duration-200`}
+               data-testid="mobile-menu-button"
+             >
+               {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+@@ -160,14 +160,14 @@ export default function Navigation() {
+ 
+         {/* Mobile Menu */}
+         {isMobileMenuOpen && (
+-          <div className={`md:hidden py-6 border-t ${user ? 'border-emerald-500/30 bg-gradient-to-b from-emerald-600/95 to-emerald-700/95' : 'border-ui-line/50'} animate-fade-in backdrop-blur-sm`}>
++          <div className={`md:hidden py-6 border-t ${user ? 'border-brand/30 bg-gradient-to-b from-brand/95 to-brand-hover/95' : 'border-ui-line/50'} animate-fade-in backdrop-blur-sm`}>
+             <div className="space-y-4">
+               <Link href="/browse-trips">
+                 <div 
+                   className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
+                     isActive('/browse-trips') 
+                       ? (user ? 'bg-white/20 text-white font-semibold' : 'bg-brand-subtle text-brand font-semibold')
+-                      : (user ? 'text-emerald-100 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
++                      : (user ? 'text-white/80 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
+                   }`}
+                   onClick={() => setIsMobileMenuOpen(false)}
+                   data-testid="mobile-nav-browse"
+@@ -180,7 +180,7 @@ export default function Navigation() {
+                   className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
+                     isActive('/post') 
+                       ? (user ? 'bg-white/20 text-white font-semibold' : 'bg-brand-subtle text-brand font-semibold')
+-                      : (user ? 'text-emerald-100 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
++                      : (user ? 'text-white/80 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
+                   }`}
+                   onClick={() => setIsMobileMenuOpen(false)}
+                   data-testid="mobile-nav-post"
+@@ -194,7 +194,7 @@ export default function Navigation() {
+                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                       isActive('/calendar') 
+                         ? 'bg-white/20 text-white font-semibold' 
+-                        : 'text-emerald-100 hover:bg-white/10 hover:text-white'
++                        : 'text-white/80 hover:bg-white/10 hover:text-white'
+                     }`}
+                     onClick={() => setIsMobileMenuOpen(false)}
+                     data-testid="mobile-nav-calendar"
+@@ -210,7 +210,7 @@ export default function Navigation() {
+                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                       isActive('/chat-buddy') || location.startsWith('/chat-buddy/') 
+                         ? 'bg-white/20 text-white font-semibold' 
+-                        : 'text-emerald-100 hover:bg-white/10 hover:text-white'
++                        : 'text-white/80 hover:bg-white/10 hover:text-white'
+                     }`}
+                     onClick={() => setIsMobileMenuOpen(false)}
+                     data-testid="mobile-nav-chat"
+@@ -225,7 +225,7 @@ export default function Navigation() {
+                   className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
+                     isActive('/community') 
+                       ? (user ? 'bg-white/20 text-white font-semibold' : 'bg-brand-subtle text-brand font-semibold')
+-                      : (user ? 'text-emerald-100 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
++                      : (user ? 'text-white/80 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
+                   }`}
+                   onClick={() => setIsMobileMenuOpen(false)}
+                   data-testid="mobile-nav-community"
+@@ -238,7 +238,7 @@ export default function Navigation() {
+                   className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
+                     isActive('/about') 
+                       ? (user ? 'bg-white/20 text-white font-semibold' : 'bg-brand-subtle text-brand font-semibold')
+-                      : (user ? 'text-emerald-100 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
++                      : (user ? 'text-white/80 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
+                   }`}
+                   onClick={() => setIsMobileMenuOpen(false)}
+                   data-testid="mobile-nav-about"
+diff --git a/client/src/components/preferences/PreferencesForm.tsx b/client/src/components/preferences/PreferencesForm.tsx
+index 30fb303..e900ec7 100644
+--- a/client/src/components/preferences/PreferencesForm.tsx
++++ b/client/src/components/preferences/PreferencesForm.tsx
+@@ -325,7 +325,7 @@ export function PreferencesForm() {
+         {availableOptions.length > 0 && (!maxItems || value.length < maxItems) && (
+           <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+             <div className="flex items-center mb-4">
+-              <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-1.5 rounded-lg mr-2">
++              <div className="bg-gradient-to-r from-brand to-accent p-1.5 rounded-lg mr-2">
+                 <Plus className="h-3 w-3 text-white" />
+               </div>
+               <h4 className="font-semibold text-gray-900">{placeholder}</h4>
+@@ -336,7 +336,7 @@ export function PreferencesForm() {
+                   key={option}
+                   type="button"
+                   onClick={() => handleAdd(option)}
+-                  className="group bg-white hover:bg-gradient-to-r hover:from-emerald-400 hover:to-teal-500 border border-gray-200 hover:border-transparent rounded-xl px-4 py-3 text-left transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:text-white"
++                  className="group bg-white hover:bg-gradient-to-r hover:from-brand hover:to-accent border border-gray-200 hover:border-transparent rounded-xl px-4 py-3 text-left transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:text-white"
+                   data-testid={`chip-add-${option}`}
+                 >
+                   <div className="flex items-center">
+diff --git a/client/src/pages/chat-buddy.tsx b/client/src/pages/chat-buddy.tsx
+index 6dcc645..f07b417 100644
+--- a/client/src/pages/chat-buddy.tsx
++++ b/client/src/pages/chat-buddy.tsx
+@@ -67,12 +67,12 @@ function ChatThreadsListView() {
+   
+   if (!user) {
+     return (
+-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800">
++      <div className="min-h-screen bg-gradient-to-br from-accent-subtle to-brand-subtle dark:from-gray-900 dark:to-gray-800">
+         <Navigation />
+         {/* Chat Buddy Header with beautiful gradient like HiBowan Tribes */}
+         <div className="py-8">
+           <div className="max-w-6xl mx-auto p-6">
+-            <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-2xl shadow-lg shadow-emerald-500/20 p-8 mb-8">
++            <div className="bg-gradient-to-r from-brand to-brand-hover rounded-2xl shadow-lg shadow-brand/20 p-8 mb-8">
+               <div className="text-center">
+                 <h1 className="text-4xl font-bold text-white mb-2">💬 Chat Buddy</h1>
+                 <p className="text-white/90 text-lg">Connect with fellow travelers and trip organizers</p>
+@@ -90,12 +90,12 @@ function ChatThreadsListView() {
+   }
+ 
+   return (
+-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800">
++    <div className="min-h-screen bg-gradient-to-br from-accent-subtle to-brand-subtle dark:from-gray-900 dark:to-gray-800">
+       <Navigation />
+       <div className="py-8">
+         <div className="max-w-6xl mx-auto p-6">
+           {/* Chat Buddy Header with beautiful gradient like HiBowan Tribes */}
+-          <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-2xl shadow-lg shadow-emerald-500/20 p-8 mb-8">
++          <div className="bg-gradient-to-r from-brand to-brand-hover rounded-2xl shadow-lg shadow-brand/20 p-8 mb-8">
+             <div className="flex items-center justify-between">
+               <div>
+                 <h1 className="text-4xl font-bold text-white mb-2">💬 Chat Buddy</h1>
+@@ -433,7 +433,7 @@ export default function ChatBuddy() {
+       <div className="max-w-6xl mx-auto px-4 py-8">
+         {/* Header Section */}
+         <div className="mb-8">
+-          <div className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 rounded-2xl p-8 text-white shadow-xl">
++          <div className="bg-gradient-to-r from-brand to-brand-hover rounded-2xl p-8 text-white shadow-xl">
+             <div className="flex items-center justify-between">
+               <div>
+                 <div className="flex items-center space-x-3 mb-4">
+@@ -625,7 +625,7 @@ export default function ChatBuddy() {
+                               <div
+                                 className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                                   isOwnMessage
+-                                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
++                                    ? 'bg-gradient-to-r from-brand to-brand-hover text-white'
+                                     : 'bg-gray-100 text-gray-900'
+                                 }`}
+                               >
+@@ -672,7 +672,7 @@ export default function ChatBuddy() {
+                         onClick={handleSendMessage}
+                         disabled={!messageText.trim() || sendMessageMutation.isPending}
+                         size="icon"
+-                        className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white disabled:opacity-50"
++                        className="bg-gradient-to-r from-brand to-brand-hover hover:from-brand-hover hover:to-brand text-white disabled:opacity-50"
+                       >
+                         <Send className="h-4 w-4" />
+                       </Button>
+-- 
+2.50.1 (Apple Git-155)
+
