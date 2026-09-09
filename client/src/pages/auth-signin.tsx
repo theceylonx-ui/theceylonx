@@ -62,7 +62,13 @@ export default function AuthSignInPage() {
           }
         }} />
 
-        <div className="mt-6 text-center text-sm text-gray-500">
+        <div className="mt-6 rounded-lg bg-accent-subtle p-4 text-sm text-text-secondary" data-testid="signup-safety-notice">
+          <p>
+            HiBowan connects you with fellow travellers — we don't verify anyone's identity, and we're not responsible for the actions, conduct, or safety of other users. You participate in trips at your own risk, so use the same judgement you would meeting anyone new while travelling.
+          </p>
+        </div>
+
+        <div className="mt-4 text-center text-sm text-gray-500">
           <p>
             By signing in, you agree to our{" "}
             <Link href="/terms-of-service" className="text-ceylon-green hover:underline">

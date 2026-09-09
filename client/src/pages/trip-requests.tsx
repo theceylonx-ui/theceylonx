@@ -317,36 +317,41 @@ export default function TripRequestsPage({ params }: TripRequestsPageProps) {
 
                     {/* Action Buttons */}
                     {request.status === 'pending' && (
-                      <div className="flex items-center gap-3 pt-4 border-t">
-                        <Button
-                          size="sm"
-                          onClick={() => acceptMutation.mutate(request.id)}
-                          disabled={processingRequests.has(request.id)}
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          <Check className="h-4 w-4 mr-2" />
-                          Accept Request
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => rejectMutation.mutate(request.id)}
-                          disabled={processingRequests.has(request.id)}
-                          className="border-red-300 text-red-600 hover:bg-red-50"
-                        >
-                          <X className="h-4 w-4 mr-2" />
-                          Decline
-                        </Button>
-                        {request.chatThreadId && (
+                      <div className="pt-4 border-t">
+                        <p className="text-xs text-gray-500 mb-3" data-testid="accept-safety-reminder">
+                          Accepting unlocks chat with a fellow traveller we haven't verified — you're responsible for how you arrange and coordinate this trip.
+                        </p>
+                        <div className="flex items-center gap-3">
                           <Button
                             size="sm"
-                            variant="ghost"
-                            onClick={() => setLocation(`/chat-buddy/${request.chatThreadId}`)}
+                            onClick={() => acceptMutation.mutate(request.id)}
+                            disabled={processingRequests.has(request.id)}
+                            className="bg-green-600 hover:bg-green-700 text-white"
                           >
-                            <MessageCircle className="h-4 w-4 mr-2" />
-                            Chat
+                            <Check className="h-4 w-4 mr-2" />
+                            Accept Request
                           </Button>
-                        )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => rejectMutation.mutate(request.id)}
+                            disabled={processingRequests.has(request.id)}
+                            className="border-red-300 text-red-600 hover:bg-red-50"
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Decline
+                          </Button>
+                          {request.chatThreadId && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setLocation(`/chat-buddy/${request.chatThreadId}`)}
+                            >
+                              <MessageCircle className="h-4 w-4 mr-2" />
+                              Chat
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     )}
 

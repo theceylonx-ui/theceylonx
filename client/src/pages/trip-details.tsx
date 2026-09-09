@@ -719,39 +719,46 @@ export default function TripDetails({ params }: TripDetailsProps) {
                   {/* Clean Interest Request System */}
                   {isAuthenticated ? (
                     user && user.id !== trip.organizer?.id ? (
-                      <Button 
-                        onClick={handleSendInterest}
-                        disabled={!!existingInterestRequest || sendInterestMutation.isPending}
-                        className={`w-full ${
-                          existingInterestRequest 
-                            ? 'bg-gray-100 text-gray-600 cursor-not-allowed border border-gray-300'
-                            : 'bg-ceylon-green hover:bg-ceylon-green/90 text-white'
-                        }`}
-                        data-testid="button-interest"
-                      >
-                        {sendInterestMutation.isPending ? (
-                          <>
-                            <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
-                            Sending...
-                          </>
-                        ) : existingInterestRequest ? (
-                          <>
-                            <Heart className="h-4 w-4 mr-2 fill-current" />
-                            Request Sent
-                          </>
-                        ) : (
-                          <>
-                            Send Request
-                          </>
+                      <>
+                        <Button
+                          onClick={handleSendInterest}
+                          disabled={!!existingInterestRequest || sendInterestMutation.isPending}
+                          className={`w-full ${
+                            existingInterestRequest
+                              ? 'bg-gray-100 text-gray-600 cursor-not-allowed border border-gray-300'
+                              : 'bg-ceylon-green hover:bg-ceylon-green/90 text-white'
+                          }`}
+                          data-testid="button-interest"
+                        >
+                          {sendInterestMutation.isPending ? (
+                            <>
+                              <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
+                              Sending...
+                            </>
+                          ) : existingInterestRequest ? (
+                            <>
+                              <Heart className="h-4 w-4 mr-2 fill-current" />
+                              Request Sent
+                            </>
+                          ) : (
+                            <>
+                              Send Request
+                            </>
+                          )}
+                        </Button>
+                        {!existingInterestRequest && (
+                          <p className="text-xs text-text-muted text-center mt-2" data-testid="request-safety-reminder">
+                            You're responsible for arrangements and safety once you connect — meet in public first.
+                          </p>
                         )}
-                      </Button>
+                      </>
                     ) : user?.id === trip.organizer?.id ? (
                       <div className="w-full text-center text-sm text-gray-600 p-3 bg-blue-50 rounded-md border border-blue-200">
                         You are the organizer of this trip
                       </div>
                     ) : null
                   ) : (
-                    <Button 
+                    <Button
                       onClick={() => {
                         const currentPath = `${window.location.pathname}${window.location.search}`;
                         window.location.href = createLoginRedirectUrl(currentPath);
