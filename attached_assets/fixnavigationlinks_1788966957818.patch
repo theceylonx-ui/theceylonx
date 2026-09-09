@@ -1,0 +1,692 @@
+From e7db7113f2ef4fbc06d3795a78d8804d5aa16483 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Wed, 9 Sep 2026 20:20:53 +0530
+Subject: [PATCH] Fix broken and unreliable internal navigation links
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- "Report this trip" pointed to a page that never existed (/report-trip/:id);
+  replaced with a working report modal wired to the existing /api/reports
+  endpoint, matching the pattern already used for reporting users.
+- Six chat links across chat-inbox, quick-trip-detail, and trip-requests
+  pointed to /chat/:id, which doesn't match the registered /chat-buddy/:threadId
+  route — fixed to the correct path.
+- Replaced ~20 window.location.href assignments and a couple of raw <a href>
+  tags used for in-app navigation (trip cards, profile links, FAQ, Community,
+  browse/post CTAs, sign-in page legal links) with wouter's client-side
+  routing, consistent with how the rest of the app navigates. Sign-in/sign-out
+  redirects were left as hard reloads intentionally.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ .../PreferencesCompletionBanner.tsx           |   6 +-
+ client/src/components/chat-inbox.tsx          |   4 +-
+ client/src/components/trip-card.tsx           |   9 +-
+ .../src/components/ui/report-trip-dialog.tsx  | 216 ++++++++++++++++++
+ client/src/pages/ChatPage.tsx                 |   6 +-
+ client/src/pages/auth-signin.tsx              |  10 +-
+ client/src/pages/contact-us.tsx               |   7 +-
+ client/src/pages/home.tsx                     |   2 +-
+ client/src/pages/me.tsx                       |  13 +-
+ client/src/pages/quick-trip-detail.tsx        |  15 +-
+ client/src/pages/trip-details.tsx             |  22 +-
+ client/src/pages/trip-requests.tsx            |   7 +-
+ 12 files changed, 275 insertions(+), 42 deletions(-)
+ create mode 100644 client/src/components/ui/report-trip-dialog.tsx
+
+diff --git a/client/src/components/PreferencesCompletionBanner.tsx b/client/src/components/PreferencesCompletionBanner.tsx
+index 33dc9e7..b038100 100644
+--- a/client/src/components/PreferencesCompletionBanner.tsx
++++ b/client/src/components/PreferencesCompletionBanner.tsx
+@@ -4,7 +4,7 @@ import { X, Settings, CheckCircle, Star } from "lucide-react";
+ import { Card, CardContent } from "@/components/ui/card";
+ import { Button } from "@/components/ui/button";
+ import { Badge } from "@/components/ui/badge";
+-import { Link } from "wouter";
++import { Link, useLocation } from "wouter";
+ 
+ interface UserPreferences {
+   vibe?: string[];
+@@ -38,6 +38,7 @@ function calculatePreferencesCompletion(preferences: UserPreferences | null): nu
+ 
+ export function PreferencesCompletionBanner({ onDismiss, className }: PreferencesCompletionBannerProps) {
+   const [isDismissed, setIsDismissed] = useState(false);
++  const [, setLocation] = useLocation();
+ 
+   // Fetch current user preferences
+   const { data: preferences, isLoading } = useQuery<UserPreferences>({
+@@ -99,8 +100,7 @@ export function PreferencesCompletionBanner({ onDismiss, className }: Preference
+                 className="bg-orange-500 hover:bg-orange-600 text-white" 
+                 data-testid="button-complete-preferences"
+                 onClick={() => {
+-                  console.log('🔍 Complete Setup clicked - navigating to /me?tab=preferences');
+-                  window.location.href = '/me?tab=preferences';
++                  setLocation('/me?tab=preferences');
+                 }}
+               >
+                 <Settings className="h-4 w-4 mr-2" />
+diff --git a/client/src/components/chat-inbox.tsx b/client/src/components/chat-inbox.tsx
+index bfbbfc2..a3bf9d1 100644
+--- a/client/src/components/chat-inbox.tsx
++++ b/client/src/components/chat-inbox.tsx
+@@ -1,4 +1,5 @@
+ import { useQuery } from "@tanstack/react-query";
++import { useLocation } from "wouter";
+ import { MessageSquare, Users, Clock } from "lucide-react";
+ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+@@ -41,6 +42,7 @@ interface ChatInboxProps {
+ }
+ 
+ export function ChatInbox({ userId, onThreadSelect }: ChatInboxProps) {
++  const [, setLocation] = useLocation();
+   const { data: threads, isLoading } = useQuery<ChatThread[]>({
+     queryKey: ["/api/threads"],
+     queryFn: async () => {
+@@ -53,7 +55,7 @@ export function ChatInbox({ userId, onThreadSelect }: ChatInboxProps) {
+     if (onThreadSelect) {
+       onThreadSelect(threadId);
+     } else {
+-      window.location.href = `/chat/${threadId}`;
++      setLocation(`/chat-buddy/${threadId}`);
+     }
+   };
+ 
+diff --git a/client/src/components/trip-card.tsx b/client/src/components/trip-card.tsx
+index 204179a..bcad040 100644
+--- a/client/src/components/trip-card.tsx
++++ b/client/src/components/trip-card.tsx
+@@ -1,4 +1,4 @@
+-import { Link } from "wouter";
++import { Link, useLocation } from "wouter";
+ import { MapPin, Calendar, Users, DollarSign, Mail, Lock, Pin, PinOff, Star, StarOff, Zap, Clock, Heart } from "lucide-react";
+ import { Card, CardContent } from "@/components/ui/card";
+ import { Button } from "@/components/ui/button";
+@@ -50,7 +50,8 @@ export default function TripCard({ trip, badges }: TripCardProps) {
+   const { user } = useAuth();
+   const { toast } = useToast();
+   const queryClient = useQueryClient();
+-  
++  const [, setLocation] = useLocation();
++
+   const [showEditDialog, setShowEditDialog] = useState(false);
+   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+   
+@@ -597,7 +598,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
+                 onClick={(e) => {
+                   e.preventDefault();
+                   e.stopPropagation();
+-                  window.location.href = `/profile/${trip.organizer?.username || trip.organizer?.id}`;
++                  setLocation(`/profile/${trip.organizer?.username || trip.organizer?.id}`);
+                 }}
+               >
+                 <UserDisplay 
+@@ -668,7 +669,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
+                 onClick={(e) => {
+                   e.preventDefault();
+                   e.stopPropagation();
+-                  window.location.href = isQuickTrip ? `/quick-trips/${trip.id}` : createTripDetailLink(trip.id);
++                  setLocation(isQuickTrip ? `/quick-trips/${trip.id}` : createTripDetailLink(trip.id));
+                 }}
+               >
+                 View Details
+diff --git a/client/src/components/ui/report-trip-dialog.tsx b/client/src/components/ui/report-trip-dialog.tsx
+new file mode 100644
+index 0000000..2a8a4e2
+--- /dev/null
++++ b/client/src/components/ui/report-trip-dialog.tsx
+@@ -0,0 +1,216 @@
++import { useState } from "react";
++import { useMutation } from "@tanstack/react-query";
++import { Flag, AlertTriangle, Shield } from "lucide-react";
++import { Button } from "@/components/ui/button";
++import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
++import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
++import { Textarea } from "@/components/ui/textarea";
++import { Label } from "@/components/ui/label";
++import { useToast } from "@/hooks/use-toast";
++import { apiRequest } from "@/lib/queryClient";
++import { Alert, AlertDescription } from "@/components/ui/alert";
++
++interface ReportTripDialogProps {
++  tripId: string;
++  open: boolean;
++  onOpenChange: (open: boolean) => void;
++}
++
++const tripReportReasons = [
++  {
++    value: "misleading_details",
++    label: "Misleading Trip Details",
++    description: "Dates, route, or costs don't match what's actually being offered",
++  },
++  {
++    value: "inappropriate_content",
++    label: "Inappropriate Content",
++    description: "Trip title, description, or photos are inappropriate",
++  },
++  {
++    value: "safety_concern",
++    label: "Safety Concern",
++    description: "Trip plan raises safety concerns for participants",
++  },
++  {
++    value: "spam",
++    label: "Spam or Scam",
++    description: "This looks like spam, a scam, or isn't a genuine trip",
++  },
++  {
++    value: "other",
++    label: "Other",
++    description: "Other reason not listed above",
++  },
++];
++
++export function ReportTripDialog({ tripId, open, onOpenChange }: ReportTripDialogProps) {
++  const [reason, setReason] = useState("");
++  const [description, setDescription] = useState("");
++  const [showSuccess, setShowSuccess] = useState(false);
++  const { toast } = useToast();
++
++  const reportMutation = useMutation({
++    mutationFn: async ({ reason, description }: { reason: string; description: string }) => {
++      await apiRequest("/api/reports", {
++        method: "POST",
++        body: JSON.stringify({ context: "trip", tripId, reason, description }),
++        headers: { "Content-Type": "application/json" },
++      });
++    },
++    onSuccess: () => {
++      setShowSuccess(true);
++      setReason("");
++      setDescription("");
++
++      setTimeout(() => {
++        onOpenChange(false);
++        setShowSuccess(false);
++      }, 3000);
++
++      toast({
++        title: "Report Submitted",
++        description: "Thank you for helping keep our community safe. We'll review this report promptly.",
++      });
++    },
++    onError: () => {
++      toast({
++        title: "Error",
++        description: "Failed to submit report. Please try again later.",
++        variant: "destructive",
++      });
++    },
++  });
++
++  const handleSubmit = () => {
++    if (!reason) {
++      toast({
++        title: "Select a Reason",
++        description: "Please select a reason for reporting this trip.",
++        variant: "destructive",
++      });
++      return;
++    }
++
++    if (reason === "other" && !description.trim()) {
++      toast({
++        title: "Additional Details Required",
++        description: "Please provide additional details for your report.",
++        variant: "destructive",
++      });
++      return;
++    }
++
++    reportMutation.mutate({ reason, description });
++  };
++
++  const selectedReason = tripReportReasons.find((r) => r.value === reason);
++
++  if (showSuccess) {
++    return (
++      <Dialog open={open} onOpenChange={onOpenChange}>
++        <DialogContent className="sm:max-w-md">
++          <DialogHeader>
++            <DialogTitle className="flex items-center gap-2 text-green-600">
++              <Shield className="h-5 w-5" />
++              Report Submitted Successfully
++            </DialogTitle>
++          </DialogHeader>
++          <Alert className="border-green-200 bg-green-50">
++            <Shield className="h-4 w-4 text-green-600" />
++            <AlertDescription className="text-green-800">
++              Thank you for helping keep our community safe. We take all reports seriously and will review this promptly.
++            </AlertDescription>
++          </Alert>
++          <div className="text-sm text-gray-600 text-center">
++            This dialog will close automatically...
++          </div>
++        </DialogContent>
++      </Dialog>
++    );
++  }
++
++  return (
++    <Dialog open={open} onOpenChange={onOpenChange}>
++      <DialogContent className="sm:max-w-md" data-testid="dialog-report-trip">
++        <DialogHeader>
++          <DialogTitle className="flex items-center gap-2">
++            <Flag className="h-5 w-5 text-red-500" />
++            Report This Trip
++          </DialogTitle>
++          <DialogDescription>
++            Help us maintain a safe community by reporting misleading, inappropriate, or unsafe trip listings.
++          </DialogDescription>
++        </DialogHeader>
++
++        <div className="space-y-4">
++          <div className="space-y-2">
++            <Label htmlFor="trip-report-reason">Reason for Report</Label>
++            <Select value={reason} onValueChange={setReason}>
++              <SelectTrigger id="trip-report-reason">
++                <SelectValue placeholder="Select a reason..." />
++              </SelectTrigger>
++              <SelectContent>
++                {tripReportReasons.map((reasonOption) => (
++                  <SelectItem key={reasonOption.value} value={reasonOption.value}>
++                    <div>
++                      <div className="font-medium">{reasonOption.label}</div>
++                      <div className="text-xs text-gray-500">{reasonOption.description}</div>
++                    </div>
++                  </SelectItem>
++                ))}
++              </SelectContent>
++            </Select>
++          </div>
++
++          {selectedReason && (
++            <Alert className="border-orange-200 bg-orange-50">
++              <AlertTriangle className="h-4 w-4 text-orange-600" />
++              <AlertDescription className="text-orange-800">
++                <strong>{selectedReason.label}:</strong> {selectedReason.description}
++              </AlertDescription>
++            </Alert>
++          )}
++
++          <div className="space-y-2">
++            <Label htmlFor="trip-report-description">
++              Additional Details {reason === "other" && <span className="text-red-500">*</span>}
++            </Label>
++            <Textarea
++              id="trip-report-description"
++              placeholder="Please provide any additional context that would help our moderation team..."
++              value={description}
++              onChange={(e) => setDescription(e.target.value)}
++              className="min-h-[100px]"
++              maxLength={1000}
++            />
++            <div className="text-xs text-gray-500 text-right">
++              {description.length}/1000 characters
++            </div>
++          </div>
++
++          <Alert className="border-red-200 bg-red-50">
++            <AlertTriangle className="h-4 w-4 text-red-600" />
++            <AlertDescription className="text-red-800">
++              <strong>Important:</strong> False reports may result in restrictions on your account.
++              Please only report genuine concerns.
++            </AlertDescription>
++          </Alert>
++        </div>
++
++        <div className="flex gap-3 mt-6">
++          <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
++            Cancel
++          </Button>
++          <Button
++            onClick={handleSubmit}
++            disabled={reportMutation.isPending || !reason}
++            className="flex-1 bg-red-600 hover:bg-red-700"
++          >
++            {reportMutation.isPending ? "Submitting..." : "Submit Report"}
++          </Button>
++        </div>
++      </DialogContent>
++    </Dialog>
++  );
++}
+diff --git a/client/src/pages/ChatPage.tsx b/client/src/pages/ChatPage.tsx
+index 27cb003..23358bc 100644
+--- a/client/src/pages/ChatPage.tsx
++++ b/client/src/pages/ChatPage.tsx
+@@ -1,5 +1,5 @@
+ import { useState } from "react";
+-import { useRoute } from "wouter";
++import { useRoute, Link } from "wouter";
+ import { useAuth } from "@/hooks/useAuth";
+ import { ChatThreadsList } from "@/components/chat/ChatThreadsList";
+ import { ChatWindow } from "@/components/chat/ChatWindow";
+@@ -84,10 +84,10 @@ export default function ChatPage() {
+             <div>
+               <div className="mb-6">
+                 <Button variant="ghost" asChild className="mb-4">
+-                  <a href="/">
++                  <Link href="/">
+                     <ArrowLeft className="w-4 h-4 mr-2" />
+                     Back to Home
+-                  </a>
++                  </Link>
+                 </Button>
+                 <h1 className="text-2xl font-bold">Your Chats</h1>
+               </div>
+diff --git a/client/src/pages/auth-signin.tsx b/client/src/pages/auth-signin.tsx
+index 28b61c4..7978a29 100644
+--- a/client/src/pages/auth-signin.tsx
++++ b/client/src/pages/auth-signin.tsx
+@@ -1,5 +1,5 @@
+ import { useEffect } from "react";
+-import { useLocation } from "wouter";
++import { useLocation, Link } from "wouter";
+ import { useAuth } from "@/hooks/useAuth";
+ import { AuthSignIn } from "@/components/AuthSignIn";
+ import newLogo from "@assets/Copy of CEY  X Letter Digital Company Logo.png";
+@@ -65,13 +65,13 @@ export default function AuthSignInPage() {
+         <div className="mt-6 text-center text-sm text-gray-500">
+           <p>
+             By signing in, you agree to our{" "}
+-            <a href="/terms-of-service" className="text-ceylon-green hover:underline">
++            <Link href="/terms-of-service" className="text-ceylon-green hover:underline">
+               Terms of Service
+-            </a>{" "}
++            </Link>{" "}
+             and{" "}
+-            <a href="/privacy-policy" className="text-ceylon-green hover:underline">
++            <Link href="/privacy-policy" className="text-ceylon-green hover:underline">
+               Privacy Policy
+-            </a>
++            </Link>
+           </p>
+         </div>
+       </div>
+diff --git a/client/src/pages/contact-us.tsx b/client/src/pages/contact-us.tsx
+index 2595dc7..f009c34 100644
+--- a/client/src/pages/contact-us.tsx
++++ b/client/src/pages/contact-us.tsx
+@@ -1,3 +1,4 @@
++import { Link } from "wouter";
+ import Navigation from "@/components/navigation";
+ import Footer from "@/components/Footer";
+ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+@@ -266,12 +267,12 @@ export default function ContactUs() {
+                 </div>
+                 
+                 <div className="pt-2">
+-                  <a 
+-                    href="/faq" 
++                  <Link
++                    href="/faq"
+                     className="text-ceylon-green hover:text-ceylon-green/80 text-sm font-medium"
+                   >
+                     View all FAQs →
+-                  </a>
++                  </Link>
+                 </div>
+               </CardContent>
+             </Card>
+diff --git a/client/src/pages/home.tsx b/client/src/pages/home.tsx
+index 9688210..ac4a446 100644
+--- a/client/src/pages/home.tsx
++++ b/client/src/pages/home.tsx
+@@ -62,7 +62,7 @@ export default function Home() {
+               <Button 
+                 size="lg"
+                 className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-lg font-semibold w-full sm:w-auto shadow-2xl px-8 py-6 rounded-full transition-all hover:scale-105"
+-                onClick={() => window.location.href = "/post"}
++                onClick={() => setLocation("/post")}
+                 data-testid="button-post-trip"
+               >
+                 Post a Trip
+diff --git a/client/src/pages/me.tsx b/client/src/pages/me.tsx
+index cdfc141..0234c7b 100644
+--- a/client/src/pages/me.tsx
++++ b/client/src/pages/me.tsx
+@@ -973,6 +973,7 @@ function ProfileEditor({ profile, onUpdate }: any) {
+ function TravelPreferences({ preferences, onUpdate }: any) {
+   const [isUpdating, setIsUpdating] = useState(false);
+   const { toast } = useToast();
++  const [, setLocation] = useLocation();
+   
+   const handleUpdateClick = () => {
+     setIsUpdating(true);
+@@ -981,7 +982,7 @@ function TravelPreferences({ preferences, onUpdate }: any) {
+       description: "Taking you to travel preferences settings.",
+     });
+     setTimeout(() => {
+-      window.location.href = '/travel-style-settings';
++      setLocation('/travel-style-settings');
+     }, 500);
+   };
+ 
+@@ -1152,7 +1153,7 @@ function SavedTrips() {
+           <Button
+             size="sm"
+             variant="outline"
+-            onClick={() => window.location.href = `/trips/${item.id}`}
++            onClick={() => setLocation(`/trips/${item.id}`)}
+             data-testid={`view-trip-${item.id}`}
+           >
+             View Trip
+@@ -1303,7 +1304,7 @@ function UserActivity() {
+                         <Button
+                           size="sm"
+                           variant="outline"
+-                          onClick={() => window.location.href = `/question/${question.id}`}
++                          onClick={() => setLocation(`/question/${question.id}`)}
+                           data-testid={`button-view-question-${question.id}`}
+                         >
+                           👁️ View
+@@ -1327,7 +1328,7 @@ function UserActivity() {
+             ) : (
+               <div className="text-center py-8">
+                 <p className="text-gray-500">No questions asked yet.</p>
+-                <Button className="mt-4" onClick={() => window.location.href = '/community'}>
++                <Button className="mt-4" onClick={() => setLocation('/community')}>
+                   Ask Your First Question
+                 </Button>
+               </div>
+@@ -1360,7 +1361,7 @@ function UserActivity() {
+                         <Button
+                           size="sm"
+                           variant="outline"
+-                          onClick={() => window.location.href = `/trips/${trip.id}`}
++                          onClick={() => setLocation(`/trips/${trip.id}`)}
+                           data-testid={`button-view-trip-${trip.id}`}
+                         >
+                           👁️ View Details
+@@ -1368,7 +1369,7 @@ function UserActivity() {
+                         <Button
+                           size="sm"
+                           variant="secondary"
+-                          onClick={() => window.location.href = `/trips/${trip.id}/requests`}
++                          onClick={() => setLocation(`/trips/${trip.id}/requests`)}
+                           data-testid={`button-view-requests-${trip.id}`}
+                         >
+                           📥 Requests
+diff --git a/client/src/pages/quick-trip-detail.tsx b/client/src/pages/quick-trip-detail.tsx
+index 64e8bc2..b183c55 100644
+--- a/client/src/pages/quick-trip-detail.tsx
++++ b/client/src/pages/quick-trip-detail.tsx
+@@ -1,4 +1,4 @@
+-import { useRoute } from "wouter";
++import { useRoute, useLocation } from "wouter";
+ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+ import { useState, useEffect, useRef } from "react";
+ import Navigation from "@/components/navigation";
+@@ -31,6 +31,7 @@ function useCountdownHours(expiresAt: string | Date | null | undefined): number
+ 
+ export default function QuickTripDetailPage() {
+   const [, params] = useRoute("/quick-trips/:id");
++  const [, setLocation] = useLocation();
+   const tripId = params?.id;
+   const { user, isAuthenticated } = useAuth();
+   const { toast } = useToast();
+@@ -118,7 +119,7 @@ export default function QuickTripDetailPage() {
+           title: "Request Accepted!",
+           description: "A chat has been opened. You can now message the traveler.",
+         });
+-        window.location.href = `/chat/${data.chatThreadId}`;
++        setLocation(`/chat-buddy/${data.chatThreadId}`);
+       } else {
+         toast({ title: "Request Updated", description: "The request has been updated." });
+       }
+@@ -213,7 +214,7 @@ export default function QuickTripDetailPage() {
+                                   <div
+                                     className="cursor-pointer hover:opacity-80 transition-opacity"
+                                     onClick={() => {
+-                                      window.location.href = `/profile/${request.user?.username || request.user?.id}`;
++                                      setLocation(`/profile/${request.user?.username || request.user?.id}`);
+                                     }}
+                                   >
+                                     <UserDisplay user={request.user} avatarSize="md" />
+@@ -263,7 +264,7 @@ export default function QuickTripDetailPage() {
+                                   <div
+                                     className="cursor-pointer hover:opacity-80 transition-opacity"
+                                     onClick={() => {
+-                                      window.location.href = `/profile/${request.user?.username || request.user?.id}`;
++                                      setLocation(`/profile/${request.user?.username || request.user?.id}`);
+                                     }}
+                                   >
+                                     <UserDisplay user={request.user} avatarSize="md" />
+@@ -274,7 +275,7 @@ export default function QuickTripDetailPage() {
+                                   <Button
+                                     size="sm"
+                                     className="bg-green-600 hover:bg-green-700"
+-                                    onClick={() => { window.location.href = `/chat/${request.chatThreadId}`; }}
++                                    onClick={() => { setLocation(`/chat-buddy/${request.chatThreadId}`); }}
+                                   >
+                                     <MessageCircle className="w-4 h-4 mr-1" /> Chat
+                                   </Button>
+@@ -383,7 +384,7 @@ export default function QuickTripDetailPage() {
+                 <div
+                   className="cursor-pointer hover:opacity-80 transition-opacity"
+                   onClick={() => {
+-                    window.location.href = `/profile/${trip.organizer?.username || trip.organizer?.id}`;
++                    setLocation(`/profile/${trip.organizer?.username || trip.organizer?.id}`);
+                   }}
+                 >
+                   <UserDisplay user={trip.organizer} avatarSize="lg" />
+@@ -405,7 +406,7 @@ export default function QuickTripDetailPage() {
+                       <Button
+                         size="sm"
+                         className="bg-green-600 hover:bg-green-700"
+-                        onClick={() => { window.location.href = `/chat/${existingInterest.chatThreadId}`; }}
++                        onClick={() => { setLocation(`/chat-buddy/${existingInterest.chatThreadId}`); }}
+                       >
+                         <MessageCircle className="w-4 h-4 mr-1" /> Open Chat
+                       </Button>
+diff --git a/client/src/pages/trip-details.tsx b/client/src/pages/trip-details.tsx
+index 6a92324..0aa3b95 100644
+--- a/client/src/pages/trip-details.tsx
++++ b/client/src/pages/trip-details.tsx
+@@ -28,6 +28,7 @@ import { EditContentDialog } from "@/components/EditContentDialog";
+ import { TripEditDialog } from "@/components/TripEditDialog";
+ import { ActionsMenu } from "@/components/ActionsMenu";
+ import { TripBreadcrumbs } from "@/components/TripBreadcrumbs";
++import { ReportTripDialog } from "@/components/ui/report-trip-dialog";
+ import newLogo from "@assets/Copy of CEY  X Letter Digital Company Logo.png";
+ 
+ interface TripDetailsProps {
+@@ -47,6 +48,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
+   const [showEditDialog, setShowEditDialog] = useState(false);
+   const [showTripEditDialog, setShowTripEditDialog] = useState(false);
+   const [showDateEditModal, setShowDateEditModal] = useState(false);
++  const [showReportDialog, setShowReportDialog] = useState(false);
+   const { setSelectedDates } = useTripsStore();
+   
+   // Get tab from URL params
+@@ -378,17 +380,16 @@ export default function TripDetails({ params }: TripDetailsProps) {
+ 
+   const handleReport = () => {
+     if (!isAuthenticated) {
+-      window.location.href = "/auth/signin";
++      setLocation(createLoginRedirectUrl(`${window.location.pathname}${window.location.search}`));
+       return;
+     }
+-    // Navigate to dedicated report page
+-    window.location.href = `/report-trip/${id}`;
++    setShowReportDialog(true);
+   };
+ 
+   const handleContact = () => {
+     if (!trip || !isAuthenticated) return;
+-    // Contact is handled through chat system - redirect to chat
+-    window.location.href = `/chat-buddy?tripId=${trip.id}`;
++    // Contact is handled through chat system
++    setLocation(`/chat-buddy?tripId=${trip.id}`);
+   };
+ 
+   const handleSendInterest = () => {
+@@ -768,7 +769,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
+                           <Button 
+                             size="sm" 
+                             className="mt-2 bg-green-600 hover:bg-green-700 text-white"
+-                            onClick={() => window.location.href = `/chat-buddy?tripId=${trip.id}`}
++                            onClick={() => setLocation(`/chat-buddy?tripId=${trip.id}`)}
+                           >
+                             Chat with Trip Members
+                           </Button>
+@@ -1091,6 +1092,15 @@ export default function TripDetails({ params }: TripDetailsProps) {
+           trip={trip as any}
+         />
+       )}
++
++      {/* Report Trip Dialog */}
++      {id && (
++        <ReportTripDialog
++          tripId={id}
++          open={showReportDialog}
++          onOpenChange={setShowReportDialog}
++        />
++      )}
+     </div>
+   );
+ }
+diff --git a/client/src/pages/trip-requests.tsx b/client/src/pages/trip-requests.tsx
+index f593ca3..7d86bf6 100644
+--- a/client/src/pages/trip-requests.tsx
++++ b/client/src/pages/trip-requests.tsx
+@@ -1,6 +1,6 @@
+ import { useState } from "react";
+ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+-import { Link, useParams } from "wouter";
++import { Link, useParams, useLocation } from "wouter";
+ import { ArrowLeft, Check, X, MessageCircle, Clock, User, Mail, Phone, Calendar } from "lucide-react";
+ import Navigation from "@/components/navigation";
+ import Footer from "@/components/Footer";
+@@ -24,6 +24,7 @@ interface TripRequestsPageProps {
+ 
+ export default function TripRequestsPage({ params }: TripRequestsPageProps) {
+   const { id } = params;
++  const [, setLocation] = useLocation();
+   const { user } = useAuth();
+   const { toast } = useToast();
+   const queryClient = useQueryClient();
+@@ -340,7 +341,7 @@ export default function TripRequestsPage({ params }: TripRequestsPageProps) {
+                           <Button
+                             size="sm"
+                             variant="ghost"
+-                            onClick={() => window.location.href = `/chat/${request.chatThreadId}`}
++                            onClick={() => setLocation(`/chat-buddy/${request.chatThreadId}`)}
+                           >
+                             <MessageCircle className="h-4 w-4 mr-2" />
+                             Chat
+@@ -354,7 +355,7 @@ export default function TripRequestsPage({ params }: TripRequestsPageProps) {
+                       <div className="flex items-center gap-3 pt-4 border-t">
+                         <Button
+                           size="sm"
+-                          onClick={() => window.location.href = `/chat/${request.chatThreadId}`}
++                          onClick={() => setLocation(`/chat-buddy/${request.chatThreadId}`)}
+                           className="bg-blue-600 hover:bg-blue-700 text-white"
+                         >
+                           <MessageCircle className="h-4 w-4 mr-2" />
+-- 
+2.50.1 (Apple Git-155)
+
