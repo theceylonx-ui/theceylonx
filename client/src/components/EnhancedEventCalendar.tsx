@@ -461,13 +461,13 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
-            <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-              <Heart className="h-4 w-4 text-green-600" />
+          <div className="flex items-center gap-2 p-2 bg-brand-subtle rounded-lg">
+            <div className="w-8 h-8 bg-brand-subtle rounded-lg flex items-center justify-center">
+              <Heart className="h-4 w-4 text-brand" />
             </div>
             <div>
               <div className="text-xs text-gray-500">Price</div>
-              <div className="text-sm font-semibold text-green-700">Free Trip</div>
+              <div className="text-sm font-semibold text-brand">Free Trip</div>
             </div>
           </div>
         )}
@@ -756,10 +756,10 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
         {/* Enhanced Day Preview Panel */}
         {isDayPreviewOpen && (
           <Card className="overflow-hidden shadow-lg border-2 border-gradient">
-            <CardHeader className="bg-gradient-to-r from-blue-50 to-emerald-50 dark:from-blue-950/30 dark:to-emerald-950/30 pb-4">
+            <CardHeader className="bg-gradient-to-r from-accent-subtle to-brand-subtle dark:from-accent/20 dark:to-brand/20 pb-4">
               <CardTitle className="text-xl font-semibold">
                 <div className="flex flex-col">
-                  <span className="bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-accent to-brand bg-clip-text text-transparent">
                     {format(new Date(calendarState.selectedDate + 'T00:00:00'), 'EEEE, MMMM d, yyyy')}
                   </span>
                   {dayResponse?.total && (

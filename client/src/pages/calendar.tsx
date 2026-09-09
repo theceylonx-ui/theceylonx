@@ -50,11 +50,11 @@ export default function CalendarPage() {
               title="📅 Master Your Travel Calendar"
               tips={[
                 "Use <strong>filter toggles</strong> to view All Trips, Free Trips, Pinned, or My Trips", 
-                "Look for <strong>bold dates with green badges</strong> - they show trip counts",
+                "Look for <strong>bold dates with coral badges</strong> - they show trip counts",
                 "Click any <strong>date</strong> to see all available trips in the preview panel",
                 "Use <strong>keyboard arrows</strong> to navigate dates quickly, Enter to toggle panel",
                 "Pin interesting trips with <strong>📌</strong> to easily find them later",
-                "Free trips show <strong>💚 Free Trip</strong> badge - perfect for budget travel"
+                "Free trips show a <strong>Free Trip</strong> badge - perfect for budget travel"
               ]}
             />
           </div>
