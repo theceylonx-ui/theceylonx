@@ -1,0 +1,287 @@
+From 5efa6ebd609f36200b4b87fc21597e59fb834460 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Wed, 9 Sep 2026 23:11:45 +0530
+Subject: [PATCH] Signed-in nav bar: match the light nav instead of a dark
+ coral bar
+
+Pradas's spec: header background #F8F4EA (cream), logo unchanged (it's
+already the brand coral, just wasn't visible against the coral bar it
+sat on), wordmark text #3F8AB4 (ocean), and the rest of the nav text in
+deep navy.
+
+Previously the signed-in nav used a coral gradient background with white
+text/translucent-white overlays -- a completely different visual system
+from the signed-out nav's light cream bar. Rather than patch that dark
+scheme's colors, replaced it: both signed-in and signed-out states now
+share one light nav (cream bg, navy link text, coral active-state
+highlight, light-surface icon buttons for notifications/profile). The
+only thing that still changes based on auth is the "HiBowan" wordmark
+color -- ocean blue when signed in, navy when signed out. This also
+collapses a lot of user-conditional className branching that existed
+only to support the old dark bar.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ client/src/components/navigation.tsx | 129 +++++++++------------------
+ 1 file changed, 44 insertions(+), 85 deletions(-)
+
+diff --git a/client/src/components/navigation.tsx b/client/src/components/navigation.tsx
+index 18b92ef..60b1b4b 100644
+--- a/client/src/components/navigation.tsx
++++ b/client/src/components/navigation.tsx
+@@ -26,19 +26,26 @@ export default function Navigation() {
+     setIsMobileMenuOpen(!isMobileMenuOpen);
+   };
+ 
++  // Same light nav for both signed-in and signed-out -- only the wordmark
++  // color changes once signed in (brand tokens: bg = ui-bg/#F8F4EA, text = accent/#3F8AB4).
++  const linkClass = (active: boolean) =>
++    active
++      ? 'bg-brand-subtle text-brand font-semibold shadow-sm'
++      : 'text-text-primary hover:text-brand hover:bg-ui-surface';
++  const mobileLinkClass = (active: boolean) =>
++    active
++      ? 'bg-brand-subtle text-brand font-semibold'
++      : 'text-text-primary hover:bg-ui-surface hover:text-brand';
++
+   return (
+-    <nav className={`${
+-      user
+-        ? 'bg-gradient-to-r from-brand to-brand-hover border-b border-brand/30 shadow-lg shadow-brand/20'
+-        : 'bg-ui-bg border-b border-ui-line/50'
+-    } sticky top-0 z-50 backdrop-blur-sm transition-all duration-300`}>
++    <nav className="bg-ui-bg border-b border-ui-line/50 sticky top-0 z-50 backdrop-blur-sm transition-all duration-300">
+       <div className="page-container">
+         <div className="flex justify-between items-center h-16">
+           {/* Logo */}
+           <Link href="/">
+             <div className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-all duration-200" data-testid="nav-logo">
+-              <img 
+-                src={Copy_of_CEY__X_Letter_Digital_Company_Logo} 
++              <img
++                src={Copy_of_CEY__X_Letter_Digital_Company_Logo}
+                 alt="HiBowan Logo"
+                 className="h-8 w-8"
+                 width="32"
+@@ -46,31 +53,23 @@ export default function Navigation() {
+                 loading="eager"
+                 data-testid="logo-icon"
+               />
+-              <span className={`text-xl font-semibold ${user ? 'text-white' : 'text-text-primary'} transition-colors duration-300`} data-testid="logo-text">HiBowan</span>
++              <span className={`text-xl font-semibold ${user ? 'text-accent' : 'text-text-primary'} transition-colors duration-300`} data-testid="logo-text">HiBowan</span>
+             </div>
+           </Link>
+ 
+           {/* Desktop Navigation */}
+           <div className="hidden md:flex items-center gap-8">
+             <Link href="/browse-trips">
+-              <span 
+-                className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${
+-                  isActive('/browse-trips') 
+-                    ? (user ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' : 'bg-brand-subtle text-brand font-semibold')
+-                    : (user ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
+-                }`}
++              <span
++                className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${linkClass(isActive('/browse-trips'))}`}
+                 data-testid="nav-browse"
+               >
+                 Browse Trips
+               </span>
+             </Link>
+             <Link href="/post">
+-              <span 
+-                className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${
+-                  isActive('/post') 
+-                    ? (user ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' : 'bg-brand-subtle text-brand font-semibold')
+-                    : (user ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
+-                }`}
++              <span
++                className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${linkClass(isActive('/post'))}`}
+                 data-testid="nav-post"
+               >
+                 Post a Trip
+@@ -78,12 +77,8 @@ export default function Navigation() {
+             </Link>
+             {user && (
+               <Link href="/calendar">
+-                <span 
+-                  className={`transition-all duration-200 cursor-pointer flex items-center gap-2 relative px-4 py-2 rounded-lg ${
+-                    isActive('/calendar') 
+-                      ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' 
+-                      : 'text-white/80 hover:text-white hover:bg-white/10'
+-                  }`}
++                <span
++                  className={`transition-all duration-200 cursor-pointer flex items-center gap-2 relative px-4 py-2 rounded-lg ${linkClass(isActive('/calendar'))}`}
+                   data-testid="nav-calendar"
+                 >
+                   <Calendar className="w-4 h-4" />
+@@ -93,12 +88,8 @@ export default function Navigation() {
+             )}
+             {user && (
+               <Link href="/chat-buddy">
+-                <span 
+-                  className={`transition-all duration-200 cursor-pointer flex items-center gap-2 relative px-4 py-2 rounded-lg ${
+-                    isActive('/chat-buddy') || location.startsWith('/chat-buddy/') 
+-                      ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' 
+-                      : 'text-white/80 hover:text-white hover:bg-white/10'
+-                  }`}
++                <span
++                  className={`transition-all duration-200 cursor-pointer flex items-center gap-2 relative px-4 py-2 rounded-lg ${linkClass(isActive('/chat-buddy') || location.startsWith('/chat-buddy/'))}`}
+                   data-testid="nav-chat"
+                 >
+                   <MessageSquare className="w-4 h-4" />
+@@ -107,24 +98,16 @@ export default function Navigation() {
+               </Link>
+             )}
+             <Link href="/community">
+-              <span 
+-                className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${
+-                  isActive('/community') 
+-                    ? (user ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' : 'bg-brand-subtle text-brand font-semibold')
+-                    : (user ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
+-                }`}
++              <span
++                className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${linkClass(isActive('/community'))}`}
+                 data-testid="nav-community"
+               >
+                 HiBowan Tribes
+               </span>
+             </Link>
+             <Link href="/about">
+-              <span 
+-                className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${
+-                  isActive('/about') 
+-                    ? (user ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' : 'bg-brand-subtle text-brand font-semibold')
+-                    : (user ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
+-                }`}
++              <span
++                className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${linkClass(isActive('/about'))}`}
+                 data-testid="nav-about"
+               >
+                 About
+@@ -136,10 +119,10 @@ export default function Navigation() {
+           <div className="flex items-center space-x-3">
+             {user && (
+               <>
+-                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2 hover:bg-white/30 hover:shadow-lg transition-all duration-200 border border-white/30">
++                <div className="bg-ui-surface hover:bg-brand-subtle rounded-lg p-2 transition-all duration-200 border border-ui-line">
+                   <EnhancedNotificationDropdown />
+                 </div>
+-                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2 hover:bg-white/30 hover:shadow-lg transition-all duration-200 border border-white/30">
++                <div className="bg-ui-surface hover:bg-brand-subtle rounded-lg p-2 transition-all duration-200 border border-ui-line">
+                   <ProfileMenu />
+                 </div>
+               </>
+@@ -150,7 +133,7 @@ export default function Navigation() {
+               variant="ghost"
+               size="sm"
+               onClick={toggleMobileMenu}
+-              className={`md:hidden p-2 ${user ? 'text-white/80 hover:text-white hover:bg-white/20' : 'text-text-secondary hover:text-brand hover:bg-ui-surface'} transition-colors duration-200`}
++              className="md:hidden p-2 text-text-secondary hover:text-brand hover:bg-ui-surface transition-colors duration-200"
+               data-testid="mobile-menu-button"
+             >
+               {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+@@ -160,15 +143,11 @@ export default function Navigation() {
+ 
+         {/* Mobile Menu */}
+         {isMobileMenuOpen && (
+-          <div className={`md:hidden py-6 border-t ${user ? 'border-brand/30 bg-gradient-to-b from-brand/95 to-brand-hover/95' : 'border-ui-line/50'} animate-fade-in backdrop-blur-sm`}>
++          <div className="md:hidden py-6 border-t border-ui-line/50 animate-fade-in backdrop-blur-sm">
+             <div className="space-y-4">
+               <Link href="/browse-trips">
+-                <div 
+-                  className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
+-                    isActive('/browse-trips') 
+-                      ? (user ? 'bg-white/20 text-white font-semibold' : 'bg-brand-subtle text-brand font-semibold')
+-                      : (user ? 'text-white/80 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
+-                  }`}
++                <div
++                  className={`block px-4 py-3 rounded-xl transition-all duration-200 ${mobileLinkClass(isActive('/browse-trips'))}`}
+                   onClick={() => setIsMobileMenuOpen(false)}
+                   data-testid="mobile-nav-browse"
+                 >
+@@ -176,12 +155,8 @@ export default function Navigation() {
+                 </div>
+               </Link>
+               <Link href="/post">
+-                <div 
+-                  className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
+-                    isActive('/post') 
+-                      ? (user ? 'bg-white/20 text-white font-semibold' : 'bg-brand-subtle text-brand font-semibold')
+-                      : (user ? 'text-white/80 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
+-                  }`}
++                <div
++                  className={`block px-4 py-3 rounded-xl transition-all duration-200 ${mobileLinkClass(isActive('/post'))}`}
+                   onClick={() => setIsMobileMenuOpen(false)}
+                   data-testid="mobile-nav-post"
+                 >
+@@ -190,12 +165,8 @@ export default function Navigation() {
+               </Link>
+               {user && (
+                 <Link href="/calendar">
+-                  <div 
+-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+-                      isActive('/calendar') 
+-                        ? 'bg-white/20 text-white font-semibold' 
+-                        : 'text-white/80 hover:bg-white/10 hover:text-white'
+-                    }`}
++                  <div
++                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${mobileLinkClass(isActive('/calendar'))}`}
+                     onClick={() => setIsMobileMenuOpen(false)}
+                     data-testid="mobile-nav-calendar"
+                   >
+@@ -206,12 +177,8 @@ export default function Navigation() {
+               )}
+               {user && (
+                 <Link href="/chat-buddy">
+-                  <div 
+-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+-                      isActive('/chat-buddy') || location.startsWith('/chat-buddy/') 
+-                        ? 'bg-white/20 text-white font-semibold' 
+-                        : 'text-white/80 hover:bg-white/10 hover:text-white'
+-                    }`}
++                  <div
++                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${mobileLinkClass(isActive('/chat-buddy') || location.startsWith('/chat-buddy/'))}`}
+                     onClick={() => setIsMobileMenuOpen(false)}
+                     data-testid="mobile-nav-chat"
+                   >
+@@ -221,12 +188,8 @@ export default function Navigation() {
+                 </Link>
+               )}
+               <Link href="/community">
+-                <div 
+-                  className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
+-                    isActive('/community') 
+-                      ? (user ? 'bg-white/20 text-white font-semibold' : 'bg-brand-subtle text-brand font-semibold')
+-                      : (user ? 'text-white/80 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
+-                  }`}
++                <div
++                  className={`block px-4 py-3 rounded-xl transition-all duration-200 ${mobileLinkClass(isActive('/community'))}`}
+                   onClick={() => setIsMobileMenuOpen(false)}
+                   data-testid="mobile-nav-community"
+                 >
+@@ -234,12 +197,8 @@ export default function Navigation() {
+                 </div>
+               </Link>
+               <Link href="/about">
+-                <div 
+-                  className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
+-                    isActive('/about') 
+-                      ? (user ? 'bg-white/20 text-white font-semibold' : 'bg-brand-subtle text-brand font-semibold')
+-                      : (user ? 'text-white/80 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
+-                  }`}
++                <div
++                  className={`block px-4 py-3 rounded-xl transition-all duration-200 ${mobileLinkClass(isActive('/about'))}`}
+                   onClick={() => setIsMobileMenuOpen(false)}
+                   data-testid="mobile-nav-about"
+                 >
+@@ -252,4 +211,4 @@ export default function Navigation() {
+       </div>
+     </nav>
+   );
+-}
+\ No newline at end of file
++}
+-- 
+2.50.1 (Apple Git-155)
+
