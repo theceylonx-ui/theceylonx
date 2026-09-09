@@ -1,0 +1,1772 @@
+From 8f8730a94434ac365950579488295288124444db Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Wed, 9 Sep 2026 21:55:41 +0530
+Subject: [PATCH] Rebrand to HiBowan: colors, sitewide rename, and safety/legal
+ copy fixes
+
+Color system:
+- Remap brand/accent/text/ui tokens in tailwind.config.ts and the CSS
+  custom properties in index.css (light + dark) from the old green/salmon
+  Ceylon Expand palette to the locked HiBowan tokens: coral-red #DB354E,
+  ocean blue #3F8AB4, deep navy #173B4D, cream #F8F4EA, white.
+- Remap legacy ceylon-green/blue/dark aliases to the same tokens so the
+  ~370 existing component usages of those classes pick up the new palette
+  without per-file changes. Also defined the ceylon-orange/red/yellow/
+  brown/cream/sand aliases that were referenced in a few places but never
+  actually defined (previously invisible/no-op classes).
+
+Sitewide rename: "Ceylon Expand" -> "HiBowan", "CeylonX Tribes"/"Ceylon
+Tribes" -> "HiBowan Tribes", theceylonx.com -> hibowan.com, @theceylonx ->
+hibowan.srilanka (including social link hrefs in the footer), across all
+~40 files that referenced the old name (page titles, meta/OG tags, footer,
+About, legal pages, comments).
+
+Known bug/copy fixes:
+- Corrected emergency numbers on Safety Guidelines (was Police 110/Medical
+  111/Fire 111; now Police 119/Ambulance 110/Fire 110).
+- Fixed the "Invalid Date" bug on Member Since / Last Updated (and a few
+  other unguarded date displays) by validating the parsed Date before
+  formatting instead of only checking the raw value was truthy.
+- Removed "(from Replit authentication)" / "Replit's trusted system" from
+  Privacy Policy, replaced with the actual Google/Facebook sign-in flow.
+- Removed the false "AI-powered" claim from the recommendations FAQ answer
+  (confirmed no AI/ML dependency anywhere in the backend) and reworded to
+  describe the real preference-matching logic.
+- Rewrote the About page's opening paragraph, which described "a local
+  wanting to share your favorite hidden spots" as an example organizer,
+  contradicting the foreigner-to-foreigner model. Also softened a similar
+  line on the landing page.
+- Purged "verified"/"verification" language implying identity checks that
+  don't exist, across Safety Guidelines, Terms of Service, Privacy Policy,
+  and the FAQ/profile pages -- confirmed via the backend that the only
+  real signals are email-address-present and Q&A activity, never phone or
+  ID. Simplified the VerificationBadges component to only the two badge
+  types the backend can actually award, and removed the generic "Verified"
+  shield that showed for any user with an email.
+- Tightened the ToS "may change with advance notice" pricing hedge to
+  match the locked model (free for travelers, indefinitely).
+
+Not included in this pass: the page-level layout/structure redesign
+(Home, Browse Trips, Trip Detail, Calendar, Tribes) matching the
+prototype, the real logo icon (still the placeholder mark), and the
+sign-up flow -- those are separate, larger changes.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ client/index.html                             |  20 +--
+ client/src/components/AuthSignIn.tsx          |   2 +-
+ client/src/components/ClerkSignIn.tsx         |   2 +-
+ client/src/components/ClerkSignUp.tsx         |   2 +-
+ client/src/components/Footer.tsx              |  32 ++---
+ client/src/components/SEO.tsx                 |  20 +--
+ client/src/components/TripBreadcrumbs.tsx     |   2 +-
+ .../components/__tests__/ActionsMenu.test.tsx |   2 +-
+ .../src/components/common/ErrorBoundary.tsx   |   2 +-
+ client/src/components/common/NetworkError.tsx |   2 +-
+ .../components/mobile/MobileNavigation.tsx    |   2 +-
+ client/src/components/navigation.tsx          |   8 +-
+ .../src/components/navigation/ProfileMenu.tsx |   2 +-
+ client/src/components/trip-card.tsx           |   8 +-
+ .../src/components/ui/verification-badges.tsx |  60 ++------
+ client/src/index.css                          | 131 +++++++++---------
+ client/src/lib/currency.ts                    |   2 +-
+ client/src/lib/formatDate.ts                  |  21 +++
+ client/src/pages/about.tsx                    |  10 +-
+ client/src/pages/admin/api-docs.tsx           |   4 +-
+ client/src/pages/admin/index.tsx              |   2 +-
+ client/src/pages/admin/settings.tsx           |   4 +-
+ client/src/pages/auth-callback.tsx            |   6 +-
+ client/src/pages/auth-magic.tsx               |   4 +-
+ client/src/pages/auth-signin.tsx              |   4 +-
+ client/src/pages/chat-buddy.tsx               |   4 +-
+ client/src/pages/community-new.tsx            |   2 +-
+ client/src/pages/contact-us.tsx               |   6 +-
+ client/src/pages/faq.tsx                      |  14 +-
+ client/src/pages/help/faq.tsx                 |  18 +--
+ client/src/pages/home.tsx                     |   2 +-
+ client/src/pages/landing.tsx                  |  18 +--
+ client/src/pages/me.tsx                       |  17 +--
+ client/src/pages/privacy-policy.tsx           |  16 +--
+ client/src/pages/question-detail.tsx          |   2 +-
+ client/src/pages/safety-guidelines.tsx        |  16 +--
+ client/src/pages/settings/account.tsx         |   4 +-
+ client/src/pages/terms-of-service.tsx         |  17 ++-
+ client/src/pages/trip-details.tsx             |  12 +-
+ client/src/pages/user-deletion.tsx            |   8 +-
+ client/src/test/setup.ts                      |   2 +-
+ client/src/utils/__tests__/validation.test.ts |   2 +-
+ client/src/utils/searchParams.ts              |   2 +-
+ client/src/utils/validation.ts                |   2 +-
+ tailwind.config.ts                            |  42 +++---
+ 45 files changed, 274 insertions(+), 286 deletions(-)
+ create mode 100644 client/src/lib/formatDate.ts
+
+diff --git a/client/index.html b/client/index.html
+index 422c189..1128f0f 100644
+--- a/client/index.html
++++ b/client/index.html
+@@ -3,15 +3,15 @@
+   <head>
+     <meta charset="UTF-8" />
+     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+-    <title>Ceylon Expand - Travel Together, Share the Journey</title>
++    <title>HiBowan - Travel Together, Share the Journey</title>
+     <meta name="description" content="Find travel companions and share journeys across Sri Lanka. Post your trip or join others for amazing adventures. Connect with fellow travelers in the beautiful island nation." />
+     
+     <!-- PWA Manifest -->
+     <link rel="manifest" href="/manifest.json" />
+-    <meta name="theme-color" content="#0F8B6E" />
++    <meta name="theme-color" content="#DB354E" />
+     <meta name="apple-mobile-web-app-capable" content="yes" />
+     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+-    <meta name="apple-mobile-web-app-title" content="Ceylon Expand" />
++    <meta name="apple-mobile-web-app-title" content="HiBowan" />
+     
+     <!-- Preload critical resources -->
+     <!-- DNS prefetch and preconnect for faster font loading -->
+@@ -48,24 +48,24 @@
+     
+     <!-- Open Graph / Social sharing -->
+     <meta property="og:type" content="website" />
+-    <meta property="og:site_name" content="Ceylon Expand" />
+-    <meta property="og:title" content="Ceylon Expand - Travel Together, Share the Journey" />
++    <meta property="og:site_name" content="HiBowan" />
++    <meta property="og:title" content="HiBowan - Travel Together, Share the Journey" />
+     <meta property="og:description" content="Find travel companions and share journeys across Sri Lanka. Post your trip or join others for amazing adventures." />
+-    <meta property="og:url" content="https://www.theceylonx.com" />
++    <meta property="og:url" content="https://www.hibowan.com" />
+     <meta property="og:image" content="https://images.unsplash.com/photo-1562602833-0f4ab2fc46e3?w=1200&q=80" />
+     <meta property="og:image:width" content="1200" />
+     <meta property="og:image:height" content="630" />
+-    <meta property="og:image:alt" content="Ceylon Expand - Travel Together in Sri Lanka" />
++    <meta property="og:image:alt" content="HiBowan - Travel Together in Sri Lanka" />
+     <meta name="twitter:card" content="summary_large_image" />
+-    <meta name="twitter:site" content="@ceylon_expand" />
+-    <meta name="twitter:title" content="Ceylon Expand - Travel Together, Share the Journey" />
++    <meta name="twitter:site" content="@hibowan.srilanka" />
++    <meta name="twitter:title" content="HiBowan - Travel Together, Share the Journey" />
+     <meta name="twitter:description" content="Find travel companions and share journeys across Sri Lanka." />
+     <meta name="twitter:image" content="https://images.unsplash.com/photo-1562602833-0f4ab2fc46e3?w=1200&q=80" />
+ 
+     <!-- Performance and SEO -->
+     <meta name="robots" content="index, follow" />
+     <meta name="googlebot" content="index, follow" />
+-    <link rel="canonical" href="https://www.theceylonx.com" />
++    <link rel="canonical" href="https://www.hibowan.com" />
+   </head>
+   <body>
+     <div id="root"></div>
+diff --git a/client/src/components/AuthSignIn.tsx b/client/src/components/AuthSignIn.tsx
+index 05ddb8c..35126fb 100644
+--- a/client/src/components/AuthSignIn.tsx
++++ b/client/src/components/AuthSignIn.tsx
+@@ -32,7 +32,7 @@ export function AuthSignIn({ onSuccess }: AuthSignInProps) {
+   return (
+     <Card className="w-full max-w-md mx-auto">
+       <CardHeader className="text-center">
+-        <CardTitle className="text-2xl">Sign in to Ceylon Expand</CardTitle>
++        <CardTitle className="text-2xl">Sign in to HiBowan</CardTitle>
+         <p className="text-gray-600">Find travel companions and share journeys</p>
+       </CardHeader>
+       <CardContent className="space-y-4">
+diff --git a/client/src/components/ClerkSignIn.tsx b/client/src/components/ClerkSignIn.tsx
+index c87f220..635e057 100644
+--- a/client/src/components/ClerkSignIn.tsx
++++ b/client/src/components/ClerkSignIn.tsx
+@@ -5,7 +5,7 @@ export default function ClerkSignInPage() {
+     <div className="min-h-screen flex items-center justify-center bg-gray-50">
+       <div className="max-w-md w-full">
+         <div className="text-center mb-8">
+-          <h1 className="text-3xl font-bold text-gray-900">Welcome to Ceylon Expand</h1>
++          <h1 className="text-3xl font-bold text-gray-900">Welcome to HiBowan</h1>
+           <p className="mt-2 text-gray-600">Your travel companion for Sri Lanka</p>
+         </div>
+         <SignIn 
+diff --git a/client/src/components/ClerkSignUp.tsx b/client/src/components/ClerkSignUp.tsx
+index fe98ced..4774d74 100644
+--- a/client/src/components/ClerkSignUp.tsx
++++ b/client/src/components/ClerkSignUp.tsx
+@@ -5,7 +5,7 @@ export default function ClerkSignUpPage() {
+     <div className="min-h-screen flex items-center justify-center bg-gray-50">
+       <div className="max-w-md w-full">
+         <div className="text-center mb-8">
+-          <h1 className="text-3xl font-bold text-gray-900">Join Ceylon Expand</h1>
++          <h1 className="text-3xl font-bold text-gray-900">Join HiBowan</h1>
+           <p className="mt-2 text-gray-600">Start your Sri Lankan adventure</p>
+         </div>
+         <SignUp 
+diff --git a/client/src/components/Footer.tsx b/client/src/components/Footer.tsx
+index b6756f5..2f35ccd 100644
+--- a/client/src/components/Footer.tsx
++++ b/client/src/components/Footer.tsx
+@@ -24,18 +24,18 @@ export default function Footer() {
+             <Link href="/">
+               <div 
+                 className="flex items-center space-x-2 mb-4 cursor-pointer hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 rounded-md p-1"
+-                aria-label="Ceylon Expand homepage"
++                aria-label="HiBowan homepage"
+                 data-testid="footer-logo-link"
+               >
+                 <img 
+                   src={newLogo} 
+-                  alt="Ceylon Expand Logo" 
++                  alt="HiBowan Logo" 
+                   className="h-6 w-6"
+                   width="24"
+                   height="24"
+                   loading="lazy"
+                 />
+-                <span className="text-xl font-bold">Ceylon Expand</span>
++                <span className="text-xl font-bold">HiBowan</span>
+               </div>
+             </Link>
+             <p className="text-gray-300 mb-4">Connect with fellow travelers and explore the beauty of Sri Lanka together.</p>
+@@ -74,7 +74,7 @@ export default function Footer() {
+                       data-testid="footer-link-community"
+                       tabIndex={0}
+                     >
+-                      CeylonX Tribes
++                      HiBowan Tribes
+                     </span>
+                   </Link>
+                 </li>
+@@ -207,46 +207,46 @@ export default function Footer() {
+         {/* Social Media Section */}
+         <div className="border-t border-gray-700 mt-8 pt-8">
+           <div className="text-center mb-6">
+-            <p className="text-gray-400 text-sm mb-4">Follow us @theceylonx</p>
++            <p className="text-gray-400 text-sm mb-4">Follow us @hibowan.srilanka</p>
+             <nav aria-label="Social media links">
+               <div className="flex justify-center items-center space-x-6" role="list">
+                 <button 
+                   className="w-10 h-10 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 inline-grid place-items-center"
+-                  aria-label="Follow Ceylon Expand on Facebook"
++                  aria-label="Follow HiBowan on Facebook"
+                   data-testid="social-facebook"
+-                  onClick={() => window.open('https://facebook.com/theceylonx', '_blank', 'noopener,noreferrer')}
++                  onClick={() => window.open('https://facebook.com/hibowan.srilanka', '_blank', 'noopener,noreferrer')}
+                 >
+                   <Facebook className="h-5 w-5 text-gray-300 group-hover:text-blue-400 block" aria-hidden="true" />
+                 </button>
+                 <button 
+                   className="w-10 h-10 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 inline-grid place-items-center"
+-                  aria-label="Follow Ceylon Expand on Instagram"
++                  aria-label="Follow HiBowan on Instagram"
+                   data-testid="social-instagram"
+-                  onClick={() => window.open('https://instagram.com/theceylonx', '_blank', 'noopener,noreferrer')}
++                  onClick={() => window.open('https://instagram.com/hibowan.srilanka', '_blank', 'noopener,noreferrer')}
+                 >
+                   <Instagram className="h-5 w-5 text-gray-300 group-hover:text-pink-400 block" aria-hidden="true" />
+                 </button>
+                 <button 
+                   className="w-10 h-10 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 inline-grid place-items-center"
+-                  aria-label="Follow Ceylon Expand on Twitter"
++                  aria-label="Follow HiBowan on Twitter"
+                   data-testid="social-twitter"
+-                  onClick={() => window.open('https://twitter.com/theceylonx', '_blank', 'noopener,noreferrer')}
++                  onClick={() => window.open('https://twitter.com/hibowan.srilanka', '_blank', 'noopener,noreferrer')}
+                 >
+                   <Twitter className="h-5 w-5 text-gray-300 group-hover:text-blue-400 block" aria-hidden="true" />
+                 </button>
+                 <button 
+                   className="w-10 h-10 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 inline-grid place-items-center"
+-                  aria-label="Follow Ceylon Expand on TikTok"
++                  aria-label="Follow HiBowan on TikTok"
+                   data-testid="social-tiktok"
+-                  onClick={() => window.open('https://tiktok.com/@theceylonx', '_blank', 'noopener,noreferrer')}
++                  onClick={() => window.open('https://tiktok.com/@hibowan.srilanka', '_blank', 'noopener,noreferrer')}
+                 >
+                   <SiTiktok className="h-5 w-5 text-gray-300 group-hover:text-red-400 block" aria-hidden="true" />
+                 </button>
+                 <button 
+                   className="w-10 h-10 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 inline-grid place-items-center"
+-                  aria-label="Follow Ceylon Expand on YouTube"
++                  aria-label="Follow HiBowan on YouTube"
+                   data-testid="social-youtube"
+-                  onClick={() => window.open('https://youtube.com/@theceylonx', '_blank', 'noopener,noreferrer')}
++                  onClick={() => window.open('https://youtube.com/@hibowan.srilanka', '_blank', 'noopener,noreferrer')}
+                 >
+                   <Youtube className="h-5 w-5 text-gray-300 group-hover:text-red-500 block" aria-hidden="true" />
+                 </button>
+@@ -256,7 +256,7 @@ export default function Footer() {
+           
+           {/* Copyright */}
+           <div className="text-center">
+-            <p className="text-gray-300">© 2026 Ceylon Expand. All rights reserved. Made with ❤️ for the tourists visiting Sri Lanka.</p>
++            <p className="text-gray-300">© 2026 HiBowan. All rights reserved. Made with ❤️ for the tourists visiting Sri Lanka.</p>
+           </div>
+         </div>
+       </div>
+diff --git a/client/src/components/SEO.tsx b/client/src/components/SEO.tsx
+index 6325c75..d5d5770 100644
+--- a/client/src/components/SEO.tsx
++++ b/client/src/components/SEO.tsx
+@@ -38,7 +38,7 @@ export function SEO({
+   ogUrl,
+   ogType = 'website',
+   twitterCard = 'summary_large_image',
+-  twitterSite = '@ceylon_expand',
++  twitterSite = '@hibowan.srilanka',
+   twitterCreator,
+   canonical,
+   robots = 'index, follow',
+@@ -139,21 +139,21 @@ export function SEO({
+ // Predefined SEO configurations for common pages
+ export const SEOConfigs = {
+   home: {
+-    title: 'Ceylon Expand - Connect with Travel Buddies in Sri Lanka',
++    title: 'HiBowan - Connect with Travel Buddies in Sri Lanka',
+     description: 'Find travel companions and share amazing journeys across Sri Lanka. Connect with like-minded travelers, split costs, and explore the pearl of the Indian Ocean together.',
+     keywords: 'sri lanka travel, travel buddies, travel companions, car sharing, trip sharing, ceylon travel, sri lanka tourism',
+     ogImage: 'https://images.unsplash.com/photo-1562602833-0f4ab2fc46e3?w=1200&q=80',
+     structuredData: {
+       '@context': 'https://schema.org',
+       '@type': 'WebSite',
+-      'name': 'Ceylon Expand',
++      'name': 'HiBowan',
+       'description': 'Travel buddy and trip sharing platform for Sri Lanka',
+-      'url': 'https://www.theceylonx.com',
++      'url': 'https://www.hibowan.com',
+       'potentialAction': {
+         '@type': 'SearchAction',
+         'target': {
+           '@type': 'EntryPoint',
+-          'urlTemplate': 'https://www.theceylonx.com/search?q={search_term_string}'
++          'urlTemplate': 'https://www.hibowan.com/search?q={search_term_string}'
+         },
+         'query-input': 'required name=search_term_string'
+       }
+@@ -161,21 +161,21 @@ export const SEOConfigs = {
+   },
+   
+   browse: {
+-    title: 'Browse Travel Opportunities - Ceylon Expand',
++    title: 'Browse Travel Opportunities - HiBowan',
+     description: 'Discover amazing travel opportunities across Sri Lanka. From Colombo to Kandy, beach trips to mountain adventures - find your perfect travel match.',
+     keywords: 'browse trips sri lanka, travel opportunities, kandy trips, colombo travel, beach trips sri lanka',
+     ogImage: 'https://images.unsplash.com/photo-1580477667995-2b94f01c9516?w=1200&q=80',
+   },
+   
+   profile: (username: string) => ({
+-    title: `${username}'s Profile - Ceylon Expand`,
+-    description: `View ${username}'s travel profile, ratings, and upcoming trips on Ceylon Expand. Connect with verified travelers across Sri Lanka.`,
++    title: `${username}'s Profile - HiBowan`,
++    description: `View ${username}'s travel profile, ratings, and upcoming trips on HiBowan. Connect with fellow travelers across Sri Lanka.`,
+     keywords: `${username} travel profile, sri lanka traveler, travel reviews`,
+     ogType: 'profile' as const,
+   }),
+   
+   trip: (tripTitle: string, destination: string) => ({
+-    title: `${tripTitle} - Travel to ${destination} | Ceylon Expand`,
++    title: `${tripTitle} - Travel to ${destination} | HiBowan`,
+     description: `Join this amazing trip to ${destination}. Connect with fellow travelers, share costs, and create unforgettable memories in Sri Lanka.`,
+     keywords: `${destination} trip, ${destination} travel, sri lanka ${destination.toLowerCase()}, travel buddies ${destination}`,
+     ogType: 'article' as const,
+@@ -183,7 +183,7 @@ export const SEOConfigs = {
+       '@context': 'https://schema.org',
+       '@type': 'TouristTrip',
+       'name': tripTitle,
+-      'description': `Travel to ${destination} with Ceylon Expand`,
++      'description': `Travel to ${destination} with HiBowan`,
+       'touristType': 'SharedTrip',
+       'itinerary': {
+         '@type': 'TouristDestination',
+diff --git a/client/src/components/TripBreadcrumbs.tsx b/client/src/components/TripBreadcrumbs.tsx
+index 270f622..c3213f7 100644
+--- a/client/src/components/TripBreadcrumbs.tsx
++++ b/client/src/components/TripBreadcrumbs.tsx
+@@ -1,5 +1,5 @@
+ /**
+- * TripBreadcrumbs component for Ceylon Expand trip detail pages
++ * TripBreadcrumbs component for HiBowan trip detail pages
+  * Displays breadcrumb navigation: Home / Trips / {Region} / {Destination} / {Title}
+  */
+ import { Link } from "wouter";
+diff --git a/client/src/components/__tests__/ActionsMenu.test.tsx b/client/src/components/__tests__/ActionsMenu.test.tsx
+index c3d394e..4742260 100644
+--- a/client/src/components/__tests__/ActionsMenu.test.tsx
++++ b/client/src/components/__tests__/ActionsMenu.test.tsx
+@@ -1,5 +1,5 @@
+ /**
+- * Ceylon Expand - ActionsMenu Component Tests
++ * HiBowan - ActionsMenu Component Tests
+  * Demonstrates comprehensive component testing patterns
+  */
+ 
+diff --git a/client/src/components/common/ErrorBoundary.tsx b/client/src/components/common/ErrorBoundary.tsx
+index f1f3edd..4307aa9 100644
+--- a/client/src/components/common/ErrorBoundary.tsx
++++ b/client/src/components/common/ErrorBoundary.tsx
+@@ -144,7 +144,7 @@ class ErrorBoundary extends Component<Props, State> {
+       `Time: ${new Date().toISOString()}\n\n` +
+       `Please describe what you were doing when this error occurred:\n`
+     );
+-    window.open(`mailto:support@ceylonx.com?subject=${subject}&body=${body}`);
++    window.open(`mailto:support@hibowan.com?subject=${subject}&body=${body}`);
+   };
+ 
+   render() {
+diff --git a/client/src/components/common/NetworkError.tsx b/client/src/components/common/NetworkError.tsx
+index 0c6fe01..f49f2ac 100644
+--- a/client/src/components/common/NetworkError.tsx
++++ b/client/src/components/common/NetworkError.tsx
+@@ -57,7 +57,7 @@ export function NetworkError({
+     if (message) return message;
+     if (!isOnline) return "You're currently offline. Please check your internet connection.";
+     if (retryAttempts > 2) return "Multiple connection attempts failed. There might be a server issue.";
+-    return "Unable to connect to Ceylon Expand servers. This might be a temporary network issue.";
++    return "Unable to connect to HiBowan servers. This might be a temporary network issue.";
+   };
+ 
+   const getErrorTitle = () => {
+diff --git a/client/src/components/mobile/MobileNavigation.tsx b/client/src/components/mobile/MobileNavigation.tsx
+index 7c08b10..68b0573 100644
+--- a/client/src/components/mobile/MobileNavigation.tsx
++++ b/client/src/components/mobile/MobileNavigation.tsx
+@@ -199,7 +199,7 @@ export function MobileNavigation() {
+             <div className="p-4 border-t border-ui-line bg-ui-surface">
+               <div className="text-center">
+                 <p className="text-sm text-text-muted">
+-                  Ceylon Expand v1.0
++                  HiBowan v1.0
+                 </p>
+                 <p className="text-xs text-text-muted mt-1">
+                   Travel Together, Share the Journey
+diff --git a/client/src/components/navigation.tsx b/client/src/components/navigation.tsx
+index d8bdda3..826cd0e 100644
+--- a/client/src/components/navigation.tsx
++++ b/client/src/components/navigation.tsx
+@@ -39,14 +39,14 @@ export default function Navigation() {
+             <div className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-all duration-200" data-testid="nav-logo">
+               <img 
+                 src={Copy_of_CEY__X_Letter_Digital_Company_Logo} 
+-                alt="Ceylon Expand Logo" 
++                alt="HiBowan Logo" 
+                 className="h-8 w-8"
+                 width="32"
+                 height="32"
+                 loading="eager"
+                 data-testid="logo-icon"
+               />
+-              <span className={`text-xl font-semibold ${user ? 'text-white' : 'text-text-primary'} transition-colors duration-300`} data-testid="logo-text">Ceylon Expand</span>
++              <span className={`text-xl font-semibold ${user ? 'text-white' : 'text-text-primary'} transition-colors duration-300`} data-testid="logo-text">HiBowan</span>
+             </div>
+           </Link>
+ 
+@@ -115,7 +115,7 @@ export default function Navigation() {
+                 }`}
+                 data-testid="nav-community"
+               >
+-                CeylonX Tribes
++                HiBowan Tribes
+               </span>
+             </Link>
+             <Link href="/about">
+@@ -230,7 +230,7 @@ export default function Navigation() {
+                   onClick={() => setIsMobileMenuOpen(false)}
+                   data-testid="mobile-nav-community"
+                 >
+-                  CeylonX Tribes
++                  HiBowan Tribes
+                 </div>
+               </Link>
+               <Link href="/about">
+diff --git a/client/src/components/navigation/ProfileMenu.tsx b/client/src/components/navigation/ProfileMenu.tsx
+index 2567931..edffb42 100644
+--- a/client/src/components/navigation/ProfileMenu.tsx
++++ b/client/src/components/navigation/ProfileMenu.tsx
+@@ -150,7 +150,7 @@ export default function ProfileMenu({ className }: ProfileMenuProps) {
+             onClick={() => handleMenuItemClick('CeylonsTribes')}
+           >
+             <Users className="mr-2 h-4 w-4" />
+-            CeylonX Tribes
++            HiBowan Tribes
+           </DropdownMenuItem>
+         </Link>
+ 
+diff --git a/client/src/components/trip-card.tsx b/client/src/components/trip-card.tsx
+index bcad040..2c63526 100644
+--- a/client/src/components/trip-card.tsx
++++ b/client/src/components/trip-card.tsx
+@@ -421,7 +421,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
+       return trip.imageUrl;
+     }
+     
+-    // Priority 3: Ceylon Expand logo as fallback
++    // Priority 3: HiBowan logo as fallback
+     console.log('Using fallback image');
+     return newLogo;
+   };
+@@ -435,7 +435,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
+       <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group border-0 shadow-sm" data-testid={`trip-card-${trip.id}`}>
+         <div className="relative">
+           {getTripImage() === newLogo && !trip.mediaUrls?.length && !trip.imageUrl ? (
+-            // Beautiful Ceylon Expand fallback design
++            // Beautiful HiBowan fallback design
+             <div className="w-full h-48 bg-gradient-to-br from-ceylon-green via-ceylon-blue to-purple-600 flex flex-col items-center justify-center relative overflow-hidden">
+               {/* Background pattern */}
+               <div className="absolute inset-0 opacity-10">
+@@ -456,9 +456,9 @@ export default function TripCard({ trip, badges }: TripCardProps) {
+                 </svg>
+               </div>
+               
+-              {/* Ceylon Expand text */}
++              {/* HiBowan text */}
+               <div className="text-center text-white">
+-                <div className="text-lg font-bold tracking-wide drop-shadow-sm">Ceylon Expand</div>
++                <div className="text-lg font-bold tracking-wide drop-shadow-sm">HiBowan</div>
+                 <div className="text-xs opacity-90 mt-1">Travel Together</div>
+               </div>
+             </div>
+diff --git a/client/src/components/ui/verification-badges.tsx b/client/src/components/ui/verification-badges.tsx
+index b97d81b..bd7113f 100644
+--- a/client/src/components/ui/verification-badges.tsx
++++ b/client/src/components/ui/verification-badges.tsx
+@@ -1,4 +1,4 @@
+-import { Shield, CheckCircle, Mail, Phone, CreditCard, Star, Award } from "lucide-react";
++import { Mail, Star, Award } from "lucide-react";
+ import { Badge } from "@/components/ui/badge";
+ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+ import { cn } from "@/lib/utils";
+@@ -12,40 +12,21 @@ interface VerificationBadgesProps {
+   showText?: boolean;
+ }
+ 
++// Only badges the backend actually awards (see storage.ts updateUserVerificationBadges) —
++// no identity/ID/phone verification exists on this platform, trust is activity-based only.
+ const badgeConfig = {
+-  // Current working badges
+   email_verified: {
+     icon: Mail,
+-    label: "Email Verified",
+-    description: "Email address has been verified",
++    label: "Email confirmed",
++    description: "Email address has been confirmed",
+     color: "bg-green-100 text-green-800 border-green-200"
+   },
+   community_leader: {
+     icon: Star,
+-    label: "Community Leader", 
++    label: "Community Leader",
+     description: "Active in Q&A community with helpful answers",
+     color: "bg-yellow-100 text-yellow-800 border-yellow-200"
+   },
+-  
+-  // Legacy badge names (for backward compatibility)
+-  email: {
+-    icon: Mail,
+-    label: "Email Verified",
+-    description: "Email address has been verified",
+-    color: "bg-green-100 text-green-800 border-green-200"
+-  },
+-  phone: {
+-    icon: Phone,
+-    label: "Phone Verified", 
+-    description: "Phone number has been verified",
+-    color: "bg-blue-100 text-blue-800 border-blue-200"
+-  },
+-  id: {
+-    icon: CreditCard,
+-    label: "ID Verified",
+-    description: "Government ID has been verified",
+-    color: "bg-purple-100 text-purple-800 border-purple-200"
+-  },
+   host: {
+     icon: Star,
+     label: "Trusted Host",
+@@ -54,7 +35,7 @@ const badgeConfig = {
+   },
+   plus: {
+     icon: Award,
+-    label: "Ceylon Plus",
++    label: "HiBowan Plus",
+     description: "Premium member with enhanced features",
+     color: "bg-orange-100 text-orange-800 border-orange-200"
+   }
+@@ -84,35 +65,14 @@ export function VerificationBadges({
+   showText = true
+ }: VerificationBadgesProps) {
+   const validBadges = badges.filter(badge => badge in badgeConfig);
+-  
+-  if (validBadges.length === 0 && !isVerified) {
++
++  if (validBadges.length === 0) {
+     return null;
+   }
+ 
+   return (
+     <div className={cn("flex items-center gap-1 flex-wrap", className)}>
+-      {/* Main verification badge */}
+-      {isVerified && (
+-        <Tooltip>
+-          <TooltipTrigger asChild>
+-            <Badge 
+-              variant="secondary"
+-              className={cn(
+-                "flex items-center gap-1 bg-green-100 text-green-800 border-green-200",
+-                sizeClasses[size].badge
+-              )}
+-            >
+-              <Shield className={cn("text-green-600", sizeClasses[size].icon)} />
+-              {showText && "Verified"}
+-            </Badge>
+-          </TooltipTrigger>
+-          <TooltipContent>
+-            <p>Verified user with level {verificationLevel} trust score</p>
+-          </TooltipContent>
+-        </Tooltip>
+-      )}
+-
+-      {/* Individual verification badges */}
++      {/* Activity badges only — HiBowan has no identity verification, so no generic "Verified" claim here */}
+       {validBadges.map((badgeType) => {
+         const config = badgeConfig[badgeType as keyof typeof badgeConfig];
+         const IconComponent = config.icon;
+diff --git a/client/src/index.css b/client/src/index.css
+index 025d998..58ab8ee 100644
+--- a/client/src/index.css
++++ b/client/src/index.css
+@@ -3,91 +3,92 @@
+ @tailwind utilities;
+ 
+ :root {
+-  /* Ceylon Expand Design System - Light Mode */
+-  --background: hsl(0 0% 100%);
+-  --foreground: hsl(0 0% 4%);
+-  --card: hsl(0 0% 97%);
+-  --card-foreground: hsl(0 0% 4%);
++  /* HiBowan Design System - Light Mode */
++  /* Locked tokens: coral #DB354E, ocean #3F8AB4, navy #173B4D, cream #F8F4EA, white #FFFFFF */
++  --background: hsl(43 50% 95%);
++  --foreground: hsl(200 54% 20%);
++  --card: hsl(0 0% 100%);
++  --card-foreground: hsl(200 54% 20%);
+   --popover: hsl(0 0% 100%);
+-  --popover-foreground: hsl(0 0% 4%);
+-  --primary: hsl(163 65% 31%);
++  --popover-foreground: hsl(200 54% 20%);
++  --primary: hsl(351 70% 53%);
+   --primary-foreground: hsl(0 0% 100%);
+   --secondary: hsl(0 0% 100%);
+-  --secondary-foreground: hsl(163 65% 31%);
+-  --muted: hsl(0 0% 97%);
+-  --muted-foreground: hsl(0 0% 44%);
+-  --accent: hsl(163 65% 95%);
+-  --accent-foreground: hsl(163 65% 31%);
++  --secondary-foreground: hsl(351 70% 53%);
++  --muted: hsl(43 35% 93%);
++  --muted-foreground: hsl(200 20% 45%);
++  --accent: hsl(202 48% 94%);
++  --accent-foreground: hsl(202 48% 40%);
+   --destructive: hsl(358 76% 51%);
+   --destructive-foreground: hsl(0 0% 100%);
+-  --border: hsl(0 0% 90%);
+-  --input: hsl(0 0% 97%);
+-  --ring: hsl(163 65% 31%);
++  --border: hsl(40 25% 85%);
++  --input: hsl(43 35% 96%);
++  --ring: hsl(351 70% 53%);
+   --radius: 0.75rem;
+-  
++
+   /* Enhanced text hierarchy */
+-  --text-primary: hsl(0 0% 4%);
+-  --text-secondary: hsl(0 0% 29%);
+-  --text-muted: hsl(0 0% 44%);
+-  
++  --text-primary: hsl(200 54% 20%);
++  --text-secondary: hsl(200 25% 38%);
++  --text-muted: hsl(200 15% 52%);
++
+   /* Brand colors */
+-  --brand: hsl(153 60% 30%);       /* #1E7A50 forest green */
+-  --brand-hover: hsl(153 60% 23%);
+-  --brand-subtle: hsl(153 60% 95%);
+-  --accent: hsl(10 80% 78%);       /* #F4A99A salmon pink */
+-  --accent-hover: hsl(10 80% 70%);
+-  --accent-subtle: hsl(10 80% 97%);
+-  
++  --brand: hsl(351 70% 53%);       /* #DB354E coral-red */
++  --brand-hover: hsl(351 70% 43%);
++  --brand-subtle: hsl(351 70% 96%);
++  --accent: hsl(202 48% 48%);      /* #3F8AB4 ocean blue */
++  --accent-hover: hsl(202 48% 38%);
++  --accent-subtle: hsl(202 48% 95%);
++
+   /* UI surfaces */
+-  --ui-bg: hsl(0 0% 100%);
+-  --ui-surface: hsl(0 0% 97%);
+-  --ui-line: hsl(0 0% 90%);
+-  
++  --ui-bg: hsl(43 50% 95%);
++  --ui-surface: hsl(0 0% 100%);
++  --ui-line: hsl(40 25% 85%);
++
+   /* Danger state */
+   --danger: hsl(358 76% 51%);
+   --danger-hover: hsl(358 76% 40%);
+ }
+ 
+ .dark {
+-  /* Ceylon Expand Design System - Dark Mode */
+-  --background: hsl(0 0% 4%);
+-  --foreground: hsl(0 0% 96%);
+-  --card: hsl(0 0% 8%);
+-  --card-foreground: hsl(0 0% 96%);
+-  --popover: hsl(0 0% 4%);
+-  --popover-foreground: hsl(0 0% 96%);
+-  --primary: hsl(163 65% 45%);
++  /* HiBowan Design System - Dark Mode */
++  --background: hsl(200 55% 10%);
++  --foreground: hsl(43 40% 93%);
++  --card: hsl(200 45% 14%);
++  --card-foreground: hsl(43 40% 93%);
++  --popover: hsl(200 55% 10%);
++  --popover-foreground: hsl(43 40% 93%);
++  --primary: hsl(351 75% 60%);
+   --primary-foreground: hsl(0 0% 100%);
+-  --secondary: hsl(0 0% 8%);
+-  --secondary-foreground: hsl(163 65% 45%);
+-  --muted: hsl(0 0% 8%);
+-  --muted-foreground: hsl(0 0% 65%);
+-  --accent: hsl(0 0% 8%);
+-  --accent-foreground: hsl(163 65% 45%);
+-  --destructive: hsl(358 76% 51%);
++  --secondary: hsl(200 40% 16%);
++  --secondary-foreground: hsl(351 75% 60%);
++  --muted: hsl(200 40% 16%);
++  --muted-foreground: hsl(43 15% 65%);
++  --accent: hsl(200 40% 18%);
++  --accent-foreground: hsl(202 55% 65%);
++  --destructive: hsl(358 76% 55%);
+   --destructive-foreground: hsl(0 0% 100%);
+-  --border: hsl(0 0% 16%);
+-  --input: hsl(0 0% 8%);
+-  --ring: hsl(163 65% 45%);
+-  
++  --border: hsl(200 30% 22%);
++  --input: hsl(200 40% 16%);
++  --ring: hsl(351 75% 60%);
++
+   /* Enhanced text hierarchy - dark mode */
+-  --text-primary: hsl(0 0% 96%);
+-  --text-secondary: hsl(0 0% 81%);
+-  --text-muted: hsl(0 0% 60%);
+-  
++  --text-primary: hsl(43 40% 93%);
++  --text-secondary: hsl(43 15% 75%);
++  --text-muted: hsl(43 10% 55%);
++
+   /* Brand colors - dark mode */
+-  --brand: hsl(153 60% 45%);
+-  --brand-hover: hsl(153 60% 38%);
+-  --brand-subtle: hsl(153 60% 8%);
+-  --accent: hsl(10 80% 72%);
+-  --accent-hover: hsl(10 80% 62%);
+-  --accent-subtle: hsl(10 80% 10%);
+-  
++  --brand: hsl(351 75% 60%);
++  --brand-hover: hsl(351 75% 68%);
++  --brand-subtle: hsl(351 50% 16%);
++  --accent: hsl(202 55% 60%);
++  --accent-hover: hsl(202 55% 68%);
++  --accent-subtle: hsl(202 45% 16%);
++
+   /* UI surfaces - dark mode */
+-  --ui-bg: hsl(0 0% 4%);
+-  --ui-surface: hsl(0 0% 8%);
+-  --ui-line: hsl(0 0% 16%);
+-  
++  --ui-bg: hsl(200 55% 10%);
++  --ui-surface: hsl(200 45% 14%);
++  --ui-line: hsl(200 30% 22%);
++
+   /* Danger state - dark mode */
+   --danger: hsl(358 76% 55%);
+   --danger-hover: hsl(358 76% 50%);
+diff --git a/client/src/lib/currency.ts b/client/src/lib/currency.ts
+index a53adfc..9996cc2 100644
+--- a/client/src/lib/currency.ts
++++ b/client/src/lib/currency.ts
+@@ -1,4 +1,4 @@
+-// LKR formatting helpers for Ceylon Expand
++// LKR formatting helpers for HiBowan
+ 
+ export function formatLKR(amount: number): string {
+   return new Intl.NumberFormat('en-LK', {
+diff --git a/client/src/lib/formatDate.ts b/client/src/lib/formatDate.ts
+new file mode 100644
+index 0000000..5a08748
+--- /dev/null
++++ b/client/src/lib/formatDate.ts
+@@ -0,0 +1,21 @@
++/**
++ * Safely formats a date-like value, falling back instead of rendering "Invalid Date"
++ * when the value is missing or unparseable.
++ */
++function toValidDate(value: unknown): Date | null {
++  if (!value) return null;
++  const date = value instanceof Date ? value : new Date(value as string);
++  return isNaN(date.getTime()) ? null : date;
++}
++
++export function formatMemberSince(value: unknown, fallback = "Recently"): string {
++  const date = toValidDate(value);
++  if (!date) return fallback;
++  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
++}
++
++export function formatShortDate(value: unknown, fallback = "Recently"): string {
++  const date = toValidDate(value);
++  if (!date) return fallback;
++  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
++}
+diff --git a/client/src/pages/about.tsx b/client/src/pages/about.tsx
+index e6b0dd4..a6d0771 100644
+--- a/client/src/pages/about.tsx
++++ b/client/src/pages/about.tsx
+@@ -11,7 +11,7 @@ export default function AboutPage() {
+       <section className="bg-gradient-to-br from-ceylon-green/10 via-white to-ceylon-orange/5 py-16 sm:py-24">
+         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+           <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
+-            About <span className="text-ceylon-green">Ceylon Expand</span>
++            About <span className="text-ceylon-green">HiBowan</span>
+           </h1>
+           <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
+             A community-driven travel platform built for exploring the beauty of Sri Lanka — together.
+@@ -23,7 +23,7 @@ export default function AboutPage() {
+         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+           <div className="prose prose-lg max-w-none">
+             <p className="text-gray-700 text-lg leading-relaxed mb-8">
+-              Whether you're a solo traveler looking for companions, a local wanting to share your favorite hidden spots, or a group seeking to split costs on an adventure, Ceylon Expand connects you with like-minded travelers heading the same way.
++              HiBowan is designed for people visiting Sri Lanka — solo travelers looking for companions, or groups seeking to split costs on an adventure. Post the trip you're planning, or find one already forming, and connect with fellow travelers heading the same way.
+             </p>
+           </div>
+ 
+@@ -79,7 +79,7 @@ export default function AboutPage() {
+                   </div>
+                   <div>
+                     <h3 className="font-semibold text-gray-900 text-lg mb-2">Community Q&A</h3>
+-                    <p className="text-gray-600">Got questions about traveling in Sri Lanka? Ask the Ceylon Tribes community — real travelers sharing real experiences.</p>
++                    <p className="text-gray-600">Got questions about traveling in Sri Lanka? Ask the HiBowan Tribes community — real travelers sharing real experiences.</p>
+                   </div>
+                 </div>
+               </CardContent>
+@@ -87,9 +87,9 @@ export default function AboutPage() {
+           </div>
+ 
+           <div className="bg-gradient-to-br from-ceylon-green/5 to-ceylon-orange/5 rounded-2xl p-8 sm:p-12 mb-16">
+-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Why Ceylon Expand?</h2>
++            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Why HiBowan?</h2>
+             <p className="text-gray-700 text-lg leading-relaxed">
+-              Sri Lanka is a small island with enormous diversity — ancient temples, pristine beaches, lush tea plantations, and vibrant wildlife. But navigating it alone can be daunting and expensive. We believe travel is better when shared. Ceylon Expand makes it easy to find companions who share your interests, split costs, and create unforgettable memories across this incredible island.
++              Sri Lanka is a small island with enormous diversity — ancient temples, pristine beaches, lush tea plantations, and vibrant wildlife. But navigating it alone can be daunting and expensive. We believe travel is better when shared. HiBowan makes it easy to find companions who share your interests, split costs, and create unforgettable memories across this incredible island.
+             </p>
+           </div>
+ 
+diff --git a/client/src/pages/admin/api-docs.tsx b/client/src/pages/admin/api-docs.tsx
+index 9a71e0f..33f3109 100644
+--- a/client/src/pages/admin/api-docs.tsx
++++ b/client/src/pages/admin/api-docs.tsx
+@@ -333,7 +333,7 @@ export default function APIDocsPage() {
+           <div>
+             <h1 className="text-3xl font-bold">API Documentation</h1>
+             <p className="text-muted-foreground">
+-              Complete reference for the Ceylon Expand Admin API
++              Complete reference for the HiBowan Admin API
+             </p>
+           </div>
+           <div className="flex items-center gap-2">
+@@ -628,7 +628,7 @@ export default function APIDocsPage() {
+                 <div>
+                   <h4 className="font-semibold mb-2">Authentication Methods</h4>
+                   <p className="text-sm text-muted-foreground mb-4">
+-                    The Ceylon Expand Admin API uses JWT-based authentication with role-based access control.
++                    The HiBowan Admin API uses JWT-based authentication with role-based access control.
+                   </p>
+                   
+                   <div className="space-y-4">
+diff --git a/client/src/pages/admin/index.tsx b/client/src/pages/admin/index.tsx
+index 6b936fb..d1fd51e 100644
+--- a/client/src/pages/admin/index.tsx
++++ b/client/src/pages/admin/index.tsx
+@@ -114,7 +114,7 @@ export default function AdminOverviewPage() {
+         <div>
+           <h1 className="text-3xl font-bold text-gray-900">Admin Overview</h1>
+           <p className="text-gray-600 mt-2">
+-            Welcome back, {adminUser?.email}. Here's what's happening on Ceylon Expand.
++            Welcome back, {adminUser?.email}. Here's what's happening on HiBowan.
+           </p>
+         </div>
+ 
+diff --git a/client/src/pages/admin/settings.tsx b/client/src/pages/admin/settings.tsx
+index fc2fd20..9888016 100644
+--- a/client/src/pages/admin/settings.tsx
++++ b/client/src/pages/admin/settings.tsx
+@@ -60,11 +60,11 @@ export default function AdminSettingsPage() {
+             <CardContent className="space-y-4">
+               <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                 <span className="text-sm font-medium text-gray-700">Platform Name</span>
+-                <span className="text-sm text-gray-600">Ceylon Expand</span>
++                <span className="text-sm text-gray-600">HiBowan</span>
+               </div>
+               <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                 <span className="text-sm font-medium text-gray-700">Domain</span>
+-                <span className="text-sm text-gray-600">www.theceylonx.com</span>
++                <span className="text-sm text-gray-600">www.hibowan.com</span>
+               </div>
+               <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                 <span className="text-sm font-medium text-gray-700">Environment</span>
+diff --git a/client/src/pages/auth-callback.tsx b/client/src/pages/auth-callback.tsx
+index 9046c66..4d4a1bf 100644
+--- a/client/src/pages/auth-callback.tsx
++++ b/client/src/pages/auth-callback.tsx
+@@ -65,13 +65,13 @@ export default function AuthCallbackPage() {
+         <div className="text-center mb-8">
+           <img 
+             src={newLogo} 
+-            alt="Ceylon Expand" 
++            alt="HiBowan" 
+             className="h-16 w-auto mx-auto mb-4"
+             width="64"
+             height="64"
+             loading="eager"
+           />
+-          <h1 className="text-3xl font-bold text-gray-900">Ceylon Expand</h1>
++          <h1 className="text-3xl font-bold text-gray-900">HiBowan</h1>
+         </div>
+ 
+         <Card className="w-full">
+@@ -91,7 +91,7 @@ export default function AuthCallbackPage() {
+                 <CheckCircle className="h-12 w-12 mx-auto text-green-500" />
+                 <div>
+                   <p className="font-medium text-green-700">Authentication successful!</p>
+-                  <p className="text-sm text-gray-600 mt-1">Welcome to Ceylon Expand. Redirecting to home page...</p>
++                  <p className="text-sm text-gray-600 mt-1">Welcome to HiBowan. Redirecting to home page...</p>
+                 </div>
+               </>
+             )}
+diff --git a/client/src/pages/auth-magic.tsx b/client/src/pages/auth-magic.tsx
+index 2f2b568..0b91f34 100644
+--- a/client/src/pages/auth-magic.tsx
++++ b/client/src/pages/auth-magic.tsx
+@@ -60,13 +60,13 @@ export default function AuthMagicPage() {
+         <div className="text-center mb-8">
+           <img 
+             src={newLogo} 
+-            alt="Ceylon Expand" 
++            alt="HiBowan" 
+             className="h-16 w-auto mx-auto mb-4"
+             width="64"
+             height="64"
+             loading="eager"
+           />
+-          <h1 className="text-3xl font-bold text-gray-900">Ceylon Expand</h1>
++          <h1 className="text-3xl font-bold text-gray-900">HiBowan</h1>
+         </div>
+ 
+         <Card className="w-full">
+diff --git a/client/src/pages/auth-signin.tsx b/client/src/pages/auth-signin.tsx
+index 7978a29..5e7c81f 100644
+--- a/client/src/pages/auth-signin.tsx
++++ b/client/src/pages/auth-signin.tsx
+@@ -40,13 +40,13 @@ export default function AuthSignInPage() {
+         <div className="text-center mb-8">
+           <img 
+             src={newLogo} 
+-            alt="Ceylon Expand" 
++            alt="HiBowan" 
+             className="h-16 w-auto mx-auto mb-4"
+             width="64"
+             height="64"
+             loading="eager"
+           />
+-          <h1 className="text-3xl font-bold text-gray-900">Ceylon Expand</h1>
++          <h1 className="text-3xl font-bold text-gray-900">HiBowan</h1>
+           <p className="text-gray-600">Your travel companion in Sri Lanka</p>
+         </div>
+ 
+diff --git a/client/src/pages/chat-buddy.tsx b/client/src/pages/chat-buddy.tsx
+index 7b7ea67..6dcc645 100644
+--- a/client/src/pages/chat-buddy.tsx
++++ b/client/src/pages/chat-buddy.tsx
+@@ -69,7 +69,7 @@ function ChatThreadsListView() {
+     return (
+       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800">
+         <Navigation />
+-        {/* Chat Buddy Header with beautiful gradient like CeylonX Tribes */}
++        {/* Chat Buddy Header with beautiful gradient like HiBowan Tribes */}
+         <div className="py-8">
+           <div className="max-w-6xl mx-auto p-6">
+             <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-2xl shadow-lg shadow-emerald-500/20 p-8 mb-8">
+@@ -94,7 +94,7 @@ function ChatThreadsListView() {
+       <Navigation />
+       <div className="py-8">
+         <div className="max-w-6xl mx-auto p-6">
+-          {/* Chat Buddy Header with beautiful gradient like CeylonX Tribes */}
++          {/* Chat Buddy Header with beautiful gradient like HiBowan Tribes */}
+           <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-2xl shadow-lg shadow-emerald-500/20 p-8 mb-8">
+             <div className="flex items-center justify-between">
+               <div>
+diff --git a/client/src/pages/community-new.tsx b/client/src/pages/community-new.tsx
+index 11a77e6..4fc8ac7 100644
+--- a/client/src/pages/community-new.tsx
++++ b/client/src/pages/community-new.tsx
+@@ -134,7 +134,7 @@ export default function CommunityPage() {
+               <div>
+                 <div className="flex items-center space-x-3 mb-2">
+                   <MessageSquare className="w-6 h-6" />
+-                  <h1 className="text-2xl md:text-3xl font-bold" data-testid="page-title">CeylonX Tribes</h1>
++                  <h1 className="text-2xl md:text-3xl font-bold" data-testid="page-title">HiBowan Tribes</h1>
+                 </div>
+                 <p className="text-base opacity-90" data-testid="page-subtitle">
+                   Ask questions, share knowledge, and connect with fellow travelers exploring Sri Lanka
+diff --git a/client/src/pages/contact-us.tsx b/client/src/pages/contact-us.tsx
+index f009c34..5594ae6 100644
+--- a/client/src/pages/contact-us.tsx
++++ b/client/src/pages/contact-us.tsx
+@@ -117,7 +117,7 @@ export default function ContactUs() {
+                         <SelectItem value="chat-buddy">Chat Buddy & Messaging</SelectItem>
+                         <SelectItem value="photos">Photo Upload Issues</SelectItem>
+                         <SelectItem value="calendar">Calendar & Filters</SelectItem>
+-                        <SelectItem value="community">CeylonX Tribes & Q&A</SelectItem>
++                        <SelectItem value="community">HiBowan Tribes & Q&A</SelectItem>
+                         <SelectItem value="notifications">Notifications</SelectItem>
+                         <SelectItem value="privacy">Privacy & Data</SelectItem>
+                         <SelectItem value="feedback">Feedback & Suggestions</SelectItem>
+@@ -260,7 +260,7 @@ export default function ContactUs() {
+                 </div>
+                 
+                 <div>
+-                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-1">What is CeylonX Tribes?</h4>
++                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-1">What is HiBowan Tribes?</h4>
+                   <p className="text-sm text-gray-600 dark:text-gray-300">
+                     Our community Q&A where you can ask questions and share travel knowledge about Sri Lanka.
+                   </p>
+@@ -305,7 +305,7 @@ export default function ContactUs() {
+             or want to share feedback, our team is ready to assist you.
+           </p>
+           <p className="text-sm text-gray-500 dark:text-gray-400">
+-            Thank you for being part of the Ceylon Expand community!
++            Thank you for being part of the HiBowan community!
+           </p>
+         </div>
+       </div>
+diff --git a/client/src/pages/faq.tsx b/client/src/pages/faq.tsx
+index 2fce942..33eab2d 100644
+--- a/client/src/pages/faq.tsx
++++ b/client/src/pages/faq.tsx
+@@ -10,7 +10,7 @@ export default function FAQ() {
+   const faqs = [
+     {
+       id: "posting-trips",
+-      question: "How do I post a trip on Ceylon Expand?",
++      question: "How do I post a trip on HiBowan?",
+       answer: "To post a trip, you need to sign up and log in first. Once logged in, click on 'Post Trip' in the navigation menu. Fill in all the required details including your route (from and to locations), travel date and time, number of available seats, price per person, and contact information. You can also add optional notes about your trip. After submitting, your trip will appear in the browse section for other travelers to find.",
+       icon: <Users className="h-5 w-5 text-ceylon-blue" />
+     },
+@@ -23,7 +23,7 @@ export default function FAQ() {
+     {
+       id: "safety-traveling",
+       question: "Is it safe to travel with people I don't know?",
+-      answer: "Ceylon Expand promotes safe travel practices. Every user must create a complete profile with verified contact information. You can see trip organizers' profiles, read comments from other travelers, and communicate directly before committing to any trip. We recommend meeting in public places, sharing trip details with family/friends, and trusting your instincts. You can also report any inappropriate behavior using the report feature on trip posts.",
++      answer: "HiBowan promotes safe travel practices. Every user creates a complete profile with a confirmed email address. You can see trip organizers' profiles, read comments from other travelers, and communicate directly before committing to any trip. We recommend meeting in public places, sharing trip details with family/friends, and trusting your instincts. You can also report any inappropriate behavior using the report feature on trip posts.",
+       icon: <Shield className="h-5 w-5 text-ceylon-blue" />
+     },
+     {
+@@ -46,14 +46,14 @@ export default function FAQ() {
+     },
+     {
+       id: "sri-lanka-coverage",
+-      question: "What regions of Sri Lanka does Ceylon Expand cover?",
+-      answer: "Ceylon Expand covers all provinces and regions of Sri Lanka! You can filter trips by major regions including Western Province (Colombo, Gampaha), Central Province (Kandy, Nuwara Eliya), Southern Province (Galle, Matara), and all other provinces. Whether you're traveling between major cities like Colombo to Kandy, or exploring destinations like Sigiriya, Ella, or Yala National Park, you'll find travel companions for your journey across the beautiful island.",
++      question: "What regions of Sri Lanka does HiBowan cover?",
++      answer: "HiBowan covers all provinces and regions of Sri Lanka! You can filter trips by major regions including Western Province (Colombo, Gampaha), Central Province (Kandy, Nuwara Eliya), Southern Province (Galle, Matara), and all other provinces. Whether you're traveling between major cities like Colombo to Kandy, or exploring destinations like Sigiriya, Ella, or Yala National Park, you'll find travel companions for your journey across the beautiful island.",
+       icon: <MapPin className="h-5 w-5 text-ceylon-blue" />
+     },
+     {
+       id: "platform-costs",
+-      question: "Is Ceylon Expand free to use? Are there any hidden fees?",
+-      answer: "Yes, Ceylon Expand is completely free to join and use! There are no registration fees, no membership costs, and no service charges from our platform. We don't take any commission from trip costs or add any additional fees. The prices you see in trip posts are the actual travel sharing costs (fuel, tolls, etc.) that participants split among themselves. You only pay your agreed share directly to the trip organizer - never to Ceylon Expand. Our platform is designed to help travelers connect and share costs, not to profit from your journeys.",
++      question: "Is HiBowan free to use? Are there any hidden fees?",
++      answer: "Yes, HiBowan is completely free to join and use! There are no registration fees, no membership costs, and no service charges from our platform. We don't take any commission from trip costs or add any additional fees. The prices you see in trip posts are the actual travel sharing costs (fuel, tolls, etc.) that participants split among themselves. You only pay your agreed share directly to the trip organizer - never to HiBowan. Our platform is designed to help travelers connect and share costs, not to profit from your journeys.",
+       icon: <DollarSign className="h-5 w-5 text-ceylon-green" />
+     }
+   ];
+@@ -69,7 +69,7 @@ export default function FAQ() {
+             Frequently Asked Questions
+           </h1>
+           <p className="text-gray-600 max-w-2xl mx-auto" data-testid="faq-subtitle">
+-            Everything you need to know about using Ceylon Expand to find travel companions and share your journeys across Sri Lanka.
++            Everything you need to know about using HiBowan to find travel companions and share your journeys across Sri Lanka.
+           </p>
+         </div>
+ 
+diff --git a/client/src/pages/help/faq.tsx b/client/src/pages/help/faq.tsx
+index 04d6fe4..5118e55 100644
+--- a/client/src/pages/help/faq.tsx
++++ b/client/src/pages/help/faq.tsx
+@@ -51,7 +51,7 @@ export default function HelpFAQPage() {
+     // Getting Started
+     {
+       id: "getting-started",
+-      question: "How do I get started with Ceylon Expand?",
++      question: "How do I get started with HiBowan?",
+       answer: "Getting started is easy! Create an account using Google, email, or other supported sign-in methods. Complete your profile with travel preferences, profile photo, and contact information. You can immediately start browsing trips (no signup required for viewing), but you'll need an account to post trips, chat with organizers, or save favorites.",
+       category: "Getting Started",
+       keywords: ["signup", "account", "profile", "start", "begin", "register", "google", "oauth"],
+@@ -69,7 +69,7 @@ export default function HelpFAQPage() {
+     // Trip Management
+     {
+       id: "posting-trips",
+-      question: "How do I post a trip on Ceylon Expand?",
++      question: "How do I post a trip on HiBowan?",
+       answer: "Click 'Post Trip' in the navigation menu. Fill in your route (from/to locations), travel date and time, number of available seats, price per person, and contact information. You can add trip photos, describe your travel style, and include special notes. Your trip will be visible to other travelers immediately after posting.",
+       category: "Trip Management",
+       keywords: ["post", "create", "trip", "route", "seats", "price", "photos"],
+@@ -174,7 +174,7 @@ export default function HelpFAQPage() {
+     {
+       id: "recommendations",
+       question: "How do the trip recommendations work?",
+-      answer: "Our AI-powered recommendation system analyzes your travel preferences, past interactions, and travel style to suggest relevant trips. It considers factors like your preferred destinations, travel companions, budget, and activity preferences to show you the most suitable trips first.",
++      answer: "Our recommendation system matches trips to your travel preferences and past activity. It considers factors like your preferred destinations, travel companions, budget, and activity preferences to show you the most suitable trips first.",
+       category: "Recommendations",
+       keywords: ["recommendations", "ai", "suggestions", "personalized", "discover"],
+       icon: <Star className="h-5 w-5 text-yellow-500" />
+@@ -192,7 +192,7 @@ export default function HelpFAQPage() {
+     {
+       id: "safety-traveling",
+       question: "Is it safe to travel with people I don't know?",
+-      answer: "Ceylon Expand promotes safe travel practices. Every user must create a complete profile with verified contact information. Review organizers' profiles, read comments from other travelers, and communicate directly before committing. Always meet in public places, share trip details with family/friends, and trust your instincts.",
++      answer: "HiBowan promotes safe travel practices. Every user creates a complete profile with a confirmed email address. Review organizers' profiles, read comments from other travelers, and communicate directly before committing. Always meet in public places, share trip details with family/friends, and trust your instincts.",
+       category: "Safety & Security",
+       keywords: ["safety", "security", "strangers", "trust", "verification", "meeting"],
+       icon: <Shield className="h-5 w-5 text-red-500" />
+@@ -243,8 +243,8 @@ export default function HelpFAQPage() {
+     // Costs & Pricing
+     {
+       id: "platform-costs",
+-      question: "Is Ceylon Expand free to use? Are there any hidden fees?",
+-      answer: "Yes, Ceylon Expand is completely free! No registration fees, membership costs, or service charges. We don't take commission from trip costs. The prices in trip posts are actual travel sharing costs (fuel, tolls) that participants split. You pay your share directly to the trip organizer - never to Ceylon Expand.",
++      question: "Is HiBowan free to use? Are there any hidden fees?",
++      answer: "Yes, HiBowan is completely free! No registration fees, membership costs, or service charges. We don't take commission from trip costs. The prices in trip posts are actual travel sharing costs (fuel, tolls) that participants split. You pay your share directly to the trip organizer - never to HiBowan.",
+       category: "Costs & Pricing",
+       keywords: ["free", "cost", "fees", "pricing", "commission", "charges"],
+       icon: <DollarSign className="h-5 w-5 text-ceylon-green" />
+@@ -279,8 +279,8 @@ export default function HelpFAQPage() {
+     // Regional Coverage
+     {
+       id: "sri-lanka-coverage",
+-      question: "What regions of Sri Lanka does Ceylon Expand cover?",
+-      answer: "Ceylon Expand covers all provinces and regions of Sri Lanka! Filter trips by Western Province (Colombo, Gampaha), Central Province (Kandy, Nuwara Eliya), Southern Province (Galle, Matara), and all other provinces including Northern, Eastern, North Western, North Central, Uva, and Sabaragamuwa. Find travel companions for journeys between major cities or to destinations like Sigiriya, Ella, or Yala National Park.",
++      question: "What regions of Sri Lanka does HiBowan cover?",
++      answer: "HiBowan covers all provinces and regions of Sri Lanka! Filter trips by Western Province (Colombo, Gampaha), Central Province (Kandy, Nuwara Eliya), Southern Province (Galle, Matara), and all other provinces including Northern, Eastern, North Western, North Central, Uva, and Sabaragamuwa. Find travel companions for journeys between major cities or to destinations like Sigiriya, Ella, or Yala National Park.",
+       category: "Regional Coverage",
+       keywords: ["regions", "provinces", "colombo", "kandy", "galle", "coverage", "destinations", "northern", "eastern"],
+       icon: <MapPin className="h-5 w-5 text-ceylon-blue" />
+@@ -328,7 +328,7 @@ export default function HelpFAQPage() {
+               Help Center & FAQ
+             </h1>
+             <p className="text-gray-600 max-w-2xl mx-auto text-lg">
+-              Find answers to common questions about using Ceylon Expand for your travel adventures across Sri Lanka
++              Find answers to common questions about using HiBowan for your travel adventures across Sri Lanka
+             </p>
+           </div>
+ 
+diff --git a/client/src/pages/home.tsx b/client/src/pages/home.tsx
+index ac4a446..15123f9 100644
+--- a/client/src/pages/home.tsx
++++ b/client/src/pages/home.tsx
+@@ -84,7 +84,7 @@ export default function Home() {
+             <div className="mt-8">
+               <Link href="/faq">
+                 <span className="text-white/80 hover:text-white text-sm underline underline-offset-4 cursor-pointer transition-colors" data-testid="link-faq-newuser">
+-                  New to Ceylon Expand? Learn how it works →
++                  New to HiBowan? Learn how it works →
+                 </span>
+               </Link>
+             </div>
+diff --git a/client/src/pages/landing.tsx b/client/src/pages/landing.tsx
+index ecc9313..4e43e0f 100644
+--- a/client/src/pages/landing.tsx
++++ b/client/src/pages/landing.tsx
+@@ -48,7 +48,7 @@ export default function Landing() {
+     <>
+       <SEO 
+         {...SEOConfigs.home}
+-        ogUrl={typeof window !== 'undefined' ? window.location.href : 'https://www.theceylonx.com'}
++        ogUrl={typeof window !== 'undefined' ? window.location.href : 'https://www.hibowan.com'}
+         ogImage={backgroundImage || undefined}
+       />
+       <div className="min-h-screen bg-ui-bg">
+@@ -68,19 +68,19 @@ export default function Landing() {
+                   <div 
+                     className="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-ui-bg rounded-md p-1"
+                     role="link"
+-                    aria-label="Ceylon Expand homepage"
++                    aria-label="HiBowan homepage"
+                     data-testid="header-logo-link"
+                   >
+                     <img 
+                       src={newLogo} 
+-                      alt="Ceylon Expand Logo" 
++                      alt="HiBowan Logo" 
+                       className="h-8 w-8"
+                       width="32"
+                       height="32"
+                       loading="eager"
+                       data-testid="logo-icon"
+                     />
+-                    <span className="text-xl font-bold text-text-primary" data-testid="logo-text">Ceylon Expand</span>
++                    <span className="text-xl font-bold text-text-primary" data-testid="logo-text">HiBowan</span>
+                   </div>
+                 </Link>
+               </div>
+@@ -113,9 +113,9 @@ export default function Landing() {
+                     data-testid="nav-community"
+                     role="menuitem"
+                     tabIndex={0}
+-                    aria-label="Join CeylonX travel community"
++                    aria-label="Join HiBowan travel community"
+                   >
+-                    CeylonX Tribes
++                    HiBowan Tribes
+                   </span>
+                 </Link>
+               </div>
+@@ -157,7 +157,7 @@ export default function Landing() {
+                 <div className="block py-2 text-text-secondary hover:text-brand font-medium" onClick={() => setMobileOpen(false)}>Post a Trip</div>
+               </Link>
+               <Link href="/community">
+-                <div className="block py-2 text-text-secondary hover:text-brand font-medium" onClick={() => setMobileOpen(false)}>CeylonX Tribes</div>
++                <div className="block py-2 text-text-secondary hover:text-brand font-medium" onClick={() => setMobileOpen(false)}>HiBowan Tribes</div>
+               </Link>
+               <Link href="/about">
+                 <div className="block py-2 text-text-secondary hover:text-brand font-medium" onClick={() => setMobileOpen(false)}>About</div>
+@@ -252,7 +252,7 @@ export default function Landing() {
+               How It Works
+             </h2>
+             <p className="text-lg text-gray-600 max-w-2xl mx-auto" data-testid="text-how-it-works-subtitle">
+-              Get started with Ceylon Expand in just three simple steps.
++              Get started with HiBowan in just three simple steps.
+             </p>
+           </div>
+           
+@@ -316,7 +316,7 @@ export default function Landing() {
+               <CardContent className="p-8">
+                 <Compass className="text-orange-600 h-10 w-10 mb-6" />
+                 <h3 className="text-xl font-semibold mb-4 text-gray-800">Explore More</h3>
+-                <p className="text-gray-600">Discover hidden gems and local insights from experienced travelers and locals.</p>
++                <p className="text-gray-600">Discover hidden gems and local insights shared by experienced fellow travelers.</p>
+               </CardContent>
+             </Card>
+           </div>
+diff --git a/client/src/pages/me.tsx b/client/src/pages/me.tsx
+index 0234c7b..9be74e5 100644
+--- a/client/src/pages/me.tsx
++++ b/client/src/pages/me.tsx
+@@ -1,4 +1,5 @@
+ import { useAuth } from "@/hooks/useAuth";
++import { formatMemberSince, formatShortDate } from "@/lib/formatDate";
+ import { useQuery, useQueryClient } from "@tanstack/react-query";
+ import { useLocation } from "wouter";
+ import { useState, useEffect, useMemo } from "react";
+@@ -271,7 +272,7 @@ export default function ProfilePage() {
+                     )}
+                     <div className="flex items-center bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">
+                       <Calendar className="h-4 w-4 mr-2" />
+-                      Member since {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'Recently'}
++                      Member since {formatMemberSince(profile.createdAt)}
+                     </div>
+                   </div>
+                   
+@@ -560,11 +561,11 @@ function ProfileOverview({ profile, stats, preferences }: any) {
+         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+           <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-white/50">
+             <div className="text-sm text-gray-600 mb-1">Member Since</div>
+-            <div className="font-semibold text-gray-900">{profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'Recently'}</div>
++            <div className="font-semibold text-gray-900">{formatMemberSince(profile.createdAt)}</div>
+           </div>
+           <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-white/50">
+             <div className="text-sm text-gray-600 mb-1">Last Updated</div>
+-            <div className="font-semibold text-gray-900">{profile.updatedAt ? new Date(profile.updatedAt).toLocaleDateString() : 'Recently'}</div>
++            <div className="font-semibold text-gray-900">{formatShortDate(profile.updatedAt)}</div>
+           </div>
+         </div>
+       </div>
+@@ -1143,9 +1144,9 @@ function SavedTrips() {
+           <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+             <span>💰 ${item.price}</span>
+             <span>👥 {item.seatsAvailable} seats</span>
+-            <span>📅 {item.date ? new Date(item.date).toLocaleDateString() : 'Date TBD'}</span>
++            <span>📅 {formatShortDate(item.date, 'Date TBD')}</span>
+             <Badge variant={item.saveType === 'pinned' ? 'default' : 'secondary'}>
+-              {item.saveType === 'pinned' ? '📌 Pinned' : '📩 Request Sent'} {item.savedAt ? new Date(item.savedAt).toLocaleDateString() : 'Recently'}
++              {item.saveType === 'pinned' ? '📌 Pinned' : '📩 Request Sent'} {formatShortDate(item.savedAt)}
+             </Badge>
+           </div>
+         </div>
+@@ -1351,7 +1352,7 @@ function UserActivity() {
+                         <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                           <span>💰 {!trip.price || Number(trip.price) === 0 ? 'Free Trip' : `LKR ${trip.price}`}</span>
+                           <span>👥 {trip.seatsAvailable} seats</span>
+-                          <span>📅 {trip.date ? new Date(trip.date).toLocaleDateString() : 'Date TBD'}</span>
++                          <span>📅 {formatShortDate(trip.date, 'Date TBD')}</span>
+                           <Badge variant={trip.status === 'active' ? 'default' : 'secondary'} className="ml-2">
+                             {trip.status}
+                           </Badge>
+@@ -1440,7 +1441,7 @@ function SecuritySettings({ profile }: any) {
+               <div className="mt-2 space-y-2 text-sm">
+                 <p><strong>Email:</strong> {profile.email}</p>
+                 <p><strong>Provider:</strong> {profile.provider || 'Email'}</p>
+-                <p><strong>Email Verified:</strong> {profile.emailVerified ? '✅ Verified' : '❌ Not verified'}</p>
++                <p><strong>Email Confirmed:</strong> {profile.emailVerified ? '✅ Confirmed' : '❌ Not confirmed'}</p>
+               </div>
+             </div>
+ 
+@@ -1660,7 +1661,7 @@ function PrivacySettings({ privacy, onUpdate }: any) {
+               Show Online Status
+             </Label>
+             <p className="text-sm text-gray-500">
+-              Let others see when you're active on Ceylon Expand
++              Let others see when you're active on HiBowan
+             </p>
+           </div>
+           <Switch 
+diff --git a/client/src/pages/privacy-policy.tsx b/client/src/pages/privacy-policy.tsx
+index 4e954f6..732c3bd 100644
+--- a/client/src/pages/privacy-policy.tsx
++++ b/client/src/pages/privacy-policy.tsx
+@@ -29,11 +29,11 @@ export default function PrivacyPolicy() {
+             </CardHeader>
+             <CardContent className="space-y-4">
+               <p className="text-gray-600 dark:text-gray-300">
+-                Ceylon Expand is committed to protecting your privacy and ensuring the security of your personal information. 
++                HiBowan is committed to protecting your privacy and ensuring the security of your personal information. 
+                 This Privacy Policy explains how we collect, use, store, and protect your data when you use our platform.
+               </p>
+               <p className="text-gray-600 dark:text-gray-300">
+-                By using Ceylon Expand, you agree to the collection and use of information in accordance with this policy. 
++                By using HiBowan, you agree to the collection and use of information in accordance with this policy. 
+                 We will not share your personal information with third parties except as described in this policy.
+               </p>
+             </CardContent>
+@@ -50,7 +50,7 @@ export default function PrivacyPolicy() {
+               <div>
+                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Account Information:</h4>
+                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+-                  <li>• Name and email address (from Replit authentication)</li>
++                  <li>• Name and email address (via your Google or Facebook account)</li>
+                   <li>• Profile picture (if provided)</li>
+                   <li>• Phone number (when you choose to add it)</li>
+                   <li>• Bio and profile information you provide</li>
+@@ -65,7 +65,7 @@ export default function PrivacyPolicy() {
+                   <li>• Trips you join or express interest in</li>
+                   <li>• Comments and messages you post</li>
+                   <li>• Ratings and reviews you give and receive</li>
+-                  <li>• Community questions and answers you post in CeylonX Tribes</li>
++                  <li>• Community questions and answers you post in HiBowan Tribes</li>
+                   <li>• Chat Buddy messages and communication preferences</li>
+                   <li>• Photos you upload and share with trips</li>
+                   <li>• Calendar filters and search preferences</li>
+@@ -102,7 +102,7 @@ export default function PrivacyPolicy() {
+                   <li>• Enable communication between travelers through Chat Buddy</li>
+                   <li>• Provide secure photo sharing and storage</li>
+                   <li>• Deliver calendar features and trip filtering</li>
+-                  <li>• Power CeylonX Tribes community Q&A features</li>
++                  <li>• Power HiBowan Tribes community Q&A features</li>
+                   <li>• Send relevant notifications and updates</li>
+                   <li>• Process ratings and reviews</li>
+                   <li>• Provide customer support and respond to inquiries</li>
+@@ -112,7 +112,7 @@ export default function PrivacyPolicy() {
+               <div>
+                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Safety and Security:</h4>
+                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+-                  <li>• Verify user identities and prevent fraudulent accounts</li>
++                  <li>• Prevent fraudulent and duplicate accounts</li>
+                   <li>• Investigate reports of misconduct or safety concerns</li>
+                   <li>• Protect against spam, abuse, and malicious activities</li>
+                   <li>• Maintain the integrity of our platform</li>
+@@ -234,7 +234,7 @@ export default function PrivacyPolicy() {
+                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Security Measures:</h4>
+                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                   <li>• Encryption of data in transit and at rest</li>
+-                  <li>• Secure authentication through Replit's trusted system</li>
++                  <li>• Secure authentication through Google and Facebook sign-in</li>
+                   <li>• Regular security audits and updates</li>
+                   <li>• Limited access to personal data by authorized personnel only</li>
+                   <li>• Secure database hosting with backup and recovery procedures</li>
+@@ -304,7 +304,7 @@ export default function PrivacyPolicy() {
+             </CardHeader>
+             <CardContent className="space-y-4">
+               <p className="text-gray-600 dark:text-gray-300">
+-                Ceylon Expand is not intended for use by children under 18 years of age. 
++                HiBowan is not intended for use by children under 18 years of age. 
+                 We do not knowingly collect personal information from children under 18. 
+                 If we become aware that a child under 18 has provided us with personal information, 
+                 we will delete such information from our systems.
+diff --git a/client/src/pages/question-detail.tsx b/client/src/pages/question-detail.tsx
+index fcc990f..7740013 100644
+--- a/client/src/pages/question-detail.tsx
++++ b/client/src/pages/question-detail.tsx
+@@ -224,7 +224,7 @@ export default function QuestionDetailPage() {
+ 
+   const handleShare = (platform: string) => {
+     const url = window.location.href;
+-    const title = question?.title || "Question from Ceylon Expand";
++    const title = question?.title || "Question from HiBowan";
+     const text = `Check out this question: ${title}`;
+ 
+     let shareUrl = "";
+diff --git a/client/src/pages/safety-guidelines.tsx b/client/src/pages/safety-guidelines.tsx
+index b0b96d2..c81a429 100644
+--- a/client/src/pages/safety-guidelines.tsx
++++ b/client/src/pages/safety-guidelines.tsx
+@@ -31,7 +31,7 @@ export default function SafetyGuidelines() {
+               <div>
+                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Before Joining a Trip:</h4>
+                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+-                  <li>• Verify the trip organizer's identity and profile completeness</li>
++                  <li>• Review the organizer's profile completeness and trip history</li>
+                   <li>• Read trip details carefully and ask questions if unclear</li>
+                   <li>• Check the organizer's ratings and reviews from previous trips</li>
+                   <li>• Use our Chat Buddy system to communicate before meeting</li>
+@@ -105,7 +105,7 @@ export default function SafetyGuidelines() {
+               <div>
+                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Medical Emergencies:</h4>
+                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+-                  <li>• Emergency services: 110 (Police), 111 (Medical)</li>
++                  <li>• Emergency services: 119 (Police), 110 (Ambulance), 110 (Fire)</li>
+                   <li>• Tourist Hotline: 1912</li>
+                   <li>• Know the location of nearest hospitals</li>
+                   <li>• Keep emergency contacts readily available</li>
+@@ -157,7 +157,7 @@ export default function SafetyGuidelines() {
+                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Using Calendar Features:</h4>
+                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                   <li>• Keep your travel schedule private until you join a trip</li>
+-                  <li>• Use calendar filters to find verified organizers</li>
++                  <li>• Use calendar filters to find active, highly-rated organizers</li>
+                   <li>• Check trip status and updates regularly</li>
+                   <li>• Confirm trip details 24 hours before departure</li>
+                 </ul>
+@@ -183,7 +183,7 @@ export default function SafetyGuidelines() {
+             </CardHeader>
+             <CardContent className="space-y-4">
+               <div>
+-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">CeylonX Tribes Safety:</h4>
++                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">HiBowan Tribes Safety:</h4>
+                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                   <li>• Verify information from community posts independently</li>
+                   <li>• Report misleading or dangerous advice</li>
+@@ -238,14 +238,14 @@ export default function SafetyGuidelines() {
+                 <div>
+                   <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Sri Lanka Emergency Services:</h4>
+                   <div className="space-y-2 text-gray-600 dark:text-gray-300">
+-                    <p><strong>Police Emergency:</strong> 110</p>
+-                    <p><strong>Medical Emergency:</strong> 111</p>
+-                    <p><strong>Fire & Rescue:</strong> 111</p>
++                    <p><strong>Police Emergency:</strong> 119</p>
++                    <p><strong>Ambulance:</strong> 110</p>
++                    <p><strong>Fire & Rescue:</strong> 110</p>
+                     <p><strong>Tourist Hotline:</strong> 1912</p>
+                   </div>
+                 </div>
+                 <div>
+-                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Ceylon Expand Support:</h4>
++                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">HiBowan Support:</h4>
+                   <div className="space-y-2 text-gray-600 dark:text-gray-300">
+                     <p><strong>Report Issues:</strong> Use our report feature.</p>
+                     <p><strong>Safety Concerns:</strong> Contact us immediately.</p>
+diff --git a/client/src/pages/settings/account.tsx b/client/src/pages/settings/account.tsx
+index b515ca7..fe8501c 100644
+--- a/client/src/pages/settings/account.tsx
++++ b/client/src/pages/settings/account.tsx
+@@ -186,7 +186,7 @@ export default function AccountSettingsPage() {
+                 Download Your Data
+               </CardTitle>
+               <CardDescription>
+-                Export all your personal data from Ceylon Expand. This includes your profile information, 
++                Export all your personal data from HiBowan. This includes your profile information, 
+                 trip history, messages, and other activity data.
+               </CardDescription>
+             </CardHeader>
+@@ -222,7 +222,7 @@ export default function AccountSettingsPage() {
+                 Delete Account
+               </CardTitle>
+               <CardDescription>
+-                Permanently delete your Ceylon Expand account and all associated data. 
++                Permanently delete your HiBowan account and all associated data. 
+                 This action cannot be undone.
+               </CardDescription>
+             </CardHeader>
+diff --git a/client/src/pages/terms-of-service.tsx b/client/src/pages/terms-of-service.tsx
+index 39712b2..dda8e7a 100644
+--- a/client/src/pages/terms-of-service.tsx
++++ b/client/src/pages/terms-of-service.tsx
+@@ -26,12 +26,12 @@ export default function TermsOfService() {
+             </CardHeader>
+             <CardContent className="space-y-4">
+               <p className="text-gray-600 dark:text-gray-300">
+-                By accessing and using Ceylon Expand ("the Service"), you accept and agree to be bound by the terms and provision of this agreement. 
++                By accessing and using HiBowan ("the Service"), you accept and agree to be bound by the terms and provision of this agreement. 
+                 If you do not agree to abide by the above, please do not use this service.
+               </p>
+               <p className="text-gray-600 dark:text-gray-300">
+-                Ceylon Expand is a comprehensive travel platform that connects travelers for shared trips and experiences in Sri Lanka. 
+-                We facilitate connections between users through trip sharing, Chat Buddy messaging, community Q&A forums (CeylonX Tribes), 
++                HiBowan is a comprehensive travel platform that connects travelers for shared trips and experiences in Sri Lanka. 
++                We facilitate connections between users through trip sharing, Chat Buddy messaging, community Q&A forums (HiBowan Tribes), 
+                 calendar features, photo sharing capabilities, and content sharing but do not directly provide travel services.
+               </p>
+             </CardContent>
+@@ -49,7 +49,6 @@ export default function TermsOfService() {
+                   <li>• You must provide accurate and complete information</li>
+                   <li>• You are responsible for maintaining the security of your account</li>
+                   <li>• One account per person - no duplicate accounts allowed</li>
+-                  <li>• You must verify your identity when requested</li>
+                 </ul>
+               </div>
+               
+@@ -147,7 +146,7 @@ export default function TermsOfService() {
+ 
+           <Card>
+             <CardHeader>
+-              <CardTitle>6. CeylonX Tribes and Community Q&A</CardTitle>
++              <CardTitle>6. HiBowan Tribes and Community Q&A</CardTitle>
+             </CardHeader>
+             <CardContent className="space-y-4">
+               <div>
+@@ -194,7 +193,7 @@ export default function TermsOfService() {
+               <div>
+                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Content Guidelines:</h4>
+                 <p className="text-gray-600 dark:text-gray-300">
+-                  All content posted on Ceylon Expand must be respectful, relevant, and comply with Sri Lankan laws. 
++                  All content posted on HiBowan must be respectful, relevant, and comply with Sri Lankan laws. 
+                   We reserve the right to remove content that violates these guidelines.
+                 </p>
+               </div>
+@@ -207,7 +206,7 @@ export default function TermsOfService() {
+             </CardHeader>
+             <CardContent className="space-y-4">
+               <p className="text-gray-600 dark:text-gray-300">
+-                Ceylon Expand facilitates connections between travelers but does not process payments between users. 
++                HiBowan facilitates connections between travelers but does not process payments between users. 
+                 Payment arrangements are made directly between trip organizers and participants.
+               </p>
+               <div>
+@@ -216,7 +215,7 @@ export default function TermsOfService() {
+                   <li>• We do not guarantee trip completion or quality</li>
+                   <li>• Disputes over payments must be resolved between users</li>
+                   <li>• We recommend using secure payment methods with buyer protection</li>
+-                  <li>• Platform usage is currently free, but this may change with advance notice</li>
++                  <li>• Platform usage is free for travelers, indefinitely</li>
+                 </ul>
+               </div>
+             </CardContent>
+@@ -232,7 +231,7 @@ export default function TermsOfService() {
+                   Important Disclaimer:
+                 </p>
+                 <p className="text-amber-700 dark:text-amber-300">
+-                  Ceylon Expand is a platform that connects travelers. We are not responsible for the actions, 
++                  HiBowan is a platform that connects travelers. We are not responsible for the actions, 
+                   conduct, or safety of users. Travelers participate in trips at their own risk and should 
+                   take appropriate precautions including travel insurance and safety measures.
+                 </p>
+diff --git a/client/src/pages/trip-details.tsx b/client/src/pages/trip-details.tsx
+index 0aa3b95..9130ac3 100644
+--- a/client/src/pages/trip-details.tsx
++++ b/client/src/pages/trip-details.tsx
+@@ -128,7 +128,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
+       return trip.imageUrl;
+     }
+     
+-    // Priority 3: Ceylon Expand logo as fallback
++    // Priority 3: HiBowan logo as fallback
+     return newLogo;
+   };
+ 
+@@ -532,7 +532,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
+             {/* Trip Image */}
+             <div className="mt-6">
+               {getTripImage() === newLogo && !trip.mediaUrls?.length && !trip.imageUrl ? (
+-                // Beautiful Ceylon Expand fallback design
++                // Beautiful HiBowan fallback design
+                 <div className="w-full h-64 bg-gradient-to-br from-ceylon-green via-ceylon-blue to-purple-600 flex flex-col items-center justify-center relative overflow-hidden rounded-lg">
+                   {/* Background pattern */}
+                   <div className="absolute inset-0 opacity-10">
+@@ -555,9 +555,9 @@ export default function TripDetails({ params }: TripDetailsProps) {
+                     </svg>
+                   </div>
+                   
+-                  {/* Ceylon Expand text */}
++                  {/* HiBowan text */}
+                   <div className="text-center text-white">
+-                    <div className="text-xl font-bold tracking-wide drop-shadow-sm">Ceylon Expand</div>
++                    <div className="text-xl font-bold tracking-wide drop-shadow-sm">HiBowan</div>
+                     <div className="text-sm opacity-90 mt-1">Travel Together</div>
+                   </div>
+                 </div>
+@@ -568,7 +568,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
+                   className="w-full h-64 object-cover rounded-lg"
+                   loading="lazy"
+                   onError={(e) => {
+-                    // Replace with beautiful Ceylon Expand fallback
++                    // Replace with beautiful HiBowan fallback
+                     const target = e.currentTarget;
+                     const container = target.parentElement;
+                     if (container) {
+@@ -592,7 +592,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
+                             </svg>
+                           </div>
+                           <div class="text-center text-white">
+-                            <div class="text-xl font-bold tracking-wide drop-shadow-sm">Ceylon Expand</div>
++                            <div class="text-xl font-bold tracking-wide drop-shadow-sm">HiBowan</div>
+                             <div class="text-sm opacity-90 mt-1">Travel Together</div>
+                           </div>
+                         </div>
+diff --git a/client/src/pages/user-deletion.tsx b/client/src/pages/user-deletion.tsx
+index 33cf853..63243fe 100644
+--- a/client/src/pages/user-deletion.tsx
++++ b/client/src/pages/user-deletion.tsx
+@@ -86,7 +86,7 @@ export default function UserDeletion() {
+             </div>
+             <CardTitle className="text-2xl text-red-700">Delete Your Account</CardTitle>
+             <CardDescription className="text-lg">
+-              Permanently remove your Ceylon Expand account and all associated data
++              Permanently remove your HiBowan account and all associated data
+             </CardDescription>
+           </CardHeader>
+           
+@@ -143,7 +143,7 @@ export default function UserDeletion() {
+                     data-testid="checkbox-understand"
+                   />
+                   <label htmlFor="understand" className="text-sm text-ceylon-brown/80 cursor-pointer">
+-                    I understand that deleting my account will remove all my data from Ceylon Expand
++                    I understand that deleting my account will remove all my data from HiBowan
+                   </label>
+                 </div>
+ 
+@@ -212,8 +212,8 @@ export default function UserDeletion() {
+               <Info className="w-4 h-4 text-blue-600" />
+               <AlertDescription className="text-blue-800">
+                 Need help or have questions? Contact our support team at{" "}
+-                <a href="mailto:support@theceylonx.com" className="underline font-medium">
+-                  support@theceylonx.com
++                <a href="mailto:support@hibowan.srilanka.com" className="underline font-medium">
++                  support@hibowan.srilanka.com
+                 </a>
+               </AlertDescription>
+             </Alert>
+diff --git a/client/src/test/setup.ts b/client/src/test/setup.ts
+index b43be04..1c413f2 100644
+--- a/client/src/test/setup.ts
++++ b/client/src/test/setup.ts
+@@ -1,5 +1,5 @@
+ /**
+- * Ceylon Expand - Test Setup Configuration
++ * HiBowan - Test Setup Configuration
+  * Global test setup for React components and API testing
+  */
+ 
+diff --git a/client/src/utils/__tests__/validation.test.ts b/client/src/utils/__tests__/validation.test.ts
+index ba02b78..ed3d3ff 100644
+--- a/client/src/utils/__tests__/validation.test.ts
++++ b/client/src/utils/__tests__/validation.test.ts
+@@ -1,5 +1,5 @@
+ /**
+- * Ceylon Expand - Validation Utils Tests
++ * HiBowan - Validation Utils Tests
+  * Comprehensive validation testing for form inputs and data validation
+  */
+ 
+diff --git a/client/src/utils/searchParams.ts b/client/src/utils/searchParams.ts
+index 1420ed8..9f3bd20 100644
+--- a/client/src/utils/searchParams.ts
++++ b/client/src/utils/searchParams.ts
+@@ -1,6 +1,6 @@
+ /**
+  * Utility functions for managing URL search parameters
+- * Helps preserve query state across navigation in Ceylon Expand
++ * Helps preserve query state across navigation in HiBowan
+  */
+ 
+ export interface SearchParamsHelper {
+diff --git a/client/src/utils/validation.ts b/client/src/utils/validation.ts
+index f35fbcd..c0eefb0 100644
+--- a/client/src/utils/validation.ts
++++ b/client/src/utils/validation.ts
+@@ -1,5 +1,5 @@
+ /**
+- * Ceylon Expand - Validation Utilities
++ * HiBowan - Validation Utilities
+  * Comprehensive validation functions for forms, data, and user inputs
+  */
+ 
+diff --git a/tailwind.config.ts b/tailwind.config.ts
+index 1f14a0b..89645cb 100644
+--- a/tailwind.config.ts
++++ b/tailwind.config.ts
+@@ -13,36 +13,42 @@ export default {
+         "2xl": "1rem",
+       },
+       colors: {
+-        // New Ceylon Expand design system
++        // HiBowan design system — locked tokens: coral #DB354E, ocean #3F8AB4, navy #173B4D, cream #F8F4EA, white
+         brand: {
+-          DEFAULT: "hsl(153 60% 30%)", // #1E7A50 - forest green
+-          hover: "hsl(153 60% 23%)",   // darker hover
+-          subtle: "hsl(153 60% 95%)",  // light background tint
++          DEFAULT: "hsl(351 70% 53%)", // #DB354E - coral-red
++          hover: "hsl(351 70% 43%)",   // darker hover
++          subtle: "hsl(351 70% 96%)",  // light background tint
+         },
+         accent: {
+-          DEFAULT: "hsl(10 80% 78%)",  // #F4A99A - salmon pink
+-          hover: "hsl(10 80% 70%)",    // darker salmon
+-          subtle: "hsl(10 80% 97%)",   // light salmon tint
++          DEFAULT: "hsl(202 48% 48%)", // #3F8AB4 - ocean blue
++          hover: "hsl(202 48% 38%)",   // darker ocean
++          subtle: "hsl(202 48% 95%)",  // light ocean tint
+         },
+         text: {
+-          primary: "hsl(0 0% 4%)",     // #0B0B0B - near-black
+-          secondary: "hsl(0 0% 29%)",  // #4A4A4A - muted text
+-          muted: "hsl(0 0% 44%)",      // #6F6F6F - very muted
++          primary: "hsl(200 54% 20%)", // #173B4D - deep navy
++          secondary: "hsl(200 25% 38%)",
++          muted: "hsl(200 15% 52%)",
+         },
+         ui: {
+-          bg: "hsl(0 0% 100%)",        // #FFFFFF - white background
+-          surface: "hsl(0 0% 97%)",    // #F7F7F7 - light surface
+-          line: "hsl(0 0% 90%)",       // #E6E6E6 - borders/dividers
++          bg: "hsl(43 50% 95%)",       // #F8F4EA - cream background
++          surface: "hsl(0 0% 100%)",   // #FFFFFF - white surface
++          line: "hsl(40 25% 85%)",     // warm neutral border
+         },
+         danger: "hsl(358 76% 51%)",    // #D92D20 - red
+         "danger-hover": "hsl(358 76% 40%)", // darker danger
+         success: "hsl(158 75% 33%)",   // #099250 - green
+         info: "hsl(207 71% 51%)",      // #1E88E5 - blue
+-        // Legacy Ceylon colors for backward compatibility
+-        "ceylon-green": "hsl(163 65% 31%)", // brand
+-        "ceylon-blue": "hsl(207 71% 51%)",  // info
+-        "ceylon-dark": "hsl(0 0% 4%)",      // text-primary
+-        
++        // Legacy Ceylon* aliases kept for backward compatibility, remapped to HiBowan tokens
++        "ceylon-green": "hsl(351 70% 53%)",  // now brand/coral
++        "ceylon-blue": "hsl(202 48% 48%)",   // now accent/ocean
++        "ceylon-dark": "hsl(200 54% 20%)",   // now text-primary/navy
++        "ceylon-orange": "hsl(351 65% 60%)", // coral, lighter
++        "ceylon-red": "hsl(351 70% 48%)",    // coral, darker
++        "ceylon-yellow": "hsl(38 55% 68%)",  // warm gold, cream-adjacent
++        "ceylon-brown": "hsl(200 40% 30%)",  // navy-adjacent dark neutral
++        "ceylon-cream": "hsl(43 50% 95%)",   // cream
++        "ceylon-sand": "hsl(40 35% 88%)",    // warm sand
++
+         // Keep shadcn compatibility
+         background: "var(--background)",
+         foreground: "var(--foreground)",
+-- 
+2.50.1 (Apple Git-155)
+
