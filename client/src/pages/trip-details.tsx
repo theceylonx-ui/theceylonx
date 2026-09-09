@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
-import { MapPin, Calendar, Users, DollarSign, Phone, Star, Flag, ArrowLeft, Lock, Trash2, Heart, Edit, MessageCircle, MoreHorizontal, ChevronRight, CalendarIcon } from "lucide-react";
+import { MapPin, Calendar, Users, DollarSign, Phone, Star, Flag, ArrowLeft, Lock, Trash2, Heart, Edit, MessageCircle, MoreHorizontal, ChevronRight, CalendarIcon, ShieldAlert } from "lucide-react";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -533,7 +533,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
             <div className="mt-6">
               {getTripImage() === newLogo && !trip.mediaUrls?.length && !trip.imageUrl ? (
                 // Beautiful HiBowan fallback design
-                <div className="w-full h-64 bg-gradient-to-br from-ceylon-green via-ceylon-blue to-purple-600 flex flex-col items-center justify-center relative overflow-hidden rounded-lg">
+                <div className="w-full h-64 bg-gradient-to-br from-brand via-accent to-brand-hover flex flex-col items-center justify-center relative overflow-hidden rounded-lg">
                   {/* Background pattern */}
                   <div className="absolute inset-0 opacity-10">
                     <div className="absolute top-4 left-4 w-8 h-8 border-2 border-white rounded-full"></div>
@@ -573,7 +573,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
                     const container = target.parentElement;
                     if (container) {
                       container.innerHTML = `
-                        <div class="w-full h-64 bg-gradient-to-br from-ceylon-green via-ceylon-blue to-purple-600 flex flex-col items-center justify-center relative overflow-hidden rounded-lg">
+                        <div class="w-full h-64 bg-gradient-to-br from-brand via-accent to-brand-hover flex flex-col items-center justify-center relative overflow-hidden rounded-lg">
                           <div class="absolute inset-0 opacity-10">
                             <div class="absolute top-4 left-4 w-8 h-8 border-2 border-white rounded-full"></div>
                             <div class="absolute top-12 right-8 w-4 h-4 border border-white rounded-full"></div>
@@ -637,6 +637,17 @@ export default function TripDetails({ params }: TripDetailsProps) {
 
               <div>
                 <h3 className="font-semibold text-gray-800 mb-3">Trip Organizer</h3>
+                <div
+                  className="mb-4 flex items-start gap-2 rounded-lg bg-accent-subtle p-3 text-sm text-text-secondary"
+                  data-testid="trust-banner"
+                >
+                  <ShieldAlert className="h-4 w-4 mt-0.5 text-accent flex-shrink-0" />
+                  <p>
+                    <strong className="text-text-primary">Fellow traveller, not a verified companion.</strong>{" "}
+                    You're responsible for arrangements and safety.
+                  </p>
+                </div>
+
                 <div className="mb-4" data-testid="trip-organizer">
                   <UserDisplay 
                     user={trip.organizer}

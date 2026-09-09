@@ -436,7 +436,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
         <div className="relative">
           {getTripImage() === newLogo && !trip.mediaUrls?.length && !trip.imageUrl ? (
             // Beautiful HiBowan fallback design
-            <div className="w-full h-48 bg-gradient-to-br from-ceylon-green via-ceylon-blue to-purple-600 flex flex-col items-center justify-center relative overflow-hidden">
+            <div className="w-full h-48 bg-gradient-to-br from-brand via-accent to-brand-hover flex flex-col items-center justify-center relative overflow-hidden">
               {/* Background pattern */}
               <div className="absolute inset-0 opacity-10">
                 <div className="absolute top-4 left-4 w-8 h-8 border-2 border-white rounded-full"></div>
@@ -571,13 +571,11 @@ export default function TripCard({ trip, badges }: TripCardProps) {
                   </>
                 ) : (
                   <>
-                    <span className="text-lg mr-2">💚</span>
                     <span className="font-semibold text-brand">Free Trip</span>
                   </>
                 )
               ) : !trip.price || Number(trip.price) === 0 ? (
                 <>
-                  <span className="text-lg mr-2">💚</span>
                   <span className="font-semibold text-brand">Free Trip</span>
                 </>
               ) : (
@@ -628,7 +626,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
                     variant={quickInterestSent ? "outline" : "default"}
                     className={quickInterestSent 
                       ? "text-sm px-3 py-2 text-green-600 border-green-300 bg-green-50 h-9" 
-                      : "text-sm px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white h-9"}
+                      : "text-sm px-3 py-2 bg-brand hover:bg-brand-hover text-white h-9"}
                     disabled={quickInterestSent || quickTripInterestMutation.isPending}
                     onClick={(e) => {
                       e.preventDefault();

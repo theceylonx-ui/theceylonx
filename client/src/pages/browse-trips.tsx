@@ -113,7 +113,7 @@ export default function BrowseTrips() {
           size="sm"
           onClick={() => handlePageChange(page - 1)}
           disabled={page === 1}
-          className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50"
+          className="border-brand/30 text-brand hover:bg-brand-subtle hover:border-brand/50 disabled:opacity-50"
           data-testid="pagination-prev"
         >
           Previous
@@ -125,7 +125,7 @@ export default function BrowseTrips() {
               variant="outline"
               size="sm"
               onClick={() => handlePageChange(1)}
-              className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
+              className="border-brand/30 text-brand hover:bg-brand-subtle hover:border-brand/50"
               data-testid="pagination-page-1"
             >
               1
@@ -140,7 +140,7 @@ export default function BrowseTrips() {
             variant={page === pageNum ? "default" : "outline"}
             size="sm"
             onClick={() => handlePageChange(pageNum)}
-            className={page === pageNum ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 border-none" : "border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"}
+            className={page === pageNum ? "bg-brand text-white hover:bg-brand-hover border-none" : "border-brand/30 text-brand hover:bg-brand-subtle hover:border-brand/50"}
             data-testid={`pagination-page-${pageNum}`}
           >
             {pageNum}
@@ -154,7 +154,7 @@ export default function BrowseTrips() {
               variant="outline"
               size="sm"
               onClick={() => handlePageChange(totalPages)}
-              className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
+              className="border-brand/30 text-brand hover:bg-brand-subtle hover:border-brand/50"
               data-testid={`pagination-page-${totalPages}`}
             >
               {totalPages}
@@ -167,7 +167,7 @@ export default function BrowseTrips() {
           size="sm"
           onClick={() => handlePageChange(page + 1)}
           disabled={page === totalPages}
-          className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50"
+          className="border-brand/30 text-brand hover:bg-brand-subtle hover:border-brand/50 disabled:opacity-50"
           data-testid="pagination-next"
         >
           Next
@@ -183,7 +183,7 @@ export default function BrowseTrips() {
       <div className="page-container section-spacing">
         {/* Header Section */}
         <div className="mb-8">
-          <div className="bg-gradient-to-r from-[#1E7A50] to-[#165c3c] rounded-2xl p-8 text-white shadow-xl">
+          <div className="bg-gradient-to-r from-brand to-brand-hover rounded-2xl p-8 text-white shadow-xl">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center space-x-3 mb-4">
@@ -193,7 +193,7 @@ export default function BrowseTrips() {
                   </h1>
                 </div>
                 <p className="text-lg opacity-90" data-testid="page-subtitle">
-                  Discover amazing travel opportunities across Sri Lanka.
+                  Colombo–Galle–Ella, Ella–Arugam Bay, Yala–Udawalawe — and everything travellers are posting in between.
                 </p>
               </div>
               <div className="hidden md:block">
@@ -201,7 +201,7 @@ export default function BrowseTrips() {
                   onClick={handlePostTrip}
                   variant="secondary"
                   size="lg"
-                  className="text-blue-600"
+                  className="text-brand"
                   data-testid="button-post-trip"
                 >
                   <Plus className="mr-2 h-5 w-5" />
@@ -339,7 +339,7 @@ export default function BrowseTrips() {
             tips={[
               "Use <strong>filters</strong> to narrow down trips by location, date, or price range",
               "Check the <strong>trip organizer's profile</strong> and ratings before joining", 
-              "Look for the <strong>💚 Free Trip</strong> badge for cost-effective adventures",
+              "Look for the <strong>Free Trip</strong> badge for cost-effective adventures",
               "Read <strong>trip descriptions carefully</strong> to understand what's included",
               "Use <strong>Chat Buddy</strong> to message organizers before committing",
               "Save interesting trips by clicking the <strong>📌 Pin</strong> button"
