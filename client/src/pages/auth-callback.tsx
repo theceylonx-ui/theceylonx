@@ -1,14 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { needsOnboarding } from "@/utils/onboarding";
 import newLogo from "@assets/hibowan-pin-hi-mark.svg";
 
 export default function AuthCallbackPage() {
   const [, navigate] = useLocation();
+  const { user } = useAuth();
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [errorMessage, setErrorMessage] = useState('');
+  const userRef = useRef(user);
+  userRef.current = user;
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -24,7 +29,9 @@ export default function AuthCallbackPage() {
           localStorage.removeItem('returnPath');
           navigate(returnPath);
         } else {
-          navigate('/');
+          // Read from the ref so we get whatever user data has loaded by now,
+          // not whatever was (likely still empty) at the moment this effect ran.
+          navigate(needsOnboarding(userRef.current) ? '/onboarding' : '/');
         }
       }, 2000);
     } else if (error) {

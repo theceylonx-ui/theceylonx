@@ -1,14 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { needsOnboarding } from "@/utils/onboarding";
 import newLogo from "@assets/hibowan-pin-hi-mark.svg";
 
 export default function AuthMagicPage() {
   const [, navigate] = useLocation();
+  const { user } = useAuth();
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
   const [errorMessage, setErrorMessage] = useState('');
+  const userRef = useRef(user);
+  userRef.current = user;
 
   useEffect(() => {
     const verifyMagicLink = async () => {
@@ -37,7 +42,7 @@ export default function AuthMagicPage() {
         if (response.ok) {
           setStatus('success');
           setTimeout(() => {
-            navigate('/');
+            navigate(needsOnboarding(userRef.current) ? '/onboarding' : '/');
           }, 2000);
         } else {
           const error = await response.json().catch(() => ({ error: 'Verification failed' }));

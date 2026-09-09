@@ -39,6 +39,7 @@ const UserDeletion = lazy(() => import("@/pages/user-deletion"));
 const CalendarPage = lazy(() => import("@/pages/calendar"));
 const TravelStyleSettings = lazy(() => import("@/pages/travel-style-settings"));
 const ProfilePage = lazy(() => import("@/pages/me"));
+const OnboardingPage = lazy(() => import("@/pages/onboarding"));
 const ChatBuddy = lazy(() => import("@/pages/chat-buddy"));
 const ClerkSmoke = lazy(() => import("@/auth/ClerkSmoke"));
 const UserProfilePage = lazy(() => import("@/pages/profile/[id]"));
@@ -182,7 +183,8 @@ function Router() {
           <Route path="/auth/signin" component={handleRoute(AuthSignInPage)} />
           <Route path="/destination/:city" component={handleRoute(DestinationPage)} />
           <Route path="/travel-style-settings" component={handleRoute(TravelStyleSettings)} />
-          
+          <Route path="/onboarding" component={handleRoute(OnboardingPage)} />
+
           {/* Profile Routes */}
           <Route path="/me" component={handleRoute(MeRedirect)} />
           <Route path="/profile/:id" component={handleRoute(UserProfilePage)} />

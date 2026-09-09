@@ -2,23 +2,27 @@ import { useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthSignIn } from "@/components/AuthSignIn";
+import { needsOnboarding } from "@/utils/onboarding";
 import newLogo from "@assets/hibowan-pin-hi-mark.svg";
 
 export default function AuthSignInPage() {
   const [, navigate] = useLocation();
   const { user, isLoading } = useAuth();
 
+  const redirectAfterAuth = (currentUser: any) => {
+    const returnPath = localStorage.getItem('returnPath');
+    if (returnPath) {
+      localStorage.removeItem('returnPath');
+      navigate(returnPath);
+    } else {
+      navigate(needsOnboarding(currentUser) ? "/onboarding" : "/");
+    }
+  };
+
   // Redirect if already authenticated
   useEffect(() => {
     if (!isLoading && user) {
-      // Check if there's a return path in localStorage
-      const returnPath = localStorage.getItem('returnPath');
-      if (returnPath) {
-        localStorage.removeItem('returnPath');
-        navigate(returnPath);
-      } else {
-        navigate("/");
-      }
+      redirectAfterAuth(user);
     }
   }, [user, isLoading, navigate]);
 
@@ -50,17 +54,11 @@ export default function AuthSignInPage() {
           <p className="text-gray-600">Your travel companion in Sri Lanka</p>
         </div>
 
-        {/* Multi-provider Sign In Component */}
-        <AuthSignIn onSuccess={() => {
-          // Check if there's a return path in localStorage
-          const returnPath = localStorage.getItem('returnPath');
-          if (returnPath) {
-            localStorage.removeItem('returnPath');
-            navigate(returnPath);
-          } else {
-            navigate("/");
-          }
-        }} />
+        {/* Multi-provider Sign In Component. Navigation on success is handled by the
+            useEffect above once the refetched user is available (needed to decide
+            whether to route through onboarding) -- not here, since the user object
+            isn't refreshed yet at the instant this fires. */}
+        <AuthSignIn />
 
         <div className="mt-6 rounded-lg bg-accent-subtle p-4 text-sm text-text-secondary" data-testid="signup-safety-notice">
           <p>
