@@ -1,0 +1,366 @@
+From b9c298f4b57ba4c7917f0c7b7666daff8588021f Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Wed, 9 Sep 2026 22:36:47 +0530
+Subject: [PATCH] Add real onboarding flow: profile setup + travel preferences
+
+New /onboarding page (client/src/pages/onboarding.tsx), two steps:
+1. Basic profile (display name, location, bio) -- PATCHes /api/me/profile,
+   a small purpose-built form rather than reusing the full ProfileEditor
+   (which isn't exported and includes avatar-picker complexity this
+   moment doesn't need).
+2. Travel preferences -- reuses the existing PreferencesForm component
+   as-is (it's self-contained, already handles its own fetch/save/redirect
+   to home on success). Both steps have a "skip for now" escape hatch;
+   nothing here is a hard gate.
+
+First-time detection (client/src/utils/onboarding.ts): a user is routed
+to /onboarding instead of home if their account is under a week old AND
+profileCompletePct is under 30 -- both real fields already returned by
+/api/auth/me, not new ones.
+
+Wired into all three places a session can start: auth-signin.tsx (the
+main Google/Facebook flow), auth-callback.tsx (OAuth redirect landing),
+and auth-magic.tsx (magic-link verification). auth-callback and
+auth-magic read the user via a ref rather than the value captured when
+their effect first ran, since the auth query hasn't necessarily resolved
+yet at that point -- reading a stale closure would silently skip
+onboarding for every new user. Also removed a redundant, less accurate
+onSuccess-callback redirect in auth-signin.tsx that raced against the
+already-correct useEffect and would have won.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ client/src/App.tsx                 |   4 +-
+ client/src/pages/auth-callback.tsx |  11 ++-
+ client/src/pages/auth-magic.tsx    |   9 +-
+ client/src/pages/auth-signin.tsx   |  36 ++++----
+ client/src/pages/onboarding.tsx    | 143 +++++++++++++++++++++++++++++
+ client/src/utils/onboarding.ts     |  11 +++
+ 6 files changed, 190 insertions(+), 24 deletions(-)
+ create mode 100644 client/src/pages/onboarding.tsx
+ create mode 100644 client/src/utils/onboarding.ts
+
+diff --git a/client/src/App.tsx b/client/src/App.tsx
+index 21a815c..c078595 100644
+--- a/client/src/App.tsx
++++ b/client/src/App.tsx
+@@ -39,6 +39,7 @@ const UserDeletion = lazy(() => import("@/pages/user-deletion"));
+ const CalendarPage = lazy(() => import("@/pages/calendar"));
+ const TravelStyleSettings = lazy(() => import("@/pages/travel-style-settings"));
+ const ProfilePage = lazy(() => import("@/pages/me"));
++const OnboardingPage = lazy(() => import("@/pages/onboarding"));
+ const ChatBuddy = lazy(() => import("@/pages/chat-buddy"));
+ const ClerkSmoke = lazy(() => import("@/auth/ClerkSmoke"));
+ const UserProfilePage = lazy(() => import("@/pages/profile/[id]"));
+@@ -182,7 +183,8 @@ function Router() {
+           <Route path="/auth/signin" component={handleRoute(AuthSignInPage)} />
+           <Route path="/destination/:city" component={handleRoute(DestinationPage)} />
+           <Route path="/travel-style-settings" component={handleRoute(TravelStyleSettings)} />
+-          
++          <Route path="/onboarding" component={handleRoute(OnboardingPage)} />
++
+           {/* Profile Routes */}
+           <Route path="/me" component={handleRoute(MeRedirect)} />
+           <Route path="/profile/:id" component={handleRoute(UserProfilePage)} />
+diff --git a/client/src/pages/auth-callback.tsx b/client/src/pages/auth-callback.tsx
+index 0ac8c0c..77400d4 100644
+--- a/client/src/pages/auth-callback.tsx
++++ b/client/src/pages/auth-callback.tsx
+@@ -1,14 +1,19 @@
+-import { useEffect, useState } from "react";
++import { useEffect, useRef, useState } from "react";
+ import { useLocation } from "wouter";
+ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+ import { Button } from "@/components/ui/button";
+ import { CheckCircle, XCircle, Loader2 } from "lucide-react";
++import { useAuth } from "@/hooks/useAuth";
++import { needsOnboarding } from "@/utils/onboarding";
+ import newLogo from "@assets/hibowan-pin-hi-mark.svg";
+ 
+ export default function AuthCallbackPage() {
+   const [, navigate] = useLocation();
++  const { user } = useAuth();
+   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
+   const [errorMessage, setErrorMessage] = useState('');
++  const userRef = useRef(user);
++  userRef.current = user;
+ 
+   useEffect(() => {
+     const urlParams = new URLSearchParams(window.location.search);
+@@ -24,7 +29,9 @@ export default function AuthCallbackPage() {
+           localStorage.removeItem('returnPath');
+           navigate(returnPath);
+         } else {
+-          navigate('/');
++          // Read from the ref so we get whatever user data has loaded by now,
++          // not whatever was (likely still empty) at the moment this effect ran.
++          navigate(needsOnboarding(userRef.current) ? '/onboarding' : '/');
+         }
+       }, 2000);
+     } else if (error) {
+diff --git a/client/src/pages/auth-magic.tsx b/client/src/pages/auth-magic.tsx
+index ae35ef5..fe05975 100644
+--- a/client/src/pages/auth-magic.tsx
++++ b/client/src/pages/auth-magic.tsx
+@@ -1,14 +1,19 @@
+-import { useEffect, useState } from "react";
++import { useEffect, useRef, useState } from "react";
+ import { useLocation } from "wouter";
+ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+ import { Button } from "@/components/ui/button";
+ import { CheckCircle, XCircle, Loader2 } from "lucide-react";
++import { useAuth } from "@/hooks/useAuth";
++import { needsOnboarding } from "@/utils/onboarding";
+ import newLogo from "@assets/hibowan-pin-hi-mark.svg";
+ 
+ export default function AuthMagicPage() {
+   const [, navigate] = useLocation();
++  const { user } = useAuth();
+   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
+   const [errorMessage, setErrorMessage] = useState('');
++  const userRef = useRef(user);
++  userRef.current = user;
+ 
+   useEffect(() => {
+     const verifyMagicLink = async () => {
+@@ -37,7 +42,7 @@ export default function AuthMagicPage() {
+         if (response.ok) {
+           setStatus('success');
+           setTimeout(() => {
+-            navigate('/');
++            navigate(needsOnboarding(userRef.current) ? '/onboarding' : '/');
+           }, 2000);
+         } else {
+           const error = await response.json().catch(() => ({ error: 'Verification failed' }));
+diff --git a/client/src/pages/auth-signin.tsx b/client/src/pages/auth-signin.tsx
+index ca14241..ace44ee 100644
+--- a/client/src/pages/auth-signin.tsx
++++ b/client/src/pages/auth-signin.tsx
+@@ -2,23 +2,27 @@ import { useEffect } from "react";
+ import { useLocation, Link } from "wouter";
+ import { useAuth } from "@/hooks/useAuth";
+ import { AuthSignIn } from "@/components/AuthSignIn";
++import { needsOnboarding } from "@/utils/onboarding";
+ import newLogo from "@assets/hibowan-pin-hi-mark.svg";
+ 
+ export default function AuthSignInPage() {
+   const [, navigate] = useLocation();
+   const { user, isLoading } = useAuth();
+ 
++  const redirectAfterAuth = (currentUser: any) => {
++    const returnPath = localStorage.getItem('returnPath');
++    if (returnPath) {
++      localStorage.removeItem('returnPath');
++      navigate(returnPath);
++    } else {
++      navigate(needsOnboarding(currentUser) ? "/onboarding" : "/");
++    }
++  };
++
+   // Redirect if already authenticated
+   useEffect(() => {
+     if (!isLoading && user) {
+-      // Check if there's a return path in localStorage
+-      const returnPath = localStorage.getItem('returnPath');
+-      if (returnPath) {
+-        localStorage.removeItem('returnPath');
+-        navigate(returnPath);
+-      } else {
+-        navigate("/");
+-      }
++      redirectAfterAuth(user);
+     }
+   }, [user, isLoading, navigate]);
+ 
+@@ -50,17 +54,11 @@ export default function AuthSignInPage() {
+           <p className="text-gray-600">Your travel companion in Sri Lanka</p>
+         </div>
+ 
+-        {/* Multi-provider Sign In Component */}
+-        <AuthSignIn onSuccess={() => {
+-          // Check if there's a return path in localStorage
+-          const returnPath = localStorage.getItem('returnPath');
+-          if (returnPath) {
+-            localStorage.removeItem('returnPath');
+-            navigate(returnPath);
+-          } else {
+-            navigate("/");
+-          }
+-        }} />
++        {/* Multi-provider Sign In Component. Navigation on success is handled by the
++            useEffect above once the refetched user is available (needed to decide
++            whether to route through onboarding) -- not here, since the user object
++            isn't refreshed yet at the instant this fires. */}
++        <AuthSignIn />
+ 
+         <div className="mt-6 rounded-lg bg-accent-subtle p-4 text-sm text-text-secondary" data-testid="signup-safety-notice">
+           <p>
+diff --git a/client/src/pages/onboarding.tsx b/client/src/pages/onboarding.tsx
+new file mode 100644
+index 0000000..0b1e30d
+--- /dev/null
++++ b/client/src/pages/onboarding.tsx
+@@ -0,0 +1,143 @@
++import { useState } from "react";
++import { useLocation } from "wouter";
++import { useQueryClient } from "@tanstack/react-query";
++import { useAuth } from "@/hooks/useAuth";
++import { useToast } from "@/hooks/use-toast";
++import { apiRequest } from "@/lib/queryClient";
++import { Button } from "@/components/ui/button";
++import { Input } from "@/components/ui/input";
++import { Textarea } from "@/components/ui/textarea";
++import { Label } from "@/components/ui/label";
++import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
++import { PreferencesForm } from "@/components/preferences/PreferencesForm";
++import { ArrowRight, MapPin } from "lucide-react";
++import newLogo from "@assets/hibowan-pin-hi-mark.svg";
++
++type Step = "profile" | "preferences";
++
++export default function OnboardingPage() {
++  const { user } = useAuth();
++  const [, navigate] = useLocation();
++  const { toast } = useToast();
++  const queryClient = useQueryClient();
++
++  const [step, setStep] = useState<Step>("profile");
++  const [displayName, setDisplayName] = useState(user?.displayName || "");
++  const [bio, setBio] = useState(user?.bio || "");
++  const [location, setLocationField] = useState(user?.location || "");
++  const [isSaving, setIsSaving] = useState(false);
++
++  const finish = () => {
++    navigate("/");
++  };
++
++  const saveProfileAndContinue = async () => {
++    setIsSaving(true);
++    try {
++      await apiRequest("PATCH", "/api/me/profile", { displayName, bio, location });
++      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
++      setStep("preferences");
++    } catch (error) {
++      toast({
++        title: "Couldn't save your profile",
++        description: "You can try again, or skip for now and fill this in later.",
++        variant: "destructive",
++      });
++    } finally {
++      setIsSaving(false);
++    }
++  };
++
++  return (
++    <div className="min-h-screen bg-ui-bg flex items-center justify-center p-4 py-12">
++      <div className="w-full max-w-lg">
++        <div className="text-center mb-8">
++          <img src={newLogo} alt="HiBowan" className="h-12 w-auto mx-auto mb-4" width="48" height="48" />
++          <h1 className="text-2xl font-bold text-text-primary">Welcome to HiBowan</h1>
++          <p className="text-text-secondary mt-1">A couple of quick things before you start exploring.</p>
++        </div>
++
++        <div className="flex items-center justify-center gap-2 mb-6" data-testid="onboarding-steps">
++          <div className={`h-1.5 w-16 rounded-full ${step === "profile" ? "bg-brand" : "bg-brand/40"}`} />
++          <div className={`h-1.5 w-16 rounded-full ${step === "preferences" ? "bg-brand" : "bg-ui-line"}`} />
++        </div>
++
++        {step === "profile" ? (
++          <Card data-testid="onboarding-step-profile">
++            <CardHeader>
++              <CardTitle>Tell fellow travellers a bit about you</CardTitle>
++            </CardHeader>
++            <CardContent className="space-y-4">
++              <div>
++                <Label htmlFor="onboarding-name">Display name</Label>
++                <Input
++                  id="onboarding-name"
++                  value={displayName}
++                  onChange={(e) => setDisplayName(e.target.value)}
++                  placeholder="How should other travellers see you?"
++                  data-testid="input-display-name"
++                />
++              </div>
++              <div>
++                <Label htmlFor="onboarding-location">Where are you based / travelling from?</Label>
++                <div className="relative">
++                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
++                  <Input
++                    id="onboarding-location"
++                    value={location}
++                    onChange={(e) => setLocationField(e.target.value)}
++                    placeholder="e.g. Berlin, Germany"
++                    className="pl-9"
++                    data-testid="input-location"
++                  />
++                </div>
++              </div>
++              <div>
++                <Label htmlFor="onboarding-bio">A short bio</Label>
++                <Textarea
++                  id="onboarding-bio"
++                  value={bio}
++                  onChange={(e) => setBio(e.target.value)}
++                  placeholder="What kind of trips are you looking for?"
++                  className="min-h-[90px]"
++                  data-testid="input-bio"
++                />
++              </div>
++
++              <div className="flex items-center justify-between pt-2">
++                <Button variant="ghost" onClick={finish} data-testid="button-skip-profile">
++                  Skip for now
++                </Button>
++                <Button
++                  onClick={saveProfileAndContinue}
++                  disabled={isSaving}
++                  className="bg-brand hover:bg-brand-hover text-white"
++                  data-testid="button-continue-to-preferences"
++                >
++                  {isSaving ? "Saving..." : "Continue"}
++                  <ArrowRight className="h-4 w-4 ml-2" />
++                </Button>
++              </div>
++            </CardContent>
++          </Card>
++        ) : (
++          <div data-testid="onboarding-step-preferences">
++            <p className="text-sm text-text-secondary mb-4 text-center">
++              Set your travel preferences so HiBowan can surface trips that actually fit you. You can always change these later from your profile.
++            </p>
++            <PreferencesForm />
++            <p className="text-center mt-4">
++              <button
++                onClick={finish}
++                className="text-sm text-text-muted hover:text-text-secondary underline underline-offset-2"
++                data-testid="button-skip-preferences"
++              >
++                Skip for now — I'll set these later
++              </button>
++            </p>
++          </div>
++        )}
++      </div>
++    </div>
++  );
++}
+diff --git a/client/src/utils/onboarding.ts b/client/src/utils/onboarding.ts
+new file mode 100644
+index 0000000..57a36d8
+--- /dev/null
++++ b/client/src/utils/onboarding.ts
+@@ -0,0 +1,11 @@
++/**
++ * Whether a freshly-signed-in user should be routed through onboarding
++ * (profile + travel preferences) instead of straight to the home page.
++ */
++export function needsOnboarding(user: any): boolean {
++  if (!user) return false;
++  const createdAt = user.createdAt ? new Date(user.createdAt).getTime() : 0;
++  const isRecentAccount = createdAt > 0 && Date.now() - createdAt < 7 * 24 * 60 * 60 * 1000;
++  const profileIncomplete = (user.profileCompletePct ?? 0) < 30;
++  return isRecentAccount && profileIncomplete;
++}
+-- 
+2.50.1 (Apple Git-155)
+

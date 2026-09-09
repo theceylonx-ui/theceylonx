@@ -1,0 +1,201 @@
+From da455ea4c23d1fedaf68d0dc76accb057fb8ae5c Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Wed, 9 Sep 2026 22:29:42 +0530
+Subject: [PATCH] Add the two trust & safety copy moments the redesign brief
+ calls for
+
+The brief's Terms of Service already has strong liability language
+(Section 9: "We are not responsible for the actions, conduct, or safety
+of users..."), but it was never surfaced anywhere outside the ToS page
+itself. Added plain-language versions at the two moments the brief names:
+
+- During sign-in/sign-up, before account creation completes: a short
+  notice on auth-signin.tsx that HiBowan doesn't verify identity and
+  isn't responsible for other users' conduct.
+- At the moment two strangers are about to connect: a line under "Send
+  Request" on Trip Detail (shown only while no request is pending yet),
+  and a matching line above "Accept Request" on the organizer's request-
+  management page, right before a chat thread opens between them.
+
+Also fixed a JSX structural issue introduced while adding the accept-side
+reminder (the button row needed an extra wrapping div once the reminder
+text was added above it).
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ client/src/pages/auth-signin.tsx   |  8 +++-
+ client/src/pages/trip-details.tsx  | 59 +++++++++++++++++-------------
+ client/src/pages/trip-requests.tsx | 57 ++++++++++++++++-------------
+ 3 files changed, 71 insertions(+), 53 deletions(-)
+
+diff --git a/client/src/pages/auth-signin.tsx b/client/src/pages/auth-signin.tsx
+index db3f1cd..ca14241 100644
+--- a/client/src/pages/auth-signin.tsx
++++ b/client/src/pages/auth-signin.tsx
+@@ -62,7 +62,13 @@ export default function AuthSignInPage() {
+           }
+         }} />
+ 
+-        <div className="mt-6 text-center text-sm text-gray-500">
++        <div className="mt-6 rounded-lg bg-accent-subtle p-4 text-sm text-text-secondary" data-testid="signup-safety-notice">
++          <p>
++            HiBowan connects you with fellow travellers — we don't verify anyone's identity, and we're not responsible for the actions, conduct, or safety of other users. You participate in trips at your own risk, so use the same judgement you would meeting anyone new while travelling.
++          </p>
++        </div>
++
++        <div className="mt-4 text-center text-sm text-gray-500">
+           <p>
+             By signing in, you agree to our{" "}
+             <Link href="/terms-of-service" className="text-ceylon-green hover:underline">
+diff --git a/client/src/pages/trip-details.tsx b/client/src/pages/trip-details.tsx
+index 06a6653..486f22d 100644
+--- a/client/src/pages/trip-details.tsx
++++ b/client/src/pages/trip-details.tsx
+@@ -719,39 +719,46 @@ export default function TripDetails({ params }: TripDetailsProps) {
+                   {/* Clean Interest Request System */}
+                   {isAuthenticated ? (
+                     user && user.id !== trip.organizer?.id ? (
+-                      <Button 
+-                        onClick={handleSendInterest}
+-                        disabled={!!existingInterestRequest || sendInterestMutation.isPending}
+-                        className={`w-full ${
+-                          existingInterestRequest 
+-                            ? 'bg-gray-100 text-gray-600 cursor-not-allowed border border-gray-300'
+-                            : 'bg-ceylon-green hover:bg-ceylon-green/90 text-white'
+-                        }`}
+-                        data-testid="button-interest"
+-                      >
+-                        {sendInterestMutation.isPending ? (
+-                          <>
+-                            <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
+-                            Sending...
+-                          </>
+-                        ) : existingInterestRequest ? (
+-                          <>
+-                            <Heart className="h-4 w-4 mr-2 fill-current" />
+-                            Request Sent
+-                          </>
+-                        ) : (
+-                          <>
+-                            Send Request
+-                          </>
++                      <>
++                        <Button
++                          onClick={handleSendInterest}
++                          disabled={!!existingInterestRequest || sendInterestMutation.isPending}
++                          className={`w-full ${
++                            existingInterestRequest
++                              ? 'bg-gray-100 text-gray-600 cursor-not-allowed border border-gray-300'
++                              : 'bg-ceylon-green hover:bg-ceylon-green/90 text-white'
++                          }`}
++                          data-testid="button-interest"
++                        >
++                          {sendInterestMutation.isPending ? (
++                            <>
++                              <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
++                              Sending...
++                            </>
++                          ) : existingInterestRequest ? (
++                            <>
++                              <Heart className="h-4 w-4 mr-2 fill-current" />
++                              Request Sent
++                            </>
++                          ) : (
++                            <>
++                              Send Request
++                            </>
++                          )}
++                        </Button>
++                        {!existingInterestRequest && (
++                          <p className="text-xs text-text-muted text-center mt-2" data-testid="request-safety-reminder">
++                            You're responsible for arrangements and safety once you connect — meet in public first.
++                          </p>
+                         )}
+-                      </Button>
++                      </>
+                     ) : user?.id === trip.organizer?.id ? (
+                       <div className="w-full text-center text-sm text-gray-600 p-3 bg-blue-50 rounded-md border border-blue-200">
+                         You are the organizer of this trip
+                       </div>
+                     ) : null
+                   ) : (
+-                    <Button 
++                    <Button
+                       onClick={() => {
+                         const currentPath = `${window.location.pathname}${window.location.search}`;
+                         window.location.href = createLoginRedirectUrl(currentPath);
+diff --git a/client/src/pages/trip-requests.tsx b/client/src/pages/trip-requests.tsx
+index 7d86bf6..aa57482 100644
+--- a/client/src/pages/trip-requests.tsx
++++ b/client/src/pages/trip-requests.tsx
+@@ -317,36 +317,41 @@ export default function TripRequestsPage({ params }: TripRequestsPageProps) {
+ 
+                     {/* Action Buttons */}
+                     {request.status === 'pending' && (
+-                      <div className="flex items-center gap-3 pt-4 border-t">
+-                        <Button
+-                          size="sm"
+-                          onClick={() => acceptMutation.mutate(request.id)}
+-                          disabled={processingRequests.has(request.id)}
+-                          className="bg-green-600 hover:bg-green-700 text-white"
+-                        >
+-                          <Check className="h-4 w-4 mr-2" />
+-                          Accept Request
+-                        </Button>
+-                        <Button
+-                          size="sm"
+-                          variant="outline"
+-                          onClick={() => rejectMutation.mutate(request.id)}
+-                          disabled={processingRequests.has(request.id)}
+-                          className="border-red-300 text-red-600 hover:bg-red-50"
+-                        >
+-                          <X className="h-4 w-4 mr-2" />
+-                          Decline
+-                        </Button>
+-                        {request.chatThreadId && (
++                      <div className="pt-4 border-t">
++                        <p className="text-xs text-gray-500 mb-3" data-testid="accept-safety-reminder">
++                          Accepting unlocks chat with a fellow traveller we haven't verified — you're responsible for how you arrange and coordinate this trip.
++                        </p>
++                        <div className="flex items-center gap-3">
+                           <Button
+                             size="sm"
+-                            variant="ghost"
+-                            onClick={() => setLocation(`/chat-buddy/${request.chatThreadId}`)}
++                            onClick={() => acceptMutation.mutate(request.id)}
++                            disabled={processingRequests.has(request.id)}
++                            className="bg-green-600 hover:bg-green-700 text-white"
+                           >
+-                            <MessageCircle className="h-4 w-4 mr-2" />
+-                            Chat
++                            <Check className="h-4 w-4 mr-2" />
++                            Accept Request
+                           </Button>
+-                        )}
++                          <Button
++                            size="sm"
++                            variant="outline"
++                            onClick={() => rejectMutation.mutate(request.id)}
++                            disabled={processingRequests.has(request.id)}
++                            className="border-red-300 text-red-600 hover:bg-red-50"
++                          >
++                            <X className="h-4 w-4 mr-2" />
++                            Decline
++                          </Button>
++                          {request.chatThreadId && (
++                            <Button
++                              size="sm"
++                              variant="ghost"
++                              onClick={() => setLocation(`/chat-buddy/${request.chatThreadId}`)}
++                            >
++                              <MessageCircle className="h-4 w-4 mr-2" />
++                              Chat
++                            </Button>
++                          )}
++                        </div>
+                       </div>
+                     )}
+ 
+-- 
+2.50.1 (Apple Git-155)
+

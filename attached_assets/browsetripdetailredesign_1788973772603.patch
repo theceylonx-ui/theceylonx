@@ -1,0 +1,209 @@
+From 4766afefa1e227be79ced97642bc87f9ce5f3812 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Wed, 9 Sep 2026 22:21:14 +0530
+Subject: [PATCH] Browse Trips + Trip Detail: fix off-brand hardcoded colors,
+ add trust banner
+
+Browse Trips / trip-card:
+- Header and pagination were hardcoded to the old green (#1E7A50) and to
+  Tailwind's stock blue/purple, bypassing the token system entirely --
+  fixed to use brand/accent tokens.
+- Trip card's photo-less fallback gradient and the Quick Trip "Show
+  Interest" button were similarly hardcoded (purple-600, orange-500) --
+  fixed to brand tokens.
+- Dropped the green heart emoji on "Free Trip" badges, which visually
+  clashed against the brand-coral label text next to it.
+- Left the per-province badge colors and Quick Trip urgency/countdown
+  styling (orange) alone -- those are deliberate semantic/categorical
+  color choices, not brand-hue bugs.
+- Updated the Browse Trips header subhead to name the three launch route
+  clusters instead of generic "amazing travel opportunities" copy.
+
+Trip Detail:
+- Added the trust banner from the redesign brief ("Fellow traveller, not
+  a verified companion. You're responsible for arrangements and safety.")
+  above the organizer info -- this didn't exist on the page before. The
+  locked-chat / interest-request flow underneath it was already accurate
+  and didn't need changing.
+- Fixed the same hardcoded purple-600 fallback-image gradient as trip-card.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ client/src/components/trip-card.tsx |  6 ++----
+ client/src/pages/browse-trips.tsx   | 18 +++++++++---------
+ client/src/pages/trip-details.tsx   | 17 ++++++++++++++---
+ 3 files changed, 25 insertions(+), 16 deletions(-)
+
+diff --git a/client/src/components/trip-card.tsx b/client/src/components/trip-card.tsx
+index 8e18e24..e671b40 100644
+--- a/client/src/components/trip-card.tsx
++++ b/client/src/components/trip-card.tsx
+@@ -436,7 +436,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
+         <div className="relative">
+           {getTripImage() === newLogo && !trip.mediaUrls?.length && !trip.imageUrl ? (
+             // Beautiful HiBowan fallback design
+-            <div className="w-full h-48 bg-gradient-to-br from-ceylon-green via-ceylon-blue to-purple-600 flex flex-col items-center justify-center relative overflow-hidden">
++            <div className="w-full h-48 bg-gradient-to-br from-brand via-accent to-brand-hover flex flex-col items-center justify-center relative overflow-hidden">
+               {/* Background pattern */}
+               <div className="absolute inset-0 opacity-10">
+                 <div className="absolute top-4 left-4 w-8 h-8 border-2 border-white rounded-full"></div>
+@@ -571,13 +571,11 @@ export default function TripCard({ trip, badges }: TripCardProps) {
+                   </>
+                 ) : (
+                   <>
+-                    <span className="text-lg mr-2">💚</span>
+                     <span className="font-semibold text-brand">Free Trip</span>
+                   </>
+                 )
+               ) : !trip.price || Number(trip.price) === 0 ? (
+                 <>
+-                  <span className="text-lg mr-2">💚</span>
+                   <span className="font-semibold text-brand">Free Trip</span>
+                 </>
+               ) : (
+@@ -628,7 +626,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
+                     variant={quickInterestSent ? "outline" : "default"}
+                     className={quickInterestSent 
+                       ? "text-sm px-3 py-2 text-green-600 border-green-300 bg-green-50 h-9" 
+-                      : "text-sm px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white h-9"}
++                      : "text-sm px-3 py-2 bg-brand hover:bg-brand-hover text-white h-9"}
+                     disabled={quickInterestSent || quickTripInterestMutation.isPending}
+                     onClick={(e) => {
+                       e.preventDefault();
+diff --git a/client/src/pages/browse-trips.tsx b/client/src/pages/browse-trips.tsx
+index 3a454c4..3128974 100644
+--- a/client/src/pages/browse-trips.tsx
++++ b/client/src/pages/browse-trips.tsx
+@@ -113,7 +113,7 @@ export default function BrowseTrips() {
+           size="sm"
+           onClick={() => handlePageChange(page - 1)}
+           disabled={page === 1}
+-          className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50"
++          className="border-brand/30 text-brand hover:bg-brand-subtle hover:border-brand/50 disabled:opacity-50"
+           data-testid="pagination-prev"
+         >
+           Previous
+@@ -125,7 +125,7 @@ export default function BrowseTrips() {
+               variant="outline"
+               size="sm"
+               onClick={() => handlePageChange(1)}
+-              className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
++              className="border-brand/30 text-brand hover:bg-brand-subtle hover:border-brand/50"
+               data-testid="pagination-page-1"
+             >
+               1
+@@ -140,7 +140,7 @@ export default function BrowseTrips() {
+             variant={page === pageNum ? "default" : "outline"}
+             size="sm"
+             onClick={() => handlePageChange(pageNum)}
+-            className={page === pageNum ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 border-none" : "border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"}
++            className={page === pageNum ? "bg-brand text-white hover:bg-brand-hover border-none" : "border-brand/30 text-brand hover:bg-brand-subtle hover:border-brand/50"}
+             data-testid={`pagination-page-${pageNum}`}
+           >
+             {pageNum}
+@@ -154,7 +154,7 @@ export default function BrowseTrips() {
+               variant="outline"
+               size="sm"
+               onClick={() => handlePageChange(totalPages)}
+-              className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
++              className="border-brand/30 text-brand hover:bg-brand-subtle hover:border-brand/50"
+               data-testid={`pagination-page-${totalPages}`}
+             >
+               {totalPages}
+@@ -167,7 +167,7 @@ export default function BrowseTrips() {
+           size="sm"
+           onClick={() => handlePageChange(page + 1)}
+           disabled={page === totalPages}
+-          className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50"
++          className="border-brand/30 text-brand hover:bg-brand-subtle hover:border-brand/50 disabled:opacity-50"
+           data-testid="pagination-next"
+         >
+           Next
+@@ -183,7 +183,7 @@ export default function BrowseTrips() {
+       <div className="page-container section-spacing">
+         {/* Header Section */}
+         <div className="mb-8">
+-          <div className="bg-gradient-to-r from-[#1E7A50] to-[#165c3c] rounded-2xl p-8 text-white shadow-xl">
++          <div className="bg-gradient-to-r from-brand to-brand-hover rounded-2xl p-8 text-white shadow-xl">
+             <div className="flex items-center justify-between">
+               <div>
+                 <div className="flex items-center space-x-3 mb-4">
+@@ -193,7 +193,7 @@ export default function BrowseTrips() {
+                   </h1>
+                 </div>
+                 <p className="text-lg opacity-90" data-testid="page-subtitle">
+-                  Discover amazing travel opportunities across Sri Lanka.
++                  Colombo–Galle–Ella, Ella–Arugam Bay, Yala–Udawalawe — and everything travellers are posting in between.
+                 </p>
+               </div>
+               <div className="hidden md:block">
+@@ -201,7 +201,7 @@ export default function BrowseTrips() {
+                   onClick={handlePostTrip}
+                   variant="secondary"
+                   size="lg"
+-                  className="text-blue-600"
++                  className="text-brand"
+                   data-testid="button-post-trip"
+                 >
+                   <Plus className="mr-2 h-5 w-5" />
+@@ -339,7 +339,7 @@ export default function BrowseTrips() {
+             tips={[
+               "Use <strong>filters</strong> to narrow down trips by location, date, or price range",
+               "Check the <strong>trip organizer's profile</strong> and ratings before joining", 
+-              "Look for the <strong>💚 Free Trip</strong> badge for cost-effective adventures",
++              "Look for the <strong>Free Trip</strong> badge for cost-effective adventures",
+               "Read <strong>trip descriptions carefully</strong> to understand what's included",
+               "Use <strong>Chat Buddy</strong> to message organizers before committing",
+               "Save interesting trips by clicking the <strong>📌 Pin</strong> button"
+diff --git a/client/src/pages/trip-details.tsx b/client/src/pages/trip-details.tsx
+index 720a9a7..06a6653 100644
+--- a/client/src/pages/trip-details.tsx
++++ b/client/src/pages/trip-details.tsx
+@@ -1,7 +1,7 @@
+ import { useState, useEffect } from "react";
+ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+ import { Link, useLocation } from "wouter";
+-import { MapPin, Calendar, Users, DollarSign, Phone, Star, Flag, ArrowLeft, Lock, Trash2, Heart, Edit, MessageCircle, MoreHorizontal, ChevronRight, CalendarIcon } from "lucide-react";
++import { MapPin, Calendar, Users, DollarSign, Phone, Star, Flag, ArrowLeft, Lock, Trash2, Heart, Edit, MessageCircle, MoreHorizontal, ChevronRight, CalendarIcon, ShieldAlert } from "lucide-react";
+ import Navigation from "@/components/navigation";
+ import Footer from "@/components/Footer";
+ import { Button } from "@/components/ui/button";
+@@ -533,7 +533,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
+             <div className="mt-6">
+               {getTripImage() === newLogo && !trip.mediaUrls?.length && !trip.imageUrl ? (
+                 // Beautiful HiBowan fallback design
+-                <div className="w-full h-64 bg-gradient-to-br from-ceylon-green via-ceylon-blue to-purple-600 flex flex-col items-center justify-center relative overflow-hidden rounded-lg">
++                <div className="w-full h-64 bg-gradient-to-br from-brand via-accent to-brand-hover flex flex-col items-center justify-center relative overflow-hidden rounded-lg">
+                   {/* Background pattern */}
+                   <div className="absolute inset-0 opacity-10">
+                     <div className="absolute top-4 left-4 w-8 h-8 border-2 border-white rounded-full"></div>
+@@ -573,7 +573,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
+                     const container = target.parentElement;
+                     if (container) {
+                       container.innerHTML = `
+-                        <div class="w-full h-64 bg-gradient-to-br from-ceylon-green via-ceylon-blue to-purple-600 flex flex-col items-center justify-center relative overflow-hidden rounded-lg">
++                        <div class="w-full h-64 bg-gradient-to-br from-brand via-accent to-brand-hover flex flex-col items-center justify-center relative overflow-hidden rounded-lg">
+                           <div class="absolute inset-0 opacity-10">
+                             <div class="absolute top-4 left-4 w-8 h-8 border-2 border-white rounded-full"></div>
+                             <div class="absolute top-12 right-8 w-4 h-4 border border-white rounded-full"></div>
+@@ -637,6 +637,17 @@ export default function TripDetails({ params }: TripDetailsProps) {
+ 
+               <div>
+                 <h3 className="font-semibold text-gray-800 mb-3">Trip Organizer</h3>
++                <div
++                  className="mb-4 flex items-start gap-2 rounded-lg bg-accent-subtle p-3 text-sm text-text-secondary"
++                  data-testid="trust-banner"
++                >
++                  <ShieldAlert className="h-4 w-4 mt-0.5 text-accent flex-shrink-0" />
++                  <p>
++                    <strong className="text-text-primary">Fellow traveller, not a verified companion.</strong>{" "}
++                    You're responsible for arrangements and safety.
++                  </p>
++                </div>
++
+                 <div className="mb-4" data-testid="trip-organizer">
+                   <UserDisplay 
+                     user={trip.organizer}
+-- 
+2.50.1 (Apple Git-155)
+
