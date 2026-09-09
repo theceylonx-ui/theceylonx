@@ -117,7 +117,7 @@ export default function ContactUs() {
                         <SelectItem value="chat-buddy">Chat Buddy & Messaging</SelectItem>
                         <SelectItem value="photos">Photo Upload Issues</SelectItem>
                         <SelectItem value="calendar">Calendar & Filters</SelectItem>
-                        <SelectItem value="community">CeylonX Tribes & Q&A</SelectItem>
+                        <SelectItem value="community">HiBowan Tribes & Q&A</SelectItem>
                         <SelectItem value="notifications">Notifications</SelectItem>
                         <SelectItem value="privacy">Privacy & Data</SelectItem>
                         <SelectItem value="feedback">Feedback & Suggestions</SelectItem>
@@ -260,7 +260,7 @@ export default function ContactUs() {
                 </div>
                 
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-1">What is CeylonX Tribes?</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-1">What is HiBowan Tribes?</h4>
                   <p className="text-sm text-gray-600 dark:text-gray-300">
                     Our community Q&A where you can ask questions and share travel knowledge about Sri Lanka.
                   </p>
@@ -305,7 +305,7 @@ export default function ContactUs() {
             or want to share feedback, our team is ready to assist you.
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Thank you for being part of the Ceylon Expand community!
+            Thank you for being part of the HiBowan community!
           </p>
         </div>
       </div>

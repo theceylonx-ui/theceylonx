@@ -39,14 +39,14 @@ export default function Navigation() {
             <div className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-all duration-200" data-testid="nav-logo">
               <img 
                 src={Copy_of_CEY__X_Letter_Digital_Company_Logo} 
-                alt="Ceylon Expand Logo" 
+                alt="HiBowan Logo"
                 className="h-8 w-8"
                 width="32"
                 height="32"
                 loading="eager"
                 data-testid="logo-icon"
               />
-              <span className={`text-xl font-semibold ${user ? 'text-white' : 'text-text-primary'} transition-colors duration-300`} data-testid="logo-text">Ceylon Expand</span>
+              <span className={`text-xl font-semibold ${user ? 'text-white' : 'text-text-primary'} transition-colors duration-300`} data-testid="logo-text">HiBowan</span>
             </div>
           </Link>
 
@@ -115,7 +115,7 @@ export default function Navigation() {
                 }`}
                 data-testid="nav-community"
               >
-                CeylonX Tribes
+                HiBowan Tribes
               </span>
             </Link>
             <Link href="/about">
@@ -230,7 +230,7 @@ export default function Navigation() {
                   onClick={() => setIsMobileMenuOpen(false)}
                   data-testid="mobile-nav-community"
                 >
-                  CeylonX Tribes
+                  HiBowan Tribes
                 </div>
               </Link>
               <Link href="/about">

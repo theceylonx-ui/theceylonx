@@ -40,13 +40,13 @@ export default function AuthSignInPage() {
         <div className="text-center mb-8">
           <img 
             src={newLogo} 
-            alt="Ceylon Expand" 
+            alt="HiBowan"
             className="h-16 w-auto mx-auto mb-4"
             width="64"
             height="64"
             loading="eager"
           />
-          <h1 className="text-3xl font-bold text-gray-900">Ceylon Expand</h1>
+          <h1 className="text-3xl font-bold text-gray-900">HiBowan</h1>
           <p className="text-gray-600">Your travel companion in Sri Lanka</p>
         </div>
 

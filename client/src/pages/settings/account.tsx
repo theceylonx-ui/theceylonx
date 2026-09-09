@@ -186,7 +186,7 @@ export default function AccountSettingsPage() {
                 Download Your Data
               </CardTitle>
               <CardDescription>
-                Export all your personal data from Ceylon Expand. This includes your profile information, 
+                Export all your personal data from HiBowan. This includes your profile information,
                 trip history, messages, and other activity data.
               </CardDescription>
             </CardHeader>
@@ -222,7 +222,7 @@ export default function AccountSettingsPage() {
                 Delete Account
               </CardTitle>
               <CardDescription>
-                Permanently delete your Ceylon Expand account and all associated data. 
+                Permanently delete your HiBowan account and all associated data.
                 This action cannot be undone.
               </CardDescription>
             </CardHeader>

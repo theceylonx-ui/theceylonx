@@ -26,12 +26,12 @@ export default function TermsOfService() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-600 dark:text-gray-300">
-                By accessing and using Ceylon Expand ("the Service"), you accept and agree to be bound by the terms and provision of this agreement. 
+                By accessing and using HiBowan ("the Service"), you accept and agree to be bound by the terms and provision of this agreement.
                 If you do not agree to abide by the above, please do not use this service.
               </p>
               <p className="text-gray-600 dark:text-gray-300">
-                Ceylon Expand is a comprehensive travel platform that connects travelers for shared trips and experiences in Sri Lanka. 
-                We facilitate connections between users through trip sharing, Chat Buddy messaging, community Q&A forums (CeylonX Tribes), 
+                HiBowan is a comprehensive travel platform that connects travelers for shared trips and experiences in Sri Lanka.
+                We facilitate connections between users through trip sharing, Chat Buddy messaging, community Q&A forums (HiBowan Tribes),
                 calendar features, photo sharing capabilities, and content sharing but do not directly provide travel services.
               </p>
             </CardContent>
@@ -49,7 +49,6 @@ export default function TermsOfService() {
                   <li>• You must provide accurate and complete information</li>
                   <li>• You are responsible for maintaining the security of your account</li>
                   <li>• One account per person - no duplicate accounts allowed</li>
-                  <li>• You must verify your identity when requested</li>
                 </ul>
               </div>
               
@@ -147,7 +146,7 @@ export default function TermsOfService() {
 
           <Card>
             <CardHeader>
-              <CardTitle>6. CeylonX Tribes and Community Q&A</CardTitle>
+              <CardTitle>6. HiBowan Tribes and Community Q&A</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -194,7 +193,7 @@ export default function TermsOfService() {
               <div>
                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Content Guidelines:</h4>
                 <p className="text-gray-600 dark:text-gray-300">
-                  All content posted on Ceylon Expand must be respectful, relevant, and comply with Sri Lankan laws. 
+                  All content posted on HiBowan must be respectful, relevant, and comply with Sri Lankan laws.
                   We reserve the right to remove content that violates these guidelines.
                 </p>
               </div>
@@ -207,7 +206,7 @@ export default function TermsOfService() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-600 dark:text-gray-300">
-                Ceylon Expand facilitates connections between travelers but does not process payments between users. 
+                HiBowan facilitates connections between travelers but does not process payments between users.
                 Payment arrangements are made directly between trip organizers and participants.
               </p>
               <div>
@@ -216,7 +215,7 @@ export default function TermsOfService() {
                   <li>• We do not guarantee trip completion or quality</li>
                   <li>• Disputes over payments must be resolved between users</li>
                   <li>• We recommend using secure payment methods with buyer protection</li>
-                  <li>• Platform usage is currently free, but this may change with advance notice</li>
+                  <li>• Platform usage is free for travelers, indefinitely</li>
                 </ul>
               </div>
             </CardContent>
@@ -232,7 +231,7 @@ export default function TermsOfService() {
                   Important Disclaimer:
                 </p>
                 <p className="text-amber-700 dark:text-amber-300">
-                  Ceylon Expand is a platform that connects travelers. We are not responsible for the actions, 
+                  HiBowan is a platform that connects travelers. We are not responsible for the actions,
                   conduct, or safety of users. Travelers participate in trips at their own risk and should 
                   take appropriate precautions including travel insurance and safety measures.
                 </p>

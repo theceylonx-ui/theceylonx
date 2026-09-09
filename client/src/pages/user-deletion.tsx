@@ -86,7 +86,7 @@ export default function UserDeletion() {
             </div>
             <CardTitle className="text-2xl text-red-700">Delete Your Account</CardTitle>
             <CardDescription className="text-lg">
-              Permanently remove your Ceylon Expand account and all associated data
+              Permanently remove your HiBowan account and all associated data
             </CardDescription>
           </CardHeader>
           
@@ -143,7 +143,7 @@ export default function UserDeletion() {
                     data-testid="checkbox-understand"
                   />
                   <label htmlFor="understand" className="text-sm text-ceylon-brown/80 cursor-pointer">
-                    I understand that deleting my account will remove all my data from Ceylon Expand
+                    I understand that deleting my account will remove all my data from HiBowan
                   </label>
                 </div>
 
@@ -212,8 +212,8 @@ export default function UserDeletion() {
               <Info className="w-4 h-4 text-blue-600" />
               <AlertDescription className="text-blue-800">
                 Need help or have questions? Contact our support team at{" "}
-                <a href="mailto:support@theceylonx.com" className="underline font-medium">
-                  support@theceylonx.com
+                <a href="mailto:support@hibowan.srilanka.com" className="underline font-medium">
+                  support@hibowan.srilanka.com
                 </a>
               </AlertDescription>
             </Alert>

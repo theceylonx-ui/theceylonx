@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
+import { formatMemberSince, formatShortDate } from "@/lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useState, useEffect, useMemo } from "react";
@@ -271,7 +272,7 @@ export default function ProfilePage() {
                     )}
                     <div className="flex items-center bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">
                       <Calendar className="h-4 w-4 mr-2" />
-                      Member since {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'Recently'}
+                      Member since {formatMemberSince(profile.createdAt)}
                     </div>
                   </div>
                   
@@ -560,11 +561,11 @@ function ProfileOverview({ profile, stats, preferences }: any) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-white/50">
             <div className="text-sm text-gray-600 mb-1">Member Since</div>
-            <div className="font-semibold text-gray-900">{profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'Recently'}</div>
+            <div className="font-semibold text-gray-900">{formatMemberSince(profile.createdAt)}</div>
           </div>
           <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-white/50">
             <div className="text-sm text-gray-600 mb-1">Last Updated</div>
-            <div className="font-semibold text-gray-900">{profile.updatedAt ? new Date(profile.updatedAt).toLocaleDateString() : 'Recently'}</div>
+            <div className="font-semibold text-gray-900">{formatShortDate(profile.updatedAt)}</div>
           </div>
         </div>
       </div>
@@ -1143,9 +1144,9 @@ function SavedTrips() {
           <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
             <span>💰 ${item.price}</span>
             <span>👥 {item.seatsAvailable} seats</span>
-            <span>📅 {item.date ? new Date(item.date).toLocaleDateString() : 'Date TBD'}</span>
+            <span>📅 {formatShortDate(item.date, 'Date TBD')}</span>
             <Badge variant={item.saveType === 'pinned' ? 'default' : 'secondary'}>
-              {item.saveType === 'pinned' ? '📌 Pinned' : '📩 Request Sent'} {item.savedAt ? new Date(item.savedAt).toLocaleDateString() : 'Recently'}
+              {item.saveType === 'pinned' ? '📌 Pinned' : '📩 Request Sent'} {formatShortDate(item.savedAt)}
             </Badge>
           </div>
         </div>
@@ -1351,7 +1352,7 @@ function UserActivity() {
                         <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
                           <span>💰 {!trip.price || Number(trip.price) === 0 ? 'Free Trip' : `LKR ${trip.price}`}</span>
                           <span>👥 {trip.seatsAvailable} seats</span>
-                          <span>📅 {trip.date ? new Date(trip.date).toLocaleDateString() : 'Date TBD'}</span>
+                          <span>📅 {formatShortDate(trip.date, 'Date TBD')}</span>
                           <Badge variant={trip.status === 'active' ? 'default' : 'secondary'} className="ml-2">
                             {trip.status}
                           </Badge>
@@ -1440,7 +1441,7 @@ function SecuritySettings({ profile }: any) {
               <div className="mt-2 space-y-2 text-sm">
                 <p><strong>Email:</strong> {profile.email}</p>
                 <p><strong>Provider:</strong> {profile.provider || 'Email'}</p>
-                <p><strong>Email Verified:</strong> {profile.emailVerified ? '✅ Verified' : '❌ Not verified'}</p>
+                <p><strong>Email Confirmed:</strong> {profile.emailVerified ? '✅ Confirmed' : '❌ Not confirmed'}</p>
               </div>
             </div>
 
@@ -1660,7 +1661,7 @@ function PrivacySettings({ privacy, onUpdate }: any) {
               Show Online Status
             </Label>
             <p className="text-sm text-gray-500">
-              Let others see when you're active on Ceylon Expand
+              Let others see when you're active on HiBowan
             </p>
           </div>
           <Switch 

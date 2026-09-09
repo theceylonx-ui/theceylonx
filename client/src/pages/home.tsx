@@ -84,7 +84,7 @@ export default function Home() {
             <div className="mt-8">
               <Link href="/faq">
                 <span className="text-white/80 hover:text-white text-sm underline underline-offset-4 cursor-pointer transition-colors" data-testid="link-faq-newuser">
-                  New to Ceylon Expand? Learn how it works →
+                  New to HiBowan? Learn how it works →
                 </span>
               </Link>
             </div>

@@ -421,7 +421,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
       return trip.imageUrl;
     }
     
-    // Priority 3: Ceylon Expand logo as fallback
+    // Priority 3: HiBowan logo as fallback
     console.log('Using fallback image');
     return newLogo;
   };
@@ -435,7 +435,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
       <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group border-0 shadow-sm" data-testid={`trip-card-${trip.id}`}>
         <div className="relative">
           {getTripImage() === newLogo && !trip.mediaUrls?.length && !trip.imageUrl ? (
-            // Beautiful Ceylon Expand fallback design
+            // Beautiful HiBowan fallback design
             <div className="w-full h-48 bg-gradient-to-br from-ceylon-green via-ceylon-blue to-purple-600 flex flex-col items-center justify-center relative overflow-hidden">
               {/* Background pattern */}
               <div className="absolute inset-0 opacity-10">
@@ -456,9 +456,9 @@ export default function TripCard({ trip, badges }: TripCardProps) {
                 </svg>
               </div>
               
-              {/* Ceylon Expand text */}
+              {/* HiBowan text */}
               <div className="text-center text-white">
-                <div className="text-lg font-bold tracking-wide drop-shadow-sm">Ceylon Expand</div>
+                <div className="text-lg font-bold tracking-wide drop-shadow-sm">HiBowan</div>
                 <div className="text-xs opacity-90 mt-1">Travel Together</div>
               </div>
             </div>

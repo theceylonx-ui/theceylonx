@@ -128,7 +128,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
       return trip.imageUrl;
     }
     
-    // Priority 3: Ceylon Expand logo as fallback
+    // Priority 3: HiBowan logo as fallback
     return newLogo;
   };
 
@@ -532,7 +532,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
             {/* Trip Image */}
             <div className="mt-6">
               {getTripImage() === newLogo && !trip.mediaUrls?.length && !trip.imageUrl ? (
-                // Beautiful Ceylon Expand fallback design
+                // Beautiful HiBowan fallback design
                 <div className="w-full h-64 bg-gradient-to-br from-ceylon-green via-ceylon-blue to-purple-600 flex flex-col items-center justify-center relative overflow-hidden rounded-lg">
                   {/* Background pattern */}
                   <div className="absolute inset-0 opacity-10">
@@ -555,9 +555,9 @@ export default function TripDetails({ params }: TripDetailsProps) {
                     </svg>
                   </div>
                   
-                  {/* Ceylon Expand text */}
+                  {/* HiBowan text */}
                   <div className="text-center text-white">
-                    <div className="text-xl font-bold tracking-wide drop-shadow-sm">Ceylon Expand</div>
+                    <div className="text-xl font-bold tracking-wide drop-shadow-sm">HiBowan</div>
                     <div className="text-sm opacity-90 mt-1">Travel Together</div>
                   </div>
                 </div>
@@ -568,7 +568,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
                   className="w-full h-64 object-cover rounded-lg"
                   loading="lazy"
                   onError={(e) => {
-                    // Replace with beautiful Ceylon Expand fallback
+                    // Replace with beautiful HiBowan fallback
                     const target = e.currentTarget;
                     const container = target.parentElement;
                     if (container) {
@@ -592,7 +592,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
                             </svg>
                           </div>
                           <div class="text-center text-white">
-                            <div class="text-xl font-bold tracking-wide drop-shadow-sm">Ceylon Expand</div>
+                            <div class="text-xl font-bold tracking-wide drop-shadow-sm">HiBowan</div>
                             <div class="text-sm opacity-90 mt-1">Travel Together</div>
                           </div>
                         </div>

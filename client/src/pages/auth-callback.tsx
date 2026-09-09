@@ -65,13 +65,13 @@ export default function AuthCallbackPage() {
         <div className="text-center mb-8">
           <img 
             src={newLogo} 
-            alt="Ceylon Expand" 
+            alt="HiBowan"
             className="h-16 w-auto mx-auto mb-4"
             width="64"
             height="64"
             loading="eager"
           />
-          <h1 className="text-3xl font-bold text-gray-900">Ceylon Expand</h1>
+          <h1 className="text-3xl font-bold text-gray-900">HiBowan</h1>
         </div>
 
         <Card className="w-full">
@@ -91,7 +91,7 @@ export default function AuthCallbackPage() {
                 <CheckCircle className="h-12 w-12 mx-auto text-green-500" />
                 <div>
                   <p className="font-medium text-green-700">Authentication successful!</p>
-                  <p className="text-sm text-gray-600 mt-1">Welcome to Ceylon Expand. Redirecting to home page...</p>
+                  <p className="text-sm text-gray-600 mt-1">Welcome to HiBowan. Redirecting to home page...</p>
                 </div>
               </>
             )}

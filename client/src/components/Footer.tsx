@@ -24,18 +24,18 @@ export default function Footer() {
             <Link href="/">
               <div 
                 className="flex items-center space-x-2 mb-4 cursor-pointer hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 rounded-md p-1"
-                aria-label="Ceylon Expand homepage"
+                aria-label="HiBowan homepage"
                 data-testid="footer-logo-link"
               >
                 <img 
                   src={newLogo} 
-                  alt="Ceylon Expand Logo" 
+                  alt="HiBowan Logo"
                   className="h-6 w-6"
                   width="24"
                   height="24"
                   loading="lazy"
                 />
-                <span className="text-xl font-bold">Ceylon Expand</span>
+                <span className="text-xl font-bold">HiBowan</span>
               </div>
             </Link>
             <p className="text-gray-300 mb-4">Connect with fellow travelers and explore the beauty of Sri Lanka together.</p>
@@ -74,7 +74,7 @@ export default function Footer() {
                       data-testid="footer-link-community"
                       tabIndex={0}
                     >
-                      CeylonX Tribes
+                      HiBowan Tribes
                     </span>
                   </Link>
                 </li>
@@ -207,46 +207,46 @@ export default function Footer() {
         {/* Social Media Section */}
         <div className="border-t border-gray-700 mt-8 pt-8">
           <div className="text-center mb-6">
-            <p className="text-gray-400 text-sm mb-4">Follow us @theceylonx</p>
+            <p className="text-gray-400 text-sm mb-4">Follow us @hibowan.srilanka</p>
             <nav aria-label="Social media links">
               <div className="flex justify-center items-center space-x-6" role="list">
                 <button 
                   className="w-10 h-10 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 inline-grid place-items-center"
-                  aria-label="Follow Ceylon Expand on Facebook"
+                  aria-label="Follow HiBowan on Facebook"
                   data-testid="social-facebook"
-                  onClick={() => window.open('https://facebook.com/theceylonx', '_blank', 'noopener,noreferrer')}
+                  onClick={() => window.open('https://facebook.com/hibowan.srilanka', '_blank', 'noopener,noreferrer')}
                 >
                   <Facebook className="h-5 w-5 text-gray-300 group-hover:text-blue-400 block" aria-hidden="true" />
                 </button>
                 <button 
                   className="w-10 h-10 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 inline-grid place-items-center"
-                  aria-label="Follow Ceylon Expand on Instagram"
+                  aria-label="Follow HiBowan on Instagram"
                   data-testid="social-instagram"
-                  onClick={() => window.open('https://instagram.com/theceylonx', '_blank', 'noopener,noreferrer')}
+                  onClick={() => window.open('https://instagram.com/hibowan.srilanka', '_blank', 'noopener,noreferrer')}
                 >
                   <Instagram className="h-5 w-5 text-gray-300 group-hover:text-pink-400 block" aria-hidden="true" />
                 </button>
                 <button 
                   className="w-10 h-10 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 inline-grid place-items-center"
-                  aria-label="Follow Ceylon Expand on Twitter"
+                  aria-label="Follow HiBowan on Twitter"
                   data-testid="social-twitter"
-                  onClick={() => window.open('https://twitter.com/theceylonx', '_blank', 'noopener,noreferrer')}
+                  onClick={() => window.open('https://twitter.com/hibowan.srilanka', '_blank', 'noopener,noreferrer')}
                 >
                   <Twitter className="h-5 w-5 text-gray-300 group-hover:text-blue-400 block" aria-hidden="true" />
                 </button>
                 <button 
                   className="w-10 h-10 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 inline-grid place-items-center"
-                  aria-label="Follow Ceylon Expand on TikTok"
+                  aria-label="Follow HiBowan on TikTok"
                   data-testid="social-tiktok"
-                  onClick={() => window.open('https://tiktok.com/@theceylonx', '_blank', 'noopener,noreferrer')}
+                  onClick={() => window.open('https://tiktok.com/@hibowan.srilanka', '_blank', 'noopener,noreferrer')}
                 >
                   <SiTiktok className="h-5 w-5 text-gray-300 group-hover:text-red-400 block" aria-hidden="true" />
                 </button>
                 <button 
                   className="w-10 h-10 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700 inline-grid place-items-center"
-                  aria-label="Follow Ceylon Expand on YouTube"
+                  aria-label="Follow HiBowan on YouTube"
                   data-testid="social-youtube"
-                  onClick={() => window.open('https://youtube.com/@theceylonx', '_blank', 'noopener,noreferrer')}
+                  onClick={() => window.open('https://youtube.com/@hibowan.srilanka', '_blank', 'noopener,noreferrer')}
                 >
                   <Youtube className="h-5 w-5 text-gray-300 group-hover:text-red-500 block" aria-hidden="true" />
                 </button>
@@ -256,7 +256,7 @@ export default function Footer() {
           
           {/* Copyright */}
           <div className="text-center">
-            <p className="text-gray-300">© 2026 Ceylon Expand. All rights reserved. Made with ❤️ for the tourists visiting Sri Lanka.</p>
+            <p className="text-gray-300">© 2026 HiBowan. All rights reserved. Made with ❤️ for the tourists visiting Sri Lanka.</p>
           </div>
         </div>
       </div>

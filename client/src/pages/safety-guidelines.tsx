@@ -31,7 +31,7 @@ export default function SafetyGuidelines() {
               <div>
                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Before Joining a Trip:</h4>
                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
-                  <li>• Verify the trip organizer's identity and profile completeness</li>
+                  <li>• Review the organizer's profile completeness and trip history</li>
                   <li>• Read trip details carefully and ask questions if unclear</li>
                   <li>• Check the organizer's ratings and reviews from previous trips</li>
                   <li>• Use our Chat Buddy system to communicate before meeting</li>
@@ -105,7 +105,7 @@ export default function SafetyGuidelines() {
               <div>
                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Medical Emergencies:</h4>
                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
-                  <li>• Emergency services: 110 (Police), 111 (Medical)</li>
+                  <li>• Emergency services: 119 (Police), 110 (Ambulance), 110 (Fire)</li>
                   <li>• Tourist Hotline: 1912</li>
                   <li>• Know the location of nearest hospitals</li>
                   <li>• Keep emergency contacts readily available</li>
@@ -157,7 +157,7 @@ export default function SafetyGuidelines() {
                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Using Calendar Features:</h4>
                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
                   <li>• Keep your travel schedule private until you join a trip</li>
-                  <li>• Use calendar filters to find verified organizers</li>
+                  <li>• Use calendar filters to find active, highly-rated organizers</li>
                   <li>• Check trip status and updates regularly</li>
                   <li>• Confirm trip details 24 hours before departure</li>
                 </ul>
@@ -183,7 +183,7 @@ export default function SafetyGuidelines() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">CeylonX Tribes Safety:</h4>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">HiBowan Tribes Safety:</h4>
                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
                   <li>• Verify information from community posts independently</li>
                   <li>• Report misleading or dangerous advice</li>
@@ -238,14 +238,14 @@ export default function SafetyGuidelines() {
                 <div>
                   <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Sri Lanka Emergency Services:</h4>
                   <div className="space-y-2 text-gray-600 dark:text-gray-300">
-                    <p><strong>Police Emergency:</strong> 110</p>
-                    <p><strong>Medical Emergency:</strong> 111</p>
-                    <p><strong>Fire & Rescue:</strong> 111</p>
+                    <p><strong>Police Emergency:</strong> 119</p>
+                    <p><strong>Ambulance:</strong> 110</p>
+                    <p><strong>Fire & Rescue:</strong> 110</p>
                     <p><strong>Tourist Hotline:</strong> 1912</p>
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Ceylon Expand Support:</h4>
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">HiBowan Support:</h4>
                   <div className="space-y-2 text-gray-600 dark:text-gray-300">
                     <p><strong>Report Issues:</strong> Use our report feature.</p>
                     <p><strong>Safety Concerns:</strong> Contact us immediately.</p>

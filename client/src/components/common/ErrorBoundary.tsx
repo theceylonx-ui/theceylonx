@@ -144,7 +144,7 @@ class ErrorBoundary extends Component<Props, State> {
       `Time: ${new Date().toISOString()}\n\n` +
       `Please describe what you were doing when this error occurred:\n`
     );
-    window.open(`mailto:support@ceylonx.com?subject=${subject}&body=${body}`);
+    window.open(`mailto:support@hibowan.com?subject=${subject}&body=${body}`);
   };
 
   render() {

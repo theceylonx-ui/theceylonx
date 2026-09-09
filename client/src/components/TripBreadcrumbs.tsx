@@ -1,5 +1,5 @@
 /**
- * TripBreadcrumbs component for Ceylon Expand trip detail pages
+ * TripBreadcrumbs component for HiBowan trip detail pages
  * Displays breadcrumb navigation: Home / Trips / {Region} / {Destination} / {Title}
  */
 import { Link } from "wouter";

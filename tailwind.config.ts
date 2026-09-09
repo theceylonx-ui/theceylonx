@@ -13,36 +13,42 @@ export default {
         "2xl": "1rem",
       },
       colors: {
-        // New Ceylon Expand design system
+        // HiBowan design system — locked tokens: coral #DB354E, ocean #3F8AB4, navy #173B4D, cream #F8F4EA, white
         brand: {
-          DEFAULT: "hsl(153 60% 30%)", // #1E7A50 - forest green
-          hover: "hsl(153 60% 23%)",   // darker hover
-          subtle: "hsl(153 60% 95%)",  // light background tint
+          DEFAULT: "hsl(351 70% 53%)", // #DB354E - coral-red
+          hover: "hsl(351 70% 43%)",   // darker hover
+          subtle: "hsl(351 70% 96%)",  // light background tint
         },
         accent: {
-          DEFAULT: "hsl(10 80% 78%)",  // #F4A99A - salmon pink
-          hover: "hsl(10 80% 70%)",    // darker salmon
-          subtle: "hsl(10 80% 97%)",   // light salmon tint
+          DEFAULT: "hsl(202 48% 48%)", // #3F8AB4 - ocean blue
+          hover: "hsl(202 48% 38%)",   // darker ocean
+          subtle: "hsl(202 48% 95%)",  // light ocean tint
         },
         text: {
-          primary: "hsl(0 0% 4%)",     // #0B0B0B - near-black
-          secondary: "hsl(0 0% 29%)",  // #4A4A4A - muted text
-          muted: "hsl(0 0% 44%)",      // #6F6F6F - very muted
+          primary: "hsl(200 54% 20%)", // #173B4D - deep navy
+          secondary: "hsl(200 25% 38%)",
+          muted: "hsl(200 15% 52%)",
         },
         ui: {
-          bg: "hsl(0 0% 100%)",        // #FFFFFF - white background
-          surface: "hsl(0 0% 97%)",    // #F7F7F7 - light surface
-          line: "hsl(0 0% 90%)",       // #E6E6E6 - borders/dividers
+          bg: "hsl(43 50% 95%)",       // #F8F4EA - cream background
+          surface: "hsl(0 0% 100%)",   // #FFFFFF - white surface
+          line: "hsl(40 25% 85%)",     // warm neutral border
         },
         danger: "hsl(358 76% 51%)",    // #D92D20 - red
         "danger-hover": "hsl(358 76% 40%)", // darker danger
         success: "hsl(158 75% 33%)",   // #099250 - green
         info: "hsl(207 71% 51%)",      // #1E88E5 - blue
-        // Legacy Ceylon colors for backward compatibility
-        "ceylon-green": "hsl(163 65% 31%)", // brand
-        "ceylon-blue": "hsl(207 71% 51%)",  // info
-        "ceylon-dark": "hsl(0 0% 4%)",      // text-primary
-        
+        // Legacy Ceylon* aliases kept for backward compatibility, remapped to HiBowan tokens
+        "ceylon-green": "hsl(351 70% 53%)",  // now brand/coral
+        "ceylon-blue": "hsl(202 48% 48%)",   // now accent/ocean
+        "ceylon-dark": "hsl(200 54% 20%)",   // now text-primary/navy
+        "ceylon-orange": "hsl(351 65% 60%)", // coral, lighter
+        "ceylon-red": "hsl(351 70% 48%)",    // coral, darker
+        "ceylon-yellow": "hsl(38 55% 68%)",  // warm gold, cream-adjacent
+        "ceylon-brown": "hsl(200 40% 30%)",  // navy-adjacent dark neutral
+        "ceylon-cream": "hsl(43 50% 95%)",   // cream
+        "ceylon-sand": "hsl(40 35% 88%)",    // warm sand
+
         // Keep shadcn compatibility
         background: "var(--background)",
         foreground: "var(--foreground)",

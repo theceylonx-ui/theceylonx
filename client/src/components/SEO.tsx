@@ -38,7 +38,7 @@ export function SEO({
   ogUrl,
   ogType = 'website',
   twitterCard = 'summary_large_image',
-  twitterSite = '@ceylon_expand',
+  twitterSite = '@hibowan.srilanka',
   twitterCreator,
   canonical,
   robots = 'index, follow',
@@ -139,21 +139,21 @@ export function SEO({
 // Predefined SEO configurations for common pages
 export const SEOConfigs = {
   home: {
-    title: 'Ceylon Expand - Connect with Travel Buddies in Sri Lanka',
+    title: 'HiBowan - Connect with Travel Buddies in Sri Lanka',
     description: 'Find travel companions and share amazing journeys across Sri Lanka. Connect with like-minded travelers, split costs, and explore the pearl of the Indian Ocean together.',
     keywords: 'sri lanka travel, travel buddies, travel companions, car sharing, trip sharing, ceylon travel, sri lanka tourism',
     ogImage: 'https://images.unsplash.com/photo-1562602833-0f4ab2fc46e3?w=1200&q=80',
     structuredData: {
       '@context': 'https://schema.org',
       '@type': 'WebSite',
-      'name': 'Ceylon Expand',
+      'name': 'HiBowan',
       'description': 'Travel buddy and trip sharing platform for Sri Lanka',
-      'url': 'https://www.theceylonx.com',
+      'url': 'https://www.hibowan.com',
       'potentialAction': {
         '@type': 'SearchAction',
         'target': {
           '@type': 'EntryPoint',
-          'urlTemplate': 'https://www.theceylonx.com/search?q={search_term_string}'
+          'urlTemplate': 'https://www.hibowan.com/search?q={search_term_string}'
         },
         'query-input': 'required name=search_term_string'
       }
@@ -161,21 +161,21 @@ export const SEOConfigs = {
   },
   
   browse: {
-    title: 'Browse Travel Opportunities - Ceylon Expand',
+    title: 'Browse Travel Opportunities - HiBowan',
     description: 'Discover amazing travel opportunities across Sri Lanka. From Colombo to Kandy, beach trips to mountain adventures - find your perfect travel match.',
     keywords: 'browse trips sri lanka, travel opportunities, kandy trips, colombo travel, beach trips sri lanka',
     ogImage: 'https://images.unsplash.com/photo-1580477667995-2b94f01c9516?w=1200&q=80',
   },
   
   profile: (username: string) => ({
-    title: `${username}'s Profile - Ceylon Expand`,
-    description: `View ${username}'s travel profile, ratings, and upcoming trips on Ceylon Expand. Connect with verified travelers across Sri Lanka.`,
+    title: `${username}'s Profile - HiBowan`,
+    description: `View ${username}'s travel profile, ratings, and upcoming trips on HiBowan. Connect with fellow travelers across Sri Lanka.`,
     keywords: `${username} travel profile, sri lanka traveler, travel reviews`,
     ogType: 'profile' as const,
   }),
   
   trip: (tripTitle: string, destination: string) => ({
-    title: `${tripTitle} - Travel to ${destination} | Ceylon Expand`,
+    title: `${tripTitle} - Travel to ${destination} | HiBowan`,
     description: `Join this amazing trip to ${destination}. Connect with fellow travelers, share costs, and create unforgettable memories in Sri Lanka.`,
     keywords: `${destination} trip, ${destination} travel, sri lanka ${destination.toLowerCase()}, travel buddies ${destination}`,
     ogType: 'article' as const,
@@ -183,7 +183,7 @@ export const SEOConfigs = {
       '@context': 'https://schema.org',
       '@type': 'TouristTrip',
       'name': tripTitle,
-      'description': `Travel to ${destination} with Ceylon Expand`,
+      'description': `Travel to ${destination} with HiBowan`,
       'touristType': 'SharedTrip',
       'itinerary': {
         '@type': 'TouristDestination',

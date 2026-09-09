@@ -12,91 +12,92 @@
 }
 
 :root {
-  /* Ceylon Expand Design System - Light Mode */
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(0 0% 4%);
-  --card: hsl(0 0% 97%);
-  --card-foreground: hsl(0 0% 4%);
+  /* HiBowan Design System - Light Mode */
+  /* Locked tokens: coral #DB354E, ocean #3F8AB4, navy #173B4D, cream #F8F4EA, white #FFFFFF */
+  --background: hsl(43 50% 95%);
+  --foreground: hsl(200 54% 20%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(200 54% 20%);
   --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(0 0% 4%);
-  --primary: hsl(163 65% 31%);
+  --popover-foreground: hsl(200 54% 20%);
+  --primary: hsl(351 70% 53%);
   --primary-foreground: hsl(0 0% 100%);
   --secondary: hsl(0 0% 100%);
-  --secondary-foreground: hsl(163 65% 31%);
-  --muted: hsl(0 0% 97%);
-  --muted-foreground: hsl(0 0% 44%);
-  --accent: hsl(163 65% 95%);
-  --accent-foreground: hsl(163 65% 31%);
+  --secondary-foreground: hsl(351 70% 53%);
+  --muted: hsl(43 35% 93%);
+  --muted-foreground: hsl(200 20% 45%);
+  --accent: hsl(202 48% 94%);
+  --accent-foreground: hsl(202 48% 40%);
   --destructive: hsl(358 76% 51%);
   --destructive-foreground: hsl(0 0% 100%);
-  --border: hsl(0 0% 90%);
-  --input: hsl(0 0% 97%);
-  --ring: hsl(163 65% 31%);
+  --border: hsl(40 25% 85%);
+  --input: hsl(43 35% 96%);
+  --ring: hsl(351 70% 53%);
   --radius: 0.75rem;
-  
+
   /* Enhanced text hierarchy */
-  --text-primary: hsl(0 0% 4%);
-  --text-secondary: hsl(0 0% 29%);
-  --text-muted: hsl(0 0% 44%);
-  
+  --text-primary: hsl(200 54% 20%);
+  --text-secondary: hsl(200 25% 38%);
+  --text-muted: hsl(200 15% 52%);
+
   /* Brand colors */
-  --brand: hsl(153 60% 30%);       /* #1E7A50 forest green */
-  --brand-hover: hsl(153 60% 23%);
-  --brand-subtle: hsl(153 60% 95%);
-  --accent: hsl(10 80% 78%);       /* #F4A99A salmon pink */
-  --accent-hover: hsl(10 80% 70%);
-  --accent-subtle: hsl(10 80% 97%);
-  
+  --brand: hsl(351 70% 53%);       /* #DB354E coral-red */
+  --brand-hover: hsl(351 70% 43%);
+  --brand-subtle: hsl(351 70% 96%);
+  --accent: hsl(202 48% 48%);      /* #3F8AB4 ocean blue */
+  --accent-hover: hsl(202 48% 38%);
+  --accent-subtle: hsl(202 48% 95%);
+
   /* UI surfaces */
-  --ui-bg: hsl(0 0% 100%);
-  --ui-surface: hsl(0 0% 97%);
-  --ui-line: hsl(0 0% 90%);
-  
+  --ui-bg: hsl(43 50% 95%);
+  --ui-surface: hsl(0 0% 100%);
+  --ui-line: hsl(40 25% 85%);
+
   /* Danger state */
   --danger: hsl(358 76% 51%);
   --danger-hover: hsl(358 76% 40%);
 }
 
 .dark {
-  /* Ceylon Expand Design System - Dark Mode */
-  --background: hsl(0 0% 4%);
-  --foreground: hsl(0 0% 96%);
-  --card: hsl(0 0% 8%);
-  --card-foreground: hsl(0 0% 96%);
-  --popover: hsl(0 0% 4%);
-  --popover-foreground: hsl(0 0% 96%);
-  --primary: hsl(163 65% 45%);
+  /* HiBowan Design System - Dark Mode */
+  --background: hsl(200 55% 10%);
+  --foreground: hsl(43 40% 93%);
+  --card: hsl(200 45% 14%);
+  --card-foreground: hsl(43 40% 93%);
+  --popover: hsl(200 55% 10%);
+  --popover-foreground: hsl(43 40% 93%);
+  --primary: hsl(351 75% 60%);
   --primary-foreground: hsl(0 0% 100%);
-  --secondary: hsl(0 0% 8%);
-  --secondary-foreground: hsl(163 65% 45%);
-  --muted: hsl(0 0% 8%);
-  --muted-foreground: hsl(0 0% 65%);
-  --accent: hsl(0 0% 8%);
-  --accent-foreground: hsl(163 65% 45%);
-  --destructive: hsl(358 76% 51%);
+  --secondary: hsl(200 40% 16%);
+  --secondary-foreground: hsl(351 75% 60%);
+  --muted: hsl(200 40% 16%);
+  --muted-foreground: hsl(43 15% 65%);
+  --accent: hsl(200 40% 18%);
+  --accent-foreground: hsl(202 55% 65%);
+  --destructive: hsl(358 76% 55%);
   --destructive-foreground: hsl(0 0% 100%);
-  --border: hsl(0 0% 16%);
-  --input: hsl(0 0% 8%);
-  --ring: hsl(163 65% 45%);
-  
+  --border: hsl(200 30% 22%);
+  --input: hsl(200 40% 16%);
+  --ring: hsl(351 75% 60%);
+
   /* Enhanced text hierarchy - dark mode */
-  --text-primary: hsl(0 0% 96%);
-  --text-secondary: hsl(0 0% 81%);
-  --text-muted: hsl(0 0% 60%);
-  
+  --text-primary: hsl(43 40% 93%);
+  --text-secondary: hsl(43 15% 75%);
+  --text-muted: hsl(43 10% 55%);
+
   /* Brand colors - dark mode */
-  --brand: hsl(153 60% 45%);
-  --brand-hover: hsl(153 60% 38%);
-  --brand-subtle: hsl(153 60% 8%);
-  --accent: hsl(10 80% 72%);
-  --accent-hover: hsl(10 80% 62%);
-  --accent-subtle: hsl(10 80% 10%);
-  
+  --brand: hsl(351 75% 60%);
+  --brand-hover: hsl(351 75% 68%);
+  --brand-subtle: hsl(351 50% 16%);
+  --accent: hsl(202 55% 60%);
+  --accent-hover: hsl(202 55% 68%);
+  --accent-subtle: hsl(202 45% 16%);
+
   /* UI surfaces - dark mode */
-  --ui-bg: hsl(0 0% 4%);
-  --ui-surface: hsl(0 0% 8%);
-  --ui-line: hsl(0 0% 16%);
-  
+  --ui-bg: hsl(200 55% 10%);
+  --ui-surface: hsl(200 45% 14%);
+  --ui-line: hsl(200 30% 22%);
+
   /* Danger state - dark mode */
   --danger: hsl(358 76% 55%);
   --danger-hover: hsl(358 76% 50%);

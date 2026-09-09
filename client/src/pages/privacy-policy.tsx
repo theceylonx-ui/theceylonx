@@ -29,11 +29,11 @@ export default function PrivacyPolicy() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-600 dark:text-gray-300">
-                Ceylon Expand is committed to protecting your privacy and ensuring the security of your personal information. 
+                HiBowan is committed to protecting your privacy and ensuring the security of your personal information.
                 This Privacy Policy explains how we collect, use, store, and protect your data when you use our platform.
               </p>
               <p className="text-gray-600 dark:text-gray-300">
-                By using Ceylon Expand, you agree to the collection and use of information in accordance with this policy. 
+                By using HiBowan, you agree to the collection and use of information in accordance with this policy.
                 We will not share your personal information with third parties except as described in this policy.
               </p>
             </CardContent>
@@ -50,7 +50,7 @@ export default function PrivacyPolicy() {
               <div>
                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Account Information:</h4>
                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
-                  <li>• Name and email address (from Replit authentication)</li>
+                  <li>• Name and email address (via your Google or Facebook account)</li>
                   <li>• Profile picture (if provided)</li>
                   <li>• Phone number (when you choose to add it)</li>
                   <li>• Bio and profile information you provide</li>
@@ -65,7 +65,7 @@ export default function PrivacyPolicy() {
                   <li>• Trips you join or express interest in</li>
                   <li>• Comments and messages you post</li>
                   <li>• Ratings and reviews you give and receive</li>
-                  <li>• Community questions and answers you post in CeylonX Tribes</li>
+                  <li>• Community questions and answers you post in HiBowan Tribes</li>
                   <li>• Chat Buddy messages and communication preferences</li>
                   <li>• Photos you upload and share with trips</li>
                   <li>• Calendar filters and search preferences</li>
@@ -102,7 +102,7 @@ export default function PrivacyPolicy() {
                   <li>• Enable communication between travelers through Chat Buddy</li>
                   <li>• Provide secure photo sharing and storage</li>
                   <li>• Deliver calendar features and trip filtering</li>
-                  <li>• Power CeylonX Tribes community Q&A features</li>
+                  <li>• Power HiBowan Tribes community Q&A features</li>
                   <li>• Send relevant notifications and updates</li>
                   <li>• Process ratings and reviews</li>
                   <li>• Provide customer support and respond to inquiries</li>
@@ -112,7 +112,7 @@ export default function PrivacyPolicy() {
               <div>
                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Safety and Security:</h4>
                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
-                  <li>• Verify user identities and prevent fraudulent accounts</li>
+                  <li>• Prevent fraudulent and duplicate accounts</li>
                   <li>• Investigate reports of misconduct or safety concerns</li>
                   <li>• Protect against spam, abuse, and malicious activities</li>
                   <li>• Maintain the integrity of our platform</li>
@@ -234,7 +234,7 @@ export default function PrivacyPolicy() {
                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Security Measures:</h4>
                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
                   <li>• Encryption of data in transit and at rest</li>
-                  <li>• Secure authentication through Replit's trusted system</li>
+                  <li>• Secure authentication through Google and Facebook sign-in</li>
                   <li>• Regular security audits and updates</li>
                   <li>• Limited access to personal data by authorized personnel only</li>
                   <li>• Secure database hosting with backup and recovery procedures</li>
@@ -304,7 +304,7 @@ export default function PrivacyPolicy() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-600 dark:text-gray-300">
-                Ceylon Expand is not intended for use by children under 18 years of age. 
+                HiBowan is not intended for use by children under 18 years of age.
                 We do not knowingly collect personal information from children under 18. 
                 If we become aware that a child under 18 has provided us with personal information, 
                 we will delete such information from our systems.

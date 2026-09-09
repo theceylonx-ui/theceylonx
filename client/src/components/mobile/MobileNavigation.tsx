@@ -199,7 +199,7 @@ export function MobileNavigation() {
             <div className="p-4 border-t border-ui-line bg-ui-surface">
               <div className="text-center">
                 <p className="text-sm text-text-muted">
-                  Ceylon Expand v1.0
+                  HiBowan v1.0
                 </p>
                 <p className="text-xs text-text-muted mt-1">
                   Travel Together, Share the Journey

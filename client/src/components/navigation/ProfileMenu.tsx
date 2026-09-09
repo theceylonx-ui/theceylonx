@@ -150,7 +150,7 @@ export default function ProfileMenu({ className }: ProfileMenuProps) {
             onClick={() => handleMenuItemClick('CeylonsTribes')}
           >
             <Users className="mr-2 h-4 w-4" />
-            CeylonX Tribes
+            HiBowan Tribes
           </DropdownMenuItem>
         </Link>
 

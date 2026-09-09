@@ -11,7 +11,7 @@ export default function AboutPage() {
       <section className="bg-gradient-to-br from-ceylon-green/10 via-white to-ceylon-orange/5 py-16 sm:py-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
-            About <span className="text-ceylon-green">Ceylon Expand</span>
+            About <span className="text-ceylon-green">HiBowan</span>
           </h1>
           <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
             A community-driven travel platform built for exploring the beauty of Sri Lanka — together.
@@ -23,7 +23,7 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="prose prose-lg max-w-none">
             <p className="text-gray-700 text-lg leading-relaxed mb-8">
-              Whether you're a solo traveler looking for companions, a local wanting to share your favorite hidden spots, or a group seeking to split costs on an adventure, Ceylon Expand connects you with like-minded travelers heading the same way.
+              HiBowan is designed for people visiting Sri Lanka — solo travelers looking for companions, or groups seeking to split costs on an adventure. Post the trip you're planning, or find one already forming, and connect with fellow travelers heading the same way.
             </p>
           </div>
 
@@ -79,7 +79,7 @@ export default function AboutPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 text-lg mb-2">Community Q&A</h3>
-                    <p className="text-gray-600">Got questions about traveling in Sri Lanka? Ask the Ceylon Tribes community — real travelers sharing real experiences.</p>
+                    <p className="text-gray-600">Got questions about traveling in Sri Lanka? Ask the HiBowan Tribes community — real travelers sharing real experiences.</p>
                   </div>
                 </div>
               </CardContent>
@@ -87,9 +87,9 @@ export default function AboutPage() {
           </div>
 
           <div className="bg-gradient-to-br from-ceylon-green/5 to-ceylon-orange/5 rounded-2xl p-8 sm:p-12 mb-16">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Why Ceylon Expand?</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Why HiBowan?</h2>
             <p className="text-gray-700 text-lg leading-relaxed">
-              Sri Lanka is a small island with enormous diversity — ancient temples, pristine beaches, lush tea plantations, and vibrant wildlife. But navigating it alone can be daunting and expensive. We believe travel is better when shared. Ceylon Expand makes it easy to find companions who share your interests, split costs, and create unforgettable memories across this incredible island.
+              Sri Lanka is a small island with enormous diversity — ancient temples, pristine beaches, lush tea plantations, and vibrant wildlife. But navigating it alone can be daunting and expensive. We believe travel is better when shared. HiBowan makes it easy to find companions who share your interests, split costs, and create unforgettable memories across this incredible island.
             </p>
           </div>
 

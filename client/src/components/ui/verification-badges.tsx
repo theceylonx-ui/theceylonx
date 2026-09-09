@@ -1,4 +1,4 @@
-import { Shield, CheckCircle, Mail, Phone, CreditCard, Star, Award } from "lucide-react";
+import { Mail, Star, Award } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -12,39 +12,20 @@ interface VerificationBadgesProps {
   showText?: boolean;
 }
 
+// Only badges the backend actually awards (see storage.ts updateUserVerificationBadges) —
+// no identity/ID/phone verification exists on this platform, trust is activity-based only.
 const badgeConfig = {
-  // Current working badges
   email_verified: {
     icon: Mail,
-    label: "Email Verified",
-    description: "Email address has been verified",
+    label: "Email confirmed",
+    description: "Email address has been confirmed",
     color: "bg-green-100 text-green-800 border-green-200"
   },
   community_leader: {
     icon: Star,
-    label: "Community Leader", 
+    label: "Community Leader",
     description: "Active in Q&A community with helpful answers",
     color: "bg-yellow-100 text-yellow-800 border-yellow-200"
-  },
-  
-  // Legacy badge names (for backward compatibility)
-  email: {
-    icon: Mail,
-    label: "Email Verified",
-    description: "Email address has been verified",
-    color: "bg-green-100 text-green-800 border-green-200"
-  },
-  phone: {
-    icon: Phone,
-    label: "Phone Verified", 
-    description: "Phone number has been verified",
-    color: "bg-blue-100 text-blue-800 border-blue-200"
-  },
-  id: {
-    icon: CreditCard,
-    label: "ID Verified",
-    description: "Government ID has been verified",
-    color: "bg-purple-100 text-purple-800 border-purple-200"
   },
   host: {
     icon: Star,
@@ -54,7 +35,7 @@ const badgeConfig = {
   },
   plus: {
     icon: Award,
-    label: "Ceylon Plus",
+    label: "HiBowan Plus",
     description: "Premium member with enhanced features",
     color: "bg-orange-100 text-orange-800 border-orange-200"
   }
@@ -84,35 +65,14 @@ export function VerificationBadges({
   showText = true
 }: VerificationBadgesProps) {
   const validBadges = badges.filter(badge => badge in badgeConfig);
-  
-  if (validBadges.length === 0 && !isVerified) {
+
+  if (validBadges.length === 0) {
     return null;
   }
 
   return (
     <div className={cn("flex items-center gap-1 flex-wrap", className)}>
-      {/* Main verification badge */}
-      {isVerified && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Badge 
-              variant="secondary"
-              className={cn(
-                "flex items-center gap-1 bg-green-100 text-green-800 border-green-200",
-                sizeClasses[size].badge
-              )}
-            >
-              <Shield className={cn("text-green-600", sizeClasses[size].icon)} />
-              {showText && "Verified"}
-            </Badge>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Verified user with level {verificationLevel} trust score</p>
-          </TooltipContent>
-        </Tooltip>
-      )}
-
-      {/* Individual verification badges */}
+      {/* Activity badges only — HiBowan has no identity verification, so no generic "Verified" claim here */}
       {validBadges.map((badgeType) => {
         const config = badgeConfig[badgeType as keyof typeof badgeConfig];
         const IconComponent = config.icon;

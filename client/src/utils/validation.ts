@@ -1,5 +1,5 @@
 /**
- * Ceylon Expand - Validation Utilities
+ * HiBowan - Validation Utilities
  * Comprehensive validation functions for forms, data, and user inputs
  */
 

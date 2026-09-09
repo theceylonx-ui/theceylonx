@@ -32,7 +32,7 @@ export function AuthSignIn({ onSuccess }: AuthSignInProps) {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Sign in to Ceylon Expand</CardTitle>
+        <CardTitle className="text-2xl">Sign in to HiBowan</CardTitle>
         <p className="text-gray-600">Find travel companions and share journeys</p>
       </CardHeader>
       <CardContent className="space-y-4">

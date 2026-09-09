@@ -1,5 +1,5 @@
 /**
- * Ceylon Expand - Test Setup Configuration
+ * HiBowan - Test Setup Configuration
  * Global test setup for React components and API testing
  */
 

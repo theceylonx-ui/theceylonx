@@ -333,7 +333,7 @@ export default function APIDocsPage() {
           <div>
             <h1 className="text-3xl font-bold">API Documentation</h1>
             <p className="text-muted-foreground">
-              Complete reference for the Ceylon Expand Admin API
+              Complete reference for the HiBowan Admin API
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -628,7 +628,7 @@ export default function APIDocsPage() {
                 <div>
                   <h4 className="font-semibold mb-2">Authentication Methods</h4>
                   <p className="text-sm text-muted-foreground mb-4">
-                    The Ceylon Expand Admin API uses JWT-based authentication with role-based access control.
+                    The HiBowan Admin API uses JWT-based authentication with role-based access control.
                   </p>
                   
                   <div className="space-y-4">

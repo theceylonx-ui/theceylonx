@@ -134,7 +134,7 @@ export default function CommunityPage() {
               <div>
                 <div className="flex items-center space-x-3 mb-2">
                   <MessageSquare className="w-6 h-6" />
-                  <h1 className="text-2xl md:text-3xl font-bold" data-testid="page-title">CeylonX Tribes</h1>
+                  <h1 className="text-2xl md:text-3xl font-bold" data-testid="page-title">HiBowan Tribes</h1>
                 </div>
                 <p className="text-base opacity-90" data-testid="page-subtitle">
                   Ask questions, share knowledge, and connect with fellow travelers exploring Sri Lanka

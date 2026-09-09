@@ -51,7 +51,7 @@ export default function HelpFAQPage() {
     // Getting Started
     {
       id: "getting-started",
-      question: "How do I get started with Ceylon Expand?",
+      question: "How do I get started with HiBowan?",
       answer: "Getting started is easy! Create an account using Google, email, or other supported sign-in methods. Complete your profile with travel preferences, profile photo, and contact information. You can immediately start browsing trips (no signup required for viewing), but you'll need an account to post trips, chat with organizers, or save favorites.",
       category: "Getting Started",
       keywords: ["signup", "account", "profile", "start", "begin", "register", "google", "oauth"],
@@ -69,7 +69,7 @@ export default function HelpFAQPage() {
     // Trip Management
     {
       id: "posting-trips",
-      question: "How do I post a trip on Ceylon Expand?",
+      question: "How do I post a trip on HiBowan?",
       answer: "Click 'Post Trip' in the navigation menu. Fill in your route (from/to locations), travel date and time, number of available seats, price per person, and contact information. You can add trip photos, describe your travel style, and include special notes. Your trip will be visible to other travelers immediately after posting.",
       category: "Trip Management",
       keywords: ["post", "create", "trip", "route", "seats", "price", "photos"],
@@ -174,7 +174,7 @@ export default function HelpFAQPage() {
     {
       id: "recommendations",
       question: "How do the trip recommendations work?",
-      answer: "Our AI-powered recommendation system analyzes your travel preferences, past interactions, and travel style to suggest relevant trips. It considers factors like your preferred destinations, travel companions, budget, and activity preferences to show you the most suitable trips first.",
+      answer: "Our recommendation system matches trips to your travel preferences and past activity. It considers factors like your preferred destinations, travel companions, budget, and activity preferences to show you the most suitable trips first.",
       category: "Recommendations",
       keywords: ["recommendations", "ai", "suggestions", "personalized", "discover"],
       icon: <Star className="h-5 w-5 text-yellow-500" />
@@ -192,7 +192,7 @@ export default function HelpFAQPage() {
     {
       id: "safety-traveling",
       question: "Is it safe to travel with people I don't know?",
-      answer: "Ceylon Expand promotes safe travel practices. Every user must create a complete profile with verified contact information. Review organizers' profiles, read comments from other travelers, and communicate directly before committing. Always meet in public places, share trip details with family/friends, and trust your instincts.",
+      answer: "HiBowan promotes safe travel practices. Every user creates a complete profile with a confirmed email address. Review organizers' profiles, read comments from other travelers, and communicate directly before committing. Always meet in public places, share trip details with family/friends, and trust your instincts.",
       category: "Safety & Security",
       keywords: ["safety", "security", "strangers", "trust", "verification", "meeting"],
       icon: <Shield className="h-5 w-5 text-red-500" />
@@ -243,8 +243,8 @@ export default function HelpFAQPage() {
     // Costs & Pricing
     {
       id: "platform-costs",
-      question: "Is Ceylon Expand free to use? Are there any hidden fees?",
-      answer: "Yes, Ceylon Expand is completely free! No registration fees, membership costs, or service charges. We don't take commission from trip costs. The prices in trip posts are actual travel sharing costs (fuel, tolls) that participants split. You pay your share directly to the trip organizer - never to Ceylon Expand.",
+      question: "Is HiBowan free to use? Are there any hidden fees?",
+      answer: "Yes, HiBowan is completely free! No registration fees, membership costs, or service charges. We don't take commission from trip costs. The prices in trip posts are actual travel sharing costs (fuel, tolls) that participants split. You pay your share directly to the trip organizer - never to HiBowan.",
       category: "Costs & Pricing",
       keywords: ["free", "cost", "fees", "pricing", "commission", "charges"],
       icon: <DollarSign className="h-5 w-5 text-ceylon-green" />
@@ -279,8 +279,8 @@ export default function HelpFAQPage() {
     // Regional Coverage
     {
       id: "sri-lanka-coverage",
-      question: "What regions of Sri Lanka does Ceylon Expand cover?",
-      answer: "Ceylon Expand covers all provinces and regions of Sri Lanka! Filter trips by Western Province (Colombo, Gampaha), Central Province (Kandy, Nuwara Eliya), Southern Province (Galle, Matara), and all other provinces including Northern, Eastern, North Western, North Central, Uva, and Sabaragamuwa. Find travel companions for journeys between major cities or to destinations like Sigiriya, Ella, or Yala National Park.",
+      question: "What regions of Sri Lanka does HiBowan cover?",
+      answer: "HiBowan covers all provinces and regions of Sri Lanka! Filter trips by Western Province (Colombo, Gampaha), Central Province (Kandy, Nuwara Eliya), Southern Province (Galle, Matara), and all other provinces including Northern, Eastern, North Western, North Central, Uva, and Sabaragamuwa. Find travel companions for journeys between major cities or to destinations like Sigiriya, Ella, or Yala National Park.",
       category: "Regional Coverage",
       keywords: ["regions", "provinces", "colombo", "kandy", "galle", "coverage", "destinations", "northern", "eastern"],
       icon: <MapPin className="h-5 w-5 text-ceylon-blue" />
@@ -328,7 +328,7 @@ export default function HelpFAQPage() {
               Help Center & FAQ
             </h1>
             <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-              Find answers to common questions about using Ceylon Expand for your travel adventures across Sri Lanka
+              Find answers to common questions about using HiBowan for your travel adventures across Sri Lanka
             </p>
           </div>
 

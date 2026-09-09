@@ -48,7 +48,7 @@ export default function Landing() {
     <>
       <SEO 
         {...SEOConfigs.home}
-        ogUrl={typeof window !== 'undefined' ? window.location.href : 'https://www.theceylonx.com'}
+        ogUrl={typeof window !== 'undefined' ? window.location.href : 'https://www.hibowan.com'}
         ogImage={backgroundImage || undefined}
       />
       <div className="min-h-screen bg-ui-bg">
@@ -68,19 +68,19 @@ export default function Landing() {
                   <div 
                     className="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-ui-bg rounded-md p-1"
                     role="link"
-                    aria-label="Ceylon Expand homepage"
+                    aria-label="HiBowan homepage"
                     data-testid="header-logo-link"
                   >
                     <img 
                       src={newLogo} 
-                      alt="Ceylon Expand Logo" 
+                      alt="HiBowan Logo"
                       className="h-8 w-8"
                       width="32"
                       height="32"
                       loading="eager"
                       data-testid="logo-icon"
                     />
-                    <span className="text-xl font-bold text-text-primary" data-testid="logo-text">Ceylon Expand</span>
+                    <span className="text-xl font-bold text-text-primary" data-testid="logo-text">HiBowan</span>
                   </div>
                 </Link>
               </div>
@@ -113,9 +113,9 @@ export default function Landing() {
                     data-testid="nav-community"
                     role="menuitem"
                     tabIndex={0}
-                    aria-label="Join CeylonX travel community"
+                    aria-label="Join HiBowan travel community"
                   >
-                    CeylonX Tribes
+                    HiBowan Tribes
                   </span>
                 </Link>
               </div>
@@ -157,7 +157,7 @@ export default function Landing() {
                 <div className="block py-2 text-text-secondary hover:text-brand font-medium" onClick={() => setMobileOpen(false)}>Post a Trip</div>
               </Link>
               <Link href="/community">
-                <div className="block py-2 text-text-secondary hover:text-brand font-medium" onClick={() => setMobileOpen(false)}>CeylonX Tribes</div>
+                <div className="block py-2 text-text-secondary hover:text-brand font-medium" onClick={() => setMobileOpen(false)}>HiBowan Tribes</div>
               </Link>
               <Link href="/about">
                 <div className="block py-2 text-text-secondary hover:text-brand font-medium" onClick={() => setMobileOpen(false)}>About</div>
@@ -252,7 +252,7 @@ export default function Landing() {
               How It Works
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto" data-testid="text-how-it-works-subtitle">
-              Get started with Ceylon Expand in just three simple steps.
+              Get started with HiBowan in just three simple steps.
             </p>
           </div>
           
@@ -316,7 +316,7 @@ export default function Landing() {
               <CardContent className="p-8">
                 <Compass className="text-orange-600 h-10 w-10 mb-6" />
                 <h3 className="text-xl font-semibold mb-4 text-gray-800">Explore More</h3>
-                <p className="text-gray-600">Discover hidden gems and local insights from experienced travelers and locals.</p>
+                <p className="text-gray-600">Discover hidden gems and local insights shared by experienced fellow travelers.</p>
               </CardContent>
             </Card>
           </div>

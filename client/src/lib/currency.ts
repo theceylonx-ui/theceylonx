@@ -1,4 +1,4 @@
-// LKR formatting helpers for Ceylon Expand
+// LKR formatting helpers for HiBowan
 
 export function formatLKR(amount: number): string {
   return new Intl.NumberFormat('en-LK', {

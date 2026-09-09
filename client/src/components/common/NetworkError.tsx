@@ -57,7 +57,7 @@ export function NetworkError({
     if (message) return message;
     if (!isOnline) return "You're currently offline. Please check your internet connection.";
     if (retryAttempts > 2) return "Multiple connection attempts failed. There might be a server issue.";
-    return "Unable to connect to Ceylon Expand servers. This might be a temporary network issue.";
+    return "Unable to connect to HiBowan servers. This might be a temporary network issue.";
   };
 
   const getErrorTitle = () => {

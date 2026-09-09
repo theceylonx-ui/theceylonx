@@ -1,6 +1,6 @@
 /**
  * Utility functions for managing URL search parameters
- * Helps preserve query state across navigation in Ceylon Expand
+ * Helps preserve query state across navigation in HiBowan
  */
 
 export interface SearchParamsHelper {

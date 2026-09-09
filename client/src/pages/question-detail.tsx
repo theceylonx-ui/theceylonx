@@ -224,7 +224,7 @@ export default function QuestionDetailPage() {
 
   const handleShare = (platform: string) => {
     const url = window.location.href;
-    const title = question?.title || "Question from Ceylon Expand";
+    const title = question?.title || "Question from HiBowan";
     const text = `Check out this question: ${title}`;
 
     let shareUrl = "";

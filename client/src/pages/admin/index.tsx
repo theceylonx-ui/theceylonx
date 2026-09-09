@@ -114,7 +114,7 @@ export default function AdminOverviewPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Admin Overview</h1>
           <p className="text-gray-600 mt-2">
-            Welcome back, {adminUser?.email}. Here's what's happening on Ceylon Expand.
+            Welcome back, {adminUser?.email}. Here's what's happening on HiBowan.
           </p>
         </div>
 

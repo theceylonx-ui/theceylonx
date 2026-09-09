@@ -1,5 +1,5 @@
 /**
- * Ceylon Expand - ActionsMenu Component Tests
+ * HiBowan - ActionsMenu Component Tests
  * Demonstrates comprehensive component testing patterns
  */
 
