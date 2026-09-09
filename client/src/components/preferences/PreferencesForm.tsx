@@ -325,7 +325,7 @@ export function PreferencesForm() {
         {availableOptions.length > 0 && (!maxItems || value.length < maxItems) && (
           <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
             <div className="flex items-center mb-4">
-              <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-1.5 rounded-lg mr-2">
+              <div className="bg-gradient-to-r from-brand to-accent p-1.5 rounded-lg mr-2">
                 <Plus className="h-3 w-3 text-white" />
               </div>
               <h4 className="font-semibold text-gray-900">{placeholder}</h4>
@@ -336,7 +336,7 @@ export function PreferencesForm() {
                   key={option}
                   type="button"
                   onClick={() => handleAdd(option)}
-                  className="group bg-white hover:bg-gradient-to-r hover:from-emerald-400 hover:to-teal-500 border border-gray-200 hover:border-transparent rounded-xl px-4 py-3 text-left transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:text-white"
+                  className="group bg-white hover:bg-gradient-to-r hover:from-brand hover:to-accent border border-gray-200 hover:border-transparent rounded-xl px-4 py-3 text-left transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:text-white"
                   data-testid={`chip-add-${option}`}
                 >
                   <div className="flex items-center">

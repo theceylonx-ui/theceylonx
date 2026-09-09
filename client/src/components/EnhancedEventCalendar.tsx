@@ -564,8 +564,8 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Enhanced Calendar View */}
         <Card className="overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-emerald-50 to-blue-50 dark:from-emerald-950/30 dark:to-blue-950/30">
-            <CardTitle className="text-xl font-semibold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Calendar</CardTitle>
+          <CardHeader className="bg-gradient-to-r from-brand-subtle to-accent-subtle dark:from-brand/20 dark:to-accent/20">
+            <CardTitle className="text-xl font-semibold bg-gradient-to-r from-brand to-accent bg-clip-text text-transparent">Calendar</CardTitle>
           </CardHeader>
           <CardContent className="p-2 sm:p-4">
             <style>{`

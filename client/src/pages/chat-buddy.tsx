@@ -67,12 +67,12 @@ function ChatThreadsListView() {
   
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen bg-gradient-to-br from-accent-subtle to-brand-subtle dark:from-gray-900 dark:to-gray-800">
         <Navigation />
         {/* Chat Buddy Header with beautiful gradient like HiBowan Tribes */}
         <div className="py-8">
           <div className="max-w-6xl mx-auto p-6">
-            <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-2xl shadow-lg shadow-emerald-500/20 p-8 mb-8">
+            <div className="bg-gradient-to-r from-brand to-brand-hover rounded-2xl shadow-lg shadow-brand/20 p-8 mb-8">
               <div className="text-center">
                 <h1 className="text-4xl font-bold text-white mb-2">💬 Chat Buddy</h1>
                 <p className="text-white/90 text-lg">Connect with fellow travelers and trip organizers</p>
@@ -90,12 +90,12 @@ function ChatThreadsListView() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-accent-subtle to-brand-subtle dark:from-gray-900 dark:to-gray-800">
       <Navigation />
       <div className="py-8">
         <div className="max-w-6xl mx-auto p-6">
           {/* Chat Buddy Header with beautiful gradient like HiBowan Tribes */}
-          <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-2xl shadow-lg shadow-emerald-500/20 p-8 mb-8">
+          <div className="bg-gradient-to-r from-brand to-brand-hover rounded-2xl shadow-lg shadow-brand/20 p-8 mb-8">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-4xl font-bold text-white mb-2">💬 Chat Buddy</h1>
@@ -433,7 +433,7 @@ export default function ChatBuddy() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header Section */}
         <div className="mb-8">
-          <div className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 rounded-2xl p-8 text-white shadow-xl">
+          <div className="bg-gradient-to-r from-brand to-brand-hover rounded-2xl p-8 text-white shadow-xl">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center space-x-3 mb-4">
@@ -625,7 +625,7 @@ export default function ChatBuddy() {
                               <div
                                 className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                                   isOwnMessage
-                                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
+                                    ? 'bg-gradient-to-r from-brand to-brand-hover text-white'
                                     : 'bg-gray-100 text-gray-900'
                                 }`}
                               >
@@ -672,7 +672,7 @@ export default function ChatBuddy() {
                         onClick={handleSendMessage}
                         disabled={!messageText.trim() || sendMessageMutation.isPending}
                         size="icon"
-                        className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white disabled:opacity-50"
+                        className="bg-gradient-to-r from-brand to-brand-hover hover:from-brand-hover hover:to-brand text-white disabled:opacity-50"
                       >
                         <Send className="h-4 w-4" />
                       </Button>

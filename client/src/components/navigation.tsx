@@ -29,7 +29,7 @@ export default function Navigation() {
   return (
     <nav className={`${
       user
-        ? 'bg-gradient-to-r from-[#1E7A50] to-[#165c3c] border-b border-[#1E7A50]/30 shadow-lg shadow-[#1E7A50]/20'
+        ? 'bg-gradient-to-r from-brand to-brand-hover border-b border-brand/30 shadow-lg shadow-brand/20'
         : 'bg-ui-bg border-b border-ui-line/50'
     } sticky top-0 z-50 backdrop-blur-sm transition-all duration-300`}>
       <div className="page-container">
@@ -57,7 +57,7 @@ export default function Navigation() {
                 className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${
                   isActive('/browse-trips') 
                     ? (user ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' : 'bg-brand-subtle text-brand font-semibold')
-                    : (user ? 'text-emerald-100 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
+                    : (user ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
                 }`}
                 data-testid="nav-browse"
               >
@@ -69,7 +69,7 @@ export default function Navigation() {
                 className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${
                   isActive('/post') 
                     ? (user ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' : 'bg-brand-subtle text-brand font-semibold')
-                    : (user ? 'text-emerald-100 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
+                    : (user ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
                 }`}
                 data-testid="nav-post"
               >
@@ -82,7 +82,7 @@ export default function Navigation() {
                   className={`transition-all duration-200 cursor-pointer flex items-center gap-2 relative px-4 py-2 rounded-lg ${
                     isActive('/calendar') 
                       ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' 
-                      : 'text-emerald-100 hover:text-white hover:bg-white/10'
+                      : 'text-white/80 hover:text-white hover:bg-white/10'
                   }`}
                   data-testid="nav-calendar"
                 >
@@ -97,7 +97,7 @@ export default function Navigation() {
                   className={`transition-all duration-200 cursor-pointer flex items-center gap-2 relative px-4 py-2 rounded-lg ${
                     isActive('/chat-buddy') || location.startsWith('/chat-buddy/') 
                       ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' 
-                      : 'text-emerald-100 hover:text-white hover:bg-white/10'
+                      : 'text-white/80 hover:text-white hover:bg-white/10'
                   }`}
                   data-testid="nav-chat"
                 >
@@ -111,7 +111,7 @@ export default function Navigation() {
                 className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${
                   isActive('/community') 
                     ? (user ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' : 'bg-brand-subtle text-brand font-semibold')
-                    : (user ? 'text-emerald-100 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
+                    : (user ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
                 }`}
                 data-testid="nav-community"
               >
@@ -123,7 +123,7 @@ export default function Navigation() {
                 className={`transition-all duration-200 cursor-pointer relative px-4 py-2 rounded-lg ${
                   isActive('/about') 
                     ? (user ? 'bg-white/15 text-white font-semibold shadow-lg backdrop-blur-sm border border-white/20' : 'bg-brand-subtle text-brand font-semibold')
-                    : (user ? 'text-emerald-100 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
+                    : (user ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-text-secondary hover:text-brand hover:bg-ui-surface')
                 }`}
                 data-testid="nav-about"
               >
@@ -150,7 +150,7 @@ export default function Navigation() {
               variant="ghost"
               size="sm"
               onClick={toggleMobileMenu}
-              className={`md:hidden p-2 ${user ? 'text-emerald-100 hover:text-white hover:bg-emerald-500/20' : 'text-text-secondary hover:text-brand hover:bg-ui-surface'} transition-colors duration-200`}
+              className={`md:hidden p-2 ${user ? 'text-white/80 hover:text-white hover:bg-white/20' : 'text-text-secondary hover:text-brand hover:bg-ui-surface'} transition-colors duration-200`}
               data-testid="mobile-menu-button"
             >
               {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -160,14 +160,14 @@ export default function Navigation() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className={`md:hidden py-6 border-t ${user ? 'border-emerald-500/30 bg-gradient-to-b from-emerald-600/95 to-emerald-700/95' : 'border-ui-line/50'} animate-fade-in backdrop-blur-sm`}>
+          <div className={`md:hidden py-6 border-t ${user ? 'border-brand/30 bg-gradient-to-b from-brand/95 to-brand-hover/95' : 'border-ui-line/50'} animate-fade-in backdrop-blur-sm`}>
             <div className="space-y-4">
               <Link href="/browse-trips">
                 <div 
                   className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
                     isActive('/browse-trips') 
                       ? (user ? 'bg-white/20 text-white font-semibold' : 'bg-brand-subtle text-brand font-semibold')
-                      : (user ? 'text-emerald-100 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
+                      : (user ? 'text-white/80 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                   data-testid="mobile-nav-browse"
@@ -180,7 +180,7 @@ export default function Navigation() {
                   className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
                     isActive('/post') 
                       ? (user ? 'bg-white/20 text-white font-semibold' : 'bg-brand-subtle text-brand font-semibold')
-                      : (user ? 'text-emerald-100 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
+                      : (user ? 'text-white/80 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                   data-testid="mobile-nav-post"
@@ -194,7 +194,7 @@ export default function Navigation() {
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                       isActive('/calendar') 
                         ? 'bg-white/20 text-white font-semibold' 
-                        : 'text-emerald-100 hover:bg-white/10 hover:text-white'
+                        : 'text-white/80 hover:bg-white/10 hover:text-white'
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                     data-testid="mobile-nav-calendar"
@@ -210,7 +210,7 @@ export default function Navigation() {
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                       isActive('/chat-buddy') || location.startsWith('/chat-buddy/') 
                         ? 'bg-white/20 text-white font-semibold' 
-                        : 'text-emerald-100 hover:bg-white/10 hover:text-white'
+                        : 'text-white/80 hover:bg-white/10 hover:text-white'
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                     data-testid="mobile-nav-chat"
@@ -225,7 +225,7 @@ export default function Navigation() {
                   className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
                     isActive('/community') 
                       ? (user ? 'bg-white/20 text-white font-semibold' : 'bg-brand-subtle text-brand font-semibold')
-                      : (user ? 'text-emerald-100 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
+                      : (user ? 'text-white/80 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                   data-testid="mobile-nav-community"
@@ -238,7 +238,7 @@ export default function Navigation() {
                   className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
                     isActive('/about') 
                       ? (user ? 'bg-white/20 text-white font-semibold' : 'bg-brand-subtle text-brand font-semibold')
-                      : (user ? 'text-emerald-100 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
+                      : (user ? 'text-white/80 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-ui-surface hover:text-brand')
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                   data-testid="mobile-nav-about"
