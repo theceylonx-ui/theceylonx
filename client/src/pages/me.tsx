@@ -973,6 +973,7 @@ function ProfileEditor({ profile, onUpdate }: any) {
 function TravelPreferences({ preferences, onUpdate }: any) {
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   
   const handleUpdateClick = () => {
     setIsUpdating(true);
@@ -981,7 +982,7 @@ function TravelPreferences({ preferences, onUpdate }: any) {
       description: "Taking you to travel preferences settings.",
     });
     setTimeout(() => {
-      window.location.href = '/travel-style-settings';
+      setLocation('/travel-style-settings');
     }, 500);
   };
 
@@ -1152,7 +1153,7 @@ function SavedTrips() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => window.location.href = `/trips/${item.id}`}
+            onClick={() => setLocation(`/trips/${item.id}`)}
             data-testid={`view-trip-${item.id}`}
           >
             View Trip
@@ -1303,7 +1304,7 @@ function UserActivity() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => window.location.href = `/question/${question.id}`}
+                          onClick={() => setLocation(`/question/${question.id}`)}
                           data-testid={`button-view-question-${question.id}`}
                         >
                           👁️ View
@@ -1327,7 +1328,7 @@ function UserActivity() {
             ) : (
               <div className="text-center py-8">
                 <p className="text-gray-500">No questions asked yet.</p>
-                <Button className="mt-4" onClick={() => window.location.href = '/community'}>
+                <Button className="mt-4" onClick={() => setLocation('/community')}>
                   Ask Your First Question
                 </Button>
               </div>
@@ -1360,7 +1361,7 @@ function UserActivity() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => window.location.href = `/trips/${trip.id}`}
+                          onClick={() => setLocation(`/trips/${trip.id}`)}
                           data-testid={`button-view-trip-${trip.id}`}
                         >
                           👁️ View Details
@@ -1368,7 +1369,7 @@ function UserActivity() {
                         <Button
                           size="sm"
                           variant="secondary"
-                          onClick={() => window.location.href = `/trips/${trip.id}/requests`}
+                          onClick={() => setLocation(`/trips/${trip.id}/requests`)}
                           data-testid={`button-view-requests-${trip.id}`}
                         >
                           📥 Requests

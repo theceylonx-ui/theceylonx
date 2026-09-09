@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { MessageSquare, Users, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -41,6 +42,7 @@ interface ChatInboxProps {
 }
 
 export function ChatInbox({ userId, onThreadSelect }: ChatInboxProps) {
+  const [, setLocation] = useLocation();
   const { data: threads, isLoading } = useQuery<ChatThread[]>({
     queryKey: ["/api/threads"],
     queryFn: async () => {
@@ -53,7 +55,7 @@ export function ChatInbox({ userId, onThreadSelect }: ChatInboxProps) {
     if (onThreadSelect) {
       onThreadSelect(threadId);
     } else {
-      window.location.href = `/chat/${threadId}`;
+      setLocation(`/chat-buddy/${threadId}`);
     }
   };
 

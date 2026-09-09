@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link, useParams } from "wouter";
+import { Link, useParams, useLocation } from "wouter";
 import { ArrowLeft, Check, X, MessageCircle, Clock, User, Mail, Phone, Calendar } from "lucide-react";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
@@ -24,6 +24,7 @@ interface TripRequestsPageProps {
 
 export default function TripRequestsPage({ params }: TripRequestsPageProps) {
   const { id } = params;
+  const [, setLocation] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -340,7 +341,7 @@ export default function TripRequestsPage({ params }: TripRequestsPageProps) {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => window.location.href = `/chat/${request.chatThreadId}`}
+                            onClick={() => setLocation(`/chat-buddy/${request.chatThreadId}`)}
                           >
                             <MessageCircle className="h-4 w-4 mr-2" />
                             Chat
@@ -354,7 +355,7 @@ export default function TripRequestsPage({ params }: TripRequestsPageProps) {
                       <div className="flex items-center gap-3 pt-4 border-t">
                         <Button
                           size="sm"
-                          onClick={() => window.location.href = `/chat/${request.chatThreadId}`}
+                          onClick={() => setLocation(`/chat-buddy/${request.chatThreadId}`)}
                           className="bg-blue-600 hover:bg-blue-700 text-white"
                         >
                           <MessageCircle className="h-4 w-4 mr-2" />

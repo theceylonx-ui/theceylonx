@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { MapPin, Calendar, Users, DollarSign, Mail, Lock, Pin, PinOff, Star, StarOff, Zap, Clock, Heart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,8 @@ export default function TripCard({ trip, badges }: TripCardProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+  const [, setLocation] = useLocation();
+
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
@@ -597,7 +598,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  window.location.href = `/profile/${trip.organizer?.username || trip.organizer?.id}`;
+                  setLocation(`/profile/${trip.organizer?.username || trip.organizer?.id}`);
                 }}
               >
                 <UserDisplay 
@@ -668,7 +669,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  window.location.href = isQuickTrip ? `/quick-trips/${trip.id}` : createTripDetailLink(trip.id);
+                  setLocation(isQuickTrip ? `/quick-trips/${trip.id}` : createTripDetailLink(trip.id));
                 }}
               >
                 View Details

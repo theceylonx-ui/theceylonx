@@ -62,7 +62,7 @@ export default function Home() {
               <Button 
                 size="lg"
                 className="bg-ceylon-blue text-white hover:bg-ceylon-blue/90 text-lg font-semibold w-full sm:w-auto shadow-2xl px-8 py-6 rounded-full transition-all hover:scale-105"
-                onClick={() => window.location.href = "/post"}
+                onClick={() => setLocation("/post")}
                 data-testid="button-post-trip"
               >
                 Post a Trip

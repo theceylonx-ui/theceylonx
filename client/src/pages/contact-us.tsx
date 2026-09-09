@@ -1,3 +1,4 @@
+import { Link } from "wouter";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -266,12 +267,12 @@ export default function ContactUs() {
                 </div>
                 
                 <div className="pt-2">
-                  <a 
-                    href="/faq" 
+                  <Link
+                    href="/faq"
                     className="text-ceylon-green hover:text-ceylon-green/80 text-sm font-medium"
                   >
                     View all FAQs →
-                  </a>
+                  </Link>
                 </div>
               </CardContent>
             </Card>

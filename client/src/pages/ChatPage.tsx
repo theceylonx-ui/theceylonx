@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useRoute } from "wouter";
+import { useRoute, Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { ChatThreadsList } from "@/components/chat/ChatThreadsList";
 import { ChatWindow } from "@/components/chat/ChatWindow";
@@ -84,10 +84,10 @@ export default function ChatPage() {
             <div>
               <div className="mb-6">
                 <Button variant="ghost" asChild className="mb-4">
-                  <a href="/">
+                  <Link href="/">
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to Home
-                  </a>
+                  </Link>
                 </Button>
                 <h1 className="text-2xl font-bold">Your Chats</h1>
               </div>

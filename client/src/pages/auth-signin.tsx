@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthSignIn } from "@/components/AuthSignIn";
 import newLogo from "@assets/Copy of CEY  X Letter Digital Company Logo.png";
@@ -65,13 +65,13 @@ export default function AuthSignInPage() {
         <div className="mt-6 text-center text-sm text-gray-500">
           <p>
             By signing in, you agree to our{" "}
-            <a href="/terms-of-service" className="text-ceylon-green hover:underline">
+            <Link href="/terms-of-service" className="text-ceylon-green hover:underline">
               Terms of Service
-            </a>{" "}
+            </Link>{" "}
             and{" "}
-            <a href="/privacy-policy" className="text-ceylon-green hover:underline">
+            <Link href="/privacy-policy" className="text-ceylon-green hover:underline">
               Privacy Policy
-            </a>
+            </Link>
           </p>
         </div>
       </div>

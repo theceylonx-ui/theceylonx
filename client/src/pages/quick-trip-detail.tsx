@@ -1,4 +1,4 @@
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import Navigation from "@/components/navigation";
@@ -31,6 +31,7 @@ function useCountdownHours(expiresAt: string | Date | null | undefined): number 
 
 export default function QuickTripDetailPage() {
   const [, params] = useRoute("/quick-trips/:id");
+  const [, setLocation] = useLocation();
   const tripId = params?.id;
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -118,7 +119,7 @@ export default function QuickTripDetailPage() {
           title: "Request Accepted!",
           description: "A chat has been opened. You can now message the traveler.",
         });
-        window.location.href = `/chat/${data.chatThreadId}`;
+        setLocation(`/chat-buddy/${data.chatThreadId}`);
       } else {
         toast({ title: "Request Updated", description: "The request has been updated." });
       }
@@ -213,7 +214,7 @@ export default function QuickTripDetailPage() {
                                   <div
                                     className="cursor-pointer hover:opacity-80 transition-opacity"
                                     onClick={() => {
-                                      window.location.href = `/profile/${request.user?.username || request.user?.id}`;
+                                      setLocation(`/profile/${request.user?.username || request.user?.id}`);
                                     }}
                                   >
                                     <UserDisplay user={request.user} avatarSize="md" />
@@ -263,7 +264,7 @@ export default function QuickTripDetailPage() {
                                   <div
                                     className="cursor-pointer hover:opacity-80 transition-opacity"
                                     onClick={() => {
-                                      window.location.href = `/profile/${request.user?.username || request.user?.id}`;
+                                      setLocation(`/profile/${request.user?.username || request.user?.id}`);
                                     }}
                                   >
                                     <UserDisplay user={request.user} avatarSize="md" />
@@ -274,7 +275,7 @@ export default function QuickTripDetailPage() {
                                   <Button
                                     size="sm"
                                     className="bg-green-600 hover:bg-green-700"
-                                    onClick={() => { window.location.href = `/chat/${request.chatThreadId}`; }}
+                                    onClick={() => { setLocation(`/chat-buddy/${request.chatThreadId}`); }}
                                   >
                                     <MessageCircle className="w-4 h-4 mr-1" /> Chat
                                   </Button>
@@ -383,7 +384,7 @@ export default function QuickTripDetailPage() {
                 <div
                   className="cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => {
-                    window.location.href = `/profile/${trip.organizer?.username || trip.organizer?.id}`;
+                    setLocation(`/profile/${trip.organizer?.username || trip.organizer?.id}`);
                   }}
                 >
                   <UserDisplay user={trip.organizer} avatarSize="lg" />
@@ -405,7 +406,7 @@ export default function QuickTripDetailPage() {
                       <Button
                         size="sm"
                         className="bg-green-600 hover:bg-green-700"
-                        onClick={() => { window.location.href = `/chat/${existingInterest.chatThreadId}`; }}
+                        onClick={() => { setLocation(`/chat-buddy/${existingInterest.chatThreadId}`); }}
                       >
                         <MessageCircle className="w-4 h-4 mr-1" /> Open Chat
                       </Button>

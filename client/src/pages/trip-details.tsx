@@ -28,6 +28,7 @@ import { EditContentDialog } from "@/components/EditContentDialog";
 import { TripEditDialog } from "@/components/TripEditDialog";
 import { ActionsMenu } from "@/components/ActionsMenu";
 import { TripBreadcrumbs } from "@/components/TripBreadcrumbs";
+import { ReportTripDialog } from "@/components/ui/report-trip-dialog";
 import newLogo from "@assets/Copy of CEY  X Letter Digital Company Logo.png";
 
 interface TripDetailsProps {
@@ -47,6 +48,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showTripEditDialog, setShowTripEditDialog] = useState(false);
   const [showDateEditModal, setShowDateEditModal] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
   const { setSelectedDates } = useTripsStore();
   
   // Get tab from URL params
@@ -378,17 +380,16 @@ export default function TripDetails({ params }: TripDetailsProps) {
 
   const handleReport = () => {
     if (!isAuthenticated) {
-      window.location.href = "/auth/signin";
+      setLocation(createLoginRedirectUrl(`${window.location.pathname}${window.location.search}`));
       return;
     }
-    // Navigate to dedicated report page
-    window.location.href = `/report-trip/${id}`;
+    setShowReportDialog(true);
   };
 
   const handleContact = () => {
     if (!trip || !isAuthenticated) return;
-    // Contact is handled through chat system - redirect to chat
-    window.location.href = `/chat-buddy?tripId=${trip.id}`;
+    // Contact is handled through chat system
+    setLocation(`/chat-buddy?tripId=${trip.id}`);
   };
 
   const handleSendInterest = () => {
@@ -768,7 +769,7 @@ export default function TripDetails({ params }: TripDetailsProps) {
                           <Button 
                             size="sm" 
                             className="mt-2 bg-green-600 hover:bg-green-700 text-white"
-                            onClick={() => window.location.href = `/chat-buddy?tripId=${trip.id}`}
+                            onClick={() => setLocation(`/chat-buddy?tripId=${trip.id}`)}
                           >
                             Chat with Trip Members
                           </Button>
@@ -1089,6 +1090,15 @@ export default function TripDetails({ params }: TripDetailsProps) {
           isOpen={showTripEditDialog}
           onClose={() => setShowTripEditDialog(false)}
           trip={trip as any}
+        />
+      )}
+
+      {/* Report Trip Dialog */}
+      {id && (
+        <ReportTripDialog
+          tripId={id}
+          open={showReportDialog}
+          onOpenChange={setShowReportDialog}
         />
       )}
     </div>

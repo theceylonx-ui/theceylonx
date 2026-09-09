@@ -4,7 +4,7 @@ import { X, Settings, CheckCircle, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 interface UserPreferences {
   vibe?: string[];
@@ -38,6 +38,7 @@ function calculatePreferencesCompletion(preferences: UserPreferences | null): nu
 
 export function PreferencesCompletionBanner({ onDismiss, className }: PreferencesCompletionBannerProps) {
   const [isDismissed, setIsDismissed] = useState(false);
+  const [, setLocation] = useLocation();
 
   // Fetch current user preferences
   const { data: preferences, isLoading } = useQuery<UserPreferences>({
@@ -99,8 +100,7 @@ export function PreferencesCompletionBanner({ onDismiss, className }: Preference
                 className="bg-orange-500 hover:bg-orange-600 text-white" 
                 data-testid="button-complete-preferences"
                 onClick={() => {
-                  console.log('🔍 Complete Setup clicked - navigating to /me?tab=preferences');
-                  window.location.href = '/me?tab=preferences';
+                  setLocation('/me?tab=preferences');
                 }}
               >
                 <Settings className="h-4 w-4 mr-2" />
