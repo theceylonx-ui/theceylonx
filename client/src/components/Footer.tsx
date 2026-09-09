@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import newLogo from "@assets/Copy of CEY  X Letter Digital Company Logo.png";
+import newLogo from "@assets/hibowan-pin-hi-mark.svg";
 import { Facebook, Instagram, Twitter, Youtube } from "lucide-react";
 import { SiTiktok } from "react-icons/si";
 

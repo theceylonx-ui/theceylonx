@@ -29,7 +29,7 @@ import { TripEditDialog } from "@/components/TripEditDialog";
 import { ActionsMenu } from "@/components/ActionsMenu";
 import { TripBreadcrumbs } from "@/components/TripBreadcrumbs";
 import { ReportTripDialog } from "@/components/ui/report-trip-dialog";
-import newLogo from "@assets/Copy of CEY  X Letter Digital Company Logo.png";
+import newLogo from "@assets/hibowan-pin-hi-mark.svg";
 
 interface TripDetailsProps {
   params: { id: string };

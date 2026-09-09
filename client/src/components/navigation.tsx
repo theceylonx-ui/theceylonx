@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { EnhancedNotificationDropdown } from "@/components/notifications/enhanced-notification-dropdown";
 import ProfileMenu from "@/components/navigation/ProfileMenu";
 
-import Copy_of_CEY__X_Letter_Digital_Company_Logo from "@assets/Copy of CEY  X Letter Digital Company Logo.png";
+import Copy_of_CEY__X_Letter_Digital_Company_Logo from "@assets/hibowan-pin-hi-mark.svg";
 
 export default function Navigation() {
   const { user } = useAuth();

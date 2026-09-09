@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import Footer from "@/components/Footer";
 import { Link } from "wouter";
 import { UserPlus, MapPin, Handshake, PiggyBank, Users, Compass, Heart, Shield, Flag, Star, UserCheck, Route, Menu, X } from "lucide-react";
-import newLogo from "@assets/Copy of CEY  X Letter Digital Company Logo.png";
+import newLogo from "@assets/hibowan-pin-hi-mark.svg";
 import { SEO, SEOConfigs } from "@/components/SEO";
 
 export default function Landing() {
@@ -191,35 +191,41 @@ export default function Landing() {
           ></div>
           
           <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center text-white">
-            <h1 
-              className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 mt-4 drop-shadow-2xl" 
-              style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }} 
+            <p
+              className="italic font-medium text-xl sm:text-2xl mb-3 drop-shadow-lg"
+              style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8)' }}
+              data-testid="hero-kicker"
+            >
+              Explore Together.
+            </p>
+            <h1
+              className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 drop-shadow-2xl"
+              style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.6)' }}
               data-testid="hero-title"
               id="page-title"
             >
-              Travel Together.<br />Share the Journey.
+              Find fellow travellers<br />heading your way.
             </h1>
-            
-            {/* Free to Use Badge */}
-            <div className="mb-6 flex justify-center" role="banner" aria-label="Free service announcement">
-              <Badge 
-                className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 text-sm font-semibold shadow-lg border-0 hover:from-green-600 hover:to-emerald-700 transition-all duration-200" 
+
+            <div className="mb-6 flex justify-center" role="banner" aria-label="Trust statement">
+              <Badge
+                className="bg-white/15 backdrop-blur-sm text-white px-4 py-2 text-sm font-semibold shadow-lg border border-white/20"
                 data-testid="free-badge"
                 role="status"
                 aria-live="polite"
               >
-                🎉 100% Free to Use - No Hidden Fees
+                No bookings. No commissions. You arrange everything directly.
               </Badge>
             </div>
-            
-            <p 
-              className="sm:text-xl md:text-2xl mb-8 max-w-3xl mx-auto px-4 drop-shadow-lg text-[27px]" 
-              style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8), 0px 0px 2px rgba(0,0,0,0.6)' }} 
+
+            <p
+              className="sm:text-xl md:text-2xl mb-8 max-w-3xl mx-auto px-4 drop-shadow-lg text-[27px]"
+              style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8), 0px 0px 2px rgba(0,0,0,0.6)' }}
               data-testid="hero-subtitle"
               role="text"
               aria-describedby="page-title"
-            >Find rides, buddies, and unique experiences across Sri Lanka.
-            Post your trip or join one today.</p>
+            >Post the trip you're planning, or find one already forming.
+            HiBowan connects foreigners exploring Sri Lanka at the same time.</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center px-4" role="group" aria-label="Main action buttons">
               <Link href="/browse-trips">
                 <Button 
@@ -258,28 +264,67 @@ export default function Landing() {
           
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center" data-testid="step-signup">
-              <div className="bg-green-100 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                <UserCheck className="text-green-600 h-12 w-12 stroke-2" />
+              <div className="bg-brand-subtle rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <Route className="text-brand h-10 w-10 stroke-2" />
               </div>
-              <h3 className="text-xl font-semibold mb-4 text-gray-800">1. Sign Up</h3>
-              <p className="text-gray-600">Create your account with basic details and complete your profile to get started.</p>
+              <h3 className="text-xl font-semibold mb-4 text-gray-800">1. Post or browse a trip</h3>
+              <p className="text-gray-600">Share where you're headed, or find a Quick Trip or Detailed Trip already forming near your route.</p>
             </div>
-            
+
             <div className="text-center" data-testid="step-post-find">
-              <div className="bg-blue-100 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                <Route className="text-blue-600 h-12 w-12 stroke-2" />
+              <div className="bg-accent-subtle rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <UserCheck className="text-accent h-12 w-12 stroke-2" />
               </div>
-              <h3 className="text-xl font-semibold mb-4 text-gray-800">2. Post/Find a Trip</h3>
-              <p className="text-gray-600">Browse existing trips or create your own adventure and invite others to join.</p>
+              <h3 className="text-xl font-semibold mb-4 text-gray-800">2. Organizer accepts</h3>
+              <p className="text-gray-600">Send a request to join. The trip organizer decides who joins — that's what keeps it safe.</p>
             </div>
-            
+
             <div className="text-center" data-testid="step-travel">
-              <div className="bg-ceylon-sand bg-opacity-30 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                <Heart className="text-orange-600 h-10 w-10" />
+              <div className="bg-brand-subtle rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <Heart className="text-brand h-10 w-10" />
               </div>
-              <h3 className="text-xl font-semibold mb-4 text-gray-800">3. Travel Together</h3>
-              <p className="text-gray-600">Connect with fellow travelers, share costs, and create unforgettable memories.</p>
+              <h3 className="text-xl font-semibold mb-4 text-gray-800">3. Coordinate directly</h3>
+              <p className="text-gray-600">Once accepted, chat unlocks. From there, you and your fellow travellers arrange everything yourselves.</p>
             </div>
+          </div>
+        </div>
+      </section>
+      {/* Launch Route Clusters */}
+      <section className="py-16 bg-white" data-testid="section-route-clusters">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+              Where people are going first
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              HiBowan launches with three route clusters — the trips most travellers are already piecing together.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            <Card className="border-l-4 border-l-accent hover:shadow-md transition-shadow" data-testid="card-route-galle">
+              <CardContent className="p-8">
+                <MapPin className="text-accent h-8 w-8 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Colombo → Galle → Ella</h3>
+                <p className="text-gray-600 text-sm">Coast to hill country, the classic south-west loop.</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-brand hover:shadow-md transition-shadow" data-testid="card-route-arugam">
+              <CardContent className="p-8">
+                <MapPin className="text-brand h-8 w-8 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Ella → Arugam Bay</h3>
+                <p className="text-gray-600 text-sm">Hill country down to the east coast surf season.</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-accent hover:shadow-md transition-shadow" data-testid="card-route-safari">
+              <CardContent className="p-8">
+                <MapPin className="text-accent h-8 w-8 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Yala → Udawalawe</h3>
+                <p className="text-gray-600 text-sm">Two-park safari runs in the south.</p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>

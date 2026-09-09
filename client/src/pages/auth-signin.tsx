@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthSignIn } from "@/components/AuthSignIn";
-import newLogo from "@assets/Copy of CEY  X Letter Digital Company Logo.png";
+import newLogo from "@assets/hibowan-pin-hi-mark.svg";
 
 export default function AuthSignInPage() {
   const [, navigate] = useLocation();

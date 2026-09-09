@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
-import newLogo from "@assets/Copy of CEY  X Letter Digital Company Logo.png";
+import newLogo from "@assets/hibowan-pin-hi-mark.svg";
 
 export default function AuthCallbackPage() {
   const [, navigate] = useLocation();

@@ -17,7 +17,7 @@ import { createTripDetailLink } from "@/utils/searchParams";
 import { useState, useCallback, useEffect } from "react";
 import { NeonBadge } from "@/components/ui/neon-badge";
 import { LazyImage } from "@/components/common/LazyImage";
-import newLogo from "@assets/Copy of CEY  X Letter Digital Company Logo.png";
+import newLogo from "@assets/hibowan-pin-hi-mark.svg";
 
 function useCountdownHours(expiresAt: string | Date | null | undefined): number | null {
   const [hoursLeft, setHoursLeft] = useState<number | null>(null);
