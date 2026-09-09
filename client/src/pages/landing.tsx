@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import { Link } from "wouter";
 import { UserPlus, MapPin, Handshake, PiggyBank, Users, Compass, Heart, Shield, Flag, Star, UserCheck, Route, Menu, X } from "lucide-react";
 import newLogo from "@assets/hibowan-pin-hi-mark.svg";
+import heroImage from "@assets/hibowan-hero-stilt-fishermen.jpg";
 import { SEO, SEOConfigs } from "@/components/SEO";
 
 export default function Landing() {
@@ -31,7 +32,7 @@ export default function Landing() {
     enabled: !backgroundSetting?.value, // Only fetch if primary setting is not available
   });
 
-  const FALLBACK_HERO = 'https://images.unsplash.com/photo-1562602833-0f4ab2fc46e3?w=1600&q=80';
+  const FALLBACK_HERO = heroImage;
   const backgroundImage = backgroundSetting?.value || fallbackBackgroundSetting?.value || FALLBACK_HERO;
 
   const handleLogin = () => {
