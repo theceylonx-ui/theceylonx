@@ -380,13 +380,13 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
   
   // Enhanced Trip card component with better mobile design
   const TripCard = ({ trip }: { trip: CalendarTrip }) => (
-    <div className="relative group overflow-hidden bg-white border-2 border-gray-100 rounded-xl p-4 hover:border-emerald-200 hover:shadow-lg transition-all duration-300 hover:scale-[1.01]" data-testid={`trip-card-${trip.id}`}>
+    <div className="relative group overflow-hidden bg-white border-2 border-gray-100 rounded-xl p-4 hover:border-accent/30 hover:shadow-lg transition-all duration-300 hover:scale-[1.01]" data-testid={`trip-card-${trip.id}`}>
       {/* Status flags */}
       {trip.flags && (
         <div className="absolute top-3 right-3 flex gap-1">
           {trip.flags.mine && (
-            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-              <User className="h-3 w-3 text-blue-600" />
+            <div className="w-6 h-6 bg-accent-subtle rounded-full flex items-center justify-center">
+              <User className="h-3 w-3 text-accent" />
             </div>
           )}
           {trip.flags.pinned && (
@@ -410,9 +410,9 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
       </div>
       
       {/* Route information - prominent display */}
-      <div className="mb-4 p-3 bg-gradient-to-r from-emerald-50 to-blue-50 rounded-lg border border-emerald-100">
+      <div className="mb-4 p-3 bg-gradient-to-r from-brand-subtle to-accent-subtle rounded-lg border border-accent/20">
         <div className="flex items-center gap-2">
-          <MapPin className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+          <MapPin className="h-4 w-4 text-accent flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium text-gray-800 truncate">
               {trip.fromLocation}
@@ -428,8 +428,8 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
       {/* Trip details grid */}
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-            <Clock className="h-4 w-4 text-blue-600" />
+          <div className="w-8 h-8 bg-accent-subtle rounded-lg flex items-center justify-center">
+            <Clock className="h-4 w-4 text-accent" />
           </div>
           <div className="min-w-0">
             <div className="text-xs text-gray-500">Time</div>
@@ -438,8 +438,8 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
         </div>
         
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center">
-            <Users className="h-4 w-4 text-purple-600" />
+          <div className="w-8 h-8 bg-brand-subtle rounded-lg flex items-center justify-center">
+            <Users className="h-4 w-4 text-brand" />
           </div>
           <div className="min-w-0">
             <div className="text-xs text-gray-500">Seats</div>
@@ -451,13 +451,13 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
       {/* Price section */}
       <div className="mb-4">
         {trip.price && Number(trip.price) > 0 ? (
-          <div className="flex items-center gap-2 p-2 bg-orange-50 rounded-lg">
-            <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-              <DollarSign className="h-4 w-4 text-orange-600" />
+          <div className="flex items-center gap-2 p-2 bg-accent-subtle rounded-lg">
+            <div className="w-8 h-8 bg-accent-subtle rounded-lg flex items-center justify-center">
+              <DollarSign className="h-4 w-4 text-accent" />
             </div>
             <div>
               <div className="text-xs text-gray-500">Price</div>
-              <div className="text-sm font-semibold text-orange-700">LKR {trip.price}</div>
+              <div className="text-sm font-semibold text-accent">LKR {trip.price}</div>
             </div>
           </div>
         ) : (
@@ -482,7 +482,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
         <Link href={`/trips/${trip.id}`}>
           <Button 
             size="sm" 
-            className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
+            className="bg-gradient-to-r from-brand to-accent hover:from-brand-hover hover:to-accent-hover text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
           >
             View Details
           </Button>
@@ -516,8 +516,8 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
               disabled={isDisabled}
               className={`flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm min-h-[60px] sm:min-h-[44px] rounded-lg transition-all duration-200 ${
                 isActive 
-                  ? 'bg-gradient-to-r from-emerald-500 to-blue-500 text-white shadow-lg scale-105' 
-                  : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-emerald-300 hover:bg-emerald-50'
+                  ? 'bg-gradient-to-r from-brand to-accent text-white shadow-lg scale-105' 
+                  : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-accent/40 hover:bg-accent-subtle'
               } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'}`}
               data-testid={`filter-${filterKey}`}
             >
@@ -544,7 +544,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
             </span>
             <Badge 
               variant="outline" 
-              className="bg-emerald-50 border-emerald-200 text-emerald-700 font-medium px-3 py-1"
+              className="bg-brand-subtle border-brand/20 text-brand font-medium px-3 py-1"
             >
               {Object.values(calendarState.filters).filter(Boolean).length} active
             </Badge>
@@ -597,41 +597,6 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
                 position: relative;
               }
               
-              .enhanced-calendar .rdp-button {
-                width: var(--rdp-cell-size);
-                height: var(--rdp-cell-size);
-                border-radius: 12px;
-                font-weight: 500;
-                border: 2px solid transparent;
-                transition: all 0.2s ease;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                position: relative;
-              }
-              
-              .enhanced-calendar .rdp-button:hover {
-                background-color: #f0fdf4;
-                border-color: #a7f3d0;
-                transform: scale(1.05);
-                box-shadow: 0 4px 12px rgba(6, 95, 70, 0.15);
-              }
-              
-              .enhanced-calendar .rdp-button.rdp-day_selected {
-                background: linear-gradient(135deg, #059669, #0891b2);
-                color: white;
-                border-color: #047857;
-                box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
-                transform: scale(1.1);
-              }
-              
-              .enhanced-calendar .rdp-button.rdp-day_today {
-                border-color: #fbbf24;
-                background-color: #fef3c7;
-                color: #92400e;
-                font-weight: 600;
-              }
-              
               .enhanced-calendar .rdp-head_cell {
                 font-weight: 600;
                 color: #374151;
@@ -641,31 +606,6 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
                 padding: 8px 0;
               }
               
-              .enhanced-calendar .day-badge {
-                position: absolute;
-                top: -2px;
-                right: -2px;
-                min-width: 18px;
-                height: 18px;
-                border-radius: 10px;
-                background: linear-gradient(135deg, #dc2626, #ef4444);
-                color: white;
-                font-size: 10px;
-                font-weight: 600;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border: 2px solid white;
-                box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
-                z-index: 10;
-                animation: pulse 2s infinite;
-              }
-              
-              @keyframes pulse {
-                0%, 100% { opacity: 1; }
-                50% { opacity: 0.8; }
-              }
-              
               .enhanced-calendar .day-content {
                 position: relative;
                 width: 100%;
@@ -673,16 +613,6 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-              }
-              
-              .enhanced-calendar .rdp-button.rdp-day_outside {
-                color: #9ca3af !important;
-                opacity: 0.6;
-              }
-              
-              .enhanced-calendar .rdp-button.rdp-day_outside:hover {
-                background-color: #f9fafb;
-                color: #6b7280 !important;
               }
               
               .enhanced-calendar .rdp-nav {
@@ -773,7 +703,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
             <CardContent className="p-4 sm:p-6">
               {isDayLoading ? (
                 <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-3 border-emerald-200 border-t-emerald-500 mx-auto mb-4"></div>
+                  <div className="animate-spin rounded-full h-12 w-12 border-3 border-accent/20 border-t-accent mx-auto mb-4"></div>
                   <p className="text-gray-600 font-medium">Loading trips...</p>
                 </div>
               ) : dayError?.message?.includes('401') ? (
@@ -783,22 +713,22 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
                   </div>
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Sign in Required</h3>
                   <p className="text-gray-500 mb-6">Sign in to see filtered trips and personalized content</p>
-                  <Button asChild className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600">
+                  <Button asChild className="bg-gradient-to-r from-brand to-accent hover:from-brand-hover hover:to-accent-hover">
                     <Link href="/login">Sign In</Link>
                   </Button>
                 </div>
               ) : !dayResponse?.items.length ? (
                 <div className="text-center py-12">
-                  <div className="w-20 h-20 bg-gradient-to-br from-emerald-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MapPin className="h-10 w-10 text-emerald-500" />
+                  <div className="w-20 h-20 bg-gradient-to-br from-brand-subtle to-accent-subtle rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MapPin className="h-10 w-10 text-brand" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">No Trips Found</h3>
                   <p className="text-gray-500 mb-6">No trips on this day with your current filters</p>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Button asChild variant="outline" className="border-emerald-200 text-emerald-600 hover:bg-emerald-50">
+                    <Button asChild variant="outline" className="border-accent/30 text-accent hover:bg-accent-subtle">
                       <Link href="/browse-trips">Browse All Trips</Link>
                     </Button>
-                    <Button asChild className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600">
+                    <Button asChild className="bg-gradient-to-r from-brand to-accent hover:from-brand-hover hover:to-accent-hover">
                       <Link href={`/post?date=${calendarState.selectedDate}`}>Post a Trip</Link>
                     </Button>
                   </div>
@@ -808,7 +738,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
                   <div className="mb-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-semibold text-gray-800">Available Trips</h3>
-                      <Badge variant="outline" className="bg-emerald-50 border-emerald-200 text-emerald-700">
+                      <Badge variant="outline" className="bg-brand-subtle border-brand/20 text-brand">
                         {dayResponse.items.length} of {dayResponse.total}
                       </Badge>
                     </div>
@@ -827,7 +757,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
                     </div>
                     {dayResponse.total > dayResponse.items.length && (
                       <div className="text-center mt-6 pt-4 border-t border-gray-100">
-                        <Button variant="outline" size="sm" className="border-emerald-200 text-emerald-600 hover:bg-emerald-50">
+                        <Button variant="outline" size="sm" className="border-accent/30 text-accent hover:bg-accent-subtle">
                           Load More Trips
                         </Button>
                       </div>
