@@ -20,7 +20,12 @@ export default {
           subtle: "hsl(351 70% 96%)",  // light background tint
         },
         accent: {
-          DEFAULT: "hsl(202 48% 48%)", // #3F8AB4 - ocean blue
+          // DEFAULT/foreground stay CSS-variable driven (shadcn UI primitives
+          // depend on this); --accent resolves to ocean blue #3F8AB4 in light
+          // mode. hover/subtle are static so brand-system pages can use them
+          // regardless of theme.
+          DEFAULT: "var(--accent)",
+          foreground: "var(--accent-foreground)",
           hover: "hsl(202 48% 38%)",   // darker ocean
           subtle: "hsl(202 48% 95%)",  // light ocean tint
         },
@@ -71,10 +76,6 @@ export default {
         muted: {
           DEFAULT: "var(--muted)",
           foreground: "var(--muted-foreground)",
-        },
-        accent: {
-          DEFAULT: "var(--accent)",
-          foreground: "var(--accent-foreground)",
         },
         destructive: {
           DEFAULT: "var(--destructive)",
