@@ -3228,11 +3228,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/me/privacy', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      
-      const privacy = await storage.getUserPrivacy(userId);
-      console.log('✅ Privacy settings retrieved:', privacy);
-      
-      res.json(privacy);
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({
+        profileVisibility: user.profileVisibility,
+        showEmail: user.showEmail,
+        showPhone: user.showPhone,
+        showRealName: user.showRealName,
+        showBio: user.showBio,
+        showLocation: user.showLocation,
+        showInterests: user.showInterests,
+        showTravelHistory: user.showTravelHistory,
+      });
     } catch (error) {
       console.error("❌ Error fetching privacy settings:", error);
       res.status(500).json({ message: "Failed to fetch privacy settings" });
@@ -3243,21 +3254,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/me/privacy', unifiedAuthGuard, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { visibility, dmPolicy, showOnline, showJoinedTrips, cityVisibility } = req.body;
-      
-      console.log('📝 Privacy settings:', { visibility, dmPolicy, showOnline, showJoinedTrips, cityVisibility });
+      const {
+        profileVisibility,
+        showEmail,
+        showPhone,
+        showRealName,
+        showBio,
+        showLocation,
+        showInterests,
+        showTravelHistory,
+      } = req.body;
 
-      // Update privacy settings in database
-      const updatedSettings = await storage.updateUserPrivacy(userId, {
-        visibility,
-        dmPolicy,
-        showOnline,
-        showJoinedTrips,
-        cityVisibility,
+      if (profileVisibility !== undefined && !['public', 'friends', 'private'].includes(profileVisibility)) {
+        return res.status(400).json({ message: "Invalid profileVisibility value" });
+      }
+
+      const updateData: Record<string, unknown> = {};
+      if (profileVisibility !== undefined) updateData.profileVisibility = profileVisibility;
+      if (showEmail !== undefined) updateData.showEmail = showEmail;
+      if (showPhone !== undefined) updateData.showPhone = showPhone;
+      if (showRealName !== undefined) updateData.showRealName = showRealName;
+      if (showBio !== undefined) updateData.showBio = showBio;
+      if (showLocation !== undefined) updateData.showLocation = showLocation;
+      if (showInterests !== undefined) updateData.showInterests = showInterests;
+      if (showTravelHistory !== undefined) updateData.showTravelHistory = showTravelHistory;
+
+      const updatedUser = await storage.updateUser(userId, updateData);
+
+      res.json({
+        profileVisibility: updatedUser.profileVisibility,
+        showEmail: updatedUser.showEmail,
+        showPhone: updatedUser.showPhone,
+        showRealName: updatedUser.showRealName,
+        showBio: updatedUser.showBio,
+        showLocation: updatedUser.showLocation,
+        showInterests: updatedUser.showInterests,
+        showTravelHistory: updatedUser.showTravelHistory,
       });
-      
-      console.log('✅ Privacy settings updated successfully');
-      res.json(updatedSettings);
     } catch (error) {
       console.error("❌ Error updating privacy settings:", error);
       res.status(500).json({ message: "Failed to update privacy settings" });
@@ -3291,14 +3324,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Get user's trips, ratings, and preferences (comments not available in current storage)
-      const [trips, ratings, preferences] = await Promise.all([
+      // Get user's trips, ratings, preferences, messages, and community questions
+      const [trips, ratings, preferences, messages, questions] = await Promise.all([
         storage.getUserTrips(userId),
-        storage.getUserRatings(userId), 
-        storage.getUserPreferences(userId)
+        storage.getUserRatings(userId),
+        storage.getUserPreferences(userId),
+        storage.getUserSentMessages(userId),
+        storage.getUserQuestions(userId),
       ]);
-      const comments: any[] = []; // Placeholder for comments
-      
+
       // Prepare export data
       const exportData = {
         exportDate: new Date().toISOString(),
@@ -3315,15 +3349,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           updatedAt: user.updatedAt
         },
         trips: trips || [],
-        comments: comments || [],
+        messages: messages || [],
+        questions: questions || [],
         ratings: ratings || [],
         preferences: preferences || {},
-        note: "This export contains all your personal data from Ceylon Expand as of the export date."
+        note: "This export contains all your personal data from HiBowan as of the export date."
       };
-      
+
       // Set headers for file download
       res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Content-Disposition', `attachment; filename="ceylon-expand-data-${userId}-${new Date().toISOString().split('T')[0]}.json"`);
+      res.setHeader('Content-Disposition', `attachment; filename="hibowan-data-${userId}-${new Date().toISOString().split('T')[0]}.json"`);
       
       res.json(exportData);
     } catch (error) {

@@ -214,7 +214,8 @@ export interface IStorage {
   createRating(rating: InsertRating): Promise<Rating>;
   getTripRatings(tripId: string): Promise<Rating[]>;
   getUserRatings(userId: string): Promise<Rating[]>;
-  
+  getUserSentMessages(userId: string): Promise<{ id: string; threadId: string; kind: string | null; text: string | null; createdAt: Date | null }[]>;
+
   // Report operations
   createReport(report: InsertReport): Promise<Report>;
   getReports(): Promise<Report[]>;
@@ -1113,6 +1114,20 @@ export class DatabaseStorage implements IStorage {
 
   async getUserRatings(userId: string): Promise<Rating[]> {
     return await db.select().from(ratings).where(eq(ratings.ratedId, userId));
+  }
+
+  async getUserSentMessages(userId: string): Promise<{ id: string; threadId: string; kind: string | null; text: string | null; createdAt: Date | null }[]> {
+    return await db
+      .select({
+        id: chatMessages.id,
+        threadId: chatMessages.threadId,
+        kind: chatMessages.kind,
+        text: chatMessages.text,
+        createdAt: chatMessages.createdAt,
+      })
+      .from(chatMessages)
+      .where(eq(chatMessages.senderId, userId))
+      .orderBy(desc(chatMessages.createdAt));
   }
 
   // Report operations

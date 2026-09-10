@@ -1498,8 +1498,9 @@ function SecuritySettings({ profile }: any) {
           <Button
             onClick={async () => {
               try {
-                const response = await apiRequest("GET", "/api/user/download-data");
-                const blob = new Blob([JSON.stringify(response, null, 2)], { type: 'application/json' });
+                const response = await apiRequest("GET", "/api/me/export");
+                const data = await response.json();
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -1609,12 +1610,30 @@ function SecuritySettings({ profile }: any) {
 function PrivacySettings({ privacy, onUpdate }: any) {
   const { toast } = useToast();
   const [settings, setSettings] = useState({
-    visibility: privacy?.visibility ?? 'public',
-    showOnline: privacy?.showOnline ?? true,
-    showJoinedTrips: privacy?.showJoinedTrips ?? true,
-    cityVisibility: privacy?.cityVisibility ?? 'show'
+    profileVisibility: privacy?.profileVisibility ?? 'public',
+    showRealName: privacy?.showRealName ?? true,
+    showBio: privacy?.showBio ?? true,
+    showLocation: privacy?.showLocation ?? true,
+    showEmail: privacy?.showEmail ?? false,
+    showPhone: privacy?.showPhone ?? false,
+    showInterests: privacy?.showInterests ?? true,
+    showTravelHistory: privacy?.showTravelHistory ?? true,
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!privacy) return;
+    setSettings({
+      profileVisibility: privacy.profileVisibility ?? 'public',
+      showRealName: privacy.showRealName ?? true,
+      showBio: privacy.showBio ?? true,
+      showLocation: privacy.showLocation ?? true,
+      showEmail: privacy.showEmail ?? false,
+      showPhone: privacy.showPhone ?? false,
+      showInterests: privacy.showInterests ?? true,
+      showTravelHistory: privacy.showTravelHistory ?? true,
+    });
+  }, [privacy]);
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -1636,6 +1655,16 @@ function PrivacySettings({ privacy, onUpdate }: any) {
     }
   };
 
+  const toggleRows: Array<{ key: keyof typeof settings; label: string; helper: string; testId: string }> = [
+    { key: 'showRealName', label: 'Show Real Name', helper: 'Display your first and last name on your profile', testId: 'switch-show-real-name' },
+    { key: 'showBio', label: 'Show Bio', helper: 'Display your bio on your profile', testId: 'switch-show-bio' },
+    { key: 'showLocation', label: 'Show Location', helper: 'Display your city on your profile', testId: 'switch-show-location' },
+    { key: 'showInterests', label: 'Show Interests', helper: 'Display your travel interests and vibe on your profile', testId: 'switch-show-interests' },
+    { key: 'showTravelHistory', label: 'Show Travel History', helper: 'Display your past trips on your profile', testId: 'switch-show-travel-history' },
+    { key: 'showEmail', label: 'Show Email', helper: 'Display your email address on your profile', testId: 'switch-show-email' },
+    { key: 'showPhone', label: 'Show Phone', helper: 'Display your phone number on your profile', testId: 'switch-show-phone' },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-6">
@@ -1656,78 +1685,48 @@ function PrivacySettings({ privacy, onUpdate }: any) {
           <Label htmlFor="profile-visibility" className="text-base font-medium text-gray-700">
             Profile Visibility
           </Label>
-          <Select 
-            value={settings.visibility} 
-            onValueChange={(value) => setSettings({...settings, visibility: value})}
+          <Select
+            value={settings.profileVisibility}
+            onValueChange={(value) => setSettings({...settings, profileVisibility: value})}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select visibility level" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="public">Public - Everyone can see</SelectItem>
-              <SelectItem value="friends">Friends Only</SelectItem>
               <SelectItem value="private">Private - Only me</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        {/* Show Online Status */}
-        <div className="flex items-center justify-between py-3">
-          <div className="space-y-1">
-            <Label className="text-base font-medium text-gray-700">
-              Show Online Status
-            </Label>
-            <p className="text-sm text-gray-500">
-              Let others see when you're active on HiBowan
-            </p>
-          </div>
-          <Switch 
-            checked={settings.showOnline}
-            onCheckedChange={(checked) => setSettings({...settings, showOnline: checked})}
-            data-testid="switch-online-status"
-          />
-        </div>
+        {settings.profileVisibility === 'private' && (
+          <p className="text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+            Your profile is private, so nobody else can see it regardless of the settings below.
+          </p>
+        )}
 
-        {/* Show Joined Trips */}
-        <div className="flex items-center justify-between py-3">
-          <div className="space-y-1">
-            <Label className="text-base font-medium text-gray-700">
-              Show Joined Trips
-            </Label>
-            <p className="text-sm text-gray-500">
-              Display trips you've joined on your profile
-            </p>
+        {toggleRows.map((row) => (
+          <div key={row.key} className="flex items-center justify-between py-3">
+            <div className="space-y-1">
+              <Label className="text-base font-medium text-gray-700">
+                {row.label}
+              </Label>
+              <p className="text-sm text-gray-500">
+                {row.helper}
+              </p>
+            </div>
+            <Switch
+              checked={settings[row.key] as boolean}
+              onCheckedChange={(checked) => setSettings({...settings, [row.key]: checked})}
+              data-testid={row.testId}
+            />
           </div>
-          <Switch 
-            checked={settings.showJoinedTrips}
-            onCheckedChange={(checked) => setSettings({...settings, showJoinedTrips: checked})}
-            data-testid="switch-joined-trips"
-          />
-        </div>
-
-        {/* City Visibility */}
-        <div className="space-y-3">
-          <Label htmlFor="city-visibility" className="text-base font-medium text-gray-700">
-            City Visibility
-          </Label>
-          <Select 
-            value={settings.cityVisibility} 
-            onValueChange={(value) => setSettings({...settings, cityVisibility: value})}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select city visibility" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="show">Show my city</SelectItem>
-              <SelectItem value="hide">Hide my city</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        ))}
 
         {/* Save Button */}
         <div className="pt-4">
-          <Button 
-            onClick={handleSave} 
+          <Button
+            onClick={handleSave}
             disabled={isLoading}
             className="bg-ceylon-green hover:bg-ceylon-green/90 text-white px-8"
             data-testid="button-save-privacy"
