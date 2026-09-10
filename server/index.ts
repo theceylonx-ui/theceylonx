@@ -1,10 +1,11 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { checkClerkEnv } from "./utils/checkClerk";
+
+const log = (message: string) => console.log(message);
 
 // Suppress verbose console.log in production to prevent internal stack trace leakage.
 // console.error and console.warn remain active for critical production messages.
@@ -33,7 +34,7 @@ if (!clerkCheck.ok) {
   clerkCheck.problems.forEach(problem => console.warn(`  - ${problem}`));
 }
 
-const app = express();
+export const app = express();
 
 // Trust proxy for proper IP detection (required for rate limiting in production)
 app.set('trust proxy', 1);
@@ -207,7 +208,38 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
+let appInitialization: Promise<void> | undefined;
+
+export function initializeApp(): Promise<void> {
+  if (!appInitialization) {
+    appInitialization = (async () => {
+      if (process.env.NODE_ENV === 'test') {
+        app.use((req, _res, next) => {
+          req.user = {
+            id: req.header('x-test-user-id') || 'test-user-id',
+            email: 'test@ceylonexpand.com',
+            role: 'user',
+          };
+          next();
+        });
+      }
+
+      await registerRoutes(app);
+
+      app.use('/api', (err: any, _req: Request, res: Response, _next: NextFunction) => {
+        const status = err.status || err.statusCode || 500;
+        const message = err.message || "Internal Server Error";
+
+        console.error(`API Error ${status}: ${message}`, err.stack);
+        res.status(status).json({ message });
+      });
+    })();
+  }
+
+  return appInitialization;
+}
+
+async function startServer() {
   try {
     // Validate critical environment variables (production only)
     if (isProduction) {
@@ -232,7 +264,7 @@ app.use((req, res, next) => {
     
     // CRITICAL: Register API routes BEFORE Vite to prevent catch-all interception
     console.warn('[startup] Registering routes (includes auth setup)...');
-    await registerRoutes(app);
+    await initializeApp();
     console.warn('[startup] Routes registered successfully');
     
     // Mount Vite AFTER routes are registered
@@ -306,17 +338,6 @@ app.use((req, res, next) => {
     setInterval(runTripArchiver, DAILY_ARCHIVE_INTERVAL);
     console.log('✅ Trip auto-archiver started (runs daily)');
 
-    // API error handler - scoped to /api routes
-    app.use('/api', (err: any, _req: Request, res: Response, _next: NextFunction) => {
-      const status = err.status || err.statusCode || 500;
-      const message = err.message || "Internal Server Error";
-      
-      // Log the error for debugging
-      console.error(`API Error ${status}: ${message}`, err.stack);
-      
-      res.status(status).json({ message });
-    });
-
     // Setup static file serving for production (Vite already set up in dev)
     if (!isDevelopment) {
       console.log('Setting up static file serving for production...');
@@ -366,7 +387,11 @@ app.use((req, res, next) => {
     // Exit with error code to signal deployment failure
     process.exit(1);
   }
-})();
+}
+
+if (process.env.NODE_ENV !== 'test') {
+  void startServer();
+}
 
 // Handle uncaught exceptions and unhandled rejections
 process.on('uncaughtException', (error) => {

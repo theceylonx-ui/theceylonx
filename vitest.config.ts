@@ -13,6 +13,9 @@ export default defineConfig({
   test: {
     // Test environment
     environment: 'jsdom',
+    environmentMatchGlobs: [
+      ['server/**', 'node'],
+    ],
     
     // Global test setup
     globals: true,
