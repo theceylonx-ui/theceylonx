@@ -143,7 +143,7 @@ export function StepSafetyTerms({ form }: StepSafetyTermsProps) {
                           setCustomCountryCode("");
                           form.setValue("organizerCountryCode", "+94");
                         }}
-                        className="text-sm text-blue-600 hover:underline"
+                        className="text-sm text-accent hover:underline"
                       >
                         ← Back to country list
                       </button>
@@ -221,9 +221,9 @@ export function StepSafetyTerms({ form }: StepSafetyTermsProps) {
         />
 
         {/* Privacy Notice */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-800 font-medium mb-2">🔒 Your Privacy is Protected</p>
-          <p className="text-sm text-blue-700">
+        <div className="bg-accent-subtle border border-accent/20 rounded-lg p-4">
+          <p className="text-sm text-accent font-medium mb-2">🔒 Your Privacy is Protected</p>
+          <p className="text-sm text-text-secondary">
             Contact details are kept private and only shared with accepted participants through our secure chat system. 
             You control who gets your contact information.
           </p>

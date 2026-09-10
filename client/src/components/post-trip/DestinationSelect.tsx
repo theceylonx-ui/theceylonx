@@ -96,7 +96,7 @@ export function DestinationSelect({
   return (
     <div className={className}>
       <Label htmlFor="destination-input" className="text-sm font-medium mb-2 block">
-        {label} {required && <span className="text-red-500">*</span>}
+        {label} {required && <span className="text-danger">*</span>}
       </Label>
       
       {/* Toggle between input and dropdown modes */}
@@ -161,7 +161,7 @@ export function DestinationSelect({
                   className="flex items-center"
                   data-testid="destination-custom-option"
                 >
-                  <MapPin className="h-4 w-4 mr-2 text-blue-500" />
+                  <MapPin className="h-4 w-4 mr-2 text-accent" />
                   <span>Use "{searchQuery}" as custom location</span>
                 </CommandItem>
               </CommandGroup>
@@ -199,7 +199,7 @@ export function DestinationSelect({
       )}
       
       {error && (
-        <p className="text-sm text-red-600 mt-1" data-testid="destination-error">
+        <p className="text-sm text-danger mt-1" data-testid="destination-error">
           {error}
         </p>
       )}

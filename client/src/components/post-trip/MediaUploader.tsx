@@ -188,7 +188,7 @@ export function MediaUploader({
       <div
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
           isDragging
-            ? 'border-ceylon-blue bg-blue-50'
+            ? 'border-accent bg-accent-subtle'
             : 'border-gray-300 hover:border-gray-400'
         }`}
         onDragOver={handleDragOver}
@@ -198,7 +198,7 @@ export function MediaUploader({
       >
         {isCompressing ? (
           <div className="space-y-4">
-            <Zap className="mx-auto h-12 w-12 text-green-500 animate-pulse" />
+            <Zap className="mx-auto h-12 w-12 text-accent animate-pulse" />
             <div className="text-lg font-medium text-gray-900">
               Compressing Images...
             </div>
@@ -229,7 +229,7 @@ export function MediaUploader({
               Maximum {maxFiles} images • Auto-compressed for optimal quality
             </p>
             {compressionStats && (
-              <div className="mt-3 text-xs text-green-600 bg-green-50 rounded-lg px-3 py-2 inline-block">
+              <div className="mt-3 text-xs text-success bg-success/10 rounded-lg px-3 py-2 inline-block">
                 <Zap className="inline h-3 w-3 mr-1" />
                 Last upload saved {formatFileSize(compressionStats.originalSize - compressionStats.compressedSize)} 
                 ({compressionStats.compressionRatio.toFixed(0)}% smaller)
@@ -348,7 +348,7 @@ export function MediaUploader({
       )}
       
       {error && (
-        <p className="text-sm text-red-600 mt-2" data-testid="media-uploader-error">
+        <p className="text-sm text-danger mt-2" data-testid="media-uploader-error">
           {error}
         </p>
       )}

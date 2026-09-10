@@ -93,7 +93,7 @@ export function StepSchedule({ form }: StepScheduleProps) {
           name="region"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Region <span className="text-red-500">*</span></FormLabel>
+              <FormLabel>Region <span className="text-danger">*</span></FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger data-testid="region-select">
@@ -126,7 +126,7 @@ export function StepSchedule({ form }: StepScheduleProps) {
               <FormItem>
                 <FormLabel className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  Trip Date <span className="text-red-500">*</span>
+                  Trip Date <span className="text-danger">*</span>
                 </FormLabel>
                 <FormControl>
                   <Input
@@ -150,7 +150,7 @@ export function StepSchedule({ form }: StepScheduleProps) {
               <FormItem>
                 <FormLabel className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
-                  Departure Time <span className="text-red-500">*</span>
+                  Departure Time <span className="text-danger">*</span>
                 </FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
@@ -200,9 +200,9 @@ export function StepSchedule({ form }: StepScheduleProps) {
       </div>
 
       {/* Schedule Tips */}
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-        <h4 className="font-medium text-amber-900 mb-2">📅 Scheduling Tips</h4>
-        <ul className="text-sm text-amber-800 space-y-1">
+      <div className="bg-accent-subtle border border-accent/20 rounded-lg p-4">
+        <h4 className="font-medium text-accent mb-2">📅 Scheduling Tips</h4>
+        <ul className="text-sm text-text-secondary space-y-1">
           <li>• Choose a departure time that allows for easy meetups</li>
           <li>• Consider traffic patterns when setting departure times</li>
           <li>• Allow buffer time for unexpected delays</li>

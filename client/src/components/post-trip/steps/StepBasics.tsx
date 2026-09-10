@@ -36,7 +36,7 @@ export function StepBasics({ form }: StepBasicsProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel className="flex items-center gap-2">
-                Trip Title <span className="text-red-500">*</span>
+                Trip Title <span className="text-danger">*</span>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
@@ -66,7 +66,7 @@ export function StepBasics({ form }: StepBasicsProps) {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description <span className="text-red-500">*</span></FormLabel>
+              <FormLabel>Description <span className="text-danger">*</span></FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="Describe your trip in detail. Include highlights, what makes it special, and what participants can expect..."
@@ -89,7 +89,7 @@ export function StepBasics({ form }: StepBasicsProps) {
           name="category"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Trip Category <span className="text-red-500">*</span></FormLabel>
+              <FormLabel>Trip Category <span className="text-danger">*</span></FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger data-testid="trip-category-select">
@@ -118,9 +118,9 @@ export function StepBasics({ form }: StepBasicsProps) {
       </div>
 
       {/* Tips */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-medium text-blue-900 mb-2">💡 Tips for a great trip posting</h4>
-        <ul className="text-sm text-blue-800 space-y-1">
+      <div className="bg-accent-subtle border border-accent/20 rounded-lg p-4">
+        <h4 className="font-medium text-accent mb-2">💡 Tips for a great trip posting</h4>
+        <ul className="text-sm text-text-secondary space-y-1">
           <li>• Use specific locations and highlights in your title</li>
           <li>• Describe the unique experiences participants will have</li>
           <li>• Mention the skill level or physical requirements if any</li>

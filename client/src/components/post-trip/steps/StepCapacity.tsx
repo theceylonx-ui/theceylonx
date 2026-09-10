@@ -26,7 +26,7 @@ export function StepCapacity({ form }: StepCapacityProps) {
             <FormItem>
               <FormLabel className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                Available Seats <span className="text-red-500">*</span>
+                Available Seats <span className="text-danger">*</span>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
@@ -65,10 +65,10 @@ export function StepCapacity({ form }: StepCapacityProps) {
         />
 
         {/* Solo Traveler Friendly */}
-        <Card className="border-pink-200 bg-pink-50/50">
+        <Card className="border-brand/20 bg-brand-subtle/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Heart className="h-5 w-5 text-pink-600" />
+              <Heart className="h-5 w-5 text-brand" />
               Solo Traveler Friendly
             </CardTitle>
             <CardDescription>
@@ -80,7 +80,7 @@ export function StepCapacity({ form }: StepCapacityProps) {
               control={form.control}
               name="buddyFriendly"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border-2 border-gray-200 p-4 bg-white hover:border-pink-300 transition-colors">
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border-2 border-gray-200 p-4 bg-white hover:border-brand/40 transition-colors">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base font-semibold flex items-center gap-2">
                       <span className="text-lg">❤️</span>
@@ -93,7 +93,7 @@ export function StepCapacity({ form }: StepCapacityProps) {
                   <FormControl>
                     <div className="flex items-center gap-3">
                       <span className={`text-sm font-semibold ${
-                        field.value ? 'text-green-600' : 'text-gray-500'
+                        field.value ? 'text-success' : 'text-gray-500'
                       }`}>
                         {field.value ? '✓ Enabled' : 'Disabled'}
                       </span>
@@ -152,9 +152,9 @@ export function StepCapacity({ form }: StepCapacityProps) {
 
       {/* Buddy Friendly Benefits */}
       {buddyFriendlyValue && (
-        <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
-          <h4 className="font-medium text-pink-900 mb-2">💕 Solo Traveler Friendly Benefits</h4>
-          <ul className="text-sm text-pink-800 space-y-1">
+        <div className="bg-brand-subtle border border-brand/20 rounded-lg p-4">
+          <h4 className="font-medium text-brand mb-2">💕 Solo Traveler Friendly Benefits</h4>
+          <ul className="text-sm text-text-secondary space-y-1">
             <li>• Your trip will be highlighted to solo travelers</li>
             <li>• Attracts people who are open to making new friends</li>
             <li>• Creates a welcoming atmosphere for everyone</li>
@@ -164,9 +164,9 @@ export function StepCapacity({ form }: StepCapacityProps) {
       )}
 
       {/* Capacity Tips */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-medium text-blue-900 mb-2">👥 Capacity Planning Tips</h4>
-        <ul className="text-sm text-blue-800 space-y-1">
+      <div className="bg-accent-subtle border border-accent/20 rounded-lg p-4">
+        <h4 className="font-medium text-accent mb-2">👥 Capacity Planning Tips</h4>
+        <ul className="text-sm text-text-secondary space-y-1">
           <li>• Consider your vehicle's comfortable capacity</li>
           <li>• Smaller groups (4-8) often have better dynamics</li>
           <li>• Factor in luggage space for longer trips</li>

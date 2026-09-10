@@ -46,7 +46,7 @@ export function StepPricing({ form }: StepPricingProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-300 transition-colors">
+            <div className="flex items-center justify-between p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-accent/40 transition-colors">
               <div className="flex items-center space-x-3">
                 <span className="text-lg">💰</span>
                 <div>
@@ -60,7 +60,7 @@ export function StepPricing({ form }: StepPricingProps) {
               </div>
               <div className="flex items-center gap-3">
                 <span className={`text-sm font-semibold ${
-                  useRange ? 'text-green-600' : 'text-gray-500'
+                  useRange ? 'text-success' : 'text-gray-500'
                 }`}>
                   {useRange ? '✓ Range' : 'Fixed'}
                 </span>
@@ -177,7 +177,7 @@ export function StepPricing({ form }: StepPricingProps) {
         )}
 
         {/* Free Trip Option */}
-        <Card className="border-green-200 bg-green-50/50">
+        <Card className="border-success/30 bg-success/10">
           <CardContent className="pt-6">
             <div className="flex items-start space-x-3">
               <input
@@ -198,10 +198,10 @@ export function StepPricing({ form }: StepPricingProps) {
                 data-testid="free-trip-checkbox"
               />
               <div className="flex-1">
-                <label htmlFor="free-trip" className="text-sm font-medium text-green-900">
+                <label htmlFor="free-trip" className="text-sm font-medium text-success">
                   This is a free trip
                 </label>
-                <p className="text-xs text-green-700 mt-1">
+                <p className="text-xs text-success/80 mt-1">
                   Participants only need to cover their own expenses (food, entrance fees, etc.)
                 </p>
               </div>
@@ -211,9 +211,9 @@ export function StepPricing({ form }: StepPricingProps) {
       </div>
 
       {/* Pricing Tips */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-medium text-blue-900 mb-2">💰 Pricing Guidelines</h4>
-        <ul className="text-sm text-blue-800 space-y-1">
+      <div className="bg-accent-subtle border border-accent/20 rounded-lg p-4">
+        <h4 className="font-medium text-accent mb-2">💰 Pricing Guidelines</h4>
+        <ul className="text-sm text-text-secondary space-y-1">
           <li>• Consider transportation costs (fuel, tolls, parking)</li>
           <li>• Factor in entrance fees and activity costs</li>
           <li>• Account for your time and effort as organizer</li>

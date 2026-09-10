@@ -158,18 +158,18 @@ export function QuickTripWizard() {
                     isActive
                       ? "bg-orange-500 text-white shadow-lg"
                       : isComplete
-                      ? "bg-green-500 text-white"
+                      ? "bg-success text-white"
                       : "bg-gray-200 text-gray-500"
                   }`}
                 >
                   {isComplete ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
                 </div>
-                <span className={`text-xs mt-1 font-medium ${isActive ? "text-orange-600" : isComplete ? "text-green-600" : "text-gray-400"}`}>
+                <span className={`text-xs mt-1 font-medium ${isActive ? "text-orange-600" : isComplete ? "text-success" : "text-gray-400"}`}>
                   {step.title}
                 </span>
               </div>
               {index < STEPS.length - 1 && (
-                <div className={`h-0.5 flex-1 mx-2 ${currentStep > step.id ? "bg-green-400" : "bg-gray-200"}`} />
+                <div className={`h-0.5 flex-1 mx-2 ${currentStep > step.id ? "bg-success" : "bg-gray-200"}`} />
               )}
             </div>
           );
@@ -228,7 +228,7 @@ export function QuickTripWizard() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" /> Date <span className="text-red-500">*</span>
+                          <Calendar className="w-4 h-4" /> Date <span className="text-danger">*</span>
                         </FormLabel>
                         <FormControl>
                           <Input type="date" min={minDate} max={maxDate} {...field} value={typeof field.value === 'string' ? field.value : ''} />
@@ -245,7 +245,7 @@ export function QuickTripWizard() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" /> Time <span className="text-red-500">*</span>
+                          <Clock className="w-4 h-4" /> Time <span className="text-danger">*</span>
                         </FormLabel>
                         <Select value={field.value} onValueChange={field.onChange}>
                           <FormControl>
@@ -281,7 +281,7 @@ export function QuickTripWizard() {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Trip Title <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel>Trip Title <span className="text-danger">*</span></FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., Quick ride to Ella" {...field} />
                       </FormControl>
@@ -295,7 +295,7 @@ export function QuickTripWizard() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel>Description <span className="text-danger">*</span></FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Briefly describe your trip..."
@@ -315,7 +315,7 @@ export function QuickTripWizard() {
                     name="category"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Category <span className="text-red-500">*</span></FormLabel>
+                        <FormLabel>Category <span className="text-danger">*</span></FormLabel>
                         <Select value={field.value} onValueChange={field.onChange}>
                           <FormControl>
                             <SelectTrigger>
@@ -338,7 +338,7 @@ export function QuickTripWizard() {
                     name="seatsAvailable"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Seats Available <span className="text-red-500">*</span></FormLabel>
+                        <FormLabel>Seats Available <span className="text-danger">*</span></FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -356,13 +356,13 @@ export function QuickTripWizard() {
 
                 <div>
                   <FormLabel className="flex items-center gap-1 mb-3">
-                    <DollarSign className="w-4 h-4" /> Seat Pricing <span className="text-red-500">*</span>
+                    <DollarSign className="w-4 h-4" /> Seat Pricing <span className="text-danger">*</span>
                   </FormLabel>
                   <div className="grid grid-cols-2 gap-3">
                     <div
                       className={`cursor-pointer border-2 rounded-lg p-4 text-center transition-all ${
                         formData.isFree
-                          ? "border-green-500 bg-green-50 ring-2 ring-green-200"
+                          ? "border-success bg-success/10 ring-2 ring-success/20"
                           : "border-gray-200 hover:border-gray-300"
                       }`}
                       onClick={() => {
@@ -398,7 +398,7 @@ export function QuickTripWizard() {
                     name="seatPrice"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Price per Seat (LKR) <span className="text-red-500">*</span></FormLabel>
+                        <FormLabel>Price per Seat (LKR) <span className="text-danger">*</span></FormLabel>
                         <FormControl>
                           <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">LKR</span>
@@ -493,7 +493,7 @@ export function QuickTripWizard() {
                   <div>
                     <p className="text-sm text-gray-500">Pricing</p>
                     {formData.isFree ? (
-                      <Badge className="bg-green-100 text-green-700 border-green-300">Free</Badge>
+                      <Badge className="bg-success/10 text-success border-success/30">Free</Badge>
                     ) : (
                       <p className="font-medium text-orange-600">LKR {formData.seatPrice?.toLocaleString()} per seat</p>
                     )}
@@ -521,7 +521,7 @@ export function QuickTripWizard() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={createMutation.isPending}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-success hover:bg-success/90"
               >
                 {createMutation.isPending ? "Posting..." : (
                   <>

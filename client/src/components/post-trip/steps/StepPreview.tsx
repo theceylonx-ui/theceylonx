@@ -74,25 +74,25 @@ export function StepPreview({ form }: StepPreviewProps) {
   return (
     <div className="space-y-6">
       {/* Pre-publish Checklist */}
-      <Card className={isReadyToPublish ? "border-green-200 bg-green-50/50" : "border-red-200 bg-red-50/50"}>
+      <Card className={isReadyToPublish ? "border-success/30 bg-success/10" : "border-danger/30 bg-danger/10"}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             {isReadyToPublish ? (
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              <CheckCircle2 className="h-5 w-5 text-success" />
             ) : (
-              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <AlertTriangle className="h-5 w-5 text-danger" />
             )}
             Pre-publish Checklist
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isReadyToPublish ? (
-            <div className="text-green-800">
+            <div className="text-success">
               <p className="font-medium mb-2">✅ All required fields completed!</p>
               <p className="text-sm">Your trip is ready to be published.</p>
             </div>
           ) : (
-            <div className="text-red-800">
+            <div className="text-danger">
               <p className="font-medium mb-2">❌ Missing required information:</p>
               <ul className="text-sm space-y-1">
                 {missingFields.map(({ label }) => (
@@ -136,7 +136,7 @@ export function StepPreview({ form }: StepPreviewProps) {
               )}
             </div>
             {formData.buddyFriendly && (
-              <Badge variant="outline" className="text-pink-600 border-pink-300">
+              <Badge variant="outline" className="text-brand border-brand/30">
                 Solo Traveler Friendly
               </Badge>
             )}
@@ -236,7 +236,7 @@ export function StepPreview({ form }: StepPreviewProps) {
             <h4 className="font-medium mb-2">Organizer Contact</h4>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">🔒 Contact details are private</span>
-              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+              <span className="text-xs bg-accent-subtle text-accent px-2 py-1 rounded">
                 Shared through secure chat
               </span>
             </div>

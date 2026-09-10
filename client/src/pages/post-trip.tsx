@@ -107,7 +107,7 @@ export default function PostTripPage() {
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="mb-8">
-          <div className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-600 rounded-2xl p-8 text-white shadow-xl">
+          <div className="bg-gradient-to-r from-brand to-accent rounded-2xl p-8 text-white shadow-xl">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center space-x-3 mb-4">
@@ -187,15 +187,15 @@ export default function PostTripPage() {
               onClick={() => setTripMode('detailed')}
               className="group text-left"
             >
-              <Card className="h-full border-2 border-transparent hover:border-blue-400 transition-all duration-200 hover:shadow-lg cursor-pointer">
+              <Card className="h-full border-2 border-transparent hover:border-accent/50 transition-all duration-200 hover:shadow-lg cursor-pointer">
                 <CardContent className="p-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                      <ClipboardList className="w-6 h-6 text-blue-600" />
+                    <div className="w-12 h-12 bg-accent-subtle rounded-xl flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                      <ClipboardList className="w-6 h-6 text-accent" />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-gray-800">Detailed Trip</h3>
-                      <Badge className="bg-blue-100 text-blue-700 text-xs">Full Feature</Badge>
+                      <Badge className="bg-accent-subtle text-accent text-xs">Full Feature</Badge>
                     </div>
                   </div>
                   <p className="text-gray-600 mb-4">
@@ -203,15 +203,15 @@ export default function PostTripPage() {
                   </p>
                   <ul className="space-y-2 text-sm text-gray-500">
                     <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 bg-blue-400 rounded-full" />
+                      <span className="w-1.5 h-1.5 bg-accent rounded-full" />
                       7-step guided wizard
                     </li>
                     <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 bg-blue-400 rounded-full" />
+                      <span className="w-1.5 h-1.5 bg-accent rounded-full" />
                       Stays until you remove it
                     </li>
                     <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 bg-blue-400 rounded-full" />
+                      <span className="w-1.5 h-1.5 bg-accent rounded-full" />
                       Photos, pricing & safety details
                     </li>
                   </ul>
