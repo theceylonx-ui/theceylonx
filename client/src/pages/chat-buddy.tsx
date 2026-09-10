@@ -280,7 +280,7 @@ export default function ChatBuddy() {
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="mb-6">
             <h1 className="text-3xl font-bold flex items-center gap-2">
-              <MessageCircle className="h-8 w-8 text-purple-600" />
+              <MessageCircle className="h-8 w-8 text-brand" />
               Chat Buddy
             </h1>
           </div>
@@ -370,7 +370,7 @@ export default function ChatBuddy() {
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="mb-6">
             <h1 className="text-3xl font-bold flex items-center gap-2">
-              <MessageCircle className="h-8 w-8 text-purple-600" />
+              <MessageCircle className="h-8 w-8 text-brand" />
               Chat Buddy
             </h1>
           </div>
@@ -393,7 +393,7 @@ export default function ChatBuddy() {
                 </p>
               </div>
 
-              <div className="bg-blue-50 rounded-lg p-6 mb-6">
+              <div className="bg-accent-subtle rounded-lg p-6 mb-6">
                 <h3 className="font-semibold mb-4 text-left">💡 Tips to get started:</h3>
                 <div className="space-y-3 text-left">
                   <div className="flex items-start gap-3">
@@ -401,7 +401,7 @@ export default function ChatBuddy() {
                     <p className="text-sm">Use ⭐ <strong>Interested</strong> on trips you like; the organizer will review your request.</p>
                   </div>
                   <div className="flex items-start gap-3">
-                    <MessageSquare className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                    <MessageSquare className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
                     <p className="text-sm">Once accepted, coordinate routes, costs, and meeting points here.</p>
                   </div>
                   <div className="flex items-start gap-3">
@@ -489,7 +489,7 @@ export default function ChatBuddy() {
                           onClick={() => setSelectedUserId(chatUser.id)}
                           className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
                             selectedUserId === chatUser.id
-                              ? 'bg-purple-50 border border-purple-200'
+                              ? 'bg-brand-subtle border border-brand/20'
                               : 'hover:bg-gray-50'
                           }`}
                         >
@@ -508,7 +508,7 @@ export default function ChatBuddy() {
                             </p>
                           </div>
                           {selectedUserId === chatUser.id && (
-                            <MessageSquare className="h-4 w-4 text-purple-600" />
+                            <MessageSquare className="h-4 w-4 text-brand" />
                           )}
                         </div>
                       ))
@@ -535,7 +535,7 @@ export default function ChatBuddy() {
               ) : messagesLoading ? (
                 <CardContent className="flex-1 flex items-center justify-center">
                   <div className="text-center">
-                    <div className="animate-spin h-8 w-8 border-2 border-purple-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <div className="animate-spin h-8 w-8 border-2 border-brand border-t-transparent rounded-full mx-auto mb-4"></div>
                     <p className="text-muted-foreground">Loading chat...</p>
                   </div>
                 </CardContent>
@@ -572,14 +572,14 @@ export default function ChatBuddy() {
                       <div className="h-full flex flex-col items-center justify-center">
                         <MessageSquare className="h-12 w-12 text-gray-400 mb-4" />
                         <h3 className="font-semibold mb-2">No chat available yet</h3>
-                        <div className="bg-blue-50 rounded-lg p-4 max-w-md">
+                        <div className="bg-accent-subtle rounded-lg p-4 max-w-md">
                           <p className="text-sm text-muted-foreground mb-3">💡 Start the conversation:</p>
                           <div className="space-y-2">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => insertCannedMessage("Hi! Thanks for accepting. Where shall we meet?")}
-                              className="w-full text-left justify-start text-xs border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
+                              className="w-full text-left justify-start text-xs border-accent/30 text-accent hover:bg-accent-subtle hover:border-accent/50"
                             >
                               Hi! Thanks for accepting. Where shall we meet?
                             </Button>
@@ -587,7 +587,7 @@ export default function ChatBuddy() {
                               variant="outline"
                               size="sm"
                               onClick={() => insertCannedMessage("Can we confirm the cost and split?")}
-                              className="w-full text-left justify-start text-xs border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
+                              className="w-full text-left justify-start text-xs border-accent/30 text-accent hover:bg-accent-subtle hover:border-accent/50"
                             >
                               Can we confirm the cost and split?
                             </Button>
@@ -595,7 +595,7 @@ export default function ChatBuddy() {
                               variant="outline"
                               size="sm"
                               onClick={() => insertCannedMessage("What time should we start?")}
-                              className="w-full text-left justify-start text-xs border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
+                              className="w-full text-left justify-start text-xs border-accent/30 text-accent hover:bg-accent-subtle hover:border-accent/50"
                             >
                               What time should we start?
                             </Button>
@@ -632,7 +632,7 @@ export default function ChatBuddy() {
                                 <p className="text-sm">{message.body}</p>
                                 <p
                                   className={`text-xs mt-1 ${
-                                    isOwnMessage ? 'text-green-100' : 'text-gray-500'
+                                    isOwnMessage ? 'text-white/80' : 'text-gray-500'
                                   }`}
                                 >
                                   <Clock className="h-3 w-3 inline mr-1" />
@@ -664,7 +664,7 @@ export default function ChatBuddy() {
                         onImageSent={() => {
                           // Refresh messages after image is sent
                           queryClient.invalidateQueries({
-                            queryKey: ['/api/chat', 'threads', tripStatus?.chatThreadId, 'messages'],
+                            queryKey: ['/api/chat', selectedUserId, tripId],
                           });
                         }}
                       />

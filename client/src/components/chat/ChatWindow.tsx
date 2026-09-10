@@ -344,7 +344,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
             variant="default" 
             size="sm" 
             onClick={() => setIsContactShareOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-accent hover:bg-accent-hover text-white"
           >
             <Phone className="w-4 h-4 mr-2" />
             Share Contact
@@ -532,8 +532,8 @@ function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
   if (message.kind === 'contact_share') {
     return (
       <div className="flex justify-center my-4">
-        <Card className="p-3 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-          <div className="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
+        <Card className="p-3 bg-accent/10 border-accent/30">
+          <div className="flex items-center space-x-2 text-accent">
             <Phone className="w-4 h-4" />
             <span className="text-sm font-medium">Contact details shared</span>
           </div>

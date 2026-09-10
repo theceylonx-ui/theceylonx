@@ -1934,13 +1934,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if user has an interest request for this trip
       const interestRequest = await storage.getTripInterestRequestByUserAndTrip(userId, id);
-      
+
       if (!interestRequest) {
-        return res.json({ status: 'none' });
+        return res.json({ status: 'none', chatThreadId: null });
       }
 
       // Return the status of the interest request
-      res.json({ status: interestRequest.status });
+      res.json({ status: interestRequest.status, chatThreadId: interestRequest.chatThreadId || null });
     } catch (error) {
       console.error("Error fetching trip status:", error);
       res.status(500).json({ message: "Failed to fetch trip status" });
@@ -3989,21 +3989,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // NEW: Trip-specific chat endpoints for Chat Buddy functionality
   
   // Get trip participation status for current user
-  app.get('/api/trips/:tripId/status', unifiedAuthGuard, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const tripId = req.params.tripId;
-
-      const interestRequest = await storage.getTripInterestRequestByUserAndTrip(userId, tripId);
-      const status = interestRequest?.status || 'none';
-      
-      res.json({ status, chatThreadId: interestRequest?.chatThreadId || null });
-    } catch (error) {
-      console.error("Error fetching trip status:", error);
-      res.status(500).json({ message: "Failed to fetch trip status" });
-    }
-  });
-
   // Get chat-eligible users for a trip (only for accepted participants)
   app.get('/api/chat/users', unifiedAuthGuard, async (req: any, res) => {
     try {
