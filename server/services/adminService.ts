@@ -53,7 +53,7 @@ export class AdminService {
   // Setup superadmin on first login
   async setupSuperadmin(email: string): Promise<UserWithRole | null> {
     try {
-      const superadminEmails = process.env.SUPERADMIN_EMAILS?.split(',') || ['theceylonx@gmail.com'];
+      const superadminEmails = process.env.SUPERADMIN_EMAILS?.split(',') || [];
       
       if (!superadminEmails.includes(email)) {
         return null;
