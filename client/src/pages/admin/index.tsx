@@ -1,9 +1,12 @@
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { PermissionGuard } from "@/components/admin/PermissionGuard";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Users, 
   FileText, 
@@ -12,7 +15,9 @@ import {
   TrendingUp,
   AlertTriangle,
   CheckCircle,
-  Clock
+  Clock,
+  Database,
+  Loader2
 } from "lucide-react";
 
 interface DashboardStats {
@@ -94,6 +99,7 @@ function StatCard({
 
 export default function AdminOverviewPage() {
   const { adminUser } = useAdminAuth();
+  const { toast } = useToast();
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ['/api/admin/dashboard'],
@@ -105,6 +111,37 @@ export default function AdminOverviewPage() {
     trips: { total: 0, active: 0, pending: 0 },
     reports: { total: 0, open: 0, resolved24h: 0 },
     chat: { activeThreads: 0, flaggedMessages: 0 }
+  };
+
+  const seedSampleData = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/admin/seed-data", undefined, {
+        timeout: 60000,
+      });
+      return response.json();
+    },
+    onSuccess: (result) => {
+      toast({
+        title: "Sample trips are ready",
+        description: result?.data?.trips || "10 sample trips are now available.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Could not seed sample trips",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSeedSampleData = () => {
+    const confirmed = window.confirm(
+      "Add any missing sample trips and sample questions? Existing trips and questions will not be deleted."
+    );
+    if (confirmed) {
+      seedSampleData.mutate();
+    }
   };
 
   return (
@@ -266,6 +303,38 @@ export default function AdminOverviewPage() {
             </CardContent>
           </Card>
         </div>
+
+        <Card className="border-brand/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Database className="h-5 w-5 text-brand" />
+              Sample Content
+            </CardTitle>
+            <CardDescription>
+              Add any missing sample trips and community questions to this environment.
+              Existing content is kept unchanged.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              onClick={handleSeedSampleData}
+              disabled={seedSampleData.isPending}
+              className="bg-brand text-white hover:bg-brand/90"
+            >
+              {seedSampleData.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Seeding sample content...
+                </>
+              ) : (
+                <>
+                  <Database className="mr-2 h-4 w-4" />
+                  Seed 10 Sample Trips
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Role Information */}
         <Card>

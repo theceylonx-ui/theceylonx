@@ -654,8 +654,8 @@ router.post('/seed-data', requireAdmin, async (req, res) => {
       message: 'Sample data seeded successfully',
       timestamp: new Date().toISOString(),
       data: {
-        trips: '8 sample trips created',
-        questions: '10 sample questions created'
+        trips: '10 sample trips available',
+        questions: 'Sample questions available'
       }
     });
   } catch (error) {
