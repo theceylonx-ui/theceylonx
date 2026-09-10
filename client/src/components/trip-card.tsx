@@ -389,8 +389,8 @@ export default function TripCard({ trip, badges }: TripCardProps) {
       'central': 'bg-orange-500',
       'northern': 'bg-purple-500',
       'eastern': 'bg-pink-500',
-      'northwestern': 'bg-indigo-500',
-      'north-central': 'bg-yellow-500',
+      'north_western': 'bg-indigo-500',
+      'north_central': 'bg-yellow-500',
       'sabaragamuwa': 'bg-red-500',
       'uva': 'bg-teal-500',
     };
@@ -401,28 +401,15 @@ export default function TripCard({ trip, badges }: TripCardProps) {
     // Priority 1: Use user-uploaded images from mediaUrls
     if (trip.mediaUrls && trip.mediaUrls.length > 0) {
       const coverIndex = trip.coverImageIndex || 0;
-      const coverImageUrl = trip.mediaUrls[Math.min(coverIndex, trip.mediaUrls.length - 1)];
-      
-      // Debug logging
-      console.log('Trip mediaUrls:', trip.mediaUrls);
-      console.log('Cover index:', coverIndex);
-      console.log('Selected image URL:', coverImageUrl);
-      
-      return coverImageUrl;
+      return trip.mediaUrls[Math.min(coverIndex, trip.mediaUrls.length - 1)];
     }
-    
+
     // Priority 2: Use database imageUrl (fallback or external image)
     if (trip.imageUrl) {
-      console.log('Using trip.imageUrl:', trip.imageUrl);
-      // If it's a local asset path, ensure it works in both dev and production
-      if (trip.imageUrl.startsWith('/assets/')) {
-        return trip.imageUrl;
-      }
       return trip.imageUrl;
     }
-    
+
     // Priority 3: HiBowan logo as fallback
-    console.log('Using fallback image');
     return newLogo;
   };
 

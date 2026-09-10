@@ -294,15 +294,11 @@ export default function BrowseTripsFilters({
           >
             Clear
           </Button>
-          <Button 
+          <Button
             variant="default"
             className="bg-brand hover:bg-brand-hover text-white"
             data-testid="btn-apply-filters"
-            onClick={() => {
-              // Force a re-fetch by triggering a query invalidation
-              // The filters are already applied through the store
-              console.log('Filters applied:', filters);
-            }}
+            title="Filters apply automatically as you set them"
           >
             Apply Filters
           </Button>
