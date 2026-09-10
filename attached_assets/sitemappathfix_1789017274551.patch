@@ -1,0 +1,89 @@
+From 1813a14de2780544e5b18991871e45b77d491fd3 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 10:33:47 +0530
+Subject: [PATCH] Fix sitemap.xml/robots.txt page paths to match real app
+ routes
+
+sitemap.xml and robots.txt were listing pages that 404 on the live
+site: /browse, /privacy, /terms, and /trip/:id. Actual routes are
+/browse-trips, /privacy-policy, /terms-of-service, and /trips/:id
+(per client/src/App.tsx). Also pointed the searchAction urlTemplate
+in both the server-rendered and client-rendered structured data at
+/browse-trips instead of the nonexistent /browse and /search.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ client/src/components/SEO.tsx |  2 +-
+ server/routes/seo.ts          | 16 ++++++++--------
+ 2 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/client/src/components/SEO.tsx b/client/src/components/SEO.tsx
+index da2fe4b..0b300c0 100644
+--- a/client/src/components/SEO.tsx
++++ b/client/src/components/SEO.tsx
+@@ -153,7 +153,7 @@ export const SEOConfigs = {
+         '@type': 'SearchAction',
+         'target': {
+           '@type': 'EntryPoint',
+-          'urlTemplate': 'https://www.hibowan.com/search?q={search_term_string}'
++          'urlTemplate': 'https://www.hibowan.com/browse-trips?q={search_term_string}'
+         },
+         'query-input': 'required name=search_term_string'
+       }
+diff --git a/server/routes/seo.ts b/server/routes/seo.ts
+index 20e1c7a..03c4dbf 100644
+--- a/server/routes/seo.ts
++++ b/server/routes/seo.ts
+@@ -16,12 +16,12 @@ router.get('/sitemap.xml', async (req: Request, res: Response) => {
+     // Static pages with priorities and frequencies
+     const staticPages = [
+       { url: '', changefreq: 'daily', priority: '1.0' },
+-      { url: '/browse', changefreq: 'hourly', priority: '0.9' },
++      { url: '/browse-trips', changefreq: 'hourly', priority: '0.9' },
+       { url: '/community', changefreq: 'daily', priority: '0.8' },
+       { url: '/faq', changefreq: 'weekly', priority: '0.7' },
+       { url: '/about', changefreq: 'monthly', priority: '0.6' },
+-      { url: '/privacy', changefreq: 'monthly', priority: '0.5' },
+-      { url: '/terms', changefreq: 'monthly', priority: '0.5' },
++      { url: '/privacy-policy', changefreq: 'monthly', priority: '0.5' },
++      { url: '/terms-of-service', changefreq: 'monthly', priority: '0.5' },
+     ];
+     
+     // Get recent active trips for dynamic content (simplified for now)
+@@ -60,7 +60,7 @@ router.get('/sitemap.xml', async (req: Request, res: Response) => {
+       const lastmod = trip.createdAt ? trip.createdAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+       sitemap += `
+   <url>
+-    <loc>${baseUrl}/trip/${trip.id}</loc>
++    <loc>${baseUrl}/trips/${trip.id}</loc>
+     <changefreq>weekly</changefreq>
+     <priority>0.7</priority>
+     <lastmod>${lastmod}</lastmod>
+@@ -92,12 +92,12 @@ router.get('/robots.txt', (req: Request, res: Response) => {
+ Allow: /
+ 
+ # Important pages
+-Allow: /browse
++Allow: /browse-trips
+ Allow: /community
+ Allow: /faq
+ Allow: /about
+-Allow: /privacy
+-Allow: /terms
++Allow: /privacy-policy
++Allow: /terms-of-service
+ 
+ # Sitemap location
+ Sitemap: ${baseUrl}/sitemap.xml
+@@ -143,7 +143,7 @@ router.get('/api/structured-data/home', (req: Request, res: Response) => {
+       '@type': 'SearchAction',
+       'target': {
+         '@type': 'EntryPoint',
+-        'urlTemplate': `${baseUrl}/browse?q={search_term_string}`
++        'urlTemplate': `${baseUrl}/browse-trips?q={search_term_string}`
+       },
+       'query-input': 'required name=search_term_string'
+     }
+-- 
+2.50.1 (Apple Git-155)
+

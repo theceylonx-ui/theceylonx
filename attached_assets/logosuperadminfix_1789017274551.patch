@@ -1,0 +1,55 @@
+From 7991680a8fca7a7f3f9cb1513af4c7d1bfa56894 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 10:39:44 +0530
+Subject: [PATCH] Fix dead /logo.png link and superadmin fallback email
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Structured data's 'logo' field pointed at /logo.png, which doesn't
+exist — pointed it at the real deployed brand icon (pwa-icon-512x512.png)
+instead.
+
+adminService.ts's setupSuperadmin() fell back to the old
+theceylonx@gmail.com when SUPERADMIN_EMAILS isn't set. Since this is
+an access-control default, replaced it with an empty array so a
+missing env var fails closed (no one gets superadmin) rather than
+silently granting it to a stale address. SUPERADMIN_EMAILS is already
+set in Replit, so this only changes behavior if that env var is ever
+unset.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ server/routes/seo.ts            | 2 +-
+ server/services/adminService.ts | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/server/routes/seo.ts b/server/routes/seo.ts
+index 03c4dbf..8d8a3e3 100644
+--- a/server/routes/seo.ts
++++ b/server/routes/seo.ts
+@@ -133,7 +133,7 @@ router.get('/api/structured-data/home', (req: Request, res: Response) => {
+     'name': 'HiBowan',
+     'description': 'Travel buddy and trip sharing platform for Sri Lanka. Connect with fellow travelers and explore the pearl of the Indian Ocean together.',
+     'url': baseUrl,
+-    'logo': `${baseUrl}/logo.png`,
++    'logo': `${baseUrl}/pwa-icon-512x512.png`,
+     'sameAs': [
+       'https://www.facebook.com/hibowan.srilanka',
+       'https://www.instagram.com/hibowan.srilanka',
+diff --git a/server/services/adminService.ts b/server/services/adminService.ts
+index aad0619..5ae6c77 100644
+--- a/server/services/adminService.ts
++++ b/server/services/adminService.ts
+@@ -53,7 +53,7 @@ export class AdminService {
+   // Setup superadmin on first login
+   async setupSuperadmin(email: string): Promise<UserWithRole | null> {
+     try {
+-      const superadminEmails = process.env.SUPERADMIN_EMAILS?.split(',') || ['theceylonx@gmail.com'];
++      const superadminEmails = process.env.SUPERADMIN_EMAILS?.split(',') || [];
+       
+       if (!superadminEmails.includes(email)) {
+         return null;
+-- 
+2.50.1 (Apple Git-155)
+
