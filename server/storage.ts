@@ -2334,19 +2334,40 @@ export class DatabaseStorage implements IStorage {
         chatThreadId: tripInterestRequests.chatThreadId,
         user: {
           id: users.id,
+          displayName: users.displayName,
+          username: users.username,
           firstName: users.firstName,
           lastName: users.lastName,
           email: users.email,
           profileImageUrl: users.profileImageUrl,
-          phone: users.phone
+          phone: users.phone,
+          showRealName: users.showRealName,
+          showEmail: users.showEmail,
+          showPhone: users.showPhone,
         }
       })
       .from(tripInterestRequests)
       .leftJoin(users, eq(tripInterestRequests.userId, users.id))
       .where(eq(tripInterestRequests.tripId, tripId))
       .orderBy(desc(tripInterestRequests.createdAt));
-    
-    return requests;
+
+    // Respect the requester's own privacy settings even though this is
+    // shown to the trip organizer, not the public — requesting to join
+    // doesn't imply consenting to share contact info before acceptance.
+    return requests.map((request) => {
+      if (!request.user) return request;
+      const { showRealName, showEmail, showPhone, ...user } = request.user;
+      return {
+        ...request,
+        user: {
+          ...user,
+          firstName: showRealName ? user.firstName : undefined,
+          lastName: showRealName ? user.lastName : undefined,
+          email: showEmail ? user.email : undefined,
+          phone: showPhone ? user.phone : undefined,
+        },
+      };
+    });
   }
 
   async updateTripInterestRequestStatus(requestId: string, status: 'accepted' | 'rejected'): Promise<TripInterestRequest> {
@@ -2370,20 +2391,33 @@ export class DatabaseStorage implements IStorage {
         updatedAt: tripInterestRequests.updatedAt,
         chatThreadId: tripInterestRequests.chatThreadId,
         tripTitle: trips.title,
+        requesterDisplayName: users.displayName,
+        requesterUsername: users.username,
         requesterName: users.firstName,
         requesterLastName: users.lastName,
         requesterEmail: users.email,
-        requesterProfileImage: users.profileImageUrl
+        requesterProfileImage: users.profileImageUrl,
+        requesterShowRealName: users.showRealName,
+        requesterShowEmail: users.showEmail,
       })
       .from(tripInterestRequests)
       .leftJoin(trips, eq(tripInterestRequests.tripId, trips.id))
       .leftJoin(users, eq(tripInterestRequests.userId, users.id))
       .where(eq(trips.organizerId, userId))
       .orderBy(desc(tripInterestRequests.createdAt));
-    
+
+    // Respect the requester's own privacy settings — requesting to join
+    // doesn't imply consenting to share contact info before acceptance.
+    const privacyFiltered = result.map(({ requesterShowRealName, requesterShowEmail, ...request }) => ({
+      ...request,
+      requesterName: requesterShowRealName ? request.requesterName : undefined,
+      requesterLastName: requesterShowRealName ? request.requesterLastName : undefined,
+      requesterEmail: requesterShowEmail ? request.requesterEmail : undefined,
+    }));
+
     // Add duration calculation for each request
     const currentTime = new Date();
-    const requestsWithDuration = result.map(request => {
+    const requestsWithDuration = privacyFiltered.map(request => {
       const createdAt = request.createdAt ? new Date(request.createdAt) : currentTime;
       const durationMs = currentTime.getTime() - createdAt.getTime();
       
