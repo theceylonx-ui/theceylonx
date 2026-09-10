@@ -122,6 +122,7 @@ import {
   type TravelStyleSettings,
   insertQuickTripSchema,
   QuickTripFormSchema,
+  UpdateQuickTripSchema,
 } from "@shared/schema";
 import { enhancedRecommendationService } from "./ml/enhancedRecommendationService";
 import { z } from "zod";
@@ -855,6 +856,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching quick trip:", error);
       res.status(500).json({ message: "Failed to fetch quick trip" });
+    }
+  });
+
+  app.patch('/api/quick-trips/:id', unifiedAuthGuard, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const trip = await storage.getQuickTrip(req.params.id);
+      if (!trip) return res.status(404).json({ message: "Quick trip not found" });
+      if (trip.organizerId !== userId) {
+        return res.status(403).json({ message: "Not authorized to update this quick trip" });
+      }
+
+      const parsed = UpdateQuickTripSchema.parse(req.body);
+      const updateData = insertQuickTripSchema.omit({ organizerId: true }).parse({
+        ...parsed,
+        date: new Date(parsed.date as string),
+      });
+      const updatedTrip = await storage.updateQuickTrip(req.params.id, updateData);
+      res.json({ ...updatedTrip, organizer: trip.organizer, tripType: 'quick' });
+    } catch (error: any) {
+      if (error?.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid trip data", errors: error.errors });
+      }
+      console.error("Error updating quick trip:", error);
+      res.status(500).json({ message: "Failed to update quick trip" });
     }
   });
 

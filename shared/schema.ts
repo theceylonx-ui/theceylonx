@@ -1946,9 +1946,9 @@ export type QuickTripWithOrganizer = QuickTrip & {
 };
 
 const QuickTripBaseSchema = z.object({
-  fromLocation: z.string().min(1, "Departure location is required"),
-  toLocation: z.string().min(1, "Destination is required"),
-  region: z.string().min(1, "Region is required"),
+  fromLocation: z.string().trim().min(1, "Departure location is required").max(100, "Departure location must be 100 characters or less"),
+  toLocation: z.string().trim().min(1, "Destination is required").max(100, "Destination must be 100 characters or less"),
+  region: z.string().trim().min(1, "Region is required").max(50, "Region must be 50 characters or less"),
   date: z.string().or(z.date()).refine((val) => {
     const date = typeof val === 'string' ? new Date(val) : val;
     const today = new Date();
@@ -1962,10 +1962,10 @@ const QuickTripBaseSchema = z.object({
     return date <= maxDate;
   }, "Quick trips can only be scheduled within the next 5 days"),
   time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
-  title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters").max(500, "Description must be less than 500 characters"),
+  title: z.string().trim().min(1, "Title is required").max(100, "Title must be 100 characters or less"),
+  description: z.string().trim().min(10, "Description must be at least 10 characters").max(500, "Description must be 500 characters or less"),
   category: z.enum(['roadtrip', 'hiking', 'beach', 'culture', 'wellness', 'festival', 'workshop', 'wildlife', 'food', 'adventure_sport', 'unknown']).refine(val => val !== 'unknown', "Please select a trip category"),
-  seatsAvailable: z.number().min(1, "At least 1 seat required").max(50, "Maximum 50 seats"),
+  seatsAvailable: z.number().int("Seats available must be a whole number").min(1, "At least 1 seat required").max(50, "Maximum 50 seats"),
   isFree: z.boolean().default(true),
   seatPrice: z.number().min(0).max(100000).nullable().optional(),
 });
@@ -1979,6 +1979,8 @@ export const QuickTripFormSchema = QuickTripBaseSchema.refine((data) => {
   message: "Please enter a seat price for paid trips",
   path: ["seatPrice"],
 });
+
+export const UpdateQuickTripSchema = QuickTripFormSchema;
 
 export const QuickTripStep1Schema = QuickTripBaseSchema.pick({
   fromLocation: true,
@@ -2006,3 +2008,4 @@ export const QuickTripStep2Schema = QuickTripBaseSchema.pick({
 });
 
 export type QuickTripFormData = z.infer<typeof QuickTripFormSchema>;
+export type UpdateQuickTripData = z.infer<typeof UpdateQuickTripSchema>;

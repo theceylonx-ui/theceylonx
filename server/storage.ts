@@ -267,6 +267,7 @@ export interface IStorage {
   
   // Quick Trip operations
   createQuickTrip(trip: InsertQuickTrip): Promise<QuickTrip>;
+  updateQuickTrip(id: string, trip: Omit<InsertQuickTrip, 'organizerId'>): Promise<QuickTrip | undefined>;
   getQuickTrip(id: string): Promise<QuickTripWithOrganizer | undefined>;
   getUserQuickTrips(userId: string): Promise<QuickTripWithOrganizer[]>;
   deleteExpiredQuickTrips(): Promise<number>;
@@ -3525,6 +3526,15 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return newTrip;
+  }
+
+  async updateQuickTrip(id: string, trip: Omit<InsertQuickTrip, 'organizerId'>): Promise<QuickTrip | undefined> {
+    const [updatedTrip] = await db
+      .update(quickTrips)
+      .set(trip)
+      .where(eq(quickTrips.id, id))
+      .returning();
+    return updatedTrip;
   }
 
   async getQuickTrip(id: string): Promise<QuickTripWithOrganizer | undefined> {

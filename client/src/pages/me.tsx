@@ -27,6 +27,7 @@ import {
   Download,
   UserX,
   Trash2,
+  Pencil,
 } from "lucide-react";
 import { getDisplayName, getInitials, getAvatarOptions, AVATAR_STYLES } from "@/lib/profileUtils";
 import { VisibilityToggle } from "@/components/VisibilityToggle";
@@ -40,6 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { PreferencesForm } from "@/components/preferences/PreferencesForm";
+import { QuickTripEditDialog } from "@/components/QuickTripEditDialog";
 
 
 // Travel Quote Component that uses session-based quote selection
@@ -1260,6 +1262,7 @@ function UserActivity() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeSubTab, setActiveSubTab] = useState("questions");
+  const [quickTripToEdit, setQuickTripToEdit] = useState<any>(null);
 
   const { data: questions = [], isLoading: questionsLoading } = useQuery<any>({
     queryKey: ['/api/me/activity/questions'],
@@ -1385,6 +1388,14 @@ function UserActivity() {
                         <Button
                           size="sm"
                           variant="outline"
+                          onClick={() => setQuickTripToEdit(trip)}
+                          data-testid={`button-edit-quick-trip-${trip.id}`}
+                        >
+                          <Pencil className="w-3.5 h-3.5 mr-1" /> Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => setLocation(`/quick-trips/${trip.id}`)}
                           data-testid={`button-view-quick-trip-${trip.id}`}
                         >
@@ -1408,6 +1419,13 @@ function UserActivity() {
                     </div>
                   </div>
                 ))}
+                {quickTripToEdit && (
+                  <QuickTripEditDialog
+                    open={!!quickTripToEdit}
+                    onOpenChange={(open) => { if (!open) setQuickTripToEdit(null); }}
+                    trip={quickTripToEdit}
+                  />
+                )}
                 {trips.map((trip: any) => (
                   <div key={trip.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between">

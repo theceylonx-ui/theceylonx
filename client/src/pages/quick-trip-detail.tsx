@@ -12,7 +12,8 @@ import { UserDisplay } from "@/components/ui/user-display";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { MapPin, Calendar, Clock, Users, Zap, Heart, Send, CheckCircle2, X, Check, MessageCircle, BellRing, DollarSign, Trash2 } from "lucide-react";
+import { QuickTripEditDialog } from "@/components/QuickTripEditDialog";
+import { MapPin, Calendar, Clock, Users, Zap, Heart, Send, CheckCircle2, X, Check, MessageCircle, BellRing, DollarSign, Trash2, Pencil } from "lucide-react";
 
 function useCountdownHours(expiresAt: string | Date | null | undefined): number | null {
   const [hoursLeft, setHoursLeft] = useState<number | null>(null);
@@ -38,6 +39,7 @@ export default function QuickTripDetailPage() {
   const queryClient = useQueryClient();
   const [interestMessage, setInterestMessage] = useState("");
   const [showMessageInput, setShowMessageInput] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const interestsSectionRef = useRef<HTMLDivElement>(null);
 
   const { data: trip, isLoading, error } = useQuery<any>({
@@ -409,7 +411,10 @@ export default function QuickTripDetailPage() {
 
             {/* ORGANIZER: manage this trip */}
             {isOrganizer && (
-              <div className="border-t pt-6">
+              <div className="border-t pt-6 flex flex-wrap gap-3">
+                <Button variant="outline" onClick={() => setShowEditDialog(true)} data-testid="button-edit-quick-trip">
+                  <Pencil className="w-4 h-4 mr-2" /> Edit Trip
+                </Button>
                 <Button
                   variant="outline"
                   className="border-red-300 text-red-600 hover:bg-red-50"
@@ -516,6 +521,9 @@ export default function QuickTripDetailPage() {
             )}
           </CardContent>
         </Card>
+        {isOrganizer && (
+          <QuickTripEditDialog open={showEditDialog} onOpenChange={setShowEditDialog} trip={trip} />
+        )}
       </div>
       
       <Footer />
