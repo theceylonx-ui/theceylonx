@@ -129,7 +129,13 @@ function removeEmptyValues(obj: any): any {
   if (Array.isArray(obj)) {
     return obj.map(removeEmptyValues).filter(Boolean);
   }
-  
+
+  // Dates (and other non-plain objects) have no own enumerable properties,
+  // so walking them with Object.entries() would silently flatten them to {}.
+  if (obj instanceof Date) {
+    return obj;
+  }
+
   if (obj && typeof obj === 'object') {
     const cleaned: any = {};
     for (const [key, value] of Object.entries(obj)) {
@@ -139,7 +145,7 @@ function removeEmptyValues(obj: any): any {
     }
     return cleaned;
   }
-  
+
   return obj;
 }
 
