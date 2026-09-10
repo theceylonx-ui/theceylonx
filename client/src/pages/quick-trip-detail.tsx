@@ -12,7 +12,7 @@ import { UserDisplay } from "@/components/ui/user-display";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { MapPin, Calendar, Clock, Users, Zap, Heart, Send, CheckCircle2, X, Check, MessageCircle, BellRing, DollarSign } from "lucide-react";
+import { MapPin, Calendar, Clock, Users, Zap, Heart, Send, CheckCircle2, X, Check, MessageCircle, BellRing, DollarSign, Trash2 } from "lucide-react";
 
 function useCountdownHours(expiresAt: string | Date | null | undefined): number | null {
   const [hoursLeft, setHoursLeft] = useState<number | null>(null);
@@ -104,6 +104,21 @@ export default function QuickTripDetailPage() {
       } else {
         toast({ title: "Error", description: error.message || "Failed to send interest", variant: "destructive" });
       }
+    },
+  });
+
+  const deleteTripMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("DELETE", `/api/quick-trips/${tripId}`);
+    },
+    onSuccess: () => {
+      toast({ title: "Trip Deleted", description: "Your quick trip has been removed." });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/quick-trips"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
+      setLocation("/browse-trips");
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to delete trip", variant: "destructive" });
     },
   });
 
@@ -389,6 +404,25 @@ export default function QuickTripDetailPage() {
                 >
                   <UserDisplay user={trip.organizer} avatarSize="lg" />
                 </div>
+              </div>
+            )}
+
+            {/* ORGANIZER: manage this trip */}
+            {isOrganizer && (
+              <div className="border-t pt-6">
+                <Button
+                  variant="outline"
+                  className="border-red-300 text-red-600 hover:bg-red-50"
+                  disabled={deleteTripMutation.isPending}
+                  onClick={() => {
+                    if (window.confirm("Delete this quick trip? This can't be undone.")) {
+                      deleteTripMutation.mutate();
+                    }
+                  }}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  {deleteTripMutation.isPending ? "Deleting..." : "Delete Trip"}
+                </Button>
               </div>
             )}
 

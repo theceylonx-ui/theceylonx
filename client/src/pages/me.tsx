@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { formatMemberSince, formatShortDate } from "@/lib/formatDate";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +26,7 @@ import {
   Heart,
   Download,
   UserX,
+  Trash2,
 } from "lucide-react";
 import { getDisplayName, getInitials, getAvatarOptions, AVATAR_STYLES } from "@/lib/profileUtils";
 import { VisibilityToggle } from "@/components/VisibilityToggle";
@@ -1256,8 +1257,10 @@ function SavedTrips() {
 function UserActivity() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [activeSubTab, setActiveSubTab] = useState("questions");
-  
+
   const { data: questions = [], isLoading: questionsLoading } = useQuery<any>({
     queryKey: ['/api/me/activity/questions'],
     enabled: !!user,
@@ -1266,6 +1269,24 @@ function UserActivity() {
   const { data: trips = [], isLoading: tripsLoading } = useQuery<any>({
     queryKey: ['/api/me/activity/trips'],
     enabled: !!user,
+  });
+
+  const { data: quickTrips = [], isLoading: quickTripsLoading } = useQuery<any>({
+    queryKey: ['/api/user/quick-trips'],
+    enabled: !!user,
+  });
+
+  const deleteQuickTripMutation = useMutation({
+    mutationFn: async (tripId: string) => {
+      return await apiRequest("DELETE", `/api/quick-trips/${tripId}`);
+    },
+    onSuccess: () => {
+      toast({ title: "Trip Deleted", description: "Your quick trip has been removed." });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/quick-trips'] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to delete trip", variant: "destructive" });
+    },
   });
 
   return (
@@ -1337,10 +1358,56 @@ function UserActivity() {
           </TabsContent>
 
           <TabsContent value="trips" className="mt-6">
-            {tripsLoading ? (
+            {tripsLoading || quickTripsLoading ? (
               <div>Loading trips...</div>
-            ) : trips?.length > 0 ? (
+            ) : trips?.length > 0 || quickTrips?.length > 0 ? (
               <div className="space-y-4">
+                {quickTrips.map((trip: any) => (
+                  <div key={trip.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold text-lg">{trip.title}</h3>
+                          <Badge className="bg-orange-100 text-orange-700 border-orange-300">
+                            <Zap className="w-3 h-3 mr-1" /> Quick Trip
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {trip.fromLocation} → {trip.toLocation}
+                        </p>
+                        <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                          <span>👥 {trip.seatsAvailable} seats</span>
+                          <span>📅 {formatShortDate(trip.date, 'Date TBD')}</span>
+                          <span>⏳ Expires {formatShortDate(trip.expiresAt, 'soon')}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2 ml-4">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setLocation(`/quick-trips/${trip.id}`)}
+                          data-testid={`button-view-quick-trip-${trip.id}`}
+                        >
+                          👁️ View Details
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-red-300 text-red-600 hover:bg-red-50"
+                          disabled={deleteQuickTripMutation.isPending}
+                          onClick={() => {
+                            if (window.confirm("Delete this quick trip? This can't be undone.")) {
+                              deleteQuickTripMutation.mutate(trip.id);
+                            }
+                          }}
+                          data-testid={`button-delete-quick-trip-${trip.id}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
                 {trips.map((trip: any) => (
                   <div key={trip.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between">
