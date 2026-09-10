@@ -1,0 +1,649 @@
+From a15b7e0f45f38c874bb556e146493b8d963f9856 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 14:52:52 +0530
+Subject: [PATCH 1/2] =?UTF-8?q?Wire=20up=20Edit/Delete=20on=20Tribes=20que?=
+ =?UTF-8?q?stions=20=E2=80=94=20were=20completely=20non-functional?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Found while auditing the Tribes page: QuestionCard's Edit/Delete
+buttons never appeared for anyone, even a question's own author,
+because community-new.tsx never passed currentUserId — the prop
+isAuthor is computed from. Even if they had appeared, the handlers
+were console.log stubs; PATCH/DELETE /api/questions/:id already
+existed and worked, nothing on the client ever called them.
+
+- Extended AskQuestionDialog with an optional edit mode (questionId +
+  initialValues + externally-controlled open state) so the same form
+  handles both creating and editing, using PATCH instead of POST when
+  editing. Kept the existing create-mode call sites unchanged.
+- community-new.tsx: pass currentUserId to QuestionCard, wire
+  handleEditQuestion to open the dialog pre-filled with the question's
+  data, wire handleDeleteQuestion to a real mutation against the
+  existing DELETE endpoint, and render one controlled edit-dialog
+  instance for the whole list rather than one per card.
+- Recolored the stats row, search focus ring, and sort-tab active
+  state from raw purple/pink/red to brand/accent tokens.
+- Removed CommunityStats.tsx and StickyFilters.tsx — both imported
+  into this page but never actually rendered, and not used anywhere
+  else in the codebase.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ client/src/components/CommunityStats.tsx |  65 ----------
+ client/src/components/StickyFilters.tsx  | 158 -----------------------
+ 2 files changed, 223 deletions(-)
+ delete mode 100644 client/src/components/CommunityStats.tsx
+ delete mode 100644 client/src/components/StickyFilters.tsx
+
+diff --git a/client/src/components/CommunityStats.tsx b/client/src/components/CommunityStats.tsx
+deleted file mode 100644
+index c99cd3f..0000000
+--- a/client/src/components/CommunityStats.tsx
++++ /dev/null
+@@ -1,65 +0,0 @@
+-import { useQuery } from "@tanstack/react-query";
+-import { Badge } from "@/components/ui/badge";
+-import { Users, MessageSquare, HelpCircle } from "lucide-react";
+-
+-interface CommunityStatsData {
+-  totalQuestions: number;
+-  totalAnswers: number;
+-  totalTopics: number;
+-}
+-
+-export function CommunityStats() {
+-  const { data: stats } = useQuery<CommunityStatsData>({
+-    queryKey: ['/api/community/stats'],
+-    queryFn: async () => {
+-      try {
+-        const response = await fetch('/api/community/stats');
+-        if (response.ok) {
+-          return await response.json();
+-        }
+-        // Fallback to hardcoded values if API not available
+-        return {
+-          totalQuestions: 10,
+-          totalAnswers: 24,
+-          totalTopics: 12
+-        };
+-      } catch {
+-        // Fallback to hardcoded values if API not available
+-        return {
+-          totalQuestions: 10,
+-          totalAnswers: 24,
+-          totalTopics: 12
+-        };
+-      }
+-    },
+-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+-  });
+-
+-  if (!stats) return null;
+-
+-  return (
+-    <div className="flex items-center justify-center gap-6 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 py-3 px-4 rounded-lg border">
+-      <div className="flex items-center gap-2">
+-        <HelpCircle className="h-4 w-4" />
+-        <span className="font-medium">{stats.totalQuestions.toLocaleString()}</span>
+-        <span className="hidden sm:inline">Questions</span>
+-      </div>
+-      
+-      <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
+-      
+-      <div className="flex items-center gap-2">
+-        <MessageSquare className="h-4 w-4" />
+-        <span className="font-medium">{stats.totalAnswers.toLocaleString()}</span>
+-        <span className="hidden sm:inline">Answers</span>
+-      </div>
+-      
+-      <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
+-      
+-      <div className="flex items-center gap-2">
+-        <Users className="h-4 w-4" />
+-        <span className="font-medium">{stats.totalTopics}</span>
+-        <span className="hidden sm:inline">Topics</span>
+-      </div>
+-    </div>
+-  );
+-}
+\ No newline at end of file
+diff --git a/client/src/components/StickyFilters.tsx b/client/src/components/StickyFilters.tsx
+deleted file mode 100644
+index ab4fd9d..0000000
+--- a/client/src/components/StickyFilters.tsx
++++ /dev/null
+@@ -1,158 +0,0 @@
+-import { useState } from "react";
+-import { Input } from "@/components/ui/input";
+-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+-import { Button } from "@/components/ui/button";
+-import { Search, Filter, TrendingUp, Clock, MessageSquare } from "lucide-react";
+-import type { Topic } from "@shared/schema";
+-
+-interface StickyFiltersProps {
+-  searchQuery: string;
+-  setSearchQuery: (query: string) => void;
+-  selectedTopic: string;
+-  setSelectedTopic: (topic: string) => void;
+-  sortBy: "top" | "new" | "unanswered";
+-  setSortBy: (sort: "top" | "new" | "unanswered") => void;
+-  topics: Topic[];
+-  isLoading?: boolean;
+-}
+-
+-export function StickyFilters({
+-  searchQuery,
+-  setSearchQuery,
+-  selectedTopic,
+-  setSelectedTopic,
+-  sortBy,
+-  setSortBy,
+-  topics,
+-  isLoading = false
+-}: StickyFiltersProps) {
+-  const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
+-
+-  const getSortIcon = (sort: "top" | "new" | "unanswered") => {
+-    switch (sort) {
+-      case "top":
+-        return <TrendingUp className="h-4 w-4" />;
+-      case "new":
+-        return <Clock className="h-4 w-4" />;
+-      case "unanswered":
+-        return <MessageSquare className="h-4 w-4" />;
+-    }
+-  };
+-
+-  const getSortLabel = (sort: "top" | "new" | "unanswered") => {
+-    switch (sort) {
+-      case "top":
+-        return "Top";
+-      case "new":
+-        return "New";
+-      case "unanswered":
+-        return "Unanswered";
+-    }
+-  };
+-
+-  return (
+-    <div className="sticky top-0 z-10 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 shadow-sm">
+-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+-        
+-        {/* Main Search Bar */}
+-        <div className="relative mb-4">
+-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+-          <Input
+-            placeholder="Search questions about Sri Lanka travel..."
+-            value={searchQuery}
+-            onChange={(e) => setSearchQuery(e.target.value)}
+-            className="pl-10 pr-4 h-12 text-lg bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:border-ceylon-blue focus:ring-ceylon-blue"
+-            disabled={isLoading}
+-          />
+-        </div>
+-
+-        {/* Filters Row */}
+-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+-          
+-          {/* Left side - Sort and Topic filters */}
+-          <div className="flex flex-wrap gap-3 items-center">
+-            
+-            {/* Sort Toggle Buttons */}
+-            <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+-              {(["top", "new", "unanswered"] as const).map((sort) => (
+-                <Button
+-                  key={sort}
+-                  variant={sortBy === sort ? "default" : "ghost"}
+-                  size="sm"
+-                  onClick={() => setSortBy(sort)}
+-                  className={`px-3 py-1.5 h-auto text-sm ${
+-                    sortBy === sort 
+-                      ? "bg-white dark:bg-gray-700 shadow-sm text-ceylon-blue" 
+-                      : "hover:bg-gray-200 dark:hover:bg-gray-700"
+-                  }`}
+-                  disabled={isLoading}
+-                >
+-                  <span className="flex items-center gap-2">
+-                    {getSortIcon(sort)}
+-                    <span className="hidden sm:inline">{getSortLabel(sort)}</span>
+-                  </span>
+-                </Button>
+-              ))}
+-            </div>
+-
+-            {/* Topic Filter */}
+-            <Select value={selectedTopic} onValueChange={setSelectedTopic} disabled={isLoading}>
+-              <SelectTrigger className="w-40 h-9 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+-                <SelectValue placeholder="All Topics" />
+-              </SelectTrigger>
+-              <SelectContent>
+-                <SelectItem value="all">All Topics</SelectItem>
+-                {topics && topics.length > 0 && topics.map((topic) => (
+-                  <SelectItem key={topic.id} value={topic.id}>
+-                    {topic.name}
+-                  </SelectItem>
+-                ))}
+-              </SelectContent>
+-            </Select>
+-          </div>
+-
+-          {/* Right side - Mobile filter toggle */}
+-          <div className="sm:hidden">
+-            <Button
+-              variant="outline"
+-              size="sm"
+-              onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+-              className="h-9"
+-            >
+-              <Filter className="h-4 w-4 mr-2" />
+-              Filters
+-            </Button>
+-          </div>
+-        </div>
+-
+-        {/* Mobile Expanded Filters */}
+-        {isFiltersExpanded && (
+-          <div className="sm:hidden mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+-            <div className="space-y-3">
+-              <div>
+-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+-                  Sort by
+-                </label>
+-                <div className="grid grid-cols-3 gap-2">
+-                  {(["top", "new", "unanswered"] as const).map((sort) => (
+-                    <Button
+-                      key={sort}
+-                      variant={sortBy === sort ? "default" : "outline"}
+-                      size="sm"
+-                      onClick={() => setSortBy(sort)}
+-                      className="justify-start"
+-                      disabled={isLoading}
+-                    >
+-                      {getSortIcon(sort)}
+-                      <span className="ml-2">{getSortLabel(sort)}</span>
+-                    </Button>
+-                  ))}
+-                </div>
+-              </div>
+-            </div>
+-          </div>
+-        )}
+-      </div>
+-    </div>
+-  );
+-}
+\ No newline at end of file
+-- 
+2.50.1 (Apple Git-155)
+
+
+From 5c80e54c0df174aa42a9f88d47f626f8656faf18 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 14:53:29 +0530
+Subject: [PATCH 2/2] Actually wire up Edit/Delete on Tribes questions
+ (previous commit only removed dead files)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The previous commit's message described wiring up question
+Edit/Delete, but a git add ordering mistake meant only the two dead
+file deletions were actually staged — the real code changes to
+AskQuestionDialog.tsx and community-new.tsx never made it in. This
+commit is those changes:
+
+- AskQuestionDialog gets an optional edit mode (questionId +
+  initialValues + externally-controlled open state), using PATCH
+  instead of POST when editing.
+- community-new.tsx passes currentUserId to QuestionCard (without
+  it, isAuthor was always false and Edit/Delete never appeared for
+  anyone), wires handleEditQuestion to open the dialog pre-filled,
+  wires handleDeleteQuestion to a real DELETE mutation, and renders
+  one controlled edit-dialog instance for the question list.
+- Recolored the stats row, search focus ring, and sort-tab active
+  state from raw purple/pink/red to brand/accent tokens.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ client/src/components/AskQuestionDialog.tsx | 110 +++++++++++++-------
+ client/src/pages/community-new.tsx          |  60 ++++++++---
+ 2 files changed, 123 insertions(+), 47 deletions(-)
+
+diff --git a/client/src/components/AskQuestionDialog.tsx b/client/src/components/AskQuestionDialog.tsx
+index 2106158..c934867 100644
+--- a/client/src/components/AskQuestionDialog.tsx
++++ b/client/src/components/AskQuestionDialog.tsx
+@@ -1,4 +1,4 @@
+-import { useState } from "react";
++import { useState, useEffect } from "react";
+ import { useForm } from "react-hook-form";
+ import { zodResolver } from "@hookform/resolvers/zod";
+ import { z } from "zod";
+@@ -32,42 +32,80 @@ interface AskQuestionDialogProps {
+   topics: Topic[];
+   isAuthenticated: boolean;
+   onSignInRequired: () => void;
+-  children: React.ReactNode;
++  children?: React.ReactNode;
++  // Edit mode: when questionId is set, the dialog edits that question
++  // instead of creating a new one. Open state is controlled externally
++  // so a single instance can be reused across a list of questions.
++  questionId?: string;
++  initialValues?: Partial<QuestionFormData>;
++  open?: boolean;
++  onOpenChange?: (open: boolean) => void;
+ }
+ 
+-export function AskQuestionDialog({ topics, isAuthenticated, onSignInRequired, children }: AskQuestionDialogProps) {
+-  const [isOpen, setIsOpen] = useState(false);
++export function AskQuestionDialog({
++  topics,
++  isAuthenticated,
++  onSignInRequired,
++  children,
++  questionId,
++  initialValues,
++  open: controlledOpen,
++  onOpenChange: setControlledOpen,
++}: AskQuestionDialogProps) {
++  const isEditMode = !!questionId;
++  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
++  const isOpen = controlledOpen ?? uncontrolledOpen;
++  const setIsOpen = setControlledOpen ?? setUncontrolledOpen;
+   const [currentTab, setCurrentTab] = useState("compose");
+   const [tagInput, setTagInput] = useState("");
+-  
++
+   const queryClient = useQueryClient();
+   const { toast } = useToast();
+ 
+   const form = useForm<QuestionFormData>({
+     resolver: zodResolver(questionSchema),
+     defaultValues: {
+-      title: "",
+-      body: "",
+-      topicId: "",
+-      tags: [],
+-      isAnonymous: false,
++      title: initialValues?.title ?? "",
++      body: initialValues?.body ?? "",
++      topicId: initialValues?.topicId ?? "",
++      tags: initialValues?.tags ?? [],
++      isAnonymous: initialValues?.isAnonymous ?? false,
+     },
+   });
+ 
+-  const createQuestionMutation = useMutation({
+-    mutationFn: (data: QuestionFormData) => apiRequest('POST', '/api/questions', data),
++  // Re-sync form values when opening the dialog for a different question
++  useEffect(() => {
++    if (isOpen && initialValues) {
++      form.reset({
++        title: initialValues.title ?? "",
++        body: initialValues.body ?? "",
++        topicId: initialValues.topicId ?? "",
++        tags: initialValues.tags ?? [],
++        isAnonymous: initialValues.isAnonymous ?? false,
++      });
++    }
++    // eslint-disable-next-line react-hooks/exhaustive-deps
++  }, [isOpen, questionId]);
++
++  const saveQuestionMutation = useMutation({
++    mutationFn: (data: QuestionFormData) =>
++      isEditMode
++        ? apiRequest('PATCH', `/api/questions/${questionId}`, data)
++        : apiRequest('POST', '/api/questions', data),
+     onSuccess: () => {
+       queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
+       setIsOpen(false);
+-      form.reset();
++      if (!isEditMode) {
++        form.reset();
++      }
+       setCurrentTab("compose");
+-      toast({ 
+-        title: "Question posted successfully!",
+-        description: "Your question is now live in the community."
++      toast({
++        title: isEditMode ? "Question updated" : "Question posted successfully!",
++        description: isEditMode ? "Your changes have been saved." : "Your question is now live in the community."
+       });
+     },
+     onError: (error: any) => {
+-      console.error("Question creation error:", error);
++      console.error("Question save error:", error);
+       if (error.message.includes('401')) {
+         toast({
+           title: "Authentication required",
+@@ -78,10 +116,10 @@ export function AskQuestionDialog({ topics, isAuthenticated, onSignInRequired, c
+         onSignInRequired();
+         return;
+       }
+-      toast({ 
+-        title: "Failed to post question", 
+-        description: error.message, 
+-        variant: "destructive" 
++      toast({
++        title: isEditMode ? "Failed to update question" : "Failed to post question",
++        description: error.message,
++        variant: "destructive"
+       });
+     },
+   });
+@@ -92,7 +130,7 @@ export function AskQuestionDialog({ topics, isAuthenticated, onSignInRequired, c
+       onSignInRequired();
+       return;
+     }
+-    createQuestionMutation.mutate(data);
++    saveQuestionMutation.mutate(data);
+   };
+ 
+   const handleTagAdd = () => {
+@@ -115,15 +153,13 @@ export function AskQuestionDialog({ topics, isAuthenticated, onSignInRequired, c
+ 
+   return (
+     <Dialog open={isOpen} onOpenChange={setIsOpen}>
+-      <DialogTrigger asChild>
+-        {children}
+-      </DialogTrigger>
+-      
++      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
++
+       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+         <DialogHeader>
+           <DialogTitle className="flex items-center gap-2">
+-            <MessageSquare className="h-5 w-5 text-ceylon-blue" />
+-            Ask a Question
++            <MessageSquare className="h-5 w-5 text-accent" />
++            {isEditMode ? "Edit Question" : "Ask a Question"}
+           </DialogTitle>
+         </DialogHeader>
+ 
+@@ -301,12 +337,14 @@ export function AskQuestionDialog({ topics, isAuthenticated, onSignInRequired, c
+                     Preview
+                   </Button>
+                   
+-                  <Button 
+-                    type="submit" 
+-                    disabled={createQuestionMutation.isPending}
++                  <Button
++                    type="submit"
++                    disabled={saveQuestionMutation.isPending}
+                     className="bg-ceylon-green hover:bg-ceylon-green/90"
+                   >
+-                    {createQuestionMutation.isPending ? "Posting..." : "Post Question"}
++                    {saveQuestionMutation.isPending
++                      ? (isEditMode ? "Saving..." : "Posting...")
++                      : (isEditMode ? "Save Changes" : "Post Question")}
+                   </Button>
+                 </div>
+               </form>
+@@ -362,12 +400,14 @@ export function AskQuestionDialog({ topics, isAuthenticated, onSignInRequired, c
+                 ← Back to Edit
+               </Button>
+               
+-              <Button 
++              <Button
+                 onClick={form.handleSubmit(onSubmit)}
+-                disabled={createQuestionMutation.isPending || !watchedValues.title || !watchedValues.body}
++                disabled={saveQuestionMutation.isPending || !watchedValues.title || !watchedValues.body}
+                 className="bg-ceylon-green hover:bg-ceylon-green/90"
+               >
+-                {createQuestionMutation.isPending ? "Posting..." : "Post Question"}
++                {saveQuestionMutation.isPending
++                  ? (isEditMode ? "Saving..." : "Posting...")
++                  : (isEditMode ? "Save Changes" : "Post Question")}
+               </Button>
+             </div>
+           </TabsContent>
+diff --git a/client/src/pages/community-new.tsx b/client/src/pages/community-new.tsx
+index 94a4871..cc9c09b 100644
+--- a/client/src/pages/community-new.tsx
++++ b/client/src/pages/community-new.tsx
+@@ -1,16 +1,14 @@
+ import { useState, useEffect } from "react";
+ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
++import { apiRequest } from "@/lib/queryClient";
+ import { Button } from "@/components/ui/button";
+ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+ import { Plus, MessageSquare } from "lucide-react";
+ import { useToast } from "@/hooks/use-toast";
+-import { apiRequest } from "@/lib/queryClient";
+ import { Link, useLocation } from "wouter";
+ import type { QuestionWithDetails, Topic, User as UserType } from "@shared/schema";
+ import Navigation from "@/components/navigation";
+ import Footer from "@/components/Footer";
+-import { CommunityStats } from "@/components/CommunityStats";
+-import { StickyFilters } from "@/components/StickyFilters";
+ import { AskQuestionDialog } from "@/components/AskQuestionDialog";
+ import { QuestionCard } from "@/components/QuestionCard";
+ import { useAuth } from "@/hooks/useAuth";
+@@ -62,13 +60,31 @@ export default function CommunityPage() {
+     setCurrentPage(1);
+   }, [searchQuery, selectedTopic, sortBy]);
+ 
++  const [editingQuestion, setEditingQuestion] = useState<QuestionWithDetails | null>(null);
++
++  const deleteQuestionMutation = useMutation({
++    mutationFn: (questionId: string) => apiRequest('DELETE', `/api/questions/${questionId}`),
++    onSuccess: () => {
++      queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
++      toast({ title: "Question deleted" });
++    },
++    onError: (error: any) => {
++      toast({
++        title: "Failed to delete question",
++        description: error.message,
++        variant: "destructive",
++      });
++    },
++  });
++
+   const handleEditQuestion = (questionId: string) => {
+-    console.log("Edit question:", questionId);
++    const question = questions.find((q) => q.id === questionId);
++    if (question) setEditingQuestion(question);
+   };
+ 
+   const handleDeleteQuestion = (questionId: string) => {
+     if (confirm("Are you sure you want to delete this question?")) {
+-      console.log("Delete question:", questionId);
++      deleteQuestionMutation.mutate(questionId);
+     }
+   };
+ 
+@@ -181,7 +197,7 @@ export default function CommunityPage() {
+           {/* Stats Row */}
+           <div className="flex items-center justify-center">
+             <div className="flex items-center gap-8 px-6 py-4 bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100">
+-              <div className="flex items-center gap-2 text-purple-600">
++              <div className="flex items-center gap-2 text-brand">
+                 <MessageSquare className="h-5 w-5" />
+                 <span className="font-semibold text-lg">{questionsResponse?.total ?? 0}</span>
+                 <span className="text-sm text-gray-600">Questions</span>
+@@ -189,7 +205,7 @@ export default function CommunityPage() {
+               
+               <div className="h-8 w-px bg-gray-200" />
+               
+-              <div className="flex items-center gap-2 text-pink-600">
++              <div className="flex items-center gap-2 text-accent">
+                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                 </svg>
+@@ -199,7 +215,7 @@ export default function CommunityPage() {
+               
+               <div className="h-8 w-px bg-gray-200" />
+               
+-              <div className="flex items-center gap-2 text-red-600">
++              <div className="flex items-center gap-2 text-text-primary">
+                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                   <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+                 </svg>
+@@ -221,7 +237,7 @@ export default function CommunityPage() {
+                 placeholder="Search questions about Sri Lanka travel..."
+                 value={searchQuery}
+                 onChange={(e) => setSearchQuery(e.target.value)}
+-                className="w-full pl-12 pr-4 py-4 text-lg border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 placeholder-gray-500"
++                className="w-full pl-12 pr-4 py-4 text-lg border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent bg-gray-50 placeholder-gray-500"
+               />
+             </div>
+             
+@@ -236,8 +252,8 @@ export default function CommunityPage() {
+                       onClick={() => setSortBy(sort)}
+                       className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                         sortBy === sort 
+-                          ? "bg-white text-purple-600 shadow-sm" 
+-                          : "text-gray-600 hover:text-purple-600"
++                          ? "bg-white text-brand shadow-sm" 
++                          : "text-gray-600 hover:text-brand"
+                       }`}
+                     >
+                       <span className="flex items-center gap-2">
+@@ -257,7 +273,7 @@ export default function CommunityPage() {
+                 <select
+                   value={selectedTopic}
+                   onChange={(e) => setSelectedTopic(e.target.value)}
+-                  className="px-4 py-2 border border-gray-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
++                  className="px-4 py-2 border border-gray-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
+                 >
+                   <option value="all">All Topics</option>
+                   {topics && topics.length > 0 && topics.map((topic) => (
+@@ -346,6 +362,7 @@ export default function CommunityPage() {
+                 <QuestionCard
+                   key={question.id}
+                   question={question}
++                  currentUserId={user?.id}
+                   onEdit={handleEditQuestion}
+                   onDelete={handleDeleteQuestion}
+                 />
+@@ -373,6 +390,25 @@ export default function CommunityPage() {
+         </div>
+       </div>
+       
++      {/* Edit Question Dialog (controlled, reused across all questions) */}
++      {editingQuestion && (
++        <AskQuestionDialog
++          topics={topics}
++          isAuthenticated={isAuthenticated}
++          onSignInRequired={() => setLocation('/auth/signin')}
++          questionId={editingQuestion.id}
++          initialValues={{
++            title: editingQuestion.title,
++            body: editingQuestion.body,
++            topicId: editingQuestion.topicId ?? "",
++            tags: editingQuestion.tags ?? [],
++            isAnonymous: editingQuestion.isAnonymous ?? false,
++          }}
++          open={!!editingQuestion}
++          onOpenChange={(open) => { if (!open) setEditingQuestion(null); }}
++        />
++      )}
++
+       <Footer />
+     </div>
+   );
+-- 
+2.50.1 (Apple Git-155)
+

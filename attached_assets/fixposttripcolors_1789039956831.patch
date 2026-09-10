@@ -1,0 +1,659 @@
+From bf7b329284790a3d7a96cbf9887b7567eb977e80 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 17:00:05 +0530
+Subject: [PATCH] Recolor Post Trip flow to brand palette; fix Detailed card
+ and wizard action buttons
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Post Trip's landing screen and the entire "Detailed Trip" wizard
+(7 steps + preview) were still on the pre-rebrand palette — most
+visibly, the wizard's own Back/Preview/Publish/Next buttons used an
+orange-red-pink gradient with no relation to the site's coral/ocean
+brand, on what's the primary CTA for the platform's main trip type.
+
+- post-trip.tsx: header gradient and the "Detailed Trip" choice card
+  moved from orange/blue/pink to brand/accent. Left the "Quick Trip"
+  card and its loading spinner on orange — that's this app's
+  established, deliberate color for Quick Trip UI everywhere else,
+  not a rebrand miss. The Detailed card now matches accent (ocean),
+  consistent with its own loading spinner which was already
+  correctly using ceylon-blue.
+- PostTripWizard.tsx: Back/Preview/Publish/Next buttons moved off
+  orange/red/pink onto brand tokens; "Saved just now" onto success.
+- All 7 step components + QuickTripWizard: generic "tips" info boxes
+  (blue) onto accent, required-field asterisks (red) onto danger,
+  free/success/enabled states (green) onto the success token,
+  "Solo Traveler Friendly" sections (pink) onto brand. Left
+  QuickTripWizard's orange completely untouched (correct there), and
+  left SafetyChecklist.tsx and StepPreview's "Safety Considerations"
+  box alone — both use color purely to distinguish sections/severity
+  categorically, the same deliberate-variety pattern already kept in
+  PreferencesForm.tsx earlier in this rebrand.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ .../post-trip/DestinationSelect.tsx           |  6 ++--
+ .../components/post-trip/MediaUploader.tsx    |  8 +++---
+ .../components/post-trip/PostTripWizard.tsx   | 10 +++----
+ .../components/post-trip/QuickTripWizard.tsx  | 28 +++++++++----------
+ .../components/post-trip/steps/StepBasics.tsx | 12 ++++----
+ .../post-trip/steps/StepCapacity.tsx          | 22 +++++++--------
+ .../components/post-trip/steps/StepMedia.tsx  |  6 ++--
+ .../post-trip/steps/StepPreview.tsx           | 14 +++++-----
+ .../post-trip/steps/StepPricing.tsx           | 16 +++++------
+ .../post-trip/steps/StepSafetyTerms.tsx       |  8 +++---
+ .../post-trip/steps/StepSchedule.tsx          | 12 ++++----
+ client/src/pages/post-trip.tsx                | 16 +++++------
+ 12 files changed, 79 insertions(+), 79 deletions(-)
+
+diff --git a/client/src/components/post-trip/DestinationSelect.tsx b/client/src/components/post-trip/DestinationSelect.tsx
+index ae301e6..fab0e18 100644
+--- a/client/src/components/post-trip/DestinationSelect.tsx
++++ b/client/src/components/post-trip/DestinationSelect.tsx
+@@ -96,7 +96,7 @@ export function DestinationSelect({
+   return (
+     <div className={className}>
+       <Label htmlFor="destination-input" className="text-sm font-medium mb-2 block">
+-        {label} {required && <span className="text-red-500">*</span>}
++        {label} {required && <span className="text-danger">*</span>}
+       </Label>
+       
+       {/* Toggle between input and dropdown modes */}
+@@ -161,7 +161,7 @@ export function DestinationSelect({
+                   className="flex items-center"
+                   data-testid="destination-custom-option"
+                 >
+-                  <MapPin className="h-4 w-4 mr-2 text-blue-500" />
++                  <MapPin className="h-4 w-4 mr-2 text-accent" />
+                   <span>Use "{searchQuery}" as custom location</span>
+                 </CommandItem>
+               </CommandGroup>
+@@ -199,7 +199,7 @@ export function DestinationSelect({
+       )}
+       
+       {error && (
+-        <p className="text-sm text-red-600 mt-1" data-testid="destination-error">
++        <p className="text-sm text-danger mt-1" data-testid="destination-error">
+           {error}
+         </p>
+       )}
+diff --git a/client/src/components/post-trip/MediaUploader.tsx b/client/src/components/post-trip/MediaUploader.tsx
+index dd3152d..f455598 100644
+--- a/client/src/components/post-trip/MediaUploader.tsx
++++ b/client/src/components/post-trip/MediaUploader.tsx
+@@ -188,7 +188,7 @@ export function MediaUploader({
+       <div
+         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+           isDragging
+-            ? 'border-ceylon-blue bg-blue-50'
++            ? 'border-accent bg-accent-subtle'
+             : 'border-gray-300 hover:border-gray-400'
+         }`}
+         onDragOver={handleDragOver}
+@@ -198,7 +198,7 @@ export function MediaUploader({
+       >
+         {isCompressing ? (
+           <div className="space-y-4">
+-            <Zap className="mx-auto h-12 w-12 text-green-500 animate-pulse" />
++            <Zap className="mx-auto h-12 w-12 text-accent animate-pulse" />
+             <div className="text-lg font-medium text-gray-900">
+               Compressing Images...
+             </div>
+@@ -229,7 +229,7 @@ export function MediaUploader({
+               Maximum {maxFiles} images • Auto-compressed for optimal quality
+             </p>
+             {compressionStats && (
+-              <div className="mt-3 text-xs text-green-600 bg-green-50 rounded-lg px-3 py-2 inline-block">
++              <div className="mt-3 text-xs text-success bg-success/10 rounded-lg px-3 py-2 inline-block">
+                 <Zap className="inline h-3 w-3 mr-1" />
+                 Last upload saved {formatFileSize(compressionStats.originalSize - compressionStats.compressedSize)} 
+                 ({compressionStats.compressionRatio.toFixed(0)}% smaller)
+@@ -348,7 +348,7 @@ export function MediaUploader({
+       )}
+       
+       {error && (
+-        <p className="text-sm text-red-600 mt-2" data-testid="media-uploader-error">
++        <p className="text-sm text-danger mt-2" data-testid="media-uploader-error">
+           {error}
+         </p>
+       )}
+diff --git a/client/src/components/post-trip/PostTripWizard.tsx b/client/src/components/post-trip/PostTripWizard.tsx
+index dd8623d..6a63ac3 100644
+--- a/client/src/components/post-trip/PostTripWizard.tsx
++++ b/client/src/components/post-trip/PostTripWizard.tsx
+@@ -357,7 +357,7 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
+               </div>
+             )}
+             {isSuccess && !isSaving && (
+-              <div className="text-green-600">Saved just now</div>
++              <div className="text-success">Saved just now</div>
+             )}
+           </div>
+         </div>
+@@ -400,7 +400,7 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
+                   type="button"
+                   variant="outline"
+                   onClick={handleBack}
+-                  className="border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300"
++                  className="border-ui-line text-text-secondary hover:bg-gray-50 hover:border-gray-300"
+                   data-testid="wizard-back-button"
+                 >
+                   <ChevronLeft className="w-4 h-4 mr-1" />
+@@ -413,7 +413,7 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
+                   type="button"
+                   variant="outline"
+                   onClick={handlePreview}
+-                  className="border-pink-200 text-pink-600 hover:bg-pink-50 hover:border-pink-300"
++                  className="border-accent/30 text-accent hover:bg-accent-subtle hover:border-accent/50"
+                   data-testid="wizard-preview-button"
+                 >
+                   <Eye className="w-4 h-4 mr-1" />
+@@ -425,7 +425,7 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
+                 <Button
+                   type="button"
+                   onClick={handlePublish}
+-                  className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-600 text-white hover:from-orange-600 hover:via-red-600 hover:to-pink-700 transition-all duration-300"
++                  className="bg-gradient-to-r from-brand to-brand-hover text-white hover:from-brand-hover hover:to-brand transition-all duration-300"
+                   data-testid="wizard-publish-button"
+                 >
+                   <Send className="w-4 h-4 mr-1" />
+@@ -436,7 +436,7 @@ export function PostTripWizard({ draftId, initialData }: PostTripWizardProps) {
+                   type="button"
+                   onClick={handleNext}
+                   disabled={!canProceed}
+-                  className="bg-gradient-to-r from-orange-400 to-pink-500 text-white hover:from-orange-500 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
++                  className="bg-gradient-to-r from-brand to-brand-hover text-white hover:from-brand-hover hover:to-brand disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                   data-testid="wizard-next-button"
+                 >
+                   Next
+diff --git a/client/src/components/post-trip/QuickTripWizard.tsx b/client/src/components/post-trip/QuickTripWizard.tsx
+index 6a3bcdc..07e9062 100644
+--- a/client/src/components/post-trip/QuickTripWizard.tsx
++++ b/client/src/components/post-trip/QuickTripWizard.tsx
+@@ -158,18 +158,18 @@ export function QuickTripWizard() {
+                     isActive
+                       ? "bg-orange-500 text-white shadow-lg"
+                       : isComplete
+-                      ? "bg-green-500 text-white"
++                      ? "bg-success text-white"
+                       : "bg-gray-200 text-gray-500"
+                   }`}
+                 >
+                   {isComplete ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
+                 </div>
+-                <span className={`text-xs mt-1 font-medium ${isActive ? "text-orange-600" : isComplete ? "text-green-600" : "text-gray-400"}`}>
++                <span className={`text-xs mt-1 font-medium ${isActive ? "text-orange-600" : isComplete ? "text-success" : "text-gray-400"}`}>
+                   {step.title}
+                 </span>
+               </div>
+               {index < STEPS.length - 1 && (
+-                <div className={`h-0.5 flex-1 mx-2 ${currentStep > step.id ? "bg-green-400" : "bg-gray-200"}`} />
++                <div className={`h-0.5 flex-1 mx-2 ${currentStep > step.id ? "bg-success" : "bg-gray-200"}`} />
+               )}
+             </div>
+           );
+@@ -228,7 +228,7 @@ export function QuickTripWizard() {
+                     render={({ field }) => (
+                       <FormItem>
+                         <FormLabel className="flex items-center gap-1">
+-                          <Calendar className="w-4 h-4" /> Date <span className="text-red-500">*</span>
++                          <Calendar className="w-4 h-4" /> Date <span className="text-danger">*</span>
+                         </FormLabel>
+                         <FormControl>
+                           <Input type="date" min={minDate} max={maxDate} {...field} value={typeof field.value === 'string' ? field.value : ''} />
+@@ -245,7 +245,7 @@ export function QuickTripWizard() {
+                     render={({ field }) => (
+                       <FormItem>
+                         <FormLabel className="flex items-center gap-1">
+-                          <Clock className="w-4 h-4" /> Time <span className="text-red-500">*</span>
++                          <Clock className="w-4 h-4" /> Time <span className="text-danger">*</span>
+                         </FormLabel>
+                         <Select value={field.value} onValueChange={field.onChange}>
+                           <FormControl>
+@@ -281,7 +281,7 @@ export function QuickTripWizard() {
+                   name="title"
+                   render={({ field }) => (
+                     <FormItem>
+-                      <FormLabel>Trip Title <span className="text-red-500">*</span></FormLabel>
++                      <FormLabel>Trip Title <span className="text-danger">*</span></FormLabel>
+                       <FormControl>
+                         <Input placeholder="e.g., Quick ride to Ella" {...field} />
+                       </FormControl>
+@@ -295,7 +295,7 @@ export function QuickTripWizard() {
+                   name="description"
+                   render={({ field }) => (
+                     <FormItem>
+-                      <FormLabel>Description <span className="text-red-500">*</span></FormLabel>
++                      <FormLabel>Description <span className="text-danger">*</span></FormLabel>
+                       <FormControl>
+                         <Textarea
+                           placeholder="Briefly describe your trip..."
+@@ -315,7 +315,7 @@ export function QuickTripWizard() {
+                     name="category"
+                     render={({ field }) => (
+                       <FormItem>
+-                        <FormLabel>Category <span className="text-red-500">*</span></FormLabel>
++                        <FormLabel>Category <span className="text-danger">*</span></FormLabel>
+                         <Select value={field.value} onValueChange={field.onChange}>
+                           <FormControl>
+                             <SelectTrigger>
+@@ -338,7 +338,7 @@ export function QuickTripWizard() {
+                     name="seatsAvailable"
+                     render={({ field }) => (
+                       <FormItem>
+-                        <FormLabel>Seats Available <span className="text-red-500">*</span></FormLabel>
++                        <FormLabel>Seats Available <span className="text-danger">*</span></FormLabel>
+                         <FormControl>
+                           <Input
+                             type="number"
+@@ -356,13 +356,13 @@ export function QuickTripWizard() {
+ 
+                 <div>
+                   <FormLabel className="flex items-center gap-1 mb-3">
+-                    <DollarSign className="w-4 h-4" /> Seat Pricing <span className="text-red-500">*</span>
++                    <DollarSign className="w-4 h-4" /> Seat Pricing <span className="text-danger">*</span>
+                   </FormLabel>
+                   <div className="grid grid-cols-2 gap-3">
+                     <div
+                       className={`cursor-pointer border-2 rounded-lg p-4 text-center transition-all ${
+                         formData.isFree
+-                          ? "border-green-500 bg-green-50 ring-2 ring-green-200"
++                          ? "border-success bg-success/10 ring-2 ring-success/20"
+                           : "border-gray-200 hover:border-gray-300"
+                       }`}
+                       onClick={() => {
+@@ -398,7 +398,7 @@ export function QuickTripWizard() {
+                     name="seatPrice"
+                     render={({ field }) => (
+                       <FormItem>
+-                        <FormLabel>Price per Seat (LKR) <span className="text-red-500">*</span></FormLabel>
++                        <FormLabel>Price per Seat (LKR) <span className="text-danger">*</span></FormLabel>
+                         <FormControl>
+                           <div className="relative">
+                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">LKR</span>
+@@ -493,7 +493,7 @@ export function QuickTripWizard() {
+                   <div>
+                     <p className="text-sm text-gray-500">Pricing</p>
+                     {formData.isFree ? (
+-                      <Badge className="bg-green-100 text-green-700 border-green-300">Free</Badge>
++                      <Badge className="bg-success/10 text-success border-success/30">Free</Badge>
+                     ) : (
+                       <p className="font-medium text-orange-600">LKR {formData.seatPrice?.toLocaleString()} per seat</p>
+                     )}
+@@ -521,7 +521,7 @@ export function QuickTripWizard() {
+                 type="button"
+                 onClick={handleSubmit}
+                 disabled={createMutation.isPending}
+-                className="bg-green-600 hover:bg-green-700"
++                className="bg-success hover:bg-success/90"
+               >
+                 {createMutation.isPending ? "Posting..." : (
+                   <>
+diff --git a/client/src/components/post-trip/steps/StepBasics.tsx b/client/src/components/post-trip/steps/StepBasics.tsx
+index e5ae234..dafcb36 100644
+--- a/client/src/components/post-trip/steps/StepBasics.tsx
++++ b/client/src/components/post-trip/steps/StepBasics.tsx
+@@ -36,7 +36,7 @@ export function StepBasics({ form }: StepBasicsProps) {
+           render={({ field }) => (
+             <FormItem>
+               <FormLabel className="flex items-center gap-2">
+-                Trip Title <span className="text-red-500">*</span>
++                Trip Title <span className="text-danger">*</span>
+                 <TooltipProvider>
+                   <Tooltip>
+                     <TooltipTrigger>
+@@ -66,7 +66,7 @@ export function StepBasics({ form }: StepBasicsProps) {
+           name="description"
+           render={({ field }) => (
+             <FormItem>
+-              <FormLabel>Description <span className="text-red-500">*</span></FormLabel>
++              <FormLabel>Description <span className="text-danger">*</span></FormLabel>
+               <FormControl>
+                 <Textarea
+                   placeholder="Describe your trip in detail. Include highlights, what makes it special, and what participants can expect..."
+@@ -89,7 +89,7 @@ export function StepBasics({ form }: StepBasicsProps) {
+           name="category"
+           render={({ field }) => (
+             <FormItem>
+-              <FormLabel>Trip Category <span className="text-red-500">*</span></FormLabel>
++              <FormLabel>Trip Category <span className="text-danger">*</span></FormLabel>
+               <Select onValueChange={field.onChange} defaultValue={field.value}>
+                 <FormControl>
+                   <SelectTrigger data-testid="trip-category-select">
+@@ -118,9 +118,9 @@ export function StepBasics({ form }: StepBasicsProps) {
+       </div>
+ 
+       {/* Tips */}
+-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+-        <h4 className="font-medium text-blue-900 mb-2">💡 Tips for a great trip posting</h4>
+-        <ul className="text-sm text-blue-800 space-y-1">
++      <div className="bg-accent-subtle border border-accent/20 rounded-lg p-4">
++        <h4 className="font-medium text-accent mb-2">💡 Tips for a great trip posting</h4>
++        <ul className="text-sm text-text-secondary space-y-1">
+           <li>• Use specific locations and highlights in your title</li>
+           <li>• Describe the unique experiences participants will have</li>
+           <li>• Mention the skill level or physical requirements if any</li>
+diff --git a/client/src/components/post-trip/steps/StepCapacity.tsx b/client/src/components/post-trip/steps/StepCapacity.tsx
+index a7a6e2c..a50aba7 100644
+--- a/client/src/components/post-trip/steps/StepCapacity.tsx
++++ b/client/src/components/post-trip/steps/StepCapacity.tsx
+@@ -26,7 +26,7 @@ export function StepCapacity({ form }: StepCapacityProps) {
+             <FormItem>
+               <FormLabel className="flex items-center gap-2">
+                 <Users className="h-4 w-4" />
+-                Available Seats <span className="text-red-500">*</span>
++                Available Seats <span className="text-danger">*</span>
+                 <TooltipProvider>
+                   <Tooltip>
+                     <TooltipTrigger>
+@@ -65,10 +65,10 @@ export function StepCapacity({ form }: StepCapacityProps) {
+         />
+ 
+         {/* Solo Traveler Friendly */}
+-        <Card className="border-pink-200 bg-pink-50/50">
++        <Card className="border-brand/20 bg-brand-subtle/50">
+           <CardHeader>
+             <CardTitle className="flex items-center gap-2 text-lg">
+-              <Heart className="h-5 w-5 text-pink-600" />
++              <Heart className="h-5 w-5 text-brand" />
+               Solo Traveler Friendly
+             </CardTitle>
+             <CardDescription>
+@@ -80,7 +80,7 @@ export function StepCapacity({ form }: StepCapacityProps) {
+               control={form.control}
+               name="buddyFriendly"
+               render={({ field }) => (
+-                <FormItem className="flex flex-row items-center justify-between rounded-lg border-2 border-gray-200 p-4 bg-white hover:border-pink-300 transition-colors">
++                <FormItem className="flex flex-row items-center justify-between rounded-lg border-2 border-gray-200 p-4 bg-white hover:border-brand/40 transition-colors">
+                   <div className="space-y-0.5">
+                     <FormLabel className="text-base font-semibold flex items-center gap-2">
+                       <span className="text-lg">❤️</span>
+@@ -93,7 +93,7 @@ export function StepCapacity({ form }: StepCapacityProps) {
+                   <FormControl>
+                     <div className="flex items-center gap-3">
+                       <span className={`text-sm font-semibold ${
+-                        field.value ? 'text-green-600' : 'text-gray-500'
++                        field.value ? 'text-success' : 'text-gray-500'
+                       }`}>
+                         {field.value ? '✓ Enabled' : 'Disabled'}
+                       </span>
+@@ -152,9 +152,9 @@ export function StepCapacity({ form }: StepCapacityProps) {
+ 
+       {/* Buddy Friendly Benefits */}
+       {buddyFriendlyValue && (
+-        <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
+-          <h4 className="font-medium text-pink-900 mb-2">💕 Solo Traveler Friendly Benefits</h4>
+-          <ul className="text-sm text-pink-800 space-y-1">
++        <div className="bg-brand-subtle border border-brand/20 rounded-lg p-4">
++          <h4 className="font-medium text-brand mb-2">💕 Solo Traveler Friendly Benefits</h4>
++          <ul className="text-sm text-text-secondary space-y-1">
+             <li>• Your trip will be highlighted to solo travelers</li>
+             <li>• Attracts people who are open to making new friends</li>
+             <li>• Creates a welcoming atmosphere for everyone</li>
+@@ -164,9 +164,9 @@ export function StepCapacity({ form }: StepCapacityProps) {
+       )}
+ 
+       {/* Capacity Tips */}
+-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+-        <h4 className="font-medium text-blue-900 mb-2">👥 Capacity Planning Tips</h4>
+-        <ul className="text-sm text-blue-800 space-y-1">
++      <div className="bg-accent-subtle border border-accent/20 rounded-lg p-4">
++        <h4 className="font-medium text-accent mb-2">👥 Capacity Planning Tips</h4>
++        <ul className="text-sm text-text-secondary space-y-1">
+           <li>• Consider your vehicle's comfortable capacity</li>
+           <li>• Smaller groups (4-8) often have better dynamics</li>
+           <li>• Factor in luggage space for longer trips</li>
+diff --git a/client/src/components/post-trip/steps/StepMedia.tsx b/client/src/components/post-trip/steps/StepMedia.tsx
+index bd5547d..c0206b6 100644
+--- a/client/src/components/post-trip/steps/StepMedia.tsx
++++ b/client/src/components/post-trip/steps/StepMedia.tsx
+@@ -40,9 +40,9 @@ export function StepMedia({ form }: StepMediaProps) {
+       />
+ 
+       {/* Media Tips */}
+-      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+-        <h4 className="font-medium text-green-900 mb-2">📸 Photo Tips</h4>
+-        <ul className="text-sm text-green-800 space-y-1">
++      <div className="bg-accent-subtle border border-accent/20 rounded-lg p-4">
++        <h4 className="font-medium text-accent mb-2">📸 Photo Tips</h4>
++        <ul className="text-sm text-text-secondary space-y-1">
+           <li>• Use high-quality, well-lit photos</li>
+           <li>• Show the destination and activities clearly</li>
+           <li>• Include both landscape and people photos</li>
+diff --git a/client/src/components/post-trip/steps/StepPreview.tsx b/client/src/components/post-trip/steps/StepPreview.tsx
+index 1763eee..e602c75 100644
+--- a/client/src/components/post-trip/steps/StepPreview.tsx
++++ b/client/src/components/post-trip/steps/StepPreview.tsx
+@@ -74,25 +74,25 @@ export function StepPreview({ form }: StepPreviewProps) {
+   return (
+     <div className="space-y-6">
+       {/* Pre-publish Checklist */}
+-      <Card className={isReadyToPublish ? "border-green-200 bg-green-50/50" : "border-red-200 bg-red-50/50"}>
++      <Card className={isReadyToPublish ? "border-success/30 bg-success/10" : "border-danger/30 bg-danger/10"}>
+         <CardHeader>
+           <CardTitle className="flex items-center gap-2">
+             {isReadyToPublish ? (
+-              <CheckCircle2 className="h-5 w-5 text-green-600" />
++              <CheckCircle2 className="h-5 w-5 text-success" />
+             ) : (
+-              <AlertTriangle className="h-5 w-5 text-red-600" />
++              <AlertTriangle className="h-5 w-5 text-danger" />
+             )}
+             Pre-publish Checklist
+           </CardTitle>
+         </CardHeader>
+         <CardContent>
+           {isReadyToPublish ? (
+-            <div className="text-green-800">
++            <div className="text-success">
+               <p className="font-medium mb-2">✅ All required fields completed!</p>
+               <p className="text-sm">Your trip is ready to be published.</p>
+             </div>
+           ) : (
+-            <div className="text-red-800">
++            <div className="text-danger">
+               <p className="font-medium mb-2">❌ Missing required information:</p>
+               <ul className="text-sm space-y-1">
+                 {missingFields.map(({ label }) => (
+@@ -136,7 +136,7 @@ export function StepPreview({ form }: StepPreviewProps) {
+               )}
+             </div>
+             {formData.buddyFriendly && (
+-              <Badge variant="outline" className="text-pink-600 border-pink-300">
++              <Badge variant="outline" className="text-brand border-brand/30">
+                 Solo Traveler Friendly
+               </Badge>
+             )}
+@@ -236,7 +236,7 @@ export function StepPreview({ form }: StepPreviewProps) {
+             <h4 className="font-medium mb-2">Organizer Contact</h4>
+             <div className="flex items-center gap-2">
+               <span className="text-sm text-gray-600">🔒 Contact details are private</span>
+-              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
++              <span className="text-xs bg-accent-subtle text-accent px-2 py-1 rounded">
+                 Shared through secure chat
+               </span>
+             </div>
+diff --git a/client/src/components/post-trip/steps/StepPricing.tsx b/client/src/components/post-trip/steps/StepPricing.tsx
+index 9c88610..af1f188 100644
+--- a/client/src/components/post-trip/steps/StepPricing.tsx
++++ b/client/src/components/post-trip/steps/StepPricing.tsx
+@@ -46,7 +46,7 @@ export function StepPricing({ form }: StepPricingProps) {
+             </CardDescription>
+           </CardHeader>
+           <CardContent>
+-            <div className="flex items-center justify-between p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-300 transition-colors">
++            <div className="flex items-center justify-between p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-accent/40 transition-colors">
+               <div className="flex items-center space-x-3">
+                 <span className="text-lg">💰</span>
+                 <div>
+@@ -60,7 +60,7 @@ export function StepPricing({ form }: StepPricingProps) {
+               </div>
+               <div className="flex items-center gap-3">
+                 <span className={`text-sm font-semibold ${
+-                  useRange ? 'text-green-600' : 'text-gray-500'
++                  useRange ? 'text-success' : 'text-gray-500'
+                 }`}>
+                   {useRange ? '✓ Range' : 'Fixed'}
+                 </span>
+@@ -177,7 +177,7 @@ export function StepPricing({ form }: StepPricingProps) {
+         )}
+ 
+         {/* Free Trip Option */}
+-        <Card className="border-green-200 bg-green-50/50">
++        <Card className="border-success/30 bg-success/10">
+           <CardContent className="pt-6">
+             <div className="flex items-start space-x-3">
+               <input
+@@ -198,10 +198,10 @@ export function StepPricing({ form }: StepPricingProps) {
+                 data-testid="free-trip-checkbox"
+               />
+               <div className="flex-1">
+-                <label htmlFor="free-trip" className="text-sm font-medium text-green-900">
++                <label htmlFor="free-trip" className="text-sm font-medium text-success">
+                   This is a free trip
+                 </label>
+-                <p className="text-xs text-green-700 mt-1">
++                <p className="text-xs text-success/80 mt-1">
+                   Participants only need to cover their own expenses (food, entrance fees, etc.)
+                 </p>
+               </div>
+@@ -211,9 +211,9 @@ export function StepPricing({ form }: StepPricingProps) {
+       </div>
+ 
+       {/* Pricing Tips */}
+-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+-        <h4 className="font-medium text-blue-900 mb-2">💰 Pricing Guidelines</h4>
+-        <ul className="text-sm text-blue-800 space-y-1">
++      <div className="bg-accent-subtle border border-accent/20 rounded-lg p-4">
++        <h4 className="font-medium text-accent mb-2">💰 Pricing Guidelines</h4>
++        <ul className="text-sm text-text-secondary space-y-1">
+           <li>• Consider transportation costs (fuel, tolls, parking)</li>
+           <li>• Factor in entrance fees and activity costs</li>
+           <li>• Account for your time and effort as organizer</li>
+diff --git a/client/src/components/post-trip/steps/StepSafetyTerms.tsx b/client/src/components/post-trip/steps/StepSafetyTerms.tsx
+index 7b81145..4edc0f4 100644
+--- a/client/src/components/post-trip/steps/StepSafetyTerms.tsx
++++ b/client/src/components/post-trip/steps/StepSafetyTerms.tsx
+@@ -143,7 +143,7 @@ export function StepSafetyTerms({ form }: StepSafetyTermsProps) {
+                           setCustomCountryCode("");
+                           form.setValue("organizerCountryCode", "+94");
+                         }}
+-                        className="text-sm text-blue-600 hover:underline"
++                        className="text-sm text-accent hover:underline"
+                       >
+                         ← Back to country list
+                       </button>
+@@ -221,9 +221,9 @@ export function StepSafetyTerms({ form }: StepSafetyTermsProps) {
+         />
+ 
+         {/* Privacy Notice */}
+-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+-          <p className="text-sm text-blue-800 font-medium mb-2">🔒 Your Privacy is Protected</p>
+-          <p className="text-sm text-blue-700">
++        <div className="bg-accent-subtle border border-accent/20 rounded-lg p-4">
++          <p className="text-sm text-accent font-medium mb-2">🔒 Your Privacy is Protected</p>
++          <p className="text-sm text-text-secondary">
+             Contact details are kept private and only shared with accepted participants through our secure chat system. 
+             You control who gets your contact information.
+           </p>
+diff --git a/client/src/components/post-trip/steps/StepSchedule.tsx b/client/src/components/post-trip/steps/StepSchedule.tsx
+index 1d0ca11..73f7c62 100644
+--- a/client/src/components/post-trip/steps/StepSchedule.tsx
++++ b/client/src/components/post-trip/steps/StepSchedule.tsx
+@@ -93,7 +93,7 @@ export function StepSchedule({ form }: StepScheduleProps) {
+           name="region"
+           render={({ field }) => (
+             <FormItem>
+-              <FormLabel>Region <span className="text-red-500">*</span></FormLabel>
++              <FormLabel>Region <span className="text-danger">*</span></FormLabel>
+               <Select onValueChange={field.onChange} value={field.value}>
+                 <FormControl>
+                   <SelectTrigger data-testid="region-select">
+@@ -126,7 +126,7 @@ export function StepSchedule({ form }: StepScheduleProps) {
+               <FormItem>
+                 <FormLabel className="flex items-center gap-2">
+                   <Calendar className="h-4 w-4" />
+-                  Trip Date <span className="text-red-500">*</span>
++                  Trip Date <span className="text-danger">*</span>
+                 </FormLabel>
+                 <FormControl>
+                   <Input
+@@ -150,7 +150,7 @@ export function StepSchedule({ form }: StepScheduleProps) {
+               <FormItem>
+                 <FormLabel className="flex items-center gap-2">
+                   <Clock className="h-4 w-4" />
+-                  Departure Time <span className="text-red-500">*</span>
++                  Departure Time <span className="text-danger">*</span>
+                 </FormLabel>
+                 <Select onValueChange={field.onChange} value={field.value}>
+                   <FormControl>
+@@ -200,9 +200,9 @@ export function StepSchedule({ form }: StepScheduleProps) {
+       </div>
+ 
+       {/* Schedule Tips */}
+-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+-        <h4 className="font-medium text-amber-900 mb-2">📅 Scheduling Tips</h4>
+-        <ul className="text-sm text-amber-800 space-y-1">
++      <div className="bg-accent-subtle border border-accent/20 rounded-lg p-4">
++        <h4 className="font-medium text-accent mb-2">📅 Scheduling Tips</h4>
++        <ul className="text-sm text-text-secondary space-y-1">
+           <li>• Choose a departure time that allows for easy meetups</li>
+           <li>• Consider traffic patterns when setting departure times</li>
+           <li>• Allow buffer time for unexpected delays</li>
+diff --git a/client/src/pages/post-trip.tsx b/client/src/pages/post-trip.tsx
+index 8a21392..126cb0c 100644
+--- a/client/src/pages/post-trip.tsx
++++ b/client/src/pages/post-trip.tsx
+@@ -107,7 +107,7 @@ export default function PostTripPage() {
+       
+       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+         <div className="mb-8">
+-          <div className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-600 rounded-2xl p-8 text-white shadow-xl">
++          <div className="bg-gradient-to-r from-brand to-accent rounded-2xl p-8 text-white shadow-xl">
+             <div className="flex items-center justify-between">
+               <div>
+                 <div className="flex items-center space-x-3 mb-4">
+@@ -187,15 +187,15 @@ export default function PostTripPage() {
+               onClick={() => setTripMode('detailed')}
+               className="group text-left"
+             >
+-              <Card className="h-full border-2 border-transparent hover:border-blue-400 transition-all duration-200 hover:shadow-lg cursor-pointer">
++              <Card className="h-full border-2 border-transparent hover:border-accent/50 transition-all duration-200 hover:shadow-lg cursor-pointer">
+                 <CardContent className="p-8">
+                   <div className="flex items-center gap-3 mb-4">
+-                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+-                      <ClipboardList className="w-6 h-6 text-blue-600" />
++                    <div className="w-12 h-12 bg-accent-subtle rounded-xl flex items-center justify-center group-hover:bg-accent/20 transition-colors">
++                      <ClipboardList className="w-6 h-6 text-accent" />
+                     </div>
+                     <div>
+                       <h3 className="text-xl font-bold text-gray-800">Detailed Trip</h3>
+-                      <Badge className="bg-blue-100 text-blue-700 text-xs">Full Feature</Badge>
++                      <Badge className="bg-accent-subtle text-accent text-xs">Full Feature</Badge>
+                     </div>
+                   </div>
+                   <p className="text-gray-600 mb-4">
+@@ -203,15 +203,15 @@ export default function PostTripPage() {
+                   </p>
+                   <ul className="space-y-2 text-sm text-gray-500">
+                     <li className="flex items-center gap-2">
+-                      <span className="w-1.5 h-1.5 bg-blue-400 rounded-full" />
++                      <span className="w-1.5 h-1.5 bg-accent rounded-full" />
+                       7-step guided wizard
+                     </li>
+                     <li className="flex items-center gap-2">
+-                      <span className="w-1.5 h-1.5 bg-blue-400 rounded-full" />
++                      <span className="w-1.5 h-1.5 bg-accent rounded-full" />
+                       Stays until you remove it
+                     </li>
+                     <li className="flex items-center gap-2">
+-                      <span className="w-1.5 h-1.5 bg-blue-400 rounded-full" />
++                      <span className="w-1.5 h-1.5 bg-accent rounded-full" />
+                       Photos, pricing & safety details
+                     </li>
+                   </ul>
+-- 
+2.50.1 (Apple Git-155)
+

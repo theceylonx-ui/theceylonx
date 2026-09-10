@@ -1,0 +1,522 @@
+From a4826e86f5a3c85f23b065867a444e07e3abd904 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 14:39:49 +0530
+Subject: [PATCH] Recolor Calendar page and remove dead day-selection CSS
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The Calendar page's header cards were already correctly rebranded
+(brand/accent gradients), but the trip cards inside the day preview
+panel, the filter toggle buttons, and the empty/loading states
+underneath were still saturated with raw emerald/blue/purple —
+the pre-rebrand palette. Recolored all of it to brand/accent tokens,
+consistent with the rest of the page.
+
+Also found and removed ~90 lines of dead CSS in an inline <style>
+block: react-day-picker's day-cell classes (rdp-button,
+rdp-day_selected, rdp-day_today, rdp-day_outside) and a custom
+day-badge class were all styled with hardcoded hex colors (emerald/
+cyan for selection, amber for "today", a pulsing red badge) — but
+this component's custom Day renderer replaces each day cell with its
+own <div className="day-content">, discarding whatever className
+react-day-picker would have assigned. None of those classes ever
+reach the DOM, so none of that CSS has taken effect since whenever
+this custom renderer was introduced — confirmed empirically, the
+live selected-day styling already comes entirely from dayRenderer's
+own Tailwind classes (bg-ceylon-green), matching what's on screen
+today. Left the CSS rules that do still apply (nav buttons, weekday
+header, day-content's own layout rule) alone.
+
+Also removed client/src/components/EventCalendar.tsx — an earlier,
+unrelated calendar component that's never imported anywhere.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ .../src/components/EnhancedEventCalendar.tsx  | 120 ++--------
+ client/src/components/EventCalendar.tsx       | 224 ------------------
+ 2 files changed, 25 insertions(+), 319 deletions(-)
+ delete mode 100644 client/src/components/EventCalendar.tsx
+
+diff --git a/client/src/components/EnhancedEventCalendar.tsx b/client/src/components/EnhancedEventCalendar.tsx
+index 0382ff6..be87f65 100644
+--- a/client/src/components/EnhancedEventCalendar.tsx
++++ b/client/src/components/EnhancedEventCalendar.tsx
+@@ -380,13 +380,13 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
+   
+   // Enhanced Trip card component with better mobile design
+   const TripCard = ({ trip }: { trip: CalendarTrip }) => (
+-    <div className="relative group overflow-hidden bg-white border-2 border-gray-100 rounded-xl p-4 hover:border-emerald-200 hover:shadow-lg transition-all duration-300 hover:scale-[1.01]" data-testid={`trip-card-${trip.id}`}>
++    <div className="relative group overflow-hidden bg-white border-2 border-gray-100 rounded-xl p-4 hover:border-accent/30 hover:shadow-lg transition-all duration-300 hover:scale-[1.01]" data-testid={`trip-card-${trip.id}`}>
+       {/* Status flags */}
+       {trip.flags && (
+         <div className="absolute top-3 right-3 flex gap-1">
+           {trip.flags.mine && (
+-            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+-              <User className="h-3 w-3 text-blue-600" />
++            <div className="w-6 h-6 bg-accent-subtle rounded-full flex items-center justify-center">
++              <User className="h-3 w-3 text-accent" />
+             </div>
+           )}
+           {trip.flags.pinned && (
+@@ -410,9 +410,9 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
+       </div>
+       
+       {/* Route information - prominent display */}
+-      <div className="mb-4 p-3 bg-gradient-to-r from-emerald-50 to-blue-50 rounded-lg border border-emerald-100">
++      <div className="mb-4 p-3 bg-gradient-to-r from-brand-subtle to-accent-subtle rounded-lg border border-accent/20">
+         <div className="flex items-center gap-2">
+-          <MapPin className="h-4 w-4 text-emerald-600 flex-shrink-0" />
++          <MapPin className="h-4 w-4 text-accent flex-shrink-0" />
+           <div className="flex-1 min-w-0">
+             <div className="text-sm font-medium text-gray-800 truncate">
+               {trip.fromLocation}
+@@ -428,8 +428,8 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
+       {/* Trip details grid */}
+       <div className="grid grid-cols-2 gap-3 mb-4">
+         <div className="flex items-center gap-2">
+-          <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+-            <Clock className="h-4 w-4 text-blue-600" />
++          <div className="w-8 h-8 bg-accent-subtle rounded-lg flex items-center justify-center">
++            <Clock className="h-4 w-4 text-accent" />
+           </div>
+           <div className="min-w-0">
+             <div className="text-xs text-gray-500">Time</div>
+@@ -438,8 +438,8 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
+         </div>
+         
+         <div className="flex items-center gap-2">
+-          <div className="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center">
+-            <Users className="h-4 w-4 text-purple-600" />
++          <div className="w-8 h-8 bg-brand-subtle rounded-lg flex items-center justify-center">
++            <Users className="h-4 w-4 text-brand" />
+           </div>
+           <div className="min-w-0">
+             <div className="text-xs text-gray-500">Seats</div>
+@@ -451,13 +451,13 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
+       {/* Price section */}
+       <div className="mb-4">
+         {trip.price && Number(trip.price) > 0 ? (
+-          <div className="flex items-center gap-2 p-2 bg-orange-50 rounded-lg">
+-            <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+-              <DollarSign className="h-4 w-4 text-orange-600" />
++          <div className="flex items-center gap-2 p-2 bg-accent-subtle rounded-lg">
++            <div className="w-8 h-8 bg-accent-subtle rounded-lg flex items-center justify-center">
++              <DollarSign className="h-4 w-4 text-accent" />
+             </div>
+             <div>
+               <div className="text-xs text-gray-500">Price</div>
+-              <div className="text-sm font-semibold text-orange-700">LKR {trip.price}</div>
++              <div className="text-sm font-semibold text-accent">LKR {trip.price}</div>
+             </div>
+           </div>
+         ) : (
+@@ -482,7 +482,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
+         <Link href={`/trips/${trip.id}`}>
+           <Button 
+             size="sm" 
+-            className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
++            className="bg-gradient-to-r from-brand to-accent hover:from-brand-hover hover:to-accent-hover text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
+           >
+             View Details
+           </Button>
+@@ -516,8 +516,8 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
+               disabled={isDisabled}
+               className={`flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm min-h-[60px] sm:min-h-[44px] rounded-lg transition-all duration-200 ${
+                 isActive 
+-                  ? 'bg-gradient-to-r from-emerald-500 to-blue-500 text-white shadow-lg scale-105' 
+-                  : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-emerald-300 hover:bg-emerald-50'
++                  ? 'bg-gradient-to-r from-brand to-accent text-white shadow-lg scale-105' 
++                  : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-accent/40 hover:bg-accent-subtle'
+               } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'}`}
+               data-testid={`filter-${filterKey}`}
+             >
+@@ -544,7 +544,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
+             </span>
+             <Badge 
+               variant="outline" 
+-              className="bg-emerald-50 border-emerald-200 text-emerald-700 font-medium px-3 py-1"
++              className="bg-brand-subtle border-brand/20 text-brand font-medium px-3 py-1"
+             >
+               {Object.values(calendarState.filters).filter(Boolean).length} active
+             </Badge>
+@@ -597,41 +597,6 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
+                 position: relative;
+               }
+               
+-              .enhanced-calendar .rdp-button {
+-                width: var(--rdp-cell-size);
+-                height: var(--rdp-cell-size);
+-                border-radius: 12px;
+-                font-weight: 500;
+-                border: 2px solid transparent;
+-                transition: all 0.2s ease;
+-                display: flex;
+-                align-items: center;
+-                justify-content: center;
+-                position: relative;
+-              }
+-              
+-              .enhanced-calendar .rdp-button:hover {
+-                background-color: #f0fdf4;
+-                border-color: #a7f3d0;
+-                transform: scale(1.05);
+-                box-shadow: 0 4px 12px rgba(6, 95, 70, 0.15);
+-              }
+-              
+-              .enhanced-calendar .rdp-button.rdp-day_selected {
+-                background: linear-gradient(135deg, #059669, #0891b2);
+-                color: white;
+-                border-color: #047857;
+-                box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+-                transform: scale(1.1);
+-              }
+-              
+-              .enhanced-calendar .rdp-button.rdp-day_today {
+-                border-color: #fbbf24;
+-                background-color: #fef3c7;
+-                color: #92400e;
+-                font-weight: 600;
+-              }
+-              
+               .enhanced-calendar .rdp-head_cell {
+                 font-weight: 600;
+                 color: #374151;
+@@ -641,31 +606,6 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
+                 padding: 8px 0;
+               }
+               
+-              .enhanced-calendar .day-badge {
+-                position: absolute;
+-                top: -2px;
+-                right: -2px;
+-                min-width: 18px;
+-                height: 18px;
+-                border-radius: 10px;
+-                background: linear-gradient(135deg, #dc2626, #ef4444);
+-                color: white;
+-                font-size: 10px;
+-                font-weight: 600;
+-                display: flex;
+-                align-items: center;
+-                justify-content: center;
+-                border: 2px solid white;
+-                box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+-                z-index: 10;
+-                animation: pulse 2s infinite;
+-              }
+-              
+-              @keyframes pulse {
+-                0%, 100% { opacity: 1; }
+-                50% { opacity: 0.8; }
+-              }
+-              
+               .enhanced-calendar .day-content {
+                 position: relative;
+                 width: 100%;
+@@ -675,16 +615,6 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
+                 justify-content: center;
+               }
+               
+-              .enhanced-calendar .rdp-button.rdp-day_outside {
+-                color: #9ca3af !important;
+-                opacity: 0.6;
+-              }
+-              
+-              .enhanced-calendar .rdp-button.rdp-day_outside:hover {
+-                background-color: #f9fafb;
+-                color: #6b7280 !important;
+-              }
+-              
+               .enhanced-calendar .rdp-nav {
+                 display: flex;
+                 align-items: center;
+@@ -773,7 +703,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
+             <CardContent className="p-4 sm:p-6">
+               {isDayLoading ? (
+                 <div className="text-center py-12">
+-                  <div className="animate-spin rounded-full h-12 w-12 border-3 border-emerald-200 border-t-emerald-500 mx-auto mb-4"></div>
++                  <div className="animate-spin rounded-full h-12 w-12 border-3 border-accent/20 border-t-accent mx-auto mb-4"></div>
+                   <p className="text-gray-600 font-medium">Loading trips...</p>
+                 </div>
+               ) : dayError?.message?.includes('401') ? (
+@@ -783,22 +713,22 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
+                   </div>
+                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Sign in Required</h3>
+                   <p className="text-gray-500 mb-6">Sign in to see filtered trips and personalized content</p>
+-                  <Button asChild className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600">
++                  <Button asChild className="bg-gradient-to-r from-brand to-accent hover:from-brand-hover hover:to-accent-hover">
+                     <Link href="/login">Sign In</Link>
+                   </Button>
+                 </div>
+               ) : !dayResponse?.items.length ? (
+                 <div className="text-center py-12">
+-                  <div className="w-20 h-20 bg-gradient-to-br from-emerald-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+-                    <MapPin className="h-10 w-10 text-emerald-500" />
++                  <div className="w-20 h-20 bg-gradient-to-br from-brand-subtle to-accent-subtle rounded-full flex items-center justify-center mx-auto mb-4">
++                    <MapPin className="h-10 w-10 text-brand" />
+                   </div>
+                   <h3 className="text-lg font-semibold text-gray-700 mb-2">No Trips Found</h3>
+                   <p className="text-gray-500 mb-6">No trips on this day with your current filters</p>
+                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
+-                    <Button asChild variant="outline" className="border-emerald-200 text-emerald-600 hover:bg-emerald-50">
++                    <Button asChild variant="outline" className="border-accent/30 text-accent hover:bg-accent-subtle">
+                       <Link href="/browse-trips">Browse All Trips</Link>
+                     </Button>
+-                    <Button asChild className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600">
++                    <Button asChild className="bg-gradient-to-r from-brand to-accent hover:from-brand-hover hover:to-accent-hover">
+                       <Link href={`/post?date=${calendarState.selectedDate}`}>Post a Trip</Link>
+                     </Button>
+                   </div>
+@@ -808,7 +738,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
+                   <div className="mb-6">
+                     <div className="flex items-center justify-between mb-4">
+                       <h3 className="text-lg font-semibold text-gray-800">Available Trips</h3>
+-                      <Badge variant="outline" className="bg-emerald-50 border-emerald-200 text-emerald-700">
++                      <Badge variant="outline" className="bg-brand-subtle border-brand/20 text-brand">
+                         {dayResponse.items.length} of {dayResponse.total}
+                       </Badge>
+                     </div>
+@@ -827,7 +757,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
+                     </div>
+                     {dayResponse.total > dayResponse.items.length && (
+                       <div className="text-center mt-6 pt-4 border-t border-gray-100">
+-                        <Button variant="outline" size="sm" className="border-emerald-200 text-emerald-600 hover:bg-emerald-50">
++                        <Button variant="outline" size="sm" className="border-accent/30 text-accent hover:bg-accent-subtle">
+                           Load More Trips
+                         </Button>
+                       </div>
+diff --git a/client/src/components/EventCalendar.tsx b/client/src/components/EventCalendar.tsx
+deleted file mode 100644
+index 3342550..0000000
+--- a/client/src/components/EventCalendar.tsx
++++ /dev/null
+@@ -1,224 +0,0 @@
+-import { useState } from "react";
+-import { Calendar } from "@/components/ui/calendar";
+-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+-import { Button } from "@/components/ui/button";
+-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+-import { ScrollArea } from "@/components/ui/scroll-area";
+-import { MapPin, Clock } from "lucide-react";
+-import { useQuery } from "@tanstack/react-query";
+-import { format } from "date-fns";
+-import { Link } from "wouter";
+-
+-// Day-specific calendar event interface
+-interface DayCalendarEvent {
+-  id: string;
+-  title: string;
+-  start: string;
+-  end: string;
+-  location: string;
+-  flags: {
+-    pinned: boolean;
+-    interested: boolean;
+-    mine: boolean;
+-    free: boolean;
+-  };
+-}
+-
+-type ViewType = 'all' | 'pinned' | 'interested' | 'mine' | 'free';
+-
+-const viewLabels: Record<ViewType, string> = {
+-  all: 'All Events',
+-  pinned: 'Pinned Trips',
+-  interested: 'Interested Trips', 
+-  mine: 'My Trips',
+-  free: 'Free Trips'
+-};
+-
+-const emptyStateConfig: Record<ViewType, { message: string; ctaText: string; ctaLink: string }> = {
+-  all: { message: 'No events for this date.', ctaText: 'Browse Trips', ctaLink: '/browse-trips' },
+-  pinned: { message: 'No pinned trips for this date.', ctaText: 'Browse Trips', ctaLink: '/browse-trips' },
+-  interested: { message: 'No interested trips for this date.', ctaText: 'Browse Trips', ctaLink: '/browse-trips' },
+-  mine: { message: 'No trips you created for this date.', ctaText: 'Post a Trip', ctaLink: '/post' },
+-  free: { message: 'No free trips for this date.', ctaText: 'Post a Trip', ctaLink: '/post' }
+-};
+-
+-interface EventCalendarProps {
+-  className?: string;
+-}
+-
+-const EventCalendar = ({ className }: EventCalendarProps) => {
+-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+-  const [selectedView, setSelectedView] = useState<ViewType>('all');
+-  const [isDayPreviewOpen, setIsDayPreviewOpen] = useState(true);
+-  
+-  // Fetch events for selected date and view
+-  const { data: dayEvents = [], isLoading } = useQuery<DayCalendarEvent[]>({
+-    queryKey: ['/api/calendar/day', selectedDate.toISOString().split('T')[0], selectedView],
+-    enabled: true
+-  });
+-  
+-  // Helper function to get event icons in priority order
+-  const getEventIcons = (flags: DayCalendarEvent['flags']) => {
+-    const icons: string[] = [];
+-    if (flags.interested) icons.push('⭐');
+-    if (flags.pinned && !flags.interested) icons.push('📌'); // Only show pin if not interested
+-    if (flags.mine) icons.push('👤');
+-    if (flags.free) icons.push('💚');
+-    return icons;
+-  };
+-  
+-  // Format event time range
+-  const formatTimeRange = (start: string, end: string) => {
+-    try {
+-      const startDate = new Date(start);
+-      const endDate = new Date(end);
+-      const startTime = format(startDate, 'HH:mm');
+-      const endTime = format(endDate, 'HH:mm');
+-      return `${startTime}–${endTime}`;
+-    } catch {
+-      return 'TBD';
+-    }
+-  };
+-  
+-  // Day Preview Panel Component
+-  const DayPreviewPanel = () => {
+-    const dateDisplay = format(selectedDate, 'EEEE, dd MMM yyyy');
+-    
+-    return (
+-      <Card className="w-full">
+-        <CardHeader className="pb-3">
+-          <CardTitle className="text-lg">Events on {dateDisplay}</CardTitle>
+-        </CardHeader>
+-        <CardContent>
+-          {isLoading ? (
+-            <div className="text-center py-4 text-muted-foreground">
+-              Loading events...
+-            </div>
+-          ) : dayEvents.length > 0 ? (
+-            <ScrollArea className="h-64">
+-              <div className="space-y-3">
+-                {dayEvents.map((event: DayCalendarEvent) => {
+-                  const tripId = event.id.replace('trip_', '');
+-                  const icons = getEventIcons(event.flags);
+-                  
+-                  return (
+-                    <div key={event.id} className="border rounded-lg p-3 hover:bg-muted/50 transition-colors">
+-                      <div className="flex items-start justify-between gap-2 mb-2">
+-                        <h4 className="font-medium text-sm line-clamp-2">
+-                          {icons.length > 0 && (
+-                            <span className="mr-2">{icons.join(' ')}</span>
+-                          )}
+-                          {event.title}
+-                        </h4>
+-                      </div>
+-                      
+-                      <div className="space-y-1 text-xs text-muted-foreground">
+-                        <div className="flex items-center gap-1">
+-                          <Clock className="w-3 h-3" />
+-                          {formatTimeRange(event.start, event.end)}
+-                        </div>
+-                        {event.location && (
+-                          <div className="flex items-center gap-1">
+-                            <MapPin className="w-3 h-3" />
+-                            {event.location}
+-                          </div>
+-                        )}
+-                      </div>
+-                      
+-                      <Link href={`/trips/${tripId}`}>
+-                        <Button size="sm" variant="outline" className="w-full mt-2 text-xs" 
+-                                data-testid={`event-view-${event.id}`}>
+-                          View Details
+-                        </Button>
+-                      </Link>
+-                    </div>
+-                  );
+-                })}
+-              </div>
+-            </ScrollArea>
+-          ) : (
+-            <div className="text-center py-8">
+-              <p className="text-muted-foreground mb-4">
+-                {emptyStateConfig[selectedView].message}
+-              </p>
+-              <Link href={emptyStateConfig[selectedView].ctaLink}>
+-                <Button size="sm" variant="outline">
+-                  {emptyStateConfig[selectedView].ctaText}
+-                </Button>
+-              </Link>
+-            </div>
+-          )}
+-        </CardContent>
+-      </Card>
+-    );
+-  };
+-  
+-  const handleDateSelect = (date: Date | undefined) => {
+-    if (date) {
+-      setSelectedDate(date);
+-      setIsDayPreviewOpen(true);
+-    }
+-  };
+-  
+-  const handleViewChange = (view: ViewType) => {
+-    setSelectedView(view);
+-  };
+-  
+-  return (
+-    <div className={`space-y-6 ${className}`}>
+-      
+-      {/* View Dropdown and Legend Row */}
+-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+-        <div className="flex items-center gap-2">
+-          <span className="text-sm font-medium">View:</span>
+-          <Select value={selectedView} onValueChange={handleViewChange}>
+-            <SelectTrigger className="w-40" data-testid="view-selector">
+-              <SelectValue />
+-            </SelectTrigger>
+-            <SelectContent>
+-              {Object.entries(viewLabels).map(([value, label]) => (
+-                <SelectItem key={value} value={value}>{label}</SelectItem>
+-              ))}
+-            </SelectContent>
+-          </Select>
+-        </div>
+-        
+-        {/* Legend */}
+-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+-          <span className="flex items-center gap-1">⭐ Interested</span>
+-          <span className="flex items-center gap-1">📌 Pinned</span>
+-          <span className="flex items-center gap-1">👤 My Trip</span>
+-          <span className="flex items-center gap-1">💚 Free</span>
+-        </div>
+-      </div>
+-      
+-      {/* Month Calendar and Day Preview */}
+-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+-        {/* Month Calendar */}
+-        <Card>
+-          <CardHeader>
+-            <CardTitle className="text-lg">Select Date</CardTitle>
+-          </CardHeader>
+-          <CardContent>
+-            <Calendar
+-              mode="single"
+-              selected={selectedDate}
+-              onSelect={handleDateSelect}
+-              className="rounded-md border"
+-              data-testid="month-calendar"
+-            />
+-          </CardContent>
+-        </Card>
+-        
+-        {/* Day Preview Panel */}
+-        {isDayPreviewOpen && (
+-          <div>
+-            <DayPreviewPanel />
+-          </div>
+-        )}
+-      </div>
+-    </div>
+-  );
+-};
+-
+-export default EventCalendar;
+\ No newline at end of file
+-- 
+2.50.1 (Apple Git-155)
+

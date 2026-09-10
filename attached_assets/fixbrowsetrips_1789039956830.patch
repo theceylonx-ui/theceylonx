@@ -1,0 +1,102 @@
+From cfa3b85756477a3221eb59cf3cd615dd3fe89597 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 14:33:38 +0530
+Subject: [PATCH] Fix Browse Trips bugs: region-color mismatch and debug
+ console.log noise
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- getRegionColor() in trip-card.tsx used 'northwestern'/'north-central'
+  as map keys, but the actual region values used everywhere else
+  (post-trip form, filter dropdown) are 'north_western'/'north_central'
+  (underscored). Trips from those two provinces never matched, so
+  their region badge always fell back to plain gray instead of the
+  intended indigo/yellow. Fixed the keys to match the real values.
+- Removed 5 console.log calls in getTripImage() that fired on every
+  single trip card render for every visitor, plus a getTripImage()
+  branch that returned the same value on both sides of an if/else.
+- BrowseTripsFilters' "Apply Filters" button's onClick did nothing
+  but console.log — filters already apply live via the store, so the
+  button was always just a no-op. Removed the dead handler and log,
+  added a tooltip explaining filters apply automatically, rather than
+  leave a button that looks actionable but isn't.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ client/src/components/trip-card.tsx           | 23 ++++---------------
+ .../components/trips/BrowseTripsFilters.tsx   |  8 ++-----
+ 2 files changed, 7 insertions(+), 24 deletions(-)
+
+diff --git a/client/src/components/trip-card.tsx b/client/src/components/trip-card.tsx
+index 7f7bccc..8f44b7d 100644
+--- a/client/src/components/trip-card.tsx
++++ b/client/src/components/trip-card.tsx
+@@ -389,8 +389,8 @@ export default function TripCard({ trip, badges }: TripCardProps) {
+       'central': 'bg-orange-500',
+       'northern': 'bg-purple-500',
+       'eastern': 'bg-pink-500',
+-      'northwestern': 'bg-indigo-500',
+-      'north-central': 'bg-yellow-500',
++      'north_western': 'bg-indigo-500',
++      'north_central': 'bg-yellow-500',
+       'sabaragamuwa': 'bg-red-500',
+       'uva': 'bg-teal-500',
+     };
+@@ -401,28 +401,15 @@ export default function TripCard({ trip, badges }: TripCardProps) {
+     // Priority 1: Use user-uploaded images from mediaUrls
+     if (trip.mediaUrls && trip.mediaUrls.length > 0) {
+       const coverIndex = trip.coverImageIndex || 0;
+-      const coverImageUrl = trip.mediaUrls[Math.min(coverIndex, trip.mediaUrls.length - 1)];
+-      
+-      // Debug logging
+-      console.log('Trip mediaUrls:', trip.mediaUrls);
+-      console.log('Cover index:', coverIndex);
+-      console.log('Selected image URL:', coverImageUrl);
+-      
+-      return coverImageUrl;
++      return trip.mediaUrls[Math.min(coverIndex, trip.mediaUrls.length - 1)];
+     }
+-    
++
+     // Priority 2: Use database imageUrl (fallback or external image)
+     if (trip.imageUrl) {
+-      console.log('Using trip.imageUrl:', trip.imageUrl);
+-      // If it's a local asset path, ensure it works in both dev and production
+-      if (trip.imageUrl.startsWith('/assets/')) {
+-        return trip.imageUrl;
+-      }
+       return trip.imageUrl;
+     }
+-    
++
+     // Priority 3: HiBowan logo as fallback
+-    console.log('Using fallback image');
+     return newLogo;
+   };
+ 
+diff --git a/client/src/components/trips/BrowseTripsFilters.tsx b/client/src/components/trips/BrowseTripsFilters.tsx
+index 9d0a42e..2b47e6d 100644
+--- a/client/src/components/trips/BrowseTripsFilters.tsx
++++ b/client/src/components/trips/BrowseTripsFilters.tsx
+@@ -294,15 +294,11 @@ export default function BrowseTripsFilters({
+           >
+             Clear
+           </Button>
+-          <Button 
++          <Button
+             variant="default"
+             className="bg-brand hover:bg-brand-hover text-white"
+             data-testid="btn-apply-filters"
+-            onClick={() => {
+-              // Force a re-fetch by triggering a query invalidation
+-              // The filters are already applied through the store
+-              console.log('Filters applied:', filters);
+-            }}
++            title="Filters apply automatically as you set them"
+           >
+             Apply Filters
+           </Button>
+-- 
+2.50.1 (Apple Git-155)
+

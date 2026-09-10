@@ -1,0 +1,239 @@
+From 6388873f8a34fb91892749f1a292bfd23571e6c6 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 14:59:38 +0530
+Subject: [PATCH] Fix image upload always disabled, wrong cache key, and
+ off-brand colors in Chat Buddy
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Two chat entry points exist for the same underlying thread/message
+system: /chat-buddy/:threadId (used by Quick Trips, via the already
+on-brand ChatWindow component) and /chat-buddy?tripId=X (used by
+regular trips, via a separate inline UI in this file). Confirmed both
+share the same chatThreads/chatMessages tables and the same
+normalizeUserForUI-based privacy protection, so this isn't a data
+duplication issue — just two UI implementations, one of which had
+drifted both visually and functionally.
+
+Real bugs fixed:
+- GET /api/trips/:id/status was registered twice (line ~1930 and a
+  duplicate at ~3992). Express matches the first registration, so
+  the second was 100% dead code — and it was the one that included
+  chatThreadId in its response. The live handler only ever returned
+  {status}, so tripStatus?.chatThreadId was always undefined on the
+  client. ImageUpload's threadId prop and disabled condition both
+  depend on that field, so the image-upload button has been
+  permanently disabled for every regular-trip chat. Merged
+  chatThreadId into the surviving handler and removed the dead
+  duplicate.
+- The image-sent cache invalidation used a query key
+  (['/api/chat','threads',...]) that doesn't match the key the page
+  actually fetches messages with (['/api/chat', selectedUserId,
+  tripId]), so even once upload was reachable, sending an image
+  wouldn't refresh the thread until the next 3s poll. Fixed to
+  invalidate the real key.
+
+Also recolored chat-buddy.tsx and ChatWindow.tsx from raw purple/
+blue/green to brand/accent tokens (header icons, canned-message
+chips, contact-share button and message bubble, own-message
+timestamp color which was still a green leftover against a coral
+bubble).
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ client/src/components/chat/ChatWindow.tsx |  6 +++---
+ client/src/pages/chat-buddy.tsx           | 26 +++++++++++------------
+ server/routes.ts                          | 21 +++---------------
+ 3 files changed, 19 insertions(+), 34 deletions(-)
+
+diff --git a/client/src/components/chat/ChatWindow.tsx b/client/src/components/chat/ChatWindow.tsx
+index 12367c3..a571f30 100644
+--- a/client/src/components/chat/ChatWindow.tsx
++++ b/client/src/components/chat/ChatWindow.tsx
+@@ -344,7 +344,7 @@ export function ChatWindow({ threadId, currentUserId, onBack }: ChatWindowProps)
+             variant="default" 
+             size="sm" 
+             onClick={() => setIsContactShareOpen(true)}
+-            className="bg-blue-600 hover:bg-blue-700 text-white"
++            className="bg-accent hover:bg-accent-hover text-white"
+           >
+             <Phone className="w-4 h-4 mr-2" />
+             Share Contact
+@@ -532,8 +532,8 @@ function MessageBubble({ message, isOwn, onReport }: MessageBubbleProps) {
+   if (message.kind === 'contact_share') {
+     return (
+       <div className="flex justify-center my-4">
+-        <Card className="p-3 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+-          <div className="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
++        <Card className="p-3 bg-accent/10 border-accent/30">
++          <div className="flex items-center space-x-2 text-accent">
+             <Phone className="w-4 h-4" />
+             <span className="text-sm font-medium">Contact details shared</span>
+           </div>
+diff --git a/client/src/pages/chat-buddy.tsx b/client/src/pages/chat-buddy.tsx
+index f07b417..a98409c 100644
+--- a/client/src/pages/chat-buddy.tsx
++++ b/client/src/pages/chat-buddy.tsx
+@@ -280,7 +280,7 @@ export default function ChatBuddy() {
+         <div className="max-w-4xl mx-auto px-4 py-8">
+           <div className="mb-6">
+             <h1 className="text-3xl font-bold flex items-center gap-2">
+-              <MessageCircle className="h-8 w-8 text-purple-600" />
++              <MessageCircle className="h-8 w-8 text-brand" />
+               Chat Buddy
+             </h1>
+           </div>
+@@ -370,7 +370,7 @@ export default function ChatBuddy() {
+         <div className="max-w-4xl mx-auto px-4 py-8">
+           <div className="mb-6">
+             <h1 className="text-3xl font-bold flex items-center gap-2">
+-              <MessageCircle className="h-8 w-8 text-purple-600" />
++              <MessageCircle className="h-8 w-8 text-brand" />
+               Chat Buddy
+             </h1>
+           </div>
+@@ -393,7 +393,7 @@ export default function ChatBuddy() {
+                 </p>
+               </div>
+ 
+-              <div className="bg-blue-50 rounded-lg p-6 mb-6">
++              <div className="bg-accent-subtle rounded-lg p-6 mb-6">
+                 <h3 className="font-semibold mb-4 text-left">💡 Tips to get started:</h3>
+                 <div className="space-y-3 text-left">
+                   <div className="flex items-start gap-3">
+@@ -401,7 +401,7 @@ export default function ChatBuddy() {
+                     <p className="text-sm">Use ⭐ <strong>Interested</strong> on trips you like; the organizer will review your request.</p>
+                   </div>
+                   <div className="flex items-start gap-3">
+-                    <MessageSquare className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
++                    <MessageSquare className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
+                     <p className="text-sm">Once accepted, coordinate routes, costs, and meeting points here.</p>
+                   </div>
+                   <div className="flex items-start gap-3">
+@@ -489,7 +489,7 @@ export default function ChatBuddy() {
+                           onClick={() => setSelectedUserId(chatUser.id)}
+                           className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                             selectedUserId === chatUser.id
+-                              ? 'bg-purple-50 border border-purple-200'
++                              ? 'bg-brand-subtle border border-brand/20'
+                               : 'hover:bg-gray-50'
+                           }`}
+                         >
+@@ -508,7 +508,7 @@ export default function ChatBuddy() {
+                             </p>
+                           </div>
+                           {selectedUserId === chatUser.id && (
+-                            <MessageSquare className="h-4 w-4 text-purple-600" />
++                            <MessageSquare className="h-4 w-4 text-brand" />
+                           )}
+                         </div>
+                       ))
+@@ -535,7 +535,7 @@ export default function ChatBuddy() {
+               ) : messagesLoading ? (
+                 <CardContent className="flex-1 flex items-center justify-center">
+                   <div className="text-center">
+-                    <div className="animate-spin h-8 w-8 border-2 border-purple-600 border-t-transparent rounded-full mx-auto mb-4"></div>
++                    <div className="animate-spin h-8 w-8 border-2 border-brand border-t-transparent rounded-full mx-auto mb-4"></div>
+                     <p className="text-muted-foreground">Loading chat...</p>
+                   </div>
+                 </CardContent>
+@@ -572,14 +572,14 @@ export default function ChatBuddy() {
+                       <div className="h-full flex flex-col items-center justify-center">
+                         <MessageSquare className="h-12 w-12 text-gray-400 mb-4" />
+                         <h3 className="font-semibold mb-2">No chat available yet</h3>
+-                        <div className="bg-blue-50 rounded-lg p-4 max-w-md">
++                        <div className="bg-accent-subtle rounded-lg p-4 max-w-md">
+                           <p className="text-sm text-muted-foreground mb-3">💡 Start the conversation:</p>
+                           <div className="space-y-2">
+                             <Button
+                               variant="outline"
+                               size="sm"
+                               onClick={() => insertCannedMessage("Hi! Thanks for accepting. Where shall we meet?")}
+-                              className="w-full text-left justify-start text-xs border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
++                              className="w-full text-left justify-start text-xs border-accent/30 text-accent hover:bg-accent-subtle hover:border-accent/50"
+                             >
+                               Hi! Thanks for accepting. Where shall we meet?
+                             </Button>
+@@ -587,7 +587,7 @@ export default function ChatBuddy() {
+                               variant="outline"
+                               size="sm"
+                               onClick={() => insertCannedMessage("Can we confirm the cost and split?")}
+-                              className="w-full text-left justify-start text-xs border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
++                              className="w-full text-left justify-start text-xs border-accent/30 text-accent hover:bg-accent-subtle hover:border-accent/50"
+                             >
+                               Can we confirm the cost and split?
+                             </Button>
+@@ -595,7 +595,7 @@ export default function ChatBuddy() {
+                               variant="outline"
+                               size="sm"
+                               onClick={() => insertCannedMessage("What time should we start?")}
+-                              className="w-full text-left justify-start text-xs border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
++                              className="w-full text-left justify-start text-xs border-accent/30 text-accent hover:bg-accent-subtle hover:border-accent/50"
+                             >
+                               What time should we start?
+                             </Button>
+@@ -632,7 +632,7 @@ export default function ChatBuddy() {
+                                 <p className="text-sm">{message.body}</p>
+                                 <p
+                                   className={`text-xs mt-1 ${
+-                                    isOwnMessage ? 'text-green-100' : 'text-gray-500'
++                                    isOwnMessage ? 'text-white/80' : 'text-gray-500'
+                                   }`}
+                                 >
+                                   <Clock className="h-3 w-3 inline mr-1" />
+@@ -664,7 +664,7 @@ export default function ChatBuddy() {
+                         onImageSent={() => {
+                           // Refresh messages after image is sent
+                           queryClient.invalidateQueries({
+-                            queryKey: ['/api/chat', 'threads', tripStatus?.chatThreadId, 'messages'],
++                            queryKey: ['/api/chat', selectedUserId, tripId],
+                           });
+                         }}
+                       />
+diff --git a/server/routes.ts b/server/routes.ts
+index f297196..b637929 100644
+--- a/server/routes.ts
++++ b/server/routes.ts
+@@ -1934,13 +1934,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
+ 
+       // Check if user has an interest request for this trip
+       const interestRequest = await storage.getTripInterestRequestByUserAndTrip(userId, id);
+-      
++
+       if (!interestRequest) {
+-        return res.json({ status: 'none' });
++        return res.json({ status: 'none', chatThreadId: null });
+       }
+ 
+       // Return the status of the interest request
+-      res.json({ status: interestRequest.status });
++      res.json({ status: interestRequest.status, chatThreadId: interestRequest.chatThreadId || null });
+     } catch (error) {
+       console.error("Error fetching trip status:", error);
+       res.status(500).json({ message: "Failed to fetch trip status" });
+@@ -3989,21 +3989,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
+   // NEW: Trip-specific chat endpoints for Chat Buddy functionality
+   
+   // Get trip participation status for current user
+-  app.get('/api/trips/:tripId/status', unifiedAuthGuard, async (req: any, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const tripId = req.params.tripId;
+-
+-      const interestRequest = await storage.getTripInterestRequestByUserAndTrip(userId, tripId);
+-      const status = interestRequest?.status || 'none';
+-      
+-      res.json({ status, chatThreadId: interestRequest?.chatThreadId || null });
+-    } catch (error) {
+-      console.error("Error fetching trip status:", error);
+-      res.status(500).json({ message: "Failed to fetch trip status" });
+-    }
+-  });
+-
+   // Get chat-eligible users for a trip (only for accepted participants)
+   app.get('/api/chat/users', unifiedAuthGuard, async (req: any, res) => {
+     try {
+-- 
+2.50.1 (Apple Git-155)
+
