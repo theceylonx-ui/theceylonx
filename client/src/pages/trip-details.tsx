@@ -98,17 +98,6 @@ export default function TripDetails({ params }: TripDetailsProps) {
     enabled: !!isAuthenticated && !!user && !!id,
   });
 
-  // Debug logging for button state - moved after data declarations
-  useEffect(() => {
-    console.log("Trip Details Debug:", {
-      isAuthenticated,
-      userId: user?.id,
-      tripOrganizerId: trip?.organizer?.id,
-      userIsOrganizer: user?.id === trip?.organizer?.id,
-      existingInterestRequest: !!existingInterestRequest
-    });
-  }, [isAuthenticated, user, trip, existingInterestRequest]);
-
   const getTripImage = () => {
     if (!trip) return newLogo;
     
@@ -384,12 +373,6 @@ export default function TripDetails({ params }: TripDetailsProps) {
       return;
     }
     setShowReportDialog(true);
-  };
-
-  const handleContact = () => {
-    if (!trip || !isAuthenticated) return;
-    // Contact is handled through chat system
-    setLocation(`/chat-buddy?tripId=${trip.id}`);
   };
 
   const handleSendInterest = () => {
@@ -774,20 +757,24 @@ export default function TripDetails({ params }: TripDetailsProps) {
                   {/* Show status message for existing requests */}
                   {existingInterestRequest && (
                     <div className={`text-sm text-center p-3 rounded-md mt-2 ${
-                      existingInterestRequest.status === 'accepted' 
-                        ? 'bg-green-100 text-green-800 border border-green-200'
+                      existingInterestRequest.status === 'accepted'
+                        ? 'bg-success/10 text-success border border-success/30'
                         : existingInterestRequest.status === 'rejected'
-                        ? 'bg-red-100 text-red-800 border border-red-200' 
-                        : 'bg-blue-100 text-blue-800 border border-blue-200'
+                        ? 'bg-danger/10 text-danger border border-danger/30'
+                        : 'bg-info/10 text-info border border-info/30'
                     }`} data-testid="interest-status">
                       {existingInterestRequest.status === 'pending' && 'Your request is pending review by the organizer'}
                       {existingInterestRequest.status === 'accepted' && (
                         <div>
                           <div className="font-medium">Request accepted! 🎉</div>
-                          <Button 
-                            size="sm" 
-                            className="mt-2 bg-green-600 hover:bg-green-700 text-white"
-                            onClick={() => setLocation(`/chat-buddy?tripId=${trip.id}`)}
+                          <Button
+                            size="sm"
+                            className="mt-2 bg-success hover:bg-success/90 text-white"
+                            onClick={() => setLocation(
+                              existingInterestRequest.chatThreadId
+                                ? `/chat-buddy/${existingInterestRequest.chatThreadId}`
+                                : `/chat-buddy`
+                            )}
                           >
                             Chat with Trip Members
                           </Button>

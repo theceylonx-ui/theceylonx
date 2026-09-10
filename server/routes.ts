@@ -3820,7 +3820,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: `${getDisplayName(currentUser || null)}: ${text.substring(0, 60)}${text.length > 60 ? '...' : ''}`,
           threadId: threadId,
           relatedUserId: userId,
-          actionUrl: `/chat/${threadId}`,
+          actionUrl: `/chat-buddy/${threadId}`,
           isRead: false,
         });
       }
@@ -3931,7 +3931,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: `${getDisplayName(currentUser || null) || 'Trip organizer'} shared their contact details with you`,
           threadId: threadId,
           relatedUserId: userId,
-          actionUrl: `/chat/${threadId}`,
+          actionUrl: `/chat-buddy/${threadId}`,
           isRead: false,
         });
       }
@@ -4111,7 +4111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: `${getDisplayName(currentUser || null)}: ${message.substring(0, 60)}${message.length > 60 ? '...' : ''}`,
         threadId: chatThread.id,
         relatedUserId: currentUserId,
-        actionUrl: `/chat-buddy?tripId=${tripId}&userId=${currentUserId}`,
+        actionUrl: `/chat-buddy/${chatThread.id}`,
         isRead: false,
       });
 
@@ -5016,7 +5016,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title: 'Chat Opened',
         message: `Your chat for "${trip.title}" is now open`,
         threadId: thread.id,
-        actionUrl: `/chat/${thread.id}`,
+        actionUrl: `/chat-buddy/${thread.id}`,
         isRead: false
       });
 
