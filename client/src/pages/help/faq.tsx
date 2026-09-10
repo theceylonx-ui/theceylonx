@@ -52,9 +52,9 @@ export default function HelpFAQPage() {
     {
       id: "getting-started",
       question: "How do I get started with HiBowan?",
-      answer: "Getting started is easy! Create an account using Google, email, or other supported sign-in methods. Complete your profile with travel preferences, profile photo, and contact information. You can immediately start browsing trips (no signup required for viewing), but you'll need an account to post trips, chat with organizers, or save favorites.",
+      answer: "Getting started is easy! Sign in with your Google or Facebook account — that's currently the only way to sign up. Complete your profile with travel preferences, profile photo, and contact information. You can immediately start browsing trips (no signup required for viewing), but you'll need an account to post trips, chat with organizers, or save favorites.",
       category: "Getting Started",
-      keywords: ["signup", "account", "profile", "start", "begin", "register", "google", "oauth"],
+      keywords: ["signup", "account", "profile", "start", "begin", "register", "google", "facebook", "oauth"],
       icon: <Users className="h-5 w-5 text-ceylon-blue" />
     },
     {
@@ -70,15 +70,23 @@ export default function HelpFAQPage() {
     {
       id: "posting-trips",
       question: "How do I post a trip on HiBowan?",
-      answer: "Click 'Post Trip' in the navigation menu. Fill in your route (from/to locations), travel date and time, number of available seats, price per person, and contact information. You can add trip photos, describe your travel style, and include special notes. Your trip will be visible to other travelers immediately after posting.",
+      answer: "Click 'Post Trip' in the navigation menu, then choose between a full trip post or a Quick Trip. A full trip post lets you fill in your route (from/to locations), travel date and time, number of available seats, price per person, contact information, photos, and special notes. Your trip will be visible to other travelers immediately after posting.",
       category: "Trip Management",
       keywords: ["post", "create", "trip", "route", "seats", "price", "photos"],
       icon: <MapPin className="h-5 w-5 text-ceylon-blue" />
     },
     {
+      id: "quick-trips",
+      question: "What's a Quick Trip and how is it different from a regular trip?",
+      answer: "Quick Trip is the fast, 3-step way to post a spontaneous or last-minute plan — just the essentials (route, date/time, seats, and a short description), no photos or detailed itinerary required. Quick Trips automatically disappear 3 days after posting. Interested travelers send a request instead of joining directly, and you accept or decline it just like a regular trip. You can see, and delete, your own Quick Trips from your Profile > Trips tab.",
+      category: "Trip Management",
+      keywords: ["quick trip", "spontaneous", "fast", "expire", "3 days", "last minute"],
+      icon: <Clock className="h-5 w-5 text-orange-500" />
+    },
+    {
       id: "trip-photos",
       question: "How do I add photos to my trips?",
-      answer: "When posting or editing a trip, click the camera icon to upload photos. You can add multiple images showing your planned route, destinations, or vehicle. Photos are automatically compressed for optimal loading. Set a cover image that represents your trip best. Supported formats: JPG, PNG, up to 10MB per image.",
+      answer: "When posting or editing a trip, click the camera icon to upload photos. You can add multiple images showing your planned route, destinations, or vehicle. Photos are automatically compressed for optimal loading. Set a cover image that represents your trip best. Common image formats like JPG and PNG are supported.",
       category: "Trip Management",
       keywords: ["photos", "images", "upload", "camera", "pictures", "media", "cover"],
       icon: <Camera className="h-5 w-5 text-ceylon-green" />
@@ -94,7 +102,7 @@ export default function HelpFAQPage() {
     {
       id: "trip-editing",
       question: "Can I edit or cancel my posted trips?",
-      answer: "Yes! Go to your Dashboard > My Trips to edit trip details, update photos, change dates, or cancel trips. If people have already shown interest in your trip, they'll be notified of changes. You can mark trips as complete when you've found travel companions.",
+      answer: "Yes! Go to your Profile > Trips tab to edit trip details, update photos, or change dates. There's no automatic notification when you change a trip's details today, so message anyone who's shown interest directly through Chat Buddy to keep them updated. You can also hide a trip from search results at any time without deleting it, and make it visible again later.",
       category: "Trip Management",
       keywords: ["edit", "cancel", "update", "modify", "change", "dashboard"],
       icon: <Settings className="h-5 w-5 text-ceylon-blue" />
@@ -104,7 +112,7 @@ export default function HelpFAQPage() {
     {
       id: "calendar-usage",
       question: "How does the Calendar feature work?",
-      answer: "The Calendar shows all available trips by date. Click any date to see trips for that day. Use filters like 'All Trips', 'Free Trips', 'Pinned', 'Interested', or 'My Trips' to customize your view. Bold dates with green badges indicate days with available trips. Use keyboard arrows to navigate dates quickly.",
+      answer: "The Calendar shows all available trips by date. Click any date to see trips for that day. Use filters like 'All Trips', 'Free Trips', 'Pinned', 'Interested', or 'My Trips' to customize your view. Dates with a small badge indicate days with available trips. Use keyboard arrows to navigate dates quickly.",
       category: "Calendar & Planning",
       keywords: ["calendar", "dates", "filters", "schedule", "planning", "navigation"],
       icon: <Calendar className="h-5 w-5 text-ceylon-blue" />
@@ -252,7 +260,7 @@ export default function HelpFAQPage() {
     {
       id: "trip-pricing",
       question: "How is trip pricing determined?",
-      answer: "Trip organizers set prices based on shared costs like fuel, tolls, parking, and sometimes accommodation. Prices are per person and split fairly among participants. Many trips are completely free (marked with 💚). Always clarify what's included in the price when contacting organizers.",
+      answer: "Trip organizers set prices based on shared costs like fuel, tolls, parking, and sometimes accommodation. Prices are per person and split fairly among participants. Many trips are completely free (marked with a \"Free Trip\" badge). Always clarify what's included in the price when contacting organizers.",
       category: "Costs & Pricing",
       keywords: ["pricing", "costs", "fuel", "tolls", "split", "per person"],
       icon: <DollarSign className="h-5 w-5 text-ceylon-blue" />
@@ -262,17 +270,17 @@ export default function HelpFAQPage() {
     {
       id: "trip-cancellation",
       question: "What happens if a trip gets cancelled or changes?",
-      answer: "Trip organizers can update details or cancel trips from their dashboard. If you've shown interest in a trip, you'll be notified of changes via chat or email. Stay in touch with organizers as travel dates approach. If an organizer behaves inappropriately, use the report feature.",
+      answer: "Trip organizers can update details or cancel trips from their Profile > Trips tab. There's no automatic notification when a trip changes today, so stay in touch with organizers directly through Chat Buddy as travel dates approach. If an organizer behaves inappropriately, use the report feature.",
       category: "Trip Changes",
       keywords: ["cancellation", "changes", "updates", "modify", "notify"],
       icon: <XCircle className="h-5 w-5 text-orange-500" />
     },
     {
       id: "marking-completed",
-      question: "How do I mark my trip as completed?",
-      answer: "Once you've found travel companions, go to Dashboard > My Trips and click the green 'Mark Complete' button. This removes your trip from search results. You can reactivate completed trips anytime if your plans change or you need more travel companions.",
+      question: "How do I take my trip down once I've found companions?",
+      answer: "Go to your Profile > Trips tab and use the toggle to hide the trip from search results. If your plans change or you need more travel companions, you can make it visible again anytime the same way.",
       category: "Trip Changes",
-      keywords: ["complete", "finished", "mark", "dashboard", "reactivate"],
+      keywords: ["complete", "finished", "hide", "visibility", "reactivate"],
       icon: <CheckCircle className="h-5 w-5 text-ceylon-green" />
     },
 
