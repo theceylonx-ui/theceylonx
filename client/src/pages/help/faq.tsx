@@ -277,10 +277,10 @@ export default function HelpFAQPage() {
     },
     {
       id: "marking-completed",
-      question: "How do I take my trip down once I've found companions?",
-      answer: "Go to your Profile > Trips tab and use the toggle to hide the trip from search results. If your plans change or you need more travel companions, you can make it visible again anytime the same way.",
+      question: "How do I mark my trip as completed?",
+      answer: "Once you've found travel companions, go to your Profile > Trips tab and click 'Mark Complete'. This notifies anyone who'd shown interest that the trip is filled, and removes it from search results. Changed plans? Click 'Reopen Trip' on a completed trip to make it active again.",
       category: "Trip Changes",
-      keywords: ["complete", "finished", "hide", "visibility", "reactivate"],
+      keywords: ["complete", "finished", "mark", "reopen", "notify"],
       icon: <CheckCircle className="h-5 w-5 text-ceylon-green" />
     },
 
