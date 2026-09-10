@@ -1,0 +1,63 @@
+From 87d9d9c34bfefdd234e3f334fff9982cf26cebbf Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 11:01:15 +0530
+Subject: [PATCH] Fix Date fields silently corrupted to {} in every API
+ response
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+apiResponseOptimization's removeEmptyValues() walked every JSON
+response with Object.entries() to strip null/undefined/empty-string
+fields. Date objects have no own enumerable properties, so any Date
+value (trip.date, createdAt, expiresAt, etc.) silently flattened to
+{} on the way out — this middleware runs globally on every /api
+route via performanceMiddlewareStack.
+
+Reproduced live: opening a posted quick trip's detail page threw
+"Minified React error #31" (object passed as a React child) because
+the API returned date/createdAt/expiresAt as {} instead of ISO
+strings. This same corruption likely explains other Invalid-Date-style
+symptoms and rendering failures across the site wherever a date field
+reaches the client, including trips silently failing to render in
+list views.
+
+Fix: check `obj instanceof Date` before treating a value as a plain
+object to walk.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ server/middleware/performanceOptimization.ts | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/server/middleware/performanceOptimization.ts b/server/middleware/performanceOptimization.ts
+index 7fb0bfa..f276fac 100644
+--- a/server/middleware/performanceOptimization.ts
++++ b/server/middleware/performanceOptimization.ts
+@@ -129,7 +129,13 @@ function removeEmptyValues(obj: any): any {
+   if (Array.isArray(obj)) {
+     return obj.map(removeEmptyValues).filter(Boolean);
+   }
+-  
++
++  // Dates (and other non-plain objects) have no own enumerable properties,
++  // so walking them with Object.entries() would silently flatten them to {}.
++  if (obj instanceof Date) {
++    return obj;
++  }
++
+   if (obj && typeof obj === 'object') {
+     const cleaned: any = {};
+     for (const [key, value] of Object.entries(obj)) {
+@@ -139,7 +145,7 @@ function removeEmptyValues(obj: any): any {
+     }
+     return cleaned;
+   }
+-  
++
+   return obj;
+ }
+ 
+-- 
+2.50.1 (Apple Git-155)
+
