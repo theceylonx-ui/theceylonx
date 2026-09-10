@@ -23,20 +23,22 @@ vi.mock('import.meta.env', () => ({
   SSR: false,
 }));
 
-// Mock window.matchMedia for responsive components
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: vi.fn().mockImplementation(query => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(), // Deprecated
-    removeListener: vi.fn(), // Deprecated
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-});
+if (typeof window !== 'undefined') {
+  // Mock window.matchMedia for responsive components
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation(query => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(), // Deprecated
+      removeListener: vi.fn(), // Deprecated
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+}
 
 // Mock ResizeObserver for components that use it
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
@@ -55,36 +57,38 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   thresholds: [],
 }));
 
-// Mock clipboard API for copy functionality
-Object.assign(navigator, {
-  clipboard: {
-    writeText: vi.fn().mockImplementation(() => Promise.resolve()),
-    readText: vi.fn().mockImplementation(() => Promise.resolve('')),
-  },
-});
+if (typeof navigator !== 'undefined') {
+  // Mock clipboard API for copy functionality
+  Object.assign(navigator, {
+    clipboard: {
+      writeText: vi.fn().mockImplementation(() => Promise.resolve()),
+      readText: vi.fn().mockImplementation(() => Promise.resolve('')),
+    },
+  });
 
-// Mock geolocation API for location-based features
-Object.defineProperty(navigator, 'geolocation', {
-  value: {
-    getCurrentPosition: vi.fn().mockImplementation((success) => {
-      success({
-        coords: {
-          latitude: 6.9271, // Colombo, Sri Lanka coordinates
-          longitude: 79.8612,
-          accuracy: 100,
-          altitude: null,
-          altitudeAccuracy: null,
-          heading: null,
-          speed: null,
-        },
-        timestamp: Date.now(),
-      });
-    }),
-    watchPosition: vi.fn(),
-    clearWatch: vi.fn(),
-  },
-  writable: true,
-});
+  // Mock geolocation API for location-based features
+  Object.defineProperty(navigator, 'geolocation', {
+    value: {
+      getCurrentPosition: vi.fn().mockImplementation((success) => {
+        success({
+          coords: {
+            latitude: 6.9271, // Colombo, Sri Lanka coordinates
+            longitude: 79.8612,
+            accuracy: 100,
+            altitude: null,
+            altitudeAccuracy: null,
+            heading: null,
+            speed: null,
+          },
+          timestamp: Date.now(),
+        });
+      }),
+      watchPosition: vi.fn(),
+      clearWatch: vi.fn(),
+    },
+    writable: true,
+  });
+}
 
 // Mock fetch for API testing
 global.fetch = vi.fn();
@@ -99,15 +103,17 @@ const mockStorage = {
   key: vi.fn(),
 };
 
-Object.defineProperty(window, 'localStorage', {
-  value: mockStorage,
-  writable: true,
-});
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'localStorage', {
+    value: mockStorage,
+    writable: true,
+  });
 
-Object.defineProperty(window, 'sessionStorage', {
-  value: mockStorage,
-  writable: true,
-});
+  Object.defineProperty(window, 'sessionStorage', {
+    value: mockStorage,
+    writable: true,
+  });
+}
 
 // Mock console methods for clean test output
 const originalConsoleError = console.error;
