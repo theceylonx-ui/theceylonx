@@ -146,7 +146,7 @@ export default function UserTripsPage() {
     );
   }
 
-  const displayName = getDisplayName(data.user) || 'Ceylon Traveler';
+  const displayName = getDisplayName(data.user) || 'HiBowan Traveler';
 
   return (
     <div className="min-h-screen bg-gray-50">

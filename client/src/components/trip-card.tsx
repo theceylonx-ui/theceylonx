@@ -58,7 +58,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
   const isQuickTrip = (trip as any).tripType === 'quick';
   const hoursLeft = useCountdownHours(isQuickTrip ? (trip as any).expiresAt : null);
   
-  const isSampleTrip = trip.id.startsWith('sample-') || trip.organizer?.email === 'system@ceylonexpand.com';
+  const isSampleTrip = trip.id.startsWith('sample-');
 
   const pinMutation = useMutation({
     mutationFn: async (pinned: boolean) => {

@@ -453,13 +453,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Normalize user data for UI consumption
+      // Normalize user data for UI consumption. This is the user's own
+      // data, so (unlike other callers of normalizeUserForUI) it's safe
+      // to add email back onto the response.
       const normalizedUser = normalizeUserForUI(userData);
       if (!normalizedUser) {
         return res.status(500).json({ message: "Failed to process user data" });
       }
-      
-      res.json(normalizedUser);
+
+      res.json({ ...normalizedUser, email: userData.email || undefined });
     } catch (error) {
       console.error("❌ Error in /api/user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -5534,39 +5536,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       const requesterId = req.user!.id;
-      
+      const isSelf = userId === requesterId;
+
       // Get user basic info
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
-      // Get user's trips
+
+      if (user.profileVisibility === 'private' && !isSelf) {
+        return res.status(403).json({ message: "Profile is private" });
+      }
+
+      const displayName = user.displayName || user.username || 'HiBowan Traveler';
+
+      // Get user's trips (organizer's own view includes hidden/inactive trips)
       const trips = await storage.getUserTrips(userId);
-      
+      const visibleTrips = isSelf ? trips : trips.filter(trip => trip.status === 'active');
+
       // Format response with user info and trips
       const response = {
         user: {
           id: user.id,
-          displayName: user.displayName || user.username || 'Ceylon Traveler',
-          firstName: user.firstName,
-          lastName: user.lastName,
+          displayName,
+          firstName: (isSelf || user.showRealName) ? user.firstName : undefined,
+          lastName: (isSelf || user.showRealName) ? user.lastName : undefined,
           username: user.username,
           profileImageUrl: user.profileImageUrl,
           isVerifiedUser: user.isVerifiedUser || false,
           verificationBadges: user.verificationBadges || [],
           verificationLevel: user.verificationLevel || 0,
         },
-        trips: trips.map(trip => ({
+        trips: visibleTrips.map(trip => ({
           ...trip,
           organizer: {
             id: user.id,
-            displayName: user.displayName || user.username || 'Ceylon Traveler',
+            displayName,
             profileImageUrl: user.profileImageUrl
           }
         }))
       };
-      
+
       res.json(response);
     } catch (error) {
       console.error("Error fetching user trips:", error);
@@ -5594,7 +5604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Filter profile data based on privacy settings
       const filteredProfile = {
         id: userProfile.id,
-        displayName: userProfile.displayName || userProfile.username || 'Ceylon Traveler',
+        displayName: userProfile.displayName || userProfile.username || 'HiBowan Traveler',
         firstName: userProfile.showRealName ? userProfile.firstName : undefined,
         lastName: userProfile.showRealName ? userProfile.lastName : undefined,
         username: userProfile.username,

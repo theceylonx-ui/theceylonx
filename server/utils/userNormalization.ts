@@ -6,19 +6,24 @@ export interface NormalizedUser {
   displayName: string;
   avatarUrl: string | null;
   initials: string;
-  email?: string;
   provider?: string;
 }
 
 /**
  * Normalizes user data for UI consumption with STRICT naming policy
  * ONLY uses user-provided display name, username, or USER ID
- * 
+ *
  * STRICT POLICY:
  * 1. Use 'displayName' field if available (user's chosen display name)
  * 2. Use 'username' field if displayName is empty
  * 3. Use USER ID if both are empty
  * 4. NEVER use OAuth names, firstName+lastName, or email fallbacks
+ *
+ * Deliberately never includes email: most callers pass in another
+ * user's row to show to a third party (trip organizer, comment author,
+ * chat participant), and email must never leak there regardless of the
+ * caller. The one legitimate self-view case (GET /api/user) adds
+ * `email` back onto its own response explicitly, after calling this.
  */
 export function normalizeUserForUI(user: {
   id: string;
@@ -26,14 +31,13 @@ export function normalizeUserForUI(user: {
   username?: string | null;
   profileImageUrl?: string | null;
   image?: string | null;
-  email?: string | null;
   provider?: string | null;
 } | null): NormalizedUser | null {
   if (!user) return null;
 
   // STRICT naming policy - only use user-provided fields or USER ID
   let displayName = '';
-  
+
   if (user.displayName?.trim()) {
     displayName = user.displayName.trim();
   } else if (user.username?.trim()) {
@@ -58,7 +62,6 @@ export function normalizeUserForUI(user: {
     displayName,
     avatarUrl,
     initials,
-    email: user.email || undefined,
     provider: user.provider || undefined,
   };
 }
