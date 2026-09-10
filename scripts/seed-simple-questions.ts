@@ -1,23 +1,24 @@
 import { db } from '../server/db';
-import { questions, users, topics } from '../shared/schema';
+import { answers, questions, users, topics } from '../shared/schema';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
+import { SRI_LANKA_TRIBES_QA } from './sriLankaTribesData';
 
 async function seedSimpleQuestions() {
   console.log("🌱 Starting simple questions seeding...");
   
   try {
     // Ensure seed user exists
-    const seedUser = await db.select().from(users).where(eq(users.email, "seed@theceylonx.com"));
+    const seedUser = await db.select().from(users).where(eq(users.email, "seed@hibowan.com"));
     if (seedUser.length === 0) {
       await db.insert(users).values({
         id: nanoid(),
-        email: "seed@theceylonx.com",
-        name: "CeylonX"
+        email: "seed@hibowan.com",
+        name: "HiBowan"
       });
     }
     
-    const user = await db.select().from(users).where(eq(users.email, "seed@theceylonx.com"));
+    const user = await db.select().from(users).where(eq(users.email, "seed@hibowan.com"));
     if (user.length === 0) {
       throw new Error("Failed to create or find seed user");
     }
@@ -185,6 +186,70 @@ async function seedSimpleQuestions() {
     } else {
       console.log(`⚠️ Question already exists: ${question.title}`);
     }
+  }
+
+  let travelBasicsTopic = await db
+    .select()
+    .from(topics)
+    .where(eq(topics.slug, "sri-lanka-travel-basics"));
+  if (travelBasicsTopic.length === 0) {
+    await db.insert(topics).values({
+      id: nanoid(),
+      slug: "sri-lanka-travel-basics",
+      name: "Sri Lanka Travel Basics",
+      description: "Practical advice for planning and traveling around Sri Lanka",
+    });
+    travelBasicsTopic = await db
+      .select()
+      .from(topics)
+      .where(eq(topics.slug, "sri-lanka-travel-basics"));
+  }
+
+  const travelBasicsTopicId = travelBasicsTopic[0].id;
+  for (const item of SRI_LANKA_TRIBES_QA) {
+    const questionId = `sample-sl-q-${item.key}`;
+    const answerId = `sample-sl-a-${item.key}`;
+    const existingQuestion = await db
+      .select()
+      .from(questions)
+      .where(eq(questions.id, questionId));
+
+    if (existingQuestion.length === 0) {
+      await db.insert(questions).values({
+        id: questionId,
+        title: item.title,
+        body: item.body,
+        tags: [...item.tags],
+        userId,
+        topicId: travelBasicsTopicId,
+        isAnonymous: false,
+        answersCount: 1,
+      });
+      questionCount++;
+      console.log(`✅ Created Tribes question: ${item.title}`);
+    }
+
+    const existingAnswer = await db
+      .select()
+      .from(answers)
+      .where(eq(answers.id, answerId));
+    if (existingAnswer.length === 0) {
+      await db.insert(answers).values({
+        id: answerId,
+        body: item.answer,
+        questionId,
+        userId,
+        isAccepted: true,
+      });
+    }
+
+    await db
+      .update(questions)
+      .set({
+        answersCount: 1,
+        acceptedAnswerId: answerId,
+      })
+      .where(eq(questions.id, questionId));
   }
   
   console.log(`✅ Seeded ${questionCount} sample questions`);

@@ -31,18 +31,7 @@ import {
   User,
   Heart,
   Filter,
-  Clock,
-  Plane,
-  Sun,
-  Wallet,
-  Bus,
-  Wifi,
-  HandCoins,
-  Shirt,
-  Droplet,
-  Syringe,
-  Languages,
-  Plug
+  Clock
 } from "lucide-react";
 
 interface FAQItem {
@@ -303,128 +292,6 @@ export default function HelpFAQPage() {
       category: "Regional Coverage",
       keywords: ["regions", "provinces", "colombo", "kandy", "galle", "coverage", "destinations", "northern", "eastern"],
       icon: <MapPin className="h-5 w-5 text-ceylon-blue" />
-    },
-
-    // Sri Lanka Travel Basics
-    {
-      id: "sl-visa",
-      question: "Do I need a visa to visit Sri Lanka?",
-      answer: "Most nationalities need an Electronic Travel Authorization (ETA) before arriving — a short online form usually approved within 24–48 hours. Depending on your nationality it's free or paid, and covers a double-entry stay of up to 30 days, extendable by up to 90 more days from the Department of Immigration in Colombo. Apply only through the official ETA portal — third-party sites charge more for the same thing.",
-      category: "Sri Lanka Travel Basics",
-      keywords: ["visa", "eta", "entry", "immigration", "travel authorization"],
-      icon: <Plane className="h-5 w-5 text-ceylon-blue" />
-    },
-    {
-      id: "sl-best-time",
-      question: "When's the best time to visit Sri Lanka?",
-      answer: "Sri Lanka has two monsoons that hit opposite coasts at different times, so it's less about a \"good month\" and more about picking the right region. The south and west coasts (Colombo, Galle, Bentota) are driest December–April; the north and east (Trincomalee, Jaffna) are best May–September. If you're unsure, April, May, and September are quieter shoulder months with decent weather almost everywhere.",
-      category: "Sri Lanka Travel Basics",
-      keywords: ["weather", "monsoon", "season", "best time", "climate"],
-      icon: <Sun className="h-5 w-5 text-yellow-500" />
-    },
-    {
-      id: "sl-currency",
-      question: "What currency should I use, and do cards work?",
-      answer: "Sri Lanka uses the Rupee (LKR) — you can't get it before you land, so exchange cash or use an ATM on arrival. Cards are widely accepted in hotels, restaurants, and shops in cities and tourist areas, but tuk-tuks, local eateries, and rural guesthouses are cash-only. Carry enough rupees before heading off the beaten path, and tell your bank you're traveling so your card doesn't get blocked.",
-      category: "Sri Lanka Travel Basics",
-      keywords: ["currency", "rupee", "lkr", "atm", "cash", "card", "money"],
-      icon: <Wallet className="h-5 w-5 text-ceylon-green" />
-    },
-    {
-      id: "sl-safety",
-      question: "Is Sri Lanka safe, including for solo and female travelers?",
-      answer: "Yes — violent crime against tourists is rare, and Sri Lanka is consistently rated one of Asia's more manageable solo destinations, including for women traveling alone. Most issues are practical rather than dangerous (overcharging, unlicensed taxis, staring), but normal travel vigilance still applies: stick to reputable transport and accommodation, and trust your instincts.",
-      category: "Sri Lanka Travel Basics",
-      keywords: ["safety", "solo travel", "female travel", "security", "safe"],
-      icon: <Shield className="h-5 w-5 text-red-500" />
-    },
-    {
-      id: "sl-transport",
-      question: "How do I get around the island?",
-      answer: "Trains (the Kandy–Ella line especially), buses, tuk-tuks, and hired cars with drivers are all common. Trains are the scenic, budget option; a car and driver is the easiest way to cover ground comfortably; tuk-tuks work well for short local trips — though self-drive tuk-tuk rentals got harder to arrange after new permit rules in late 2025.",
-      category: "Sri Lanka Travel Basics",
-      keywords: ["transport", "train", "tuk-tuk", "bus", "getting around", "driver"],
-      icon: <Bus className="h-5 w-5 text-ceylon-blue" />
-    },
-    {
-      id: "sl-sim",
-      question: "Do I need a local SIM card?",
-      answer: "Most travelers grab an eSIM before arrival or pick up a tourist SIM at the airport — Dialog, Mobitel, and Hutch all run arrivals-hall counters and just need your passport. A tourist SIM typically gets 15–30GB of data for about 30 days for a few dollars, with solid coverage along the main travel routes.",
-      category: "Sri Lanka Travel Basics",
-      keywords: ["sim card", "esim", "internet", "data", "mobile network"],
-      icon: <Wifi className="h-5 w-5 text-ceylon-green" />
-    },
-    {
-      id: "sl-tipping",
-      question: "Is tipping expected?",
-      answer: "Appreciated, not obligatory. Check your bill first — many hotels and restaurants already add a service charge. Where it's not included, round up or tip around 10% for good service. Drivers and guides are usually tipped per day rather than per ride, and small rupee notes make it easiest.",
-      category: "Sri Lanka Travel Basics",
-      keywords: ["tipping", "tips", "service charge", "etiquette"],
-      icon: <HandCoins className="h-5 w-5 text-ceylon-green" />
-    },
-    {
-      id: "sl-temple-dress",
-      question: "What should I wear when visiting temples?",
-      answer: "Cover your shoulders and knees, and remove shoes and any hat before entering. Beachwear and tight or sheer clothing aren't appropriate at Buddhist or Hindu sites. Loose, breathable cotton or linen works well in the heat while keeping you covered — and always ask before photographing statues or monks.",
-      category: "Sri Lanka Travel Basics",
-      keywords: ["temple", "dress code", "etiquette", "buddhist", "hindu", "clothing"],
-      icon: <Shirt className="h-5 w-5 text-ceylon-blue" />
-    },
-    {
-      id: "sl-water",
-      question: "Can I drink the tap water?",
-      answer: "Not safely, in most places — stick to bottled or filtered water, even in cities, since your stomach isn't used to what locals tolerate fine. Ice at smaller local restaurants and street stalls is often made from tap water too, so it's worth asking before you accept it.",
-      category: "Sri Lanka Travel Basics",
-      keywords: ["tap water", "drinking water", "bottled water", "food safety"],
-      icon: <Droplet className="h-5 w-5 text-ceylon-blue" />
-    },
-    {
-      id: "sl-vaccinations",
-      question: "Do I need any vaccinations before I go?",
-      answer: "There's no vaccination requirement for short tourist stays, unless you're arriving from a Yellow Fever risk country. Typhoid and hepatitis A are commonly recommended given local food and water conditions — check with a travel clinic a few weeks out, and pack mosquito repellent regardless.",
-      category: "Sri Lanka Travel Basics",
-      keywords: ["vaccination", "health", "typhoid", "hepatitis", "travel clinic"],
-      icon: <Syringe className="h-5 w-5 text-red-500" />
-    },
-    {
-      id: "sl-budget",
-      question: "How much should I budget per day?",
-      answer: "Budget travelers using public transport, local food, and hostels typically spend $25–40 a day; add a private driver or nicer hotels and that climbs toward $80+. Major sites like Sigiriya charge separate entrance fees — often $30+ for foreign visitors — so budget those on top of your daily spend, not inside it.",
-      category: "Sri Lanka Travel Basics",
-      keywords: ["budget", "cost", "daily spend", "money", "price"],
-      icon: <DollarSign className="h-5 w-5 text-ceylon-green" />
-    },
-    {
-      id: "sl-language",
-      question: "What language do people speak? Will English get me by?",
-      answer: "Sinhala and Tamil are the official languages, but English is widely spoken in hotels, restaurants, and tourist areas — enough to get by comfortably as a visitor. It gets patchier in rural villages and local markets, where a few basic Sinhala or Tamil phrases go a long way.",
-      category: "Sri Lanka Travel Basics",
-      keywords: ["language", "sinhala", "tamil", "english"],
-      icon: <Languages className="h-5 w-5 text-ceylon-blue" />
-    },
-    {
-      id: "sl-trip-length",
-      question: "How many days do I need to see Sri Lanka properly?",
-      answer: "A week covers the highlights if your route stays tight; 10–14 days lets you take in the ancient cities, hill country, and coast without rushing. Short on time? Even 5 days is enough for a focused look at one or two regions rather than trying to circle the whole island.",
-      category: "Sri Lanka Travel Basics",
-      keywords: ["itinerary", "how many days", "trip length", "planning"],
-      icon: <Calendar className="h-5 w-5 text-ceylon-green" />
-    },
-    {
-      id: "sl-plug",
-      question: "What kind of plug adapter do I need?",
-      answer: "Sri Lanka runs on 230V and mostly uses the UK-style three-pin (type G) socket, so UK visitors often don't need an adapter at all. Types D and M also turn up, especially in older buildings, so a universal adapter is the safest bet coming from North America or continental Europe.",
-      category: "Sri Lanka Travel Basics",
-      keywords: ["plug", "adapter", "electricity", "voltage", "socket"],
-      icon: <Plug className="h-5 w-5 text-ceylon-blue" />
-    },
-    {
-      id: "sl-meet-travelers",
-      question: "What's the easiest way to meet other travelers while I'm here?",
-      answer: "That's what HiBowan is for — post the trip you're planning or browse ones already forming, and connect directly with fellow travelers heading the same way. No bookings, no commissions: you coordinate everything yourselves once you've matched.",
-      category: "Sri Lanka Travel Basics",
-      keywords: ["meet travelers", "hibowan", "connect", "find companions"],
-      icon: <Users className="h-5 w-5 text-ceylon-green" />
     }
   ];
 

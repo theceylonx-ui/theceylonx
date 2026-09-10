@@ -655,7 +655,7 @@ router.post('/seed-data', requireAdmin, async (req, res) => {
       timestamp: new Date().toISOString(),
       data: {
         trips: '10 sample trips available',
-        questions: 'Sample questions available'
+        questions: '25 Tribes questions available'
       }
     });
   } catch (error) {
