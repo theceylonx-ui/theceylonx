@@ -12,6 +12,7 @@ import { RecommendedTrips } from "@/components/RecommendedTrips";
 import { PreferencesCompletionBanner } from "@/components/PreferencesCompletionBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
+import heroImage from "@assets/hibowan-hero-surfer.jpg";
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -36,7 +37,16 @@ export default function Home() {
       <Navigation />
       
       {/* Hero Section - conditional content based on authentication */}
-      <section className="relative bg-gradient-to-br from-ceylon-green to-ceylon-blue py-16">
+      <section className="relative overflow-hidden bg-gradient-to-br from-ceylon-green to-ceylon-blue py-16">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: `linear-gradient(135deg, rgba(74, 17, 35, 0.82), rgba(15, 57, 86, 0.78)), url(${heroImage})`,
+          }}
+          aria-hidden="true"
+          role="img"
+          aria-label="A surfer riding a wave along Sri Lanka's palm-lined south coast"
+        />
         <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center text-white py-12 sm:py-20">
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 drop-shadow-2xl tracking-tight" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }} data-testid="hero-welcome">
             {user ? "Welcome back, Explorer!" : "Discover Sri Lanka Together"}
