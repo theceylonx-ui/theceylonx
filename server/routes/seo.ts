@@ -16,12 +16,12 @@ router.get('/sitemap.xml', async (req: Request, res: Response) => {
     // Static pages with priorities and frequencies
     const staticPages = [
       { url: '', changefreq: 'daily', priority: '1.0' },
-      { url: '/browse', changefreq: 'hourly', priority: '0.9' },
+      { url: '/browse-trips', changefreq: 'hourly', priority: '0.9' },
       { url: '/community', changefreq: 'daily', priority: '0.8' },
       { url: '/faq', changefreq: 'weekly', priority: '0.7' },
       { url: '/about', changefreq: 'monthly', priority: '0.6' },
-      { url: '/privacy', changefreq: 'monthly', priority: '0.5' },
-      { url: '/terms', changefreq: 'monthly', priority: '0.5' },
+      { url: '/privacy-policy', changefreq: 'monthly', priority: '0.5' },
+      { url: '/terms-of-service', changefreq: 'monthly', priority: '0.5' },
     ];
     
     // Get recent active trips for dynamic content (simplified for now)
@@ -60,7 +60,7 @@ router.get('/sitemap.xml', async (req: Request, res: Response) => {
       const lastmod = trip.createdAt ? trip.createdAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
       sitemap += `
   <url>
-    <loc>${baseUrl}/trip/${trip.id}</loc>
+    <loc>${baseUrl}/trips/${trip.id}</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <lastmod>${lastmod}</lastmod>
@@ -92,12 +92,12 @@ router.get('/robots.txt', (req: Request, res: Response) => {
 Allow: /
 
 # Important pages
-Allow: /browse
+Allow: /browse-trips
 Allow: /community
 Allow: /faq
 Allow: /about
-Allow: /privacy
-Allow: /terms
+Allow: /privacy-policy
+Allow: /terms-of-service
 
 # Sitemap location
 Sitemap: ${baseUrl}/sitemap.xml
@@ -143,7 +143,7 @@ router.get('/api/structured-data/home', (req: Request, res: Response) => {
       '@type': 'SearchAction',
       'target': {
         '@type': 'EntryPoint',
-        'urlTemplate': `${baseUrl}/browse?q={search_term_string}`
+        'urlTemplate': `${baseUrl}/browse-trips?q={search_term_string}`
       },
       'query-input': 'required name=search_term_string'
     }
