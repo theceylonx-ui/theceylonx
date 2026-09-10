@@ -1,0 +1,154 @@
+From c4058df51ce524db4bf24c40335118fee9bb74a8 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 12:41:33 +0530
+Subject: [PATCH 1/2] =?UTF-8?q?Wire=20up=20Mark=20Complete=20/=20Reopen=20?=
+ =?UTF-8?q?Trip=20=E2=80=94=20backend=20existed,=20no=20UI=20called=20it?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+/api/trips/:id/complete and /api/trips/:id/reopen already worked
+(TripCompletionService marks the trip completed and notifies everyone
+who'd shown interest), but nothing in the UI ever called them —
+found this while fixing an FAQ answer that described a "Mark
+Complete" button that didn't exist anywhere.
+
+Added both actions to Profile > Trips: "Mark Complete" (with a
+confirm, since it notifies interested users) when a trip isn't
+already completed, "Reopen Trip" when it is.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ client/src/pages/me.tsx | 64 +++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 64 insertions(+)
+
+diff --git a/client/src/pages/me.tsx b/client/src/pages/me.tsx
+index d10e40c..d8fd0fd 100644
+--- a/client/src/pages/me.tsx
++++ b/client/src/pages/me.tsx
+@@ -27,6 +27,8 @@ import {
+   Download,
+   UserX,
+   Trash2,
++  CheckCircle2,
++  RotateCcw,
+ } from "lucide-react";
+ import { getDisplayName, getInitials, getAvatarOptions, AVATAR_STYLES } from "@/lib/profileUtils";
+ import { VisibilityToggle } from "@/components/VisibilityToggle";
+@@ -1289,6 +1291,38 @@ function UserActivity() {
+     },
+   });
+ 
++  const completeTripMutation = useMutation({
++    mutationFn: async (tripId: string) => {
++      const res = await apiRequest("POST", `/api/trips/${tripId}/complete`);
++      return res.json();
++    },
++    onSuccess: (data) => {
++      toast({
++        title: "Trip Marked Complete",
++        description: data?.notifiedUsers
++          ? `Notified ${data.notifiedUsers} interested traveler${data.notifiedUsers === 1 ? '' : 's'}.`
++          : "Your trip is now marked as completed.",
++      });
++      queryClient.invalidateQueries({ queryKey: ['/api/me/activity/trips'] });
++    },
++    onError: (error: any) => {
++      toast({ title: "Error", description: error.message || "Failed to mark trip complete", variant: "destructive" });
++    },
++  });
++
++  const reopenTripMutation = useMutation({
++    mutationFn: async (tripId: string) => {
++      return await apiRequest("POST", `/api/trips/${tripId}/reopen`);
++    },
++    onSuccess: () => {
++      toast({ title: "Trip Reopened", description: "Your trip is active again." });
++      queryClient.invalidateQueries({ queryKey: ['/api/me/activity/trips'] });
++    },
++    onError: (error: any) => {
++      toast({ title: "Error", description: error.message || "Failed to reopen trip", variant: "destructive" });
++    },
++  });
++
+   return (
+     <Card>
+       <CardHeader>
+@@ -1454,6 +1488,36 @@ function UserActivity() {
+                         id={trip.id}
+                         currentVisibility={trip.status || "active"}
+                       />
++                      <div className="mt-3 pt-3 border-t border-blue-100">
++                        {trip.status === 'completed' ? (
++                          <Button
++                            size="sm"
++                            variant="outline"
++                            disabled={reopenTripMutation.isPending}
++                            onClick={() => reopenTripMutation.mutate(trip.id)}
++                            data-testid={`button-reopen-trip-${trip.id}`}
++                          >
++                            <RotateCcw className="w-3.5 h-3.5 mr-1" />
++                            {reopenTripMutation.isPending ? "Reopening..." : "Reopen Trip"}
++                          </Button>
++                        ) : (
++                          <Button
++                            size="sm"
++                            variant="outline"
++                            className="border-green-300 text-green-700 hover:bg-green-50"
++                            disabled={completeTripMutation.isPending}
++                            onClick={() => {
++                              if (window.confirm("Mark this trip as completed? Anyone who showed interest will be notified.")) {
++                                completeTripMutation.mutate(trip.id);
++                              }
++                            }}
++                            data-testid={`button-complete-trip-${trip.id}`}
++                          >
++                            <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
++                            {completeTripMutation.isPending ? "Marking..." : "Mark Complete"}
++                          </Button>
++                        )}
++                      </div>
+                     </div>
+                     {trip.notes && (
+                       <div className="mt-3 p-2 bg-gray-50 rounded text-sm">
+-- 
+2.50.1 (Apple Git-155)
+
+
+From 8ed2cf7e06494c5aec74fa404f9aa2e14e105362 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 12:41:56 +0530
+Subject: [PATCH 2/2] Update FAQ's Mark Complete answer now that the feature is
+ wired up
+
+Follow-up to c4058df: the "marking-completed" FAQ entry was just
+rewritten to describe the hide/show toggle since Mark Complete had
+no UI. Now that it does, restore the answer to describe the real
+feature, including the new Reopen Trip action.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ client/src/pages/help/faq.tsx | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/client/src/pages/help/faq.tsx b/client/src/pages/help/faq.tsx
+index fe76985..2016bf5 100644
+--- a/client/src/pages/help/faq.tsx
++++ b/client/src/pages/help/faq.tsx
+@@ -277,10 +277,10 @@ export default function HelpFAQPage() {
+     },
+     {
+       id: "marking-completed",
+-      question: "How do I take my trip down once I've found companions?",
+-      answer: "Go to your Profile > Trips tab and use the toggle to hide the trip from search results. If your plans change or you need more travel companions, you can make it visible again anytime the same way.",
++      question: "How do I mark my trip as completed?",
++      answer: "Once you've found travel companions, go to your Profile > Trips tab and click 'Mark Complete'. This notifies anyone who'd shown interest that the trip is filled, and removes it from search results. Changed plans? Click 'Reopen Trip' on a completed trip to make it active again.",
+       category: "Trip Changes",
+-      keywords: ["complete", "finished", "hide", "visibility", "reactivate"],
++      keywords: ["complete", "finished", "mark", "reopen", "notify"],
+       icon: <CheckCircle className="h-5 w-5 text-ceylon-green" />
+     },
+ 
+-- 
+2.50.1 (Apple Git-155)
+

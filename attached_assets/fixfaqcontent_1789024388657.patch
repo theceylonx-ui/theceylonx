@@ -1,0 +1,272 @@
+From c825a3da37ccdd8c8ebc772920cc145fb3a12822 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 12:36:56 +0530
+Subject: [PATCH] Fix FAQ answers that no longer match the live product
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Checked every answer on the live /faq page against actual current
+behavior (schema, routes, and UI) and fixed the ones that were wrong:
+
+- "Getting started" claimed email signup exists; only Google/Facebook
+  OAuth does (email auth is disabled server-side).
+- "Trip editing" and "Trip cancellation" both claimed interested users
+  get notified when a trip changes or is cancelled — neither the
+  PATCH nor DELETE /api/trips/:id handler notifies anyone.
+- "Marking trips complete" described a "Mark Complete" button that
+  doesn't exist in the UI (the backend /api/trips/:id/complete +
+  notification flow exists but nothing calls it) — rewrote it to
+  describe the actual hide/show visibility toggle in Profile > Trips.
+- Calendar's "green badges" claim is stylistically wrong post-rebrand
+  (ceylon-green now maps to coral, not green) — described functionally
+  instead of by color, so it won't drift again.
+- "Free trips marked with 💚" is stale — that emoji was removed from
+  the Free Trip badge earlier in this rebrand pass.
+- Removed an unverifiable "10MB per image" limit claim; the actual
+  upload component defaults to 5MB and trip photos don't override it.
+- Added a "What's a Quick Trip" entry — the feature wasn't mentioned
+  anywhere in the FAQ's 27 questions.
+
+Also removed client/src/pages/faq.tsx, a duplicate FAQ page that was
+never routed anywhere (help/faq.tsx is the one both /faq and
+/help/faq actually render) and had drifted out of sync with it.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ client/src/pages/faq.tsx      | 130 ----------------------------------
+ client/src/pages/help/faq.tsx |  30 +++++---
+ 2 files changed, 19 insertions(+), 141 deletions(-)
+ delete mode 100644 client/src/pages/faq.tsx
+
+diff --git a/client/src/pages/faq.tsx b/client/src/pages/faq.tsx
+deleted file mode 100644
+index 33eab2d..0000000
+--- a/client/src/pages/faq.tsx
++++ /dev/null
+@@ -1,130 +0,0 @@
+-import { useState } from "react";
+-import Navigation from "@/components/navigation";
+-import Footer from "@/components/Footer";
+-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+-import { Badge } from "@/components/ui/badge";
+-import { MessageCircle, Users, Shield, Phone, XCircle, CheckCircle, MapPin, DollarSign } from "lucide-react";
+-
+-export default function FAQ() {
+-  const faqs = [
+-    {
+-      id: "posting-trips",
+-      question: "How do I post a trip on HiBowan?",
+-      answer: "To post a trip, you need to sign up and log in first. Once logged in, click on 'Post Trip' in the navigation menu. Fill in all the required details including your route (from and to locations), travel date and time, number of available seats, price per person, and contact information. You can also add optional notes about your trip. After submitting, your trip will appear in the browse section for other travelers to find.",
+-      icon: <Users className="h-5 w-5 text-ceylon-blue" />
+-    },
+-    {
+-      id: "contacting-travelers",
+-      question: "How can I contact trip organizers?",
+-      answer: "Browse available trips on the 'Browse Trips' page - no signup required to view them! Use the filters to find trips by location, date, region, or price range. When you find a suitable trip, click on it to view full details. To contact the organizer, you'll need to log in first. Then you can contact them directly via WhatsApp or email, or leave a comment on their trip post to ask questions.",
+-      icon: <MessageCircle className="h-5 w-5 text-ceylon-green" />
+-    },
+-    {
+-      id: "safety-traveling",
+-      question: "Is it safe to travel with people I don't know?",
+-      answer: "HiBowan promotes safe travel practices. Every user creates a complete profile with a confirmed email address. You can see trip organizers' profiles, read comments from other travelers, and communicate directly before committing to any trip. We recommend meeting in public places, sharing trip details with family/friends, and trusting your instincts. You can also report any inappropriate behavior using the report feature on trip posts.",
+-      icon: <Shield className="h-5 w-5 text-ceylon-blue" />
+-    },
+-    {
+-      id: "contacting-organizers",
+-      question: "How do I contact trip organizers?",
+-      answer: "Every trip post shows the organizer's contact information. Click the 'Contact' button on the trip details page, and it will automatically open WhatsApp for phone numbers or your email app for email addresses. You can also leave public comments on trip posts to ask questions that other travelers might find helpful. All communication happens directly between you and the trip organizer - we don't store or monitor messages.",
+-      icon: <Phone className="h-5 w-5 text-ceylon-green" />
+-    },
+-    {
+-      id: "trip-cancellation",
+-      question: "What happens if a trip gets cancelled or changes?",
+-      answer: "Trip organizers can update their trip details or delete trips entirely from their dashboard. If you've already contacted an organizer about their trip, they'll communicate any changes directly with you via WhatsApp or email. We recommend staying in touch with your trip organizer as the travel date approaches. If a trip organizer behaves inappropriately, you can report them using the report feature.",
+-      icon: <XCircle className="h-5 w-5 text-red-500" />
+-    },
+-    {
+-      id: "marking-completed",
+-      question: "How do I mark my trip as completed when I find travel partners?",
+-      answer: "Once you've found your travel companions and no longer need additional participants, go to your dashboard and click on 'My Trips'. You'll see a green 'Mark Complete' button next to each active trip. Clicking this will mark your trip as completed and remove it from search results. You can reactivate completed trips anytime if your plans change.",
+-      icon: <CheckCircle className="h-5 w-5 text-ceylon-green" />
+-    },
+-    {
+-      id: "sri-lanka-coverage",
+-      question: "What regions of Sri Lanka does HiBowan cover?",
+-      answer: "HiBowan covers all provinces and regions of Sri Lanka! You can filter trips by major regions including Western Province (Colombo, Gampaha), Central Province (Kandy, Nuwara Eliya), Southern Province (Galle, Matara), and all other provinces. Whether you're traveling between major cities like Colombo to Kandy, or exploring destinations like Sigiriya, Ella, or Yala National Park, you'll find travel companions for your journey across the beautiful island.",
+-      icon: <MapPin className="h-5 w-5 text-ceylon-blue" />
+-    },
+-    {
+-      id: "platform-costs",
+-      question: "Is HiBowan free to use? Are there any hidden fees?",
+-      answer: "Yes, HiBowan is completely free to join and use! There are no registration fees, no membership costs, and no service charges from our platform. We don't take any commission from trip costs or add any additional fees. The prices you see in trip posts are the actual travel sharing costs (fuel, tolls, etc.) that participants split among themselves. You only pay your agreed share directly to the trip organizer - never to HiBowan. Our platform is designed to help travelers connect and share costs, not to profit from your journeys.",
+-      icon: <DollarSign className="h-5 w-5 text-ceylon-green" />
+-    }
+-  ];
+-
+-  return (
+-    <div className="min-h-screen bg-gray-50">
+-      <Navigation />
+-      
+-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+-        {/* Header */}
+-        <div className="text-center mb-8">
+-          <h1 className="text-3xl font-bold text-gray-800 mb-4" data-testid="faq-title">
+-            Frequently Asked Questions
+-          </h1>
+-          <p className="text-gray-600 max-w-2xl mx-auto" data-testid="faq-subtitle">
+-            Everything you need to know about using HiBowan to find travel companions and share your journeys across Sri Lanka.
+-          </p>
+-        </div>
+-
+-        {/* FAQ Section */}
+-        <Card>
+-          <CardHeader>
+-            <CardTitle className="flex items-center space-x-2">
+-              <MessageCircle className="h-6 w-6 text-ceylon-green" />
+-              <span>Common Questions</span>
+-            </CardTitle>
+-          </CardHeader>
+-          <CardContent>
+-            <Accordion type="single" collapsible className="w-full">
+-              {faqs.map((faq) => (
+-                <AccordionItem key={faq.id} value={faq.id} data-testid={`faq-item-${faq.id}`}>
+-                  <AccordionTrigger className="text-left hover:no-underline">
+-                    <div className="flex items-center space-x-3">
+-                      {faq.icon}
+-                      <span className="font-medium text-gray-800">{faq.question}</span>
+-                    </div>
+-                  </AccordionTrigger>
+-                  <AccordionContent>
+-                    <div className="pt-2 pb-4 pl-8 text-gray-700 leading-relaxed">
+-                      {faq.answer}
+-                    </div>
+-                  </AccordionContent>
+-                </AccordionItem>
+-              ))}
+-            </Accordion>
+-          </CardContent>
+-        </Card>
+-
+-        {/* Additional Help Section */}
+-        <Card className="mt-8">
+-          <CardContent className="p-6 text-center">
+-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Still have questions?</h3>
+-            <p className="text-gray-600 mb-4">
+-              Can't find what you're looking for? Join our community and ask questions directly on trip posts or contact trip organizers.
+-            </p>
+-            <div className="flex flex-wrap justify-center gap-4">
+-              <Badge variant="outline" className="text-ceylon-green border-ceylon-green">
+-                Safe Travel Community
+-              </Badge>
+-              <Badge variant="outline" className="text-ceylon-blue border-ceylon-blue">
+-                Direct Communication
+-              </Badge>
+-              <Badge variant="outline" className="text-gray-600 border-gray-400">
+-                Island-wide Coverage
+-              </Badge>
+-            </div>
+-          </CardContent>
+-        </Card>
+-      </div>
+-      
+-      <Footer />
+-    </div>
+-  );
+-}
+\ No newline at end of file
+diff --git a/client/src/pages/help/faq.tsx b/client/src/pages/help/faq.tsx
+index 5118e55..fe76985 100644
+--- a/client/src/pages/help/faq.tsx
++++ b/client/src/pages/help/faq.tsx
+@@ -52,9 +52,9 @@ export default function HelpFAQPage() {
+     {
+       id: "getting-started",
+       question: "How do I get started with HiBowan?",
+-      answer: "Getting started is easy! Create an account using Google, email, or other supported sign-in methods. Complete your profile with travel preferences, profile photo, and contact information. You can immediately start browsing trips (no signup required for viewing), but you'll need an account to post trips, chat with organizers, or save favorites.",
++      answer: "Getting started is easy! Sign in with your Google or Facebook account — that's currently the only way to sign up. Complete your profile with travel preferences, profile photo, and contact information. You can immediately start browsing trips (no signup required for viewing), but you'll need an account to post trips, chat with organizers, or save favorites.",
+       category: "Getting Started",
+-      keywords: ["signup", "account", "profile", "start", "begin", "register", "google", "oauth"],
++      keywords: ["signup", "account", "profile", "start", "begin", "register", "google", "facebook", "oauth"],
+       icon: <Users className="h-5 w-5 text-ceylon-blue" />
+     },
+     {
+@@ -70,15 +70,23 @@ export default function HelpFAQPage() {
+     {
+       id: "posting-trips",
+       question: "How do I post a trip on HiBowan?",
+-      answer: "Click 'Post Trip' in the navigation menu. Fill in your route (from/to locations), travel date and time, number of available seats, price per person, and contact information. You can add trip photos, describe your travel style, and include special notes. Your trip will be visible to other travelers immediately after posting.",
++      answer: "Click 'Post Trip' in the navigation menu, then choose between a full trip post or a Quick Trip. A full trip post lets you fill in your route (from/to locations), travel date and time, number of available seats, price per person, contact information, photos, and special notes. Your trip will be visible to other travelers immediately after posting.",
+       category: "Trip Management",
+       keywords: ["post", "create", "trip", "route", "seats", "price", "photos"],
+       icon: <MapPin className="h-5 w-5 text-ceylon-blue" />
+     },
++    {
++      id: "quick-trips",
++      question: "What's a Quick Trip and how is it different from a regular trip?",
++      answer: "Quick Trip is the fast, 3-step way to post a spontaneous or last-minute plan — just the essentials (route, date/time, seats, and a short description), no photos or detailed itinerary required. Quick Trips automatically disappear 3 days after posting. Interested travelers send a request instead of joining directly, and you accept or decline it just like a regular trip. You can see, and delete, your own Quick Trips from your Profile > Trips tab.",
++      category: "Trip Management",
++      keywords: ["quick trip", "spontaneous", "fast", "expire", "3 days", "last minute"],
++      icon: <Clock className="h-5 w-5 text-orange-500" />
++    },
+     {
+       id: "trip-photos",
+       question: "How do I add photos to my trips?",
+-      answer: "When posting or editing a trip, click the camera icon to upload photos. You can add multiple images showing your planned route, destinations, or vehicle. Photos are automatically compressed for optimal loading. Set a cover image that represents your trip best. Supported formats: JPG, PNG, up to 10MB per image.",
++      answer: "When posting or editing a trip, click the camera icon to upload photos. You can add multiple images showing your planned route, destinations, or vehicle. Photos are automatically compressed for optimal loading. Set a cover image that represents your trip best. Common image formats like JPG and PNG are supported.",
+       category: "Trip Management",
+       keywords: ["photos", "images", "upload", "camera", "pictures", "media", "cover"],
+       icon: <Camera className="h-5 w-5 text-ceylon-green" />
+@@ -94,7 +102,7 @@ export default function HelpFAQPage() {
+     {
+       id: "trip-editing",
+       question: "Can I edit or cancel my posted trips?",
+-      answer: "Yes! Go to your Dashboard > My Trips to edit trip details, update photos, change dates, or cancel trips. If people have already shown interest in your trip, they'll be notified of changes. You can mark trips as complete when you've found travel companions.",
++      answer: "Yes! Go to your Profile > Trips tab to edit trip details, update photos, or change dates. There's no automatic notification when you change a trip's details today, so message anyone who's shown interest directly through Chat Buddy to keep them updated. You can also hide a trip from search results at any time without deleting it, and make it visible again later.",
+       category: "Trip Management",
+       keywords: ["edit", "cancel", "update", "modify", "change", "dashboard"],
+       icon: <Settings className="h-5 w-5 text-ceylon-blue" />
+@@ -104,7 +112,7 @@ export default function HelpFAQPage() {
+     {
+       id: "calendar-usage",
+       question: "How does the Calendar feature work?",
+-      answer: "The Calendar shows all available trips by date. Click any date to see trips for that day. Use filters like 'All Trips', 'Free Trips', 'Pinned', 'Interested', or 'My Trips' to customize your view. Bold dates with green badges indicate days with available trips. Use keyboard arrows to navigate dates quickly.",
++      answer: "The Calendar shows all available trips by date. Click any date to see trips for that day. Use filters like 'All Trips', 'Free Trips', 'Pinned', 'Interested', or 'My Trips' to customize your view. Dates with a small badge indicate days with available trips. Use keyboard arrows to navigate dates quickly.",
+       category: "Calendar & Planning",
+       keywords: ["calendar", "dates", "filters", "schedule", "planning", "navigation"],
+       icon: <Calendar className="h-5 w-5 text-ceylon-blue" />
+@@ -252,7 +260,7 @@ export default function HelpFAQPage() {
+     {
+       id: "trip-pricing",
+       question: "How is trip pricing determined?",
+-      answer: "Trip organizers set prices based on shared costs like fuel, tolls, parking, and sometimes accommodation. Prices are per person and split fairly among participants. Many trips are completely free (marked with 💚). Always clarify what's included in the price when contacting organizers.",
++      answer: "Trip organizers set prices based on shared costs like fuel, tolls, parking, and sometimes accommodation. Prices are per person and split fairly among participants. Many trips are completely free (marked with a \"Free Trip\" badge). Always clarify what's included in the price when contacting organizers.",
+       category: "Costs & Pricing",
+       keywords: ["pricing", "costs", "fuel", "tolls", "split", "per person"],
+       icon: <DollarSign className="h-5 w-5 text-ceylon-blue" />
+@@ -262,17 +270,17 @@ export default function HelpFAQPage() {
+     {
+       id: "trip-cancellation",
+       question: "What happens if a trip gets cancelled or changes?",
+-      answer: "Trip organizers can update details or cancel trips from their dashboard. If you've shown interest in a trip, you'll be notified of changes via chat or email. Stay in touch with organizers as travel dates approach. If an organizer behaves inappropriately, use the report feature.",
++      answer: "Trip organizers can update details or cancel trips from their Profile > Trips tab. There's no automatic notification when a trip changes today, so stay in touch with organizers directly through Chat Buddy as travel dates approach. If an organizer behaves inappropriately, use the report feature.",
+       category: "Trip Changes",
+       keywords: ["cancellation", "changes", "updates", "modify", "notify"],
+       icon: <XCircle className="h-5 w-5 text-orange-500" />
+     },
+     {
+       id: "marking-completed",
+-      question: "How do I mark my trip as completed?",
+-      answer: "Once you've found travel companions, go to Dashboard > My Trips and click the green 'Mark Complete' button. This removes your trip from search results. You can reactivate completed trips anytime if your plans change or you need more travel companions.",
++      question: "How do I take my trip down once I've found companions?",
++      answer: "Go to your Profile > Trips tab and use the toggle to hide the trip from search results. If your plans change or you need more travel companions, you can make it visible again anytime the same way.",
+       category: "Trip Changes",
+-      keywords: ["complete", "finished", "mark", "dashboard", "reactivate"],
++      keywords: ["complete", "finished", "hide", "visibility", "reactivate"],
+       icon: <CheckCircle className="h-5 w-5 text-ceylon-green" />
+     },
+ 
+-- 
+2.50.1 (Apple Git-155)
+
