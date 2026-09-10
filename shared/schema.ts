@@ -1182,41 +1182,49 @@ export const phoneVerifySchema = z.object({
   code: z.string().length(6, "Please enter a 6-digit code"),
 });
 
+const tripDateSchema = z.preprocess(
+  (value) => typeof value === "string" ? new Date(value) : value,
+  z.date({ invalid_type_error: "Date must be a valid date" })
+);
+
+const tripNumberSchema = (fieldName: string) => z.preprocess(
+  (value) => {
+    if (typeof value === "string" && value.trim() !== "") {
+      return Number(value);
+    }
+    return value;
+  },
+  z.number({
+    invalid_type_error: `${fieldName} must be a valid number`,
+  }).finite(`${fieldName} must be a valid number`)
+);
+
+const optionalTripNumberSchema = (fieldName: string) => z.preprocess(
+  (value) => value === null || value === undefined || value === "" ? null : value,
+  tripNumberSchema(fieldName).nullable()
+);
+
 // Custom schema for trip posting that handles string inputs
 export const insertTripSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
   fromLocation: z.string().min(1, "From location is required"),
   toLocation: z.string().min(1, "To location is required"),
-  date: z.union([z.string(), z.date()]).transform(val => typeof val === 'string' ? new Date(val) : val),
+  date: tripDateSchema,
   time: z.string().min(1, "Time is required"),
-  seatsAvailable: z.union([z.number(), z.string()]).transform(val => typeof val === 'string' ? parseInt(val) : val),
-  price: z.union([z.number(), z.string(), z.null(), z.undefined()]).optional().transform(val => {
-    if (val === null || val === undefined || val === '') return null;
-    if (typeof val === 'string') {
-      const parsed = parseFloat(val);
-      return isNaN(parsed) ? null : parsed;
-    }
-    return val;
-  }),
+  seatsAvailable: tripNumberSchema("Seats available")
+    .pipe(z.number().int("Seats available must be a whole number").min(1).max(100)),
+  price: optionalTripNumberSchema("Price")
+    .pipe(z.number().nonnegative("Price cannot be negative").nullable())
+    .optional(),
   region: z.string().min(1, "Region is required"),
   
   // Pricing variants
-  priceMin: z.union([z.number(), z.string(), z.null(), z.undefined()]).optional().transform(val => {
-    if (val === null || val === undefined || val === '') return null;
-    if (typeof val === 'string') {
-      const parsed = parseFloat(val);
-      return isNaN(parsed) ? null : parsed;
-    }
-    return val;
-  }),
-  priceMax: z.union([z.number(), z.string(), z.null(), z.undefined()]).optional().transform(val => {
-    if (val === null || val === undefined || val === '') return null;
-    if (typeof val === 'string') {
-      const parsed = parseFloat(val);
-      return isNaN(parsed) ? null : parsed;
-    }
-    return val;
-  }),
+  priceMin: optionalTripNumberSchema("Minimum price")
+    .pipe(z.number().nonnegative("Minimum price cannot be negative").nullable())
+    .optional(),
+  priceMax: optionalTripNumberSchema("Maximum price")
+    .pipe(z.number().nonnegative("Maximum price cannot be negative").nullable())
+    .optional(),
   
   // Additional trip details
   duration: z.string().optional(),

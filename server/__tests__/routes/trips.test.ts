@@ -242,6 +242,29 @@ describe('Trips API Routes', () => {
       expect(response.body.message).toBe('Invalid trip data');
     });
 
+    it.each([
+      ['an invalid date', { date: 'not-a-date' }, 'date'],
+      ['non-numeric seats', { seatsAvailable: 'many' }, 'seatsAvailable'],
+      ['a partial numeric seat count', { seatsAvailable: '6 seats' }, 'seatsAvailable'],
+      ['a non-numeric price', { price: 'free-ish' }, 'price'],
+    ])('should reject %s before calling storage', async (_description, invalidFields, field) => {
+      const createTripSpy = vi.spyOn(storage, 'createTrip');
+
+      const response = await request(app)
+        .post('/api/trips')
+        .send({ ...validTripData, ...invalidFields })
+        .expect('Content-Type', /json/)
+        .expect(400);
+
+      expect(response.body).toMatchObject({
+        message: 'Invalid trip data',
+        errors: expect.arrayContaining([
+          expect.objectContaining({ path: [field] }),
+        ]),
+      });
+      expect(createTripSpy).not.toHaveBeenCalled();
+    });
+
     it('should handle database errors gracefully', async () => {
       // Mock database error
       vi.spyOn(storage, 'createTrip').mockRejectedValueOnce(new Error('Database connection failed'));
