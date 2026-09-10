@@ -157,6 +157,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   let baseOrigins = [
+    'https://www.hibowan.com',
+    'https://hibowan.com',
+    // Legacy domain kept in case it still resolves/redirects
     'https://www.theceylonx.com',
     'https://theceylonx.com'
   ];

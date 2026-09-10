@@ -90,7 +90,7 @@ router.get('/facebook/callback',
     // Use localhost for development, production URL for production
     // Check if we're running locally (no REPLIT_DOMAINS means local development)
     const isLocalDev = !process.env.REPLIT_DOMAINS || req.get('host')?.includes('localhost') || process.env.NODE_ENV === 'development';
-    const baseUrl = isLocalDev ? 'http://localhost:5000' : (process.env.APP_URL || 'https://www.theceylonx.com');
+    const baseUrl = isLocalDev ? 'http://localhost:5000' : (process.env.APP_URL || 'https://www.hibowan.com');
     
     console.log('🔍 Facebook OAuth callback URL detection:', {
       NODE_ENV: process.env.NODE_ENV,
@@ -130,9 +130,9 @@ router.post('/email/start', authRateLimit, async (req: Request, res: Response) =
 });
 
 router.get('/email/verify', async (req: Request, res: Response) => {
-  const baseUrl = process.env.APP_URL || 
-    (process.env.NODE_ENV === 'production' 
-      ? 'https://theceylonx.com' 
+  const baseUrl = process.env.APP_URL ||
+    (process.env.NODE_ENV === 'production'
+      ? 'https://www.hibowan.com'
       : 'http://localhost:5000');
   return res.redirect(`${baseUrl}/auth/signin?error=email_auth_disabled`);
 });

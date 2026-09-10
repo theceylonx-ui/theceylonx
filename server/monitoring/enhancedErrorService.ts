@@ -354,7 +354,7 @@ class EnhancedErrorService {
     error: EnhancedError
   ): string {
     return `
-🚨 Ceylon Expand Alert - ${severity.toUpperCase()} Error
+🚨 HiBowan Alert - ${severity.toUpperCase()} Error
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📊 Severity: ${severity}
 📂 Category: ${category}

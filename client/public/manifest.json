@@ -1,11 +1,11 @@
 {
-  "name": "Ceylon Expand - Travel Together, Share the Journey",
-  "short_name": "Ceylon Expand",
-  "description": "Find travel companions and share journeys across Sri Lanka. Connect with fellow travelers for amazing adventures.",
+  "name": "HiBowan - Explore Together",
+  "short_name": "HiBowan",
+  "description": "Find fellow travellers heading your way in Sri Lanka. Post the trip you're planning, or join one already forming.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0F8B6E",
-  "theme_color": "#0F8B6E",
+  "background_color": "#F8F4EA",
+  "theme_color": "#DB354E",
   "orientation": "portrait-primary",
   "scope": "/",
   "categories": ["travel", "social", "lifestyle"],
@@ -13,8 +13,8 @@
   "dir": "ltr",
   "icons": [
     {
-      "src": "/assets/5_1756417819316.png",
-      "sizes": "any",
+      "src": "/pwa-icon-512x512.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
@@ -93,9 +93,9 @@
       ]
     },
     {
-      "name": "Community",
+      "name": "HiBowan Tribes",
       "short_name": "Tribes",
-      "description": "Join CeylonX travel community",
+      "description": "Join the HiBowan Tribes community",
       "url": "/community",
       "icons": [
         {

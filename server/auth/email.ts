@@ -17,11 +17,11 @@ const SMTP_CONFIG = {
   },
 };
 
-const EMAIL_FROM = process.env.EMAIL_FROM || 'Ceylon Expand <no-reply@ceylonexpand.com>';
+const EMAIL_FROM = process.env.EMAIL_FROM || 'HiBowan <no-reply@hibowan.com>';
 // Determine APP_URL based on environment
-const APP_URL = process.env.APP_URL || 
-  (process.env.NODE_ENV === 'production' 
-    ? 'https://theceylonx.com'  // Production fallback
+const APP_URL = process.env.APP_URL ||
+  (process.env.NODE_ENV === 'production'
+    ? 'https://www.hibowan.com'  // Production fallback
     : 'http://localhost:5000');  // Development fallback
 
 // Create transporter
@@ -66,11 +66,11 @@ export async function sendVerificationCode(email: string): Promise<string> {
   const emailContent = {
     from: EMAIL_FROM,
     to: email,
-    subject: 'Verify your email - Ceylon Expand',
+    subject: 'Verify your email - HiBowan',
     html: `
       <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #059669; margin: 0;">Ceylon Expand</h1>
+          <h1 style="color: #DB354E; margin: 0;">HiBowan</h1>
           <p style="color: #666; margin: 5px 0;">Your travel companion in Sri Lanka</p>
         </div>
         
@@ -80,8 +80,8 @@ export async function sendVerificationCode(email: string): Promise<string> {
             Please use the verification code below to verify your email address. This code will expire in 10 minutes.
           </p>
           
-          <div style="background: white; border: 2px solid #059669; border-radius: 8px; padding: 20px; margin: 20px 0; display: inline-block;">
-            <div style="color: #059669; font-size: 32px; font-weight: bold; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+          <div style="background: white; border: 2px solid #DB354E; border-radius: 8px; padding: 20px; margin: 20px 0; display: inline-block;">
+            <div style="color: #DB354E; font-size: 32px; font-weight: bold; letter-spacing: 8px; font-family: 'Courier New', monospace;">
               ${code}
             </div>
           </div>
@@ -93,7 +93,7 @@ export async function sendVerificationCode(email: string): Promise<string> {
         
         <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
           <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-            Ceylon Expand - Your travel companion in Sri Lanka
+            HiBowan - Your travel companion in Sri Lanka
           </p>
         </div>
       </div>
@@ -185,23 +185,23 @@ export async function sendMagicLink(email: string): Promise<void> {
   const emailContent = {
     from: EMAIL_FROM,
     to: email,
-    subject: 'Sign in to Ceylon Expand',
+    subject: 'Sign in to HiBowan',
     html: `
       <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #059669; margin: 0;">Ceylon Expand</h1>
+          <h1 style="color: #DB354E; margin: 0;">HiBowan</h1>
           <p style="color: #666; margin: 5px 0;">Your travel companion in Sri Lanka</p>
         </div>
         
         <div style="background: #f8fafc; padding: 30px; border-radius: 8px; text-align: center;">
           <h2 style="color: #1f2937; margin: 0 0 20px 0;">Sign in to your account</h2>
           <p style="color: #4b5563; margin: 0 0 30px 0; line-height: 1.5;">
-            Click the button below to securely sign in to Ceylon Expand. This link will expire in 10 minutes.
+            Click the button below to securely sign in to HiBowan. This link will expire in 10 minutes.
           </p>
           
           <a href="${magicLink}" 
-             style="background: #059669; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-            Sign In to Ceylon Expand
+             style="background: #DB354E; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+            Sign In to HiBowan
           </a>
           
           <p style="color: #9ca3af; font-size: 14px; margin: 30px 0 0 0;">
@@ -215,7 +215,7 @@ export async function sendMagicLink(email: string): Promise<void> {
       </div>
     `,
     text: `
-Sign in to Ceylon Expand
+Sign in to HiBowan
 
 Click this link to sign in: ${magicLink}
 
@@ -223,7 +223,7 @@ This link will expire in 10 minutes for your security.
 
 If you didn't request this email, you can safely ignore it.
 
-Ceylon Expand - Your travel companion in Sri Lanka
+HiBowan - Your travel companion in Sri Lanka
     `,
   };
 

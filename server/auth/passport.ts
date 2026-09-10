@@ -70,7 +70,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   } else if (isDevelopment && !isReplitDeployment) {
     googleCallbackURL = 'http://localhost:5000/api/auth/google/callback';
   } else {
-    googleCallbackURL = 'https://www.theceylonx.com/api/auth/google/callback';
+    googleCallbackURL = 'https://www.hibowan.com/api/auth/google/callback';
   }
   
   console.log('🔧 OAuth Configuration:', {
@@ -171,7 +171,7 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
   } else if (isDevelopment && !isReplitDeployment) {
     facebookCallbackURL = 'http://localhost:5000/api/auth/facebook/callback';
   } else {
-    facebookCallbackURL = 'https://www.theceylonx.com/api/auth/facebook/callback';
+    facebookCallbackURL = 'https://www.hibowan.com/api/auth/facebook/callback';
   }
   
   console.log('🔧 Facebook OAuth Configuration:', {

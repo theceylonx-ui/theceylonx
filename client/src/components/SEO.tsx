@@ -142,7 +142,7 @@ export const SEOConfigs = {
     title: 'HiBowan - Connect with Travel Buddies in Sri Lanka',
     description: 'Find travel companions and share amazing journeys across Sri Lanka. Connect with like-minded travelers, split costs, and explore the pearl of the Indian Ocean together.',
     keywords: 'sri lanka travel, travel buddies, travel companions, car sharing, trip sharing, ceylon travel, sri lanka tourism',
-    ogImage: 'https://images.unsplash.com/photo-1562602833-0f4ab2fc46e3?w=1200&q=80',
+    ogImage: 'https://www.hibowan.com/hibowan-hero-share.jpg',
     structuredData: {
       '@context': 'https://schema.org',
       '@type': 'WebSite',

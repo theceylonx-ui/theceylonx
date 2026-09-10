@@ -53,7 +53,7 @@ export async function sendPhoneOtp(phone: string): Promise<void> {
   });
 
   // Send SMS
-  const message = `Your Ceylon Expand verification code is: ${code}\n\nThis code will expire in 5 minutes.`;
+  const message = `Your HiBowan verification code is: ${code}\n\nThis code will expire in 5 minutes.`;
 
   try {
     if (messagingServiceSid) {
@@ -115,7 +115,7 @@ export async function verifyPhoneOtp(phone: string, code: string): Promise<JWTUs
 
     if (!user) {
       // Create new user with synthetic email
-      const syntheticEmail = `phone:${phone.replace('+', '')}@ceylonexpand.com`;
+      const syntheticEmail = `phone:${phone.replace('+', '')}@hibowan.com`;
       [user] = await db.insert(users).values({
         phone,
         email: syntheticEmail,

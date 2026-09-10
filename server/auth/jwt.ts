@@ -74,14 +74,14 @@ const effectiveCookieSecure = (() => {
 export function signAccessToken(user: JWTUser): string {
   return jwt.sign(user, ACCESS_TOKEN_SECRET, { 
     expiresIn: ACCESS_TOKEN_EXPIRY,
-    issuer: 'ceylon-expand'
+    issuer: 'hibowan'
   });
 }
 
 export function signRefreshToken(): string {
   return jwt.sign({ tokenId: nanoid() }, REFRESH_TOKEN_SECRET, { 
     expiresIn: REFRESH_TOKEN_EXPIRY,
-    issuer: 'ceylon-expand'
+    issuer: 'hibowan'
   });
 }
 

@@ -26,8 +26,8 @@ export function isValidRedirectUrl(url: string, allowedOrigins?: string[]): bool
 
     // Check against allowed origins
     const defaultAllowedOrigins = [
-      'https://www.theceylonx.com',
-      'https://theceylonx.com',
+      'https://www.hibowan.com',
+      'https://hibowan.com',
       ...(process.env.NODE_ENV === 'development' ? [
         'http://localhost:5000',
         'http://localhost:5173',

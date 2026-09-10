@@ -10,7 +10,7 @@ const router = Router();
 router.get('/sitemap.xml', async (req: Request, res: Response) => {
   try {
     const baseUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://www.theceylonx.com' 
+      ? 'https://www.hibowan.com' 
       : `http://${req.get('host')}`;
     
     // Static pages with priorities and frequencies
@@ -85,7 +85,7 @@ router.get('/sitemap.xml', async (req: Request, res: Response) => {
 // Generate robots.txt dynamically (if needed for different environments)
 router.get('/robots.txt', (req: Request, res: Response) => {
   const baseUrl = process.env.NODE_ENV === 'production' 
-    ? 'https://www.theceylonx.com' 
+    ? 'https://www.hibowan.com' 
     : `http://${req.get('host')}`;
   
   const robotsTxt = `User-agent: *
@@ -124,20 +124,20 @@ Crawl-delay: 1`;
 // Structured data for homepage
 router.get('/api/structured-data/home', (req: Request, res: Response) => {
   const baseUrl = process.env.NODE_ENV === 'production' 
-    ? 'https://www.theceylonx.com' 
+    ? 'https://www.hibowan.com' 
     : `http://${req.get('host')}`;
     
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    'name': 'Ceylon Expand',
+    'name': 'HiBowan',
     'description': 'Travel buddy and trip sharing platform for Sri Lanka. Connect with fellow travelers and explore the pearl of the Indian Ocean together.',
     'url': baseUrl,
     'logo': `${baseUrl}/logo.png`,
     'sameAs': [
-      'https://www.facebook.com/ceylonexpand',
-      'https://www.instagram.com/ceylon_expand',
-      'https://www.twitter.com/ceylon_expand'
+      'https://www.facebook.com/hibowan.srilanka',
+      'https://www.instagram.com/hibowan.srilanka',
+      'https://www.twitter.com/hibowan.srilanka'
     ],
     'potentialAction': {
       '@type': 'SearchAction',

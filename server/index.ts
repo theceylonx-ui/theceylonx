@@ -23,7 +23,7 @@ if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes('www.theceylo
   console.log('🔧 Database URL corrected for proper connection');
 }
 
-console.log('Starting Ceylon Expand server...');
+console.log('Starting HiBowan server...');
 
 // Check Clerk environment configuration
 const clerkCheck = checkClerkEnv();
@@ -54,7 +54,7 @@ const helmetConfig = {
         "https://js.stripe.com", // Stripe payments (specific URL)
         "https://replit.com", // Replit development banner (development mode)
         // SECURITY: Clerk domains only if configured
-        ...(process.env.CLERK_PUBLISHABLE_KEY ? ["https://clerk.ceylonx.com"] : []),
+        ...(process.env.CLERK_PUBLISHABLE_KEY ? ["https://clerk.hibowan.com"] : []),
         // SECURITY: Only allow unsafe-eval and blob: in development for HMR
         ...(isDevelopment ? ["'unsafe-eval'", "blob:"] : []),
       ].filter(Boolean),
@@ -67,7 +67,7 @@ const helmetConfig = {
         // SECURITY: Allow unsafe-inline and blob: only in development for hot reload
         ...(isDevelopment ? ["'unsafe-inline'", "blob:"] : []),
         // SECURITY: Clerk styles only if configured
-        ...(process.env.CLERK_PUBLISHABLE_KEY ? ["https://clerk.ceylonx.com"] : []),
+        ...(process.env.CLERK_PUBLISHABLE_KEY ? ["https://clerk.hibowan.com"] : []),
       ].filter(Boolean),
       fontSrc: [
         "'self'",
@@ -85,7 +85,7 @@ const helmetConfig = {
         "https://graph.facebook.com", // Facebook profile images (specific API endpoint)
         "https://api.dicebear.com", // Avatar service
         // SECURITY: Clerk assets only if configured
-        ...(process.env.CLERK_PUBLISHABLE_KEY ? ["https://clerk.ceylonx.com"] : []),
+        ...(process.env.CLERK_PUBLISHABLE_KEY ? ["https://clerk.hibowan.com"] : []),
       ].filter(Boolean),
       // SECURITY: Strict connection sources - removed broad wss:// and ws:// wildcards
       connectSrc: [
@@ -102,13 +102,13 @@ const helmetConfig = {
           "https://api.stripe.com", // Stripe API
         ]),
         // SECURITY: Clerk domains only if configured
-        ...(process.env.CLERK_PUBLISHABLE_KEY ? ["https://clerk.ceylonx.com"] : []),
+        ...(process.env.CLERK_PUBLISHABLE_KEY ? ["https://clerk.hibowan.com"] : []),
       ].filter(Boolean),
       frameSrc: [
         "'self'",
         "https://js.stripe.com", // Stripe iframe
         // SECURITY: Clerk iframe only if configured
-        ...(process.env.CLERK_PUBLISHABLE_KEY ? ["https://clerk.ceylonx.com"] : []),
+        ...(process.env.CLERK_PUBLISHABLE_KEY ? ["https://clerk.hibowan.com"] : []),
       ].filter(Boolean),
       objectSrc: ["'none'"], // SECURITY: Disable object/embed for security  
       baseUri: ["'self'"], // SECURITY: Prevent base tag injection

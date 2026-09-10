@@ -5,12 +5,12 @@ import { nanoid } from 'nanoid';
 
 async function ensureSeedUsers() {
   const usersData = [
-    { email: "seed@theceylonx.com", name: "CeylonX" },
-    { email: "traveler1@theceylonx.com", name: "Traveler One" },
-    { email: "traveler2@theceylonx.com", name: "Traveler Two" },
-    { email: "traveler3@theceylonx.com", name: "Traveler Three" },
-    { email: "guide@theceylonx.com", name: "Local Guide" },
-    { email: "explorer@theceylonx.com", name: "Adventure Explorer" },
+    { email: "seed@hibowan.com", name: "HiBowan" },
+    { email: "traveler1@hibowan.com", name: "Traveler One" },
+    { email: "traveler2@hibowan.com", name: "Traveler Two" },
+    { email: "traveler3@hibowan.com", name: "Traveler Three" },
+    { email: "traveler4@hibowan.com", name: "Fellow Traveler" },
+    { email: "explorer@hibowan.com", name: "Adventure Explorer" },
   ];
 
   for (const userData of usersData) {
@@ -29,8 +29,8 @@ export async function seedSampleTrips() {
   
   await ensureSeedUsers();
   
-  const seedUser = await db.select().from(users).where(eq(users.email, "seed@theceylonx.com"));
-  const traveler1 = await db.select().from(users).where(eq(users.email, "traveler1@theceylonx.com"));
+  const seedUser = await db.select().from(users).where(eq(users.email, "seed@hibowan.com"));
+  const traveler1 = await db.select().from(users).where(eq(users.email, "traveler1@hibowan.com"));
   
   if (seedUser.length === 0) {
     throw new Error("Seed user not found");
@@ -59,7 +59,7 @@ export async function seedSampleTrips() {
       category: "culture" as const,
       organizerId: seedUser[0].id,
       organizerPhone: "771234567",
-      organizerEmail: "seed@theceylonx.com",
+      organizerEmail: "seed@hibowan.com",
       organizerCountryCode: "+94",
       contactInfo: "Contact via WhatsApp",
       status: "active",
@@ -79,7 +79,7 @@ export async function seedSampleTrips() {
       category: "culture" as const,
       organizerId: traveler1[0]?.id || seedUser[0].id,
       organizerPhone: "772345678",
-      organizerEmail: "traveler1@theceylonx.com",
+      organizerEmail: "traveler1@hibowan.com",
       organizerCountryCode: "+94",
       contactInfo: "Call or WhatsApp",
       status: "active",
@@ -99,7 +99,7 @@ export async function seedSampleTrips() {
       category: "adventure" as const,
       organizerId: seedUser[0].id,
       organizerPhone: "773456789",
-      organizerEmail: "seed@theceylonx.com",
+      organizerEmail: "seed@hibowan.com",
       organizerCountryCode: "+94",
       contactInfo: "WhatsApp preferred",
       status: "active",
@@ -126,7 +126,7 @@ export async function seedSampleQuestions() {
   
   await ensureSeedUsers();
   
-  const seedUser = await db.select().from(users).where(eq(users.email, "seed@theceylonx.com"));
+  const seedUser = await db.select().from(users).where(eq(users.email, "seed@hibowan.com"));
   if (seedUser.length === 0) {
     throw new Error("Seed user not found");
   }

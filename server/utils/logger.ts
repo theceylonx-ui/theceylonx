@@ -34,7 +34,7 @@ export interface LogEntry {
 }
 
 class Logger {
-  private serviceName: string = 'ceylon-expand-api';
+  private serviceName: string = 'hibowan-api';
   private minLevel: LogLevel = isProduction() ? LogLevel.INFO : LogLevel.DEBUG;
 
   // Format structured log entry

@@ -88,7 +88,7 @@ class EnhancedLoggingService {
   private enabledLevels: Set<LogLevel>;
 
   constructor(
-    serviceName: string = 'ceylon-expand',
+    serviceName: string = 'hibowan',
     environment: string = process.env.NODE_ENV || 'development',
     config: {
       maxLogsInMemory?: number;

@@ -1,5 +1,5 @@
 /**
- * Ceylon Expand Admin Permission Registry
+ * HiBowan Admin Permission Registry
  * 
  * Centralized permission definitions to prevent drift and ensure consistency.
  * All admin permissions are defined here with strict typing.
