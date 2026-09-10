@@ -8,7 +8,7 @@ export default function AboutPage() {
     <div className="min-h-screen bg-white">
       <Navigation />
 
-      <section className="bg-gradient-to-br from-ceylon-green/10 via-white to-ceylon-orange/5 py-16 sm:py-24">
+      <section className="bg-gradient-to-br from-ceylon-green/10 via-white to-orange-100/40 py-16 sm:py-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
             About <span className="text-ceylon-green">HiBowan</span>
@@ -43,11 +43,11 @@ export default function AboutPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-l-4 border-l-ceylon-orange shadow-sm hover:shadow-md transition-shadow">
+            <Card className="border-l-4 border-l-orange-500 shadow-sm hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className="p-2 bg-ceylon-orange/10 rounded-lg flex-shrink-0">
-                    <Globe className="h-6 w-6 text-ceylon-orange" />
+                  <div className="p-2 bg-orange-50 rounded-lg flex-shrink-0">
+                    <Globe className="h-6 w-6 text-orange-500" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 text-lg mb-2">Post Your Own Trips</h3>
@@ -86,7 +86,7 @@ export default function AboutPage() {
             </Card>
           </div>
 
-          <div className="bg-gradient-to-br from-ceylon-green/5 to-ceylon-orange/5 rounded-2xl p-8 sm:p-12 mb-16">
+          <div className="bg-gradient-to-br from-ceylon-green/5 to-orange-100/30 rounded-2xl p-8 sm:p-12 mb-16">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Why HiBowan?</h2>
             <p className="text-gray-700 text-lg leading-relaxed">
               Sri Lanka is a small island with enormous diversity — ancient temples, pristine beaches, lush tea plantations, and vibrant wildlife. But navigating it alone can be daunting and expensive. We believe travel is better when shared. HiBowan makes it easy to find companions who share your interests, split costs, and create unforgettable memories across this incredible island.
