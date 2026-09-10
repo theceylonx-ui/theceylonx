@@ -252,7 +252,7 @@ export default function CommunityPage() {
                       onClick={() => setSortBy(sort)}
                       className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
                         sortBy === sort 
-                          ? "bg-white text-brand shadow-sm" 
+                          ? "bg-white text-brand shadow-sm"
                           : "text-gray-600 hover:text-brand"
                       }`}
                     >

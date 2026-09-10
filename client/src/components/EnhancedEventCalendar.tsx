@@ -516,7 +516,7 @@ const EnhancedEventCalendar = ({ className }: EnhancedEventCalendarProps) => {
               disabled={isDisabled}
               className={`flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm min-h-[60px] sm:min-h-[44px] rounded-lg transition-all duration-200 ${
                 isActive 
-                  ? 'bg-gradient-to-r from-brand to-accent text-white shadow-lg scale-105' 
+                  ? 'bg-gradient-to-r from-brand to-accent text-white shadow-lg scale-105'
                   : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-accent/40 hover:bg-accent-subtle'
               } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'}`}
               data-testid={`filter-${filterKey}`}
