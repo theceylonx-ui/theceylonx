@@ -1579,29 +1579,10 @@ export class DatabaseStorage implements IStorage {
         .sort((a, b) => b.count - a.count)
         .slice(0, limit);
 
-      // 🚀 RELIABILITY: Fallback to popular Sri Lankan destinations if no data
-      if (results.length === 0) {
-        const fallbackDestinations = [
-          { destination: 'Colombo', count: 15 },
-          { destination: 'Kandy', count: 12 },
-          { destination: 'Galle', count: 10 },
-          { destination: 'Nuwara Eliya', count: 8 },
-          { destination: 'Sigiriya', count: 7 }
-        ];
-        return fallbackDestinations.slice(0, limit);
-      }
-
       return results;
     } catch (error) {
       console.error('❌ Error fetching popular destinations:', error);
-      // 🚀 RELIABILITY: Always return something
-      return [
-        { destination: 'Colombo', count: 15 },
-        { destination: 'Kandy', count: 12 },
-        { destination: 'Galle', count: 10 },
-        { destination: 'Nuwara Eliya', count: 8 },
-        { destination: 'Sigiriya', count: 7 }
-      ].slice(0, limit);
+      return [];
     }
   }
 

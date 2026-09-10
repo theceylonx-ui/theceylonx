@@ -93,15 +93,15 @@ export default function Footer() {
             </nav>
           </div>
 
-          <div>
-            <h4 className="text-lg font-semibold mb-4" id="destinations-heading">Popular Destinations</h4>
-            <nav aria-labelledby="destinations-heading">
-              <ul className="space-y-2 text-gray-300" role="list">
-                {popularDestinations.length > 0 ? (
-                  popularDestinations.slice(0, 5).map((dest, index) => (
+          {popularDestinations.length > 0 && (
+            <div>
+              <h4 className="text-lg font-semibold mb-4" id="destinations-heading">Popular Destinations</h4>
+              <nav aria-labelledby="destinations-heading">
+                <ul className="space-y-2 text-gray-300" role="list">
+                  {popularDestinations.slice(0, 5).map((dest, index) => (
                     <li key={index}>
                       <Link href={`/destination/${encodeURIComponent(dest.destination)}`}>
-                        <span 
+                        <span
                           className="hover:text-ceylon-green transition-colors cursor-pointer focus:outline-none focus:underline focus:text-ceylon-green"
                           data-testid={`footer-destination-${dest.destination.toLowerCase().replace(/\s+/g, '-')}`}
                           tabIndex={0}
@@ -111,34 +111,25 @@ export default function Footer() {
                         </span>
                       </Link>
                     </li>
-                  ))
-                ) : (
-                  // Fallback destinations if no data available
-                  <>
-                    <li><Link href="/destination/Colombo"><span className="hover:text-ceylon-green transition-colors cursor-pointer focus:outline-none focus:underline focus:text-ceylon-green" tabIndex={0} data-testid="footer-destination-colombo">Colombo</span></Link></li>
-                    <li><Link href="/destination/Kandy"><span className="hover:text-ceylon-green transition-colors cursor-pointer focus:outline-none focus:underline focus:text-ceylon-green" tabIndex={0} data-testid="footer-destination-kandy">Kandy</span></Link></li>
-                    <li><Link href="/destination/Galle"><span className="hover:text-ceylon-green transition-colors cursor-pointer focus:outline-none focus:underline focus:text-ceylon-green" tabIndex={0} data-testid="footer-destination-galle">Galle</span></Link></li>
-                    <li><Link href="/destination/Nuwara%20Eliya"><span className="hover:text-ceylon-green transition-colors cursor-pointer focus:outline-none focus:underline focus:text-ceylon-green" tabIndex={0} data-testid="footer-destination-nuwara-eliya">Nuwara Eliya</span></Link></li>
-                    <li><Link href="/destination/Sigiriya"><span className="hover:text-ceylon-green transition-colors cursor-pointer focus:outline-none focus:underline focus:text-ceylon-green" tabIndex={0} data-testid="footer-destination-sigiriya">Sigiriya</span></Link></li>
-                  </>
-                )}
-              </ul>
-              
-              {/* View More Button */}
-              <div className="mt-4">
-                <Link href="/browse-trips">
-                  <span 
-                    className="text-sm text-gray-400 hover:text-ceylon-green transition-colors cursor-pointer border-b border-gray-400 hover:border-ceylon-green focus:outline-none focus:text-ceylon-green focus:border-ceylon-green"
-                    data-testid="footer-view-more-destinations"
-                    tabIndex={0}
-                    aria-label="View more destinations and browse all trips"
-                  >
-                    View more destinations →
-                  </span>
-                </Link>
-              </div>
-            </nav>
-          </div>
+                  ))}
+                </ul>
+
+                {/* View More Button */}
+                <div className="mt-4">
+                  <Link href="/browse-trips">
+                    <span
+                      className="text-sm text-gray-400 hover:text-ceylon-green transition-colors cursor-pointer border-b border-gray-400 hover:border-ceylon-green focus:outline-none focus:text-ceylon-green focus:border-ceylon-green"
+                      data-testid="footer-view-more-destinations"
+                      tabIndex={0}
+                      aria-label="View more destinations and browse all trips"
+                    >
+                      View more destinations →
+                    </span>
+                  </Link>
+                </div>
+              </nav>
+            </div>
+          )}
 
           <div>
             <h4 className="text-lg font-semibold mb-4" id="support-heading">Support</h4>
