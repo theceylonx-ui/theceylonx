@@ -1,0 +1,89 @@
+From b0a6c4490aaad9d76c86624a09090babc8c7cb7a Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 12:25:19 +0530
+Subject: [PATCH] Update Privacy Policy and Terms of Service for Quick Trips;
+ fix stale dates
+
+Neither document mentioned Quick Trips at all (a distinct, separate
+feature from regular trips: short-lived, interest-request based,
+auto-deletes after 3 days). Added it to both:
+
+- Privacy Policy: Quick Trip posts/interest requests under "Trip and
+  Activity Data", and their 3-day auto-deletion under "Retention
+  Periods".
+- Terms of Service: a new "Quick Trips" subsection under "Trip
+  Posting and Participation" covering their informal nature, 3-day
+  auto-expiry, and that the same community/safety standards apply.
+
+Also fixed the "Last updated" dates, which had drifted out of sync
+with each other (Privacy Policy said September 2025, Terms said
+January 2026) and out of date with this round of changes.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ client/src/pages/privacy-policy.tsx   |  4 +++-
+ client/src/pages/terms-of-service.tsx | 12 +++++++++++-
+ 2 files changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/client/src/pages/privacy-policy.tsx b/client/src/pages/privacy-policy.tsx
+index a1f1120..09be311 100644
+--- a/client/src/pages/privacy-policy.tsx
++++ b/client/src/pages/privacy-policy.tsx
+@@ -15,7 +15,7 @@ export default function PrivacyPolicy() {
+             Privacy Policy
+           </h1>
+           <p className="text-xl text-gray-600 dark:text-gray-400">
+-            Last updated: September 2025
++            Last updated: September 2026
+           </p>
+         </div>
+ 
+@@ -62,6 +62,7 @@ export default function PrivacyPolicy() {
+                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Trip and Activity Data:</h4>
+                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                   <li>• Trip posts you create (destinations, dates, descriptions)</li>
++                  <li>• Quick Trip posts you create (short-lived, informal trip listings) and interest requests you send or receive on them</li>
+                   <li>• Trips you join or express interest in</li>
+                   <li>• Comments and messages you post</li>
+                   <li>• Ratings and reviews you give and receive</li>
+@@ -291,6 +292,7 @@ export default function PrivacyPolicy() {
+                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                   <li>• Account information: Until account deletion + 30 days</li>
+                   <li>• Trip posts and comments: Until manually deleted or account closure</li>
++                  <li>• Quick Trip posts: Automatically deleted 3 days after posting</li>
+                   <li>• Safety reports and investigations: Up to 2 years for security purposes</li>
+                   <li>• Analytics data: Aggregated and anonymized after 1 year</li>
+                 </ul>
+diff --git a/client/src/pages/terms-of-service.tsx b/client/src/pages/terms-of-service.tsx
+index ce8b9b6..253e1ab 100644
+--- a/client/src/pages/terms-of-service.tsx
++++ b/client/src/pages/terms-of-service.tsx
+@@ -15,7 +15,7 @@ export default function TermsOfService() {
+             Terms of Service
+           </h1>
+           <p className="text-xl text-gray-600 dark:text-gray-400">
+-            Last updated: January 2026
++            Last updated: September 2026
+           </p>
+         </div>
+ 
+@@ -87,6 +87,16 @@ export default function TermsOfService() {
+                   <li>• Must pay agreed fees and respect cancellation policies</li>
+                 </ul>
+               </div>
++
++              <div>
++                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Quick Trips:</h4>
++                <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
++                  <li>• Quick Trips are short, informal trip listings meant for spontaneous plans</li>
++                  <li>• They are automatically removed 3 days after posting, whether or not they found participants</li>
++                  <li>• Other travelers show interest by sending a request, which the organizer accepts or declines</li>
++                  <li>• The same posting standards, safety expectations, and community guidelines apply as for regular trips</li>
++                </ul>
++              </div>
+             </CardContent>
+           </Card>
+ 
+-- 
+2.50.1 (Apple Git-155)
+
