@@ -4,25 +4,31 @@ import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { SRI_LANKA_TRIBES_QA } from './sriLankaTribesData';
 
-async function seedSimpleQuestions() {
+async function seedSimpleQuestions(authorUserId?: string) {
   console.log("🌱 Starting simple questions seeding...");
   
   try {
-    // Ensure seed user exists
-    const seedUser = await db.select().from(users).where(eq(users.email, "seed@hibowan.com"));
-    if (seedUser.length === 0) {
-      await db.insert(users).values({
-        id: nanoid(),
-        email: "seed@hibowan.com",
-        name: "HiBowan"
-      });
+    let userId = authorUserId;
+    if (!userId) {
+      // Standalone development seeding uses a synthetic author. The admin
+      // endpoint supplies its authenticated administrator instead.
+      const seedUser = await db.select().from(users).where(eq(users.email, "seed@hibowan.com"));
+      if (seedUser.length === 0) {
+        await db.insert(users).values({
+          id: nanoid(),
+          email: "seed@hibowan.com",
+          name: "HiBowan"
+        });
+      }
+
+      const user = await db.select().from(users).where(eq(users.email, "seed@hibowan.com"));
+      if (user.length === 0) {
+        throw new Error("Failed to create or find seed user");
+      }
+      userId = user[0].id;
     }
-    
-    const user = await db.select().from(users).where(eq(users.email, "seed@hibowan.com"));
-    if (user.length === 0) {
-      throw new Error("Failed to create or find seed user");
-    }
-    const userId = user[0].id;
+
+    const authorId = userId;
   
   // Create a default topic if none exists
   let defaultTopic = await db.select().from(topics).limit(1);
@@ -45,7 +51,7 @@ async function seedSimpleQuestions() {
       body: "Planning to visit Sigiriya. What's the best time of day and season to avoid crowds and get the best views?",
       slug: "best-time-visit-sigiriya-rock-fortress",
       tags: ["sigiriya", "timing", "crowds"],
-      userId,
+      userId: authorId,
       topicId,
       isAnonymous: false,
       views: 45,
@@ -220,7 +226,7 @@ async function seedSimpleQuestions() {
         title: item.title,
         body: item.body,
         tags: [...item.tags],
-        userId,
+        userId: authorId,
         topicId: travelBasicsTopicId,
         isAnonymous: false,
         answersCount: 1,
@@ -238,7 +244,7 @@ async function seedSimpleQuestions() {
         id: answerId,
         body: item.answer,
         questionId,
-        userId,
+        userId: authorId,
         isAccepted: true,
       });
     }

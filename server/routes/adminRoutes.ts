@@ -644,7 +644,7 @@ router.post('/seed-data', requireAdmin, async (req, res) => {
     
     // Seed questions
     const { seedSimpleQuestions } = await import('../../scripts/seed-simple-questions');
-    await seedSimpleQuestions();
+    await seedSimpleQuestions(req.adminUser!.id);
     console.log('✅ Sample questions seeded successfully');
     
     console.log('🎉 Manual seeding completed successfully');
