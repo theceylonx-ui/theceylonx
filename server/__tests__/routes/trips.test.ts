@@ -5,6 +5,10 @@
 
 import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
 import request from 'supertest';
+import { createTestDatabase } from '../testDatabase';
+
+vi.mock('../../db', async () => createTestDatabase());
+
 import { app, initializeApp } from '../../index';
 import { db } from '../../db';
 import { storage } from '../../storage';
@@ -146,9 +150,10 @@ describe('Trips API Routes', () => {
       });
     });
 
-    it('does not expose private organizer fields to unauthenticated viewers', async () => {
+    it('does not expose private organizer fields to non-owner viewers', async () => {
       const response = await request(app)
         .get(`/api/trips/${testTrip.id}`)
+        .set('x-test-user-id', 'viewer-user-id')
         .expect(200);
 
       expect(response.body.organizer).toHaveProperty('id', testUser.id);

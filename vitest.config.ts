@@ -11,6 +11,10 @@ export default defineConfig({
   plugins: [react()],
   
   test: {
+    env: {
+      NODE_ENV: 'test',
+    },
+
     // Test environment
     environment: 'jsdom',
     environmentMatchGlobs: [
