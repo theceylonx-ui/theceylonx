@@ -1,0 +1,387 @@
+From a1de258c0251d11b1e73ff59ef16fa6b8b653904 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 13:49:57 +0530
+Subject: [PATCH] Fix Privacy Settings (was writing to a dead table) and
+ Download My Data (was calling a nonexistent endpoint)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Privacy Settings: the Profile > Privacy tab saved to a `user_privacy`
+table (visibility, showOnline, showJoinedTrips, cityVisibility) that
+nothing ever reads. The actual profile-viewing endpoint
+(GET /api/users/:userId/profile) enforces a completely different set
+of fields directly on `users` (profileVisibility, showEmail,
+showPhone, showRealName, showBio, showLocation, showInterests,
+showTravelHistory) that no UI ever set — so they sat at their
+defaults forever. A user setting their profile to "Private" got a
+success toast and zero actual protection.
+
+Rewired GET/PATCH /api/me/privacy to read and write the fields that
+are actually enforced, and rebuilt the Privacy tab around them.
+Dropped "Friends Only" from the visibility options since it isn't
+actually enforced differently from Public today (only 'private' is
+checked) — offering it would just reintroduce the same problem.
+
+Download My Data: the button called /api/user/download-data, which
+doesn't exist, and even if it had, the handler never called
+response.json() before stringifying — it would have downloaded a
+near-empty file. There's already a real, working export endpoint at
+GET /api/me/export; wired the button to that instead, fixed the
+missing .json() parse, added chat messages and community questions
+to the export (the button's own copy promised them but the export
+didn't include them), and fixed lingering "Ceylon Expand" branding in
+the exported filename and content.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ client/src/pages/me.tsx | 125 ++++++++++++++++++++--------------------
+ server/routes.ts        |  91 ++++++++++++++++++++---------
+ server/storage.ts       |  17 +++++-
+ 3 files changed, 141 insertions(+), 92 deletions(-)
+
+diff --git a/client/src/pages/me.tsx b/client/src/pages/me.tsx
+index 788766b..fec0a57 100644
+--- a/client/src/pages/me.tsx
++++ b/client/src/pages/me.tsx
+@@ -1498,8 +1498,9 @@ function SecuritySettings({ profile }: any) {
+           <Button
+             onClick={async () => {
+               try {
+-                const response = await apiRequest("GET", "/api/user/download-data");
+-                const blob = new Blob([JSON.stringify(response, null, 2)], { type: 'application/json' });
++                const response = await apiRequest("GET", "/api/me/export");
++                const data = await response.json();
++                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                 const url = URL.createObjectURL(blob);
+                 const a = document.createElement('a');
+                 a.href = url;
+@@ -1609,13 +1610,31 @@ function SecuritySettings({ profile }: any) {
+ function PrivacySettings({ privacy, onUpdate }: any) {
+   const { toast } = useToast();
+   const [settings, setSettings] = useState({
+-    visibility: privacy?.visibility ?? 'public',
+-    showOnline: privacy?.showOnline ?? true,
+-    showJoinedTrips: privacy?.showJoinedTrips ?? true,
+-    cityVisibility: privacy?.cityVisibility ?? 'show'
++    profileVisibility: privacy?.profileVisibility ?? 'public',
++    showRealName: privacy?.showRealName ?? true,
++    showBio: privacy?.showBio ?? true,
++    showLocation: privacy?.showLocation ?? true,
++    showEmail: privacy?.showEmail ?? false,
++    showPhone: privacy?.showPhone ?? false,
++    showInterests: privacy?.showInterests ?? true,
++    showTravelHistory: privacy?.showTravelHistory ?? true,
+   });
+   const [isLoading, setIsLoading] = useState(false);
+ 
++  useEffect(() => {
++    if (!privacy) return;
++    setSettings({
++      profileVisibility: privacy.profileVisibility ?? 'public',
++      showRealName: privacy.showRealName ?? true,
++      showBio: privacy.showBio ?? true,
++      showLocation: privacy.showLocation ?? true,
++      showEmail: privacy.showEmail ?? false,
++      showPhone: privacy.showPhone ?? false,
++      showInterests: privacy.showInterests ?? true,
++      showTravelHistory: privacy.showTravelHistory ?? true,
++    });
++  }, [privacy]);
++
+   const handleSave = async () => {
+     setIsLoading(true);
+     try {
+@@ -1636,6 +1655,16 @@ function PrivacySettings({ privacy, onUpdate }: any) {
+     }
+   };
+ 
++  const toggleRows: Array<{ key: keyof typeof settings; label: string; helper: string; testId: string }> = [
++    { key: 'showRealName', label: 'Show Real Name', helper: 'Display your first and last name on your profile', testId: 'switch-show-real-name' },
++    { key: 'showBio', label: 'Show Bio', helper: 'Display your bio on your profile', testId: 'switch-show-bio' },
++    { key: 'showLocation', label: 'Show Location', helper: 'Display your city on your profile', testId: 'switch-show-location' },
++    { key: 'showInterests', label: 'Show Interests', helper: 'Display your travel interests and vibe on your profile', testId: 'switch-show-interests' },
++    { key: 'showTravelHistory', label: 'Show Travel History', helper: 'Display your past trips on your profile', testId: 'switch-show-travel-history' },
++    { key: 'showEmail', label: 'Show Email', helper: 'Display your email address on your profile', testId: 'switch-show-email' },
++    { key: 'showPhone', label: 'Show Phone', helper: 'Display your phone number on your profile', testId: 'switch-show-phone' },
++  ];
++
+   return (
+     <div className="space-y-6">
+       <div className="flex items-center gap-3 mb-6">
+@@ -1656,78 +1685,48 @@ function PrivacySettings({ privacy, onUpdate }: any) {
+           <Label htmlFor="profile-visibility" className="text-base font-medium text-gray-700">
+             Profile Visibility
+           </Label>
+-          <Select 
+-            value={settings.visibility} 
+-            onValueChange={(value) => setSettings({...settings, visibility: value})}
++          <Select
++            value={settings.profileVisibility}
++            onValueChange={(value) => setSettings({...settings, profileVisibility: value})}
+           >
+             <SelectTrigger className="w-full">
+               <SelectValue placeholder="Select visibility level" />
+             </SelectTrigger>
+             <SelectContent>
+               <SelectItem value="public">Public - Everyone can see</SelectItem>
+-              <SelectItem value="friends">Friends Only</SelectItem>
+               <SelectItem value="private">Private - Only me</SelectItem>
+             </SelectContent>
+           </Select>
+         </div>
+ 
+-        {/* Show Online Status */}
+-        <div className="flex items-center justify-between py-3">
+-          <div className="space-y-1">
+-            <Label className="text-base font-medium text-gray-700">
+-              Show Online Status
+-            </Label>
+-            <p className="text-sm text-gray-500">
+-              Let others see when you're active on HiBowan
+-            </p>
+-          </div>
+-          <Switch 
+-            checked={settings.showOnline}
+-            onCheckedChange={(checked) => setSettings({...settings, showOnline: checked})}
+-            data-testid="switch-online-status"
+-          />
+-        </div>
+-
+-        {/* Show Joined Trips */}
+-        <div className="flex items-center justify-between py-3">
+-          <div className="space-y-1">
+-            <Label className="text-base font-medium text-gray-700">
+-              Show Joined Trips
+-            </Label>
+-            <p className="text-sm text-gray-500">
+-              Display trips you've joined on your profile
+-            </p>
++        {settings.profileVisibility === 'private' && (
++          <p className="text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
++            Your profile is private, so nobody else can see it regardless of the settings below.
++          </p>
++        )}
++
++        {toggleRows.map((row) => (
++          <div key={row.key} className="flex items-center justify-between py-3">
++            <div className="space-y-1">
++              <Label className="text-base font-medium text-gray-700">
++                {row.label}
++              </Label>
++              <p className="text-sm text-gray-500">
++                {row.helper}
++              </p>
++            </div>
++            <Switch
++              checked={settings[row.key] as boolean}
++              onCheckedChange={(checked) => setSettings({...settings, [row.key]: checked})}
++              data-testid={row.testId}
++            />
+           </div>
+-          <Switch 
+-            checked={settings.showJoinedTrips}
+-            onCheckedChange={(checked) => setSettings({...settings, showJoinedTrips: checked})}
+-            data-testid="switch-joined-trips"
+-          />
+-        </div>
+-
+-        {/* City Visibility */}
+-        <div className="space-y-3">
+-          <Label htmlFor="city-visibility" className="text-base font-medium text-gray-700">
+-            City Visibility
+-          </Label>
+-          <Select 
+-            value={settings.cityVisibility} 
+-            onValueChange={(value) => setSettings({...settings, cityVisibility: value})}
+-          >
+-            <SelectTrigger className="w-full">
+-              <SelectValue placeholder="Select city visibility" />
+-            </SelectTrigger>
+-            <SelectContent>
+-              <SelectItem value="show">Show my city</SelectItem>
+-              <SelectItem value="hide">Hide my city</SelectItem>
+-            </SelectContent>
+-          </Select>
+-        </div>
++        ))}
+ 
+         {/* Save Button */}
+         <div className="pt-4">
+-          <Button 
+-            onClick={handleSave} 
++          <Button
++            onClick={handleSave}
+             disabled={isLoading}
+             className="bg-ceylon-green hover:bg-ceylon-green/90 text-white px-8"
+             data-testid="button-save-privacy"
+diff --git a/server/routes.ts b/server/routes.ts
+index 07c5beb..cca2442 100644
+--- a/server/routes.ts
++++ b/server/routes.ts
+@@ -3228,11 +3228,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
+   app.get('/api/me/privacy', unifiedAuthGuard, async (req: any, res) => {
+     try {
+       const userId = req.user.id;
+-      
+-      const privacy = await storage.getUserPrivacy(userId);
+-      console.log('✅ Privacy settings retrieved:', privacy);
+-      
+-      res.json(privacy);
++
++      const user = await storage.getUser(userId);
++      if (!user) {
++        return res.status(404).json({ message: "User not found" });
++      }
++
++      res.json({
++        profileVisibility: user.profileVisibility,
++        showEmail: user.showEmail,
++        showPhone: user.showPhone,
++        showRealName: user.showRealName,
++        showBio: user.showBio,
++        showLocation: user.showLocation,
++        showInterests: user.showInterests,
++        showTravelHistory: user.showTravelHistory,
++      });
+     } catch (error) {
+       console.error("❌ Error fetching privacy settings:", error);
+       res.status(500).json({ message: "Failed to fetch privacy settings" });
+@@ -3243,21 +3254,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
+   app.patch('/api/me/privacy', unifiedAuthGuard, async (req: any, res) => {
+     try {
+       const userId = req.user.id;
+-      const { visibility, dmPolicy, showOnline, showJoinedTrips, cityVisibility } = req.body;
+-      
+-      console.log('📝 Privacy settings:', { visibility, dmPolicy, showOnline, showJoinedTrips, cityVisibility });
++      const {
++        profileVisibility,
++        showEmail,
++        showPhone,
++        showRealName,
++        showBio,
++        showLocation,
++        showInterests,
++        showTravelHistory,
++      } = req.body;
+ 
+-      // Update privacy settings in database
+-      const updatedSettings = await storage.updateUserPrivacy(userId, {
+-        visibility,
+-        dmPolicy,
+-        showOnline,
+-        showJoinedTrips,
+-        cityVisibility,
++      if (profileVisibility !== undefined && !['public', 'friends', 'private'].includes(profileVisibility)) {
++        return res.status(400).json({ message: "Invalid profileVisibility value" });
++      }
++
++      const updateData: Record<string, unknown> = {};
++      if (profileVisibility !== undefined) updateData.profileVisibility = profileVisibility;
++      if (showEmail !== undefined) updateData.showEmail = showEmail;
++      if (showPhone !== undefined) updateData.showPhone = showPhone;
++      if (showRealName !== undefined) updateData.showRealName = showRealName;
++      if (showBio !== undefined) updateData.showBio = showBio;
++      if (showLocation !== undefined) updateData.showLocation = showLocation;
++      if (showInterests !== undefined) updateData.showInterests = showInterests;
++      if (showTravelHistory !== undefined) updateData.showTravelHistory = showTravelHistory;
++
++      const updatedUser = await storage.updateUser(userId, updateData);
++
++      res.json({
++        profileVisibility: updatedUser.profileVisibility,
++        showEmail: updatedUser.showEmail,
++        showPhone: updatedUser.showPhone,
++        showRealName: updatedUser.showRealName,
++        showBio: updatedUser.showBio,
++        showLocation: updatedUser.showLocation,
++        showInterests: updatedUser.showInterests,
++        showTravelHistory: updatedUser.showTravelHistory,
+       });
+-      
+-      console.log('✅ Privacy settings updated successfully');
+-      res.json(updatedSettings);
+     } catch (error) {
+       console.error("❌ Error updating privacy settings:", error);
+       res.status(500).json({ message: "Failed to update privacy settings" });
+@@ -3291,14 +3324,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
+         return res.status(404).json({ message: "User not found" });
+       }
+       
+-      // Get user's trips, ratings, and preferences (comments not available in current storage)
+-      const [trips, ratings, preferences] = await Promise.all([
++      // Get user's trips, ratings, preferences, messages, and community questions
++      const [trips, ratings, preferences, messages, questions] = await Promise.all([
+         storage.getUserTrips(userId),
+-        storage.getUserRatings(userId), 
+-        storage.getUserPreferences(userId)
++        storage.getUserRatings(userId),
++        storage.getUserPreferences(userId),
++        storage.getUserSentMessages(userId),
++        storage.getUserQuestions(userId),
+       ]);
+-      const comments: any[] = []; // Placeholder for comments
+-      
++
+       // Prepare export data
+       const exportData = {
+         exportDate: new Date().toISOString(),
+@@ -3315,15 +3349,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
+           updatedAt: user.updatedAt
+         },
+         trips: trips || [],
+-        comments: comments || [],
++        messages: messages || [],
++        questions: questions || [],
+         ratings: ratings || [],
+         preferences: preferences || {},
+-        note: "This export contains all your personal data from Ceylon Expand as of the export date."
++        note: "This export contains all your personal data from HiBowan as of the export date."
+       };
+-      
++
+       // Set headers for file download
+       res.setHeader('Content-Type', 'application/json');
+-      res.setHeader('Content-Disposition', `attachment; filename="ceylon-expand-data-${userId}-${new Date().toISOString().split('T')[0]}.json"`);
++      res.setHeader('Content-Disposition', `attachment; filename="hibowan-data-${userId}-${new Date().toISOString().split('T')[0]}.json"`);
+       
+       res.json(exportData);
+     } catch (error) {
+diff --git a/server/storage.ts b/server/storage.ts
+index e802440..c34ce36 100644
+--- a/server/storage.ts
++++ b/server/storage.ts
+@@ -202,7 +202,8 @@ export interface IStorage {
+   createRating(rating: InsertRating): Promise<Rating>;
+   getTripRatings(tripId: string): Promise<Rating[]>;
+   getUserRatings(userId: string): Promise<Rating[]>;
+-  
++  getUserSentMessages(userId: string): Promise<{ id: string; threadId: string; kind: string | null; text: string | null; createdAt: Date | null }[]>;
++
+   // Report operations
+   createReport(report: InsertReport): Promise<Report>;
+   getReports(): Promise<Report[]>;
+@@ -1132,6 +1133,20 @@ export class DatabaseStorage implements IStorage {
+     return await db.select().from(ratings).where(eq(ratings.ratedId, userId));
+   }
+ 
++  async getUserSentMessages(userId: string): Promise<{ id: string; threadId: string; kind: string | null; text: string | null; createdAt: Date | null }[]> {
++    return await db
++      .select({
++        id: chatMessages.id,
++        threadId: chatMessages.threadId,
++        kind: chatMessages.kind,
++        text: chatMessages.text,
++        createdAt: chatMessages.createdAt,
++      })
++      .from(chatMessages)
++      .where(eq(chatMessages.senderId, userId))
++      .orderBy(desc(chatMessages.createdAt));
++  }
++
+   // Report operations
+   async createReport(report: InsertReport): Promise<Report> {
+     const [newReport] = await db.insert(reports).values(report).returning();
+-- 
+2.50.1 (Apple Git-155)
+

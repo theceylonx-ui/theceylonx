@@ -1,0 +1,386 @@
+From a0840c3fab971c9dd2c6d1d7e1e84b0367b869a5 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 13:53:46 +0530
+Subject: [PATCH 1/2] Fix accent-hover/accent-subtle silently not working
+ sitewide
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+colors.accent was defined twice in tailwind.config.ts: once as the
+ocean-blue brand token (DEFAULT/hover/subtle), once again further
+down for shadcn's CSS-variable-driven semantic color (DEFAULT/
+foreground, used by 9 shadcn UI primitives for hover/focus states).
+In a JS object literal the second key wins outright, so the whole
+first definition — including hover and subtle — was silently
+discarded. accent-hover and accent-subtle classes resolved to
+nothing anywhere they were used.
+
+Found this while auditing the profile page's colors: 6 files already
+use accent-hover/accent-subtle (some edited earlier in this session)
+and have been silently missing that styling the whole time.
+
+Merged both into one accent definition: DEFAULT/foreground stay
+CSS-variable driven (needed by the shadcn primitives; --accent
+already resolves to ocean blue in light mode, so no visible change
+there), hover/subtle are restored as static values so brand-system
+pages get real ocean-blue hover/tint variants again.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ tailwind.config.ts | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/tailwind.config.ts b/tailwind.config.ts
+index 507ec41..0d31863 100644
+--- a/tailwind.config.ts
++++ b/tailwind.config.ts
+@@ -20,7 +20,12 @@ export default {
+           subtle: "hsl(351 70% 96%)",  // light background tint
+         },
+         accent: {
+-          DEFAULT: "hsl(202 48% 48%)", // #3F8AB4 - ocean blue
++          // DEFAULT/foreground stay CSS-variable driven (shadcn UI primitives
++          // depend on this); --accent resolves to ocean blue #3F8AB4 in light
++          // mode. hover/subtle are static so brand-system pages can use them
++          // regardless of theme.
++          DEFAULT: "var(--accent)",
++          foreground: "var(--accent-foreground)",
+           hover: "hsl(202 48% 38%)",   // darker ocean
+           subtle: "hsl(202 48% 95%)",  // light ocean tint
+         },
+@@ -72,10 +77,6 @@ export default {
+           DEFAULT: "var(--muted)",
+           foreground: "var(--muted-foreground)",
+         },
+-        accent: {
+-          DEFAULT: "var(--accent)",
+-          foreground: "var(--accent-foreground)",
+-        },
+         destructive: {
+           DEFAULT: "var(--destructive)",
+           foreground: "var(--destructive-foreground)",
+-- 
+2.50.1 (Apple Git-155)
+
+
+From 5e4de82be1b5404018355e0aa1690cebfbe8227e Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 13:56:33 +0530
+Subject: [PATCH 2/2] Recolor the profile dashboard to match the HiBowan brand
+ palette
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The whole page (header, all 6 tab active-states, activity stat cards,
+profile completion, help box, download/delete sections) used raw
+indigo/purple/pink/emerald/teal/cyan/violet/rose/blue Tailwind
+colors with no connection to the coral/ocean/navy brand palette —
+looked like it belonged to a different app.
+
+- Header + activity stat cards: brand (coral), accent (ocean), and
+  navy, matching the site's actual palette.
+- The 6 profile tabs previously each had a different rainbow
+  gradient for their active state; simplified to one consistent
+  brand treatment since the icon + label already distinguish them —
+  matches how active states work elsewhere in the app (nav links use
+  a single active color, not one per item).
+- Profile completion, "How This Helps You", and the trip status
+  controls box: ocean/accent tokens instead of raw blue/indigo.
+- Delete Account section: switched from raw red-* to the actual
+  `danger`/`danger-hover` design tokens.
+- Left the Quick Trip badge's orange alone — that's the established,
+  consistent color for Quick Trip UI elsewhere in the app, not a
+  rebrand miss.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ client/src/pages/me.tsx | 86 ++++++++++++++++++++---------------------
+ 1 file changed, 43 insertions(+), 43 deletions(-)
+
+diff --git a/client/src/pages/me.tsx b/client/src/pages/me.tsx
+index fec0a57..8bd29c7 100644
+--- a/client/src/pages/me.tsx
++++ b/client/src/pages/me.tsx
+@@ -215,7 +215,7 @@ export default function ProfilePage() {
+   const { profile = user, preferences = {}, privacy = {}, notifications = {}, stats = {} } = profileData;
+ 
+   return (
+-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
++    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-accent-subtle">
+       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+         {/* Navigation Header */}
+         <div className="pt-6 pb-4 flex items-center justify-between">
+@@ -231,7 +231,7 @@ export default function ProfilePage() {
+         </div>
+ 
+         {/* Stunning Profile Header with Gradient */}
+-        <div className="relative mb-8 overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 shadow-2xl">
++        <div className="relative mb-8 overflow-hidden rounded-2xl bg-gradient-to-br from-brand via-brand-hover to-accent shadow-2xl">
+           {/* Background Pattern */}
+           <div className="absolute inset-0 bg-black/10">
+             <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent"></div>
+@@ -284,12 +284,12 @@ export default function ProfilePage() {
+                   {/* Follower/Following Stats */}
+                   <div className="flex items-center gap-4 mt-3">
+                     <div className="flex items-center bg-white/15 px-4 py-2 rounded-full backdrop-blur-sm">
+-                      <Users className="h-4 w-4 mr-2 text-blue-300" />
++                      <Users className="h-4 w-4 mr-2 text-white/80" />
+                       <span className="font-semibold text-white mr-1">{followStats?.followersCount || 0}</span>
+                       <span className="text-white/80">followers</span>
+                     </div>
+                     <div className="flex items-center bg-white/15 px-4 py-2 rounded-full backdrop-blur-sm">
+-                      <Heart className="h-4 w-4 mr-2 text-pink-300" />
++                      <Heart className="h-4 w-4 mr-2 text-white/80" />
+                       <span className="font-semibold text-white mr-1">{followStats?.followingCount || 0}</span>
+                       <span className="text-white/80">following</span>
+                     </div>
+@@ -309,42 +309,42 @@ export default function ProfilePage() {
+             <TabsList className="grid w-full grid-cols-6 bg-transparent gap-2">
+               <TabsTrigger 
+                 value="overview" 
+-                className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-xl border-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
++                className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-xl border-0 data-[state=active]:bg-brand data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
+               >
+                 <TrendingUp className="h-5 w-5" />
+                 <span className="text-xs sm:text-sm font-medium">Overview</span>
+               </TabsTrigger>
+               <TabsTrigger 
+                 value="profile" 
+-                className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-xl border-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
++                className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-xl border-0 data-[state=active]:bg-brand data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
+               >
+                 <User className="h-5 w-5" />
+                 <span className="text-xs sm:text-sm font-medium">Profile</span>
+               </TabsTrigger>
+               <TabsTrigger 
+                 value="preferences" 
+-                className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-xl border-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
++                className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-xl border-0 data-[state=active]:bg-brand data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
+               >
+                 <Heart className="h-5 w-5" />
+                 <span className="text-xs sm:text-sm font-medium">Preferences</span>
+               </TabsTrigger>
+               <TabsTrigger 
+                 value="activity" 
+-                className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-xl border-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
++                className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-xl border-0 data-[state=active]:bg-brand data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
+               >
+                 <Zap className="h-5 w-5" />
+                 <span className="text-xs sm:text-sm font-medium">Activity</span>
+               </TabsTrigger>
+               <TabsTrigger 
+                 value="security" 
+-                className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-xl border-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
++                className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-xl border-0 data-[state=active]:bg-brand data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
+               >
+                 <Shield className="h-5 w-5" />
+                 <span className="text-xs sm:text-sm font-medium">Security</span>
+               </TabsTrigger>
+               <TabsTrigger 
+                 value="privacy" 
+-                className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-xl border-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
++                className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-xl border-0 data-[state=active]:bg-brand data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
+               >
+                 <Eye className="h-5 w-5" />
+                 <span className="text-xs sm:text-sm font-medium">Privacy</span>
+@@ -368,25 +368,25 @@ export default function ProfilePage() {
+               <PreferencesForm />
+               
+               {/* How This Helps You Section */}
+-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+-                <h3 className="text-lg font-semibold text-blue-900 mb-4">
++              <div className="bg-accent-subtle border border-accent/20 rounded-lg p-6">
++                <h3 className="text-lg font-semibold text-text-primary mb-4">
+                   How This Helps You
+                 </h3>
+-                <ul className="text-blue-800 space-y-3">
++                <ul className="text-text-secondary space-y-3">
+                   <li className="flex items-start">
+-                    <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
++                    <span className="inline-block w-2 h-2 bg-accent rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                     <span>Get trip recommendations that match your travel style and interests</span>
+                   </li>
+                   <li className="flex items-start">
+-                    <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
++                    <span className="inline-block w-2 h-2 bg-accent rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                     <span>Discover trips within your preferred budget range</span>
+                   </li>
+                   <li className="flex items-start">
+-                    <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
++                    <span className="inline-block w-2 h-2 bg-accent rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                     <span>Find travel companions who share similar interests</span>
+                   </li>
+                   <li className="flex items-start">
+-                    <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
++                    <span className="inline-block w-2 h-2 bg-accent rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                     <span>See relevant trips for your preferred travel times and regions</span>
+                   </li>
+                 </ul>
+@@ -439,16 +439,16 @@ function ProfileOverview({ profile, stats, preferences }: any) {
+   return (
+     <div className="space-y-8">
+       {/* Profile Completion Section */}
+-      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl p-6 border border-blue-200">
++      <div className="bg-accent-subtle rounded-2xl p-6 border border-accent/20">
+         <div className="flex items-center justify-between mb-6">
+           <h3 className="text-xl font-bold text-gray-900 flex items-center">
+-            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-2 rounded-lg mr-3">
++            <div className="bg-gradient-to-r from-accent to-accent-hover p-2 rounded-lg mr-3">
+               <User className="h-5 w-5 text-white" />
+             </div>
+             Profile Completion
+           </h3>
+           <div className="text-right">
+-            <div className="text-3xl font-bold text-blue-600">{completionPercentage}%</div>
++            <div className="text-3xl font-bold text-accent">{completionPercentage}%</div>
+             <div className="text-sm text-gray-600">Complete</div>
+           </div>
+         </div>
+@@ -499,11 +499,11 @@ function ProfileOverview({ profile, stats, preferences }: any) {
+               <div className="flex items-center gap-2">
+                 <div className="w-12 bg-gray-200 rounded-full h-2">
+                   <div 
+-                    className="bg-gradient-to-r from-blue-400 to-indigo-500 h-2 rounded-full transition-all duration-500"
++                    className="bg-gradient-to-r from-accent to-accent-hover h-2 rounded-full transition-all duration-500"
+                     style={{ width: `${preferencesCompletion}%` }}
+                   />
+                 </div>
+-                <span className="text-xs font-bold text-blue-600">{preferencesCompletion}%</span>
++                <span className="text-xs font-bold text-accent">{preferencesCompletion}%</span>
+               </div>
+             </div>
+           </div>
+@@ -512,12 +512,12 @@ function ProfileOverview({ profile, stats, preferences }: any) {
+ 
+       {/* Activity Stats Cards */}
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+-        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
++        <div className="bg-gradient-to-br from-accent to-accent-hover rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+           <div className="flex items-center justify-between">
+             <div>
+               <div className="text-3xl font-bold mb-2">{stats.questions_count || 0}</div>
+-              <div className="text-emerald-100 font-medium">Questions Asked</div>
+-              <div className="text-xs text-emerald-200 mt-1">Get answers from the community</div>
++              <div className="text-white/80 font-medium">Questions Asked</div>
++              <div className="text-xs text-white/60 mt-1">Get answers from the community</div>
+             </div>
+             <div className="bg-white/20 p-3 rounded-xl">
+               <Activity className="h-8 w-8" />
+@@ -525,12 +525,12 @@ function ProfileOverview({ profile, stats, preferences }: any) {
+           </div>
+         </div>
+ 
+-        <div className="bg-gradient-to-br from-orange-500 to-pink-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
++        <div className="bg-gradient-to-br from-brand to-brand-hover rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+           <div className="flex items-center justify-between">
+             <div>
+               <div className="text-3xl font-bold mb-2">{stats.trips_count || 0}</div>
+-              <div className="text-orange-100 font-medium">Trips Posted</div>
+-              <div className="text-xs text-orange-200 mt-1">Share your adventures</div>
++              <div className="text-white/80 font-medium">Trips Posted</div>
++              <div className="text-xs text-white/60 mt-1">Share your adventures</div>
+             </div>
+             <div className="bg-white/20 p-3 rounded-xl">
+               <MapPin className="h-8 w-8" />
+@@ -538,12 +538,12 @@ function ProfileOverview({ profile, stats, preferences }: any) {
+           </div>
+         </div>
+ 
+-        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
++        <div className="bg-gradient-to-br from-text-primary to-text-secondary rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+           <div className="flex items-center justify-between">
+             <div>
+               <div className="text-3xl font-bold mb-2">{stats.saved_count || 0}</div>
+-              <div className="text-purple-100 font-medium">Trips Saved</div>
+-              <div className="text-xs text-purple-200 mt-1">Your wishlist collection</div>
++              <div className="text-white/80 font-medium">Trips Saved</div>
++              <div className="text-xs text-white/60 mt-1">Your wishlist collection</div>
+             </div>
+             <div className="bg-white/20 p-3 rounded-xl">
+               <Heart className="h-8 w-8" />
+@@ -1306,7 +1306,7 @@ function UserActivity() {
+                         <Button
+                           size="sm"
+                           variant="outline"
+-                          className="border-red-300 text-red-600 hover:bg-red-50"
++                          className="border-danger/40 text-danger hover:bg-danger/10"
+                           disabled={deleteQuickTripMutation.isPending}
+                           onClick={() => {
+                             if (window.confirm("Delete this quick trip? This can't be undone.")) {
+@@ -1366,7 +1366,7 @@ function UserActivity() {
+                     </div>
+                     
+                     {/* Trip Visibility Controls */}
+-                    <div className="border-t border-gray-200 pt-4 mt-4 bg-blue-50 p-3 rounded">
++                    <div className="border-t border-gray-200 pt-4 mt-4 bg-accent-subtle p-3 rounded">
+                       <div className="text-sm font-semibold text-gray-700 mb-2">🔄 Trip Status Controls</div>
+                       <div className="text-xs text-gray-500 mb-2">Toggle to show/hide this trip from others</div>
+                       <VisibilityToggle
+@@ -1374,7 +1374,7 @@ function UserActivity() {
+                         id={trip.id}
+                         currentVisibility={trip.status || "active"}
+                       />
+-                      <div className="mt-3 pt-3 border-t border-blue-100">
++                      <div className="mt-3 pt-3 border-t border-accent/20">
+                         {trip.status === 'completed' ? (
+                           <Button
+                             size="sm"
+@@ -1487,7 +1487,7 @@ function SecuritySettings({ profile }: any) {
+       <Card>
+         <CardHeader>
+           <CardTitle className="flex items-center gap-2">
+-            <Download className="w-5 h-5 text-blue-500" />
++            <Download className="w-5 h-5 text-accent" />
+             Download Your Data
+           </CardTitle>
+           <p className="text-muted-foreground">
+@@ -1521,7 +1521,7 @@ function SecuritySettings({ profile }: any) {
+                 });
+               }
+             }}
+-            className="bg-blue-600 hover:bg-blue-700 text-white"
++            className="bg-accent hover:bg-accent-hover text-white"
+             data-testid="button-download-data"
+           >
+             <Download className="w-4 h-4 mr-2" />
+@@ -1534,20 +1534,20 @@ function SecuritySettings({ profile }: any) {
+       </Card>
+ 
+       {/* Account Deletion Section */}
+-      <Card className="border-red-200">
++      <Card className="border-danger/30">
+         <CardHeader>
+-          <CardTitle className="flex items-center gap-2 text-red-700">
++          <CardTitle className="flex items-center gap-2 text-danger">
+             <UserX className="w-5 h-5" />
+             Delete Account
+           </CardTitle>
+-          <p className="text-red-600">
++          <p className="text-danger">
+             Permanently delete your account and all associated data. This action cannot be undone.
+           </p>
+         </CardHeader>
+         <CardContent>
+-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+-            <h4 className="font-semibold text-red-800 mb-2">⚠️ Warning</h4>
+-            <ul className="text-sm text-red-700 space-y-1">
++          <div className="bg-danger/10 border border-danger/20 rounded-lg p-4 mb-4">
++            <h4 className="font-semibold text-danger mb-2">⚠️ Warning</h4>
++            <ul className="text-sm text-danger space-y-1">
+               <li>• All your trips will be permanently deleted</li>
+               <li>• Your chat history will be removed</li>
+               <li>• Your profile and preferences will be lost</li>
+@@ -1591,7 +1591,7 @@ function SecuritySettings({ profile }: any) {
+               }
+             }}
+             variant="destructive"
+-            className="bg-red-600 hover:bg-red-700"
++            className="bg-danger hover:bg-danger-hover"
+             data-testid="button-delete-account"
+           >
+             <UserX className="w-4 h-4 mr-2" />
+-- 
+2.50.1 (Apple Git-155)
+

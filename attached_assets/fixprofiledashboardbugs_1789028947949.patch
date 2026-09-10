@@ -1,0 +1,209 @@
+From fa6595f62de26e187303409ec7db0068259479d1 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 13:44:58 +0530
+Subject: [PATCH] Fix confirmed bugs found in a full audit of the profile
+ dashboard
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- Saved Trips showed prices as "$X" instead of "LKR X" (every other
+  price display in the app uses LKR), and didn't handle free trips
+  at all — a free saved trip showed "$0" instead of "Free Trip".
+- Removed the dead TravelPreferences component (~130 lines) — it was
+  never actually rendered; the Preferences tab renders
+  <PreferencesForm /> directly instead.
+- hover:bg-ceylon-green-dark doesn't exist in tailwind.config.ts, so
+  the avatar-picker confirm buttons had a dead hover state that did
+  nothing. Switched to the working bg-ceylon-green/90 pattern already
+  used elsewhere on this page.
+- Downloaded data export file was still named
+  ceylon-expand-data-<date>.json.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ client/src/pages/me.tsx | 140 ++--------------------------------------
+ 1 file changed, 4 insertions(+), 136 deletions(-)
+
+diff --git a/client/src/pages/me.tsx b/client/src/pages/me.tsx
+index 26a9e01..788766b 100644
+--- a/client/src/pages/me.tsx
++++ b/client/src/pages/me.tsx
+@@ -789,7 +789,7 @@ function ProfileEditor({ profile, onUpdate }: any) {
+                       <div className="text-center mb-6">
+                         <Button
+                           type="button"
+-                          className="w-full bg-ceylon-green hover:bg-ceylon-green-dark text-white"
++                          className="w-full bg-ceylon-green hover:bg-ceylon-green/90 text-white"
+                           onClick={() => {
+                             // Generate random avatar within selected style for preview
+                             const randomSeed = Math.random().toString(36).substring(7);
+@@ -838,7 +838,7 @@ function ProfileEditor({ profile, onUpdate }: any) {
+                         <div className="space-y-3">
+                           <Button
+                             type="button"
+-                            className="w-full bg-ceylon-green hover:bg-ceylon-green-dark text-white"
++                            className="w-full bg-ceylon-green hover:bg-ceylon-green/90 text-white"
+                             onClick={async () => {
+                               try {
+                                 // Update profile with the previewed avatar
+@@ -975,138 +975,6 @@ function ProfileEditor({ profile, onUpdate }: any) {
+   );
+ }
+ 
+-// Travel Preferences Component (reuse existing logic)
+-function TravelPreferences({ preferences, onUpdate }: any) {
+-  const [isUpdating, setIsUpdating] = useState(false);
+-  const { toast } = useToast();
+-  const [, setLocation] = useLocation();
+-  
+-  const handleUpdateClick = () => {
+-    setIsUpdating(true);
+-    toast({
+-      title: "Redirecting...",
+-      description: "Taking you to travel preferences settings.",
+-    });
+-    setTimeout(() => {
+-      setLocation('/travel-style-settings');
+-    }, 500);
+-  };
+-
+-  const completionPercentage = () => {
+-    let completed = 0;
+-    let total = 4;
+-    if (preferences?.vibe?.length > 0) completed++;
+-    if (preferences?.when?.length > 0) completed++;
+-    if (preferences?.companions?.length > 0) completed++;
+-    if (preferences?.interests?.length > 0) completed++;
+-    return Math.round((completed / total) * 100);
+-  };
+-
+-  return (
+-    <Card>
+-      <CardHeader>
+-        <CardTitle className="flex items-center justify-between">
+-          Travel Style Preferences
+-          <Badge variant={completionPercentage() === 100 ? "default" : "secondary"} className="ml-2">
+-            {completionPercentage()}% Complete
+-          </Badge>
+-        </CardTitle>
+-      </CardHeader>
+-      <CardContent>
+-        <div className="space-y-4">
+-          <div className="flex items-center justify-between">
+-            <p className="text-sm text-gray-600">
+-              Your travel preferences help us recommend better trips for you.
+-            </p>
+-            {completionPercentage() < 100 && (
+-              <div className="w-32 bg-gray-200 rounded-full h-2">
+-                <div 
+-                  className="bg-ceylon-green h-2 rounded-full transition-all duration-300"
+-                  style={{ width: `${completionPercentage()}%` }}
+-                ></div>
+-              </div>
+-            )}
+-          </div>
+-          
+-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+-            <div>
+-              <Label className="flex items-center gap-2">
+-                Travel Vibe
+-                {preferences?.vibe?.length > 0 && <span className="text-green-600 text-sm">✓</span>}
+-              </Label>
+-              <div className="flex flex-wrap gap-2 mt-2">
+-                {preferences?.vibe?.length > 0 ? (
+-                  preferences.vibe.map((item: string) => (
+-                    <Badge key={item} variant="default" className="bg-ceylon-green">{item}</Badge>
+-                  ))
+-                ) : (
+-                  <span className="text-sm text-gray-500 italic">None selected - update your preferences!</span>
+-                )}
+-              </div>
+-            </div>
+-            <div>
+-              <Label className="flex items-center gap-2">
+-                When You Travel
+-                {preferences?.when?.length > 0 && <span className="text-green-600 text-sm">✓</span>}
+-              </Label>
+-              <div className="flex flex-wrap gap-2 mt-2">
+-                {preferences?.when?.length > 0 ? (
+-                  preferences.when.map((item: string) => (
+-                    <Badge key={item} variant="default" className="bg-ceylon-green">{item}</Badge>
+-                  ))
+-                ) : (
+-                  <span className="text-sm text-gray-500 italic">None selected - update your preferences!</span>
+-                )}
+-              </div>
+-            </div>
+-            <div>
+-              <Label className="flex items-center gap-2">
+-                Travel Companions
+-                {preferences?.companions?.length > 0 && <span className="text-green-600 text-sm">✓</span>}
+-              </Label>
+-              <div className="flex flex-wrap gap-2 mt-2">
+-                {preferences?.companions?.length > 0 ? (
+-                  preferences.companions.map((item: string) => (
+-                    <Badge key={item} variant="default" className="bg-ceylon-green">{item}</Badge>
+-                  ))
+-                ) : (
+-                  <span className="text-sm text-gray-500 italic">None selected - update your preferences!</span>
+-                )}
+-              </div>
+-            </div>
+-            <div>
+-              <Label className="flex items-center gap-2">
+-                Interests
+-                {preferences?.interests?.length > 0 && <span className="text-green-600 text-sm">✓</span>}
+-              </Label>
+-              <div className="flex flex-wrap gap-2 mt-2">
+-                {preferences?.interests?.length > 0 ? (
+-                  preferences.interests.slice(0, 3).map((item: string) => (
+-                    <Badge key={item} variant="default" className="bg-ceylon-green">{item}</Badge>
+-                  ))
+-                ) : (
+-                  <span className="text-sm text-gray-500 italic">None selected - update your preferences!</span>
+-                )}
+-                {preferences?.interests?.length > 3 && (
+-                  <Badge variant="secondary">+{preferences.interests.length - 3} more</Badge>
+-                )}
+-              </div>
+-            </div>
+-          </div>
+-          <Button 
+-            onClick={handleUpdateClick}
+-            disabled={isUpdating}
+-            className="w-full"
+-            data-testid="button-update-preferences"
+-          >
+-            {isUpdating ? "Redirecting..." : "Update Travel Preferences"}
+-          </Button>
+-        </div>
+-      </CardContent>
+-    </Card>
+-  );
+-}
+-
+ // Saved Trips Component
+ function SavedTrips() {
+   const { user } = useAuth();
+@@ -1147,7 +1015,7 @@ function SavedTrips() {
+             {item.fromLocation} → {item.toLocation}
+           </p>
+           <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+-            <span>💰 ${item.price}</span>
++            <span>💰 {!item.price || Number(item.price) === 0 ? 'Free Trip' : `LKR ${item.price}`}</span>
+             <span>👥 {item.seatsAvailable} seats</span>
+             <span>📅 {formatShortDate(item.date, 'Date TBD')}</span>
+             <Badge variant={item.saveType === 'pinned' ? 'default' : 'secondary'}>
+@@ -1635,7 +1503,7 @@ function SecuritySettings({ profile }: any) {
+                 const url = URL.createObjectURL(blob);
+                 const a = document.createElement('a');
+                 a.href = url;
+-                a.download = `ceylon-expand-data-${new Date().toISOString().split('T')[0]}.json`;
++                a.download = `hibowan-data-${new Date().toISOString().split('T')[0]}.json`;
+                 document.body.appendChild(a);
+                 a.click();
+                 document.body.removeChild(a);
+-- 
+2.50.1 (Apple Git-155)
+
