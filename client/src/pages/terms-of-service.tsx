@@ -15,7 +15,7 @@ export default function TermsOfService() {
             Terms of Service
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400">
-            Last updated: January 2026
+            Last updated: September 2026
           </p>
         </div>
 
@@ -85,6 +85,16 @@ export default function TermsOfService() {
                   <li>• Are responsible for their own travel insurance and documentation</li>
                   <li>• Should communicate any special needs or requirements in advance</li>
                   <li>• Must pay agreed fees and respect cancellation policies</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Quick Trips:</h4>
+                <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
+                  <li>• Quick Trips are short, informal trip listings meant for spontaneous plans</li>
+                  <li>• They are automatically removed 3 days after posting, whether or not they found participants</li>
+                  <li>• Other travelers show interest by sending a request, which the organizer accepts or declines</li>
+                  <li>• The same posting standards, safety expectations, and community guidelines apply as for regular trips</li>
                 </ul>
               </div>
             </CardContent>

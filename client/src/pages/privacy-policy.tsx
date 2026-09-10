@@ -15,7 +15,7 @@ export default function PrivacyPolicy() {
             Privacy Policy
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400">
-            Last updated: September 2025
+            Last updated: September 2026
           </p>
         </div>
 
@@ -62,6 +62,7 @@ export default function PrivacyPolicy() {
                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Trip and Activity Data:</h4>
                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
                   <li>• Trip posts you create (destinations, dates, descriptions)</li>
+                  <li>• Quick Trip posts you create (short-lived, informal trip listings) and interest requests you send or receive on them</li>
                   <li>• Trips you join or express interest in</li>
                   <li>• Comments and messages you post</li>
                   <li>• Ratings and reviews you give and receive</li>
@@ -291,6 +292,7 @@ export default function PrivacyPolicy() {
                 <ul className="space-y-2 text-gray-600 dark:text-gray-300 ml-4">
                   <li>• Account information: Until account deletion + 30 days</li>
                   <li>• Trip posts and comments: Until manually deleted or account closure</li>
+                  <li>• Quick Trip posts: Automatically deleted 3 days after posting</li>
                   <li>• Safety reports and investigations: Up to 2 years for security purposes</li>
                   <li>• Analytics data: Aggregated and anonymized after 1 year</li>
                 </ul>
