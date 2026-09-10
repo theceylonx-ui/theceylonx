@@ -1,16 +1,14 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
 import type { QuestionWithDetails, Topic, User as UserType } from "@shared/schema";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/Footer";
-import { CommunityStats } from "@/components/CommunityStats";
-import { StickyFilters } from "@/components/StickyFilters";
 import { AskQuestionDialog } from "@/components/AskQuestionDialog";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useAuth } from "@/hooks/useAuth";
@@ -62,13 +60,31 @@ export default function CommunityPage() {
     setCurrentPage(1);
   }, [searchQuery, selectedTopic, sortBy]);
 
+  const [editingQuestion, setEditingQuestion] = useState<QuestionWithDetails | null>(null);
+
+  const deleteQuestionMutation = useMutation({
+    mutationFn: (questionId: string) => apiRequest('DELETE', `/api/questions/${questionId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
+      toast({ title: "Question deleted" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to delete question",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleEditQuestion = (questionId: string) => {
-    console.log("Edit question:", questionId);
+    const question = questions.find((q) => q.id === questionId);
+    if (question) setEditingQuestion(question);
   };
 
   const handleDeleteQuestion = (questionId: string) => {
     if (confirm("Are you sure you want to delete this question?")) {
-      console.log("Delete question:", questionId);
+      deleteQuestionMutation.mutate(questionId);
     }
   };
 
@@ -181,7 +197,7 @@ export default function CommunityPage() {
           {/* Stats Row */}
           <div className="flex items-center justify-center">
             <div className="flex items-center gap-8 px-6 py-4 bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100">
-              <div className="flex items-center gap-2 text-purple-600">
+              <div className="flex items-center gap-2 text-brand">
                 <MessageSquare className="h-5 w-5" />
                 <span className="font-semibold text-lg">{questionsResponse?.total ?? 0}</span>
                 <span className="text-sm text-gray-600">Questions</span>
@@ -189,7 +205,7 @@ export default function CommunityPage() {
               
               <div className="h-8 w-px bg-gray-200" />
               
-              <div className="flex items-center gap-2 text-pink-600">
+              <div className="flex items-center gap-2 text-accent">
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
@@ -199,7 +215,7 @@ export default function CommunityPage() {
               
               <div className="h-8 w-px bg-gray-200" />
               
-              <div className="flex items-center gap-2 text-red-600">
+              <div className="flex items-center gap-2 text-text-primary">
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
                 </svg>
@@ -221,7 +237,7 @@ export default function CommunityPage() {
                 placeholder="Search questions about Sri Lanka travel..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 text-lg border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 placeholder-gray-500"
+                className="w-full pl-12 pr-4 py-4 text-lg border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent bg-gray-50 placeholder-gray-500"
               />
             </div>
             
@@ -236,8 +252,8 @@ export default function CommunityPage() {
                       onClick={() => setSortBy(sort)}
                       className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
                         sortBy === sort 
-                          ? "bg-white text-purple-600 shadow-sm" 
-                          : "text-gray-600 hover:text-purple-600"
+                          ? "bg-white text-brand shadow-sm" 
+                          : "text-gray-600 hover:text-brand"
                       }`}
                     >
                       <span className="flex items-center gap-2">
@@ -257,7 +273,7 @@ export default function CommunityPage() {
                 <select
                   value={selectedTopic}
                   onChange={(e) => setSelectedTopic(e.target.value)}
-                  className="px-4 py-2 border border-gray-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="px-4 py-2 border border-gray-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                 >
                   <option value="all">All Topics</option>
                   {topics && topics.length > 0 && topics.map((topic) => (
@@ -346,6 +362,7 @@ export default function CommunityPage() {
                 <QuestionCard
                   key={question.id}
                   question={question}
+                  currentUserId={user?.id}
                   onEdit={handleEditQuestion}
                   onDelete={handleDeleteQuestion}
                 />
@@ -373,6 +390,25 @@ export default function CommunityPage() {
         </div>
       </div>
       
+      {/* Edit Question Dialog (controlled, reused across all questions) */}
+      {editingQuestion && (
+        <AskQuestionDialog
+          topics={topics}
+          isAuthenticated={isAuthenticated}
+          onSignInRequired={() => setLocation('/auth/signin')}
+          questionId={editingQuestion.id}
+          initialValues={{
+            title: editingQuestion.title,
+            body: editingQuestion.body,
+            topicId: editingQuestion.topicId ?? "",
+            tags: editingQuestion.tags ?? [],
+            isAnonymous: editingQuestion.isAnonymous ?? false,
+          }}
+          open={!!editingQuestion}
+          onOpenChange={(open) => { if (!open) setEditingQuestion(null); }}
+        />
+      )}
+
       <Footer />
     </div>
   );

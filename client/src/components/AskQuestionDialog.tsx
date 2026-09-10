@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -32,42 +32,80 @@ interface AskQuestionDialogProps {
   topics: Topic[];
   isAuthenticated: boolean;
   onSignInRequired: () => void;
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  // Edit mode: when questionId is set, the dialog edits that question
+  // instead of creating a new one. Open state is controlled externally
+  // so a single instance can be reused across a list of questions.
+  questionId?: string;
+  initialValues?: Partial<QuestionFormData>;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function AskQuestionDialog({ topics, isAuthenticated, onSignInRequired, children }: AskQuestionDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function AskQuestionDialog({
+  topics,
+  isAuthenticated,
+  onSignInRequired,
+  children,
+  questionId,
+  initialValues,
+  open: controlledOpen,
+  onOpenChange: setControlledOpen,
+}: AskQuestionDialogProps) {
+  const isEditMode = !!questionId;
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const isOpen = controlledOpen ?? uncontrolledOpen;
+  const setIsOpen = setControlledOpen ?? setUncontrolledOpen;
   const [currentTab, setCurrentTab] = useState("compose");
   const [tagInput, setTagInput] = useState("");
-  
+
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const form = useForm<QuestionFormData>({
     resolver: zodResolver(questionSchema),
     defaultValues: {
-      title: "",
-      body: "",
-      topicId: "",
-      tags: [],
-      isAnonymous: false,
+      title: initialValues?.title ?? "",
+      body: initialValues?.body ?? "",
+      topicId: initialValues?.topicId ?? "",
+      tags: initialValues?.tags ?? [],
+      isAnonymous: initialValues?.isAnonymous ?? false,
     },
   });
 
-  const createQuestionMutation = useMutation({
-    mutationFn: (data: QuestionFormData) => apiRequest('POST', '/api/questions', data),
+  // Re-sync form values when opening the dialog for a different question
+  useEffect(() => {
+    if (isOpen && initialValues) {
+      form.reset({
+        title: initialValues.title ?? "",
+        body: initialValues.body ?? "",
+        topicId: initialValues.topicId ?? "",
+        tags: initialValues.tags ?? [],
+        isAnonymous: initialValues.isAnonymous ?? false,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, questionId]);
+
+  const saveQuestionMutation = useMutation({
+    mutationFn: (data: QuestionFormData) =>
+      isEditMode
+        ? apiRequest('PATCH', `/api/questions/${questionId}`, data)
+        : apiRequest('POST', '/api/questions', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
       setIsOpen(false);
-      form.reset();
+      if (!isEditMode) {
+        form.reset();
+      }
       setCurrentTab("compose");
-      toast({ 
-        title: "Question posted successfully!",
-        description: "Your question is now live in the community."
+      toast({
+        title: isEditMode ? "Question updated" : "Question posted successfully!",
+        description: isEditMode ? "Your changes have been saved." : "Your question is now live in the community."
       });
     },
     onError: (error: any) => {
-      console.error("Question creation error:", error);
+      console.error("Question save error:", error);
       if (error.message.includes('401')) {
         toast({
           title: "Authentication required",
@@ -78,10 +116,10 @@ export function AskQuestionDialog({ topics, isAuthenticated, onSignInRequired, c
         onSignInRequired();
         return;
       }
-      toast({ 
-        title: "Failed to post question", 
-        description: error.message, 
-        variant: "destructive" 
+      toast({
+        title: isEditMode ? "Failed to update question" : "Failed to post question",
+        description: error.message,
+        variant: "destructive"
       });
     },
   });
@@ -92,7 +130,7 @@ export function AskQuestionDialog({ topics, isAuthenticated, onSignInRequired, c
       onSignInRequired();
       return;
     }
-    createQuestionMutation.mutate(data);
+    saveQuestionMutation.mutate(data);
   };
 
   const handleTagAdd = () => {
@@ -115,15 +153,13 @@ export function AskQuestionDialog({ topics, isAuthenticated, onSignInRequired, c
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
-      
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
+
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-ceylon-blue" />
-            Ask a Question
+            <MessageSquare className="h-5 w-5 text-accent" />
+            {isEditMode ? "Edit Question" : "Ask a Question"}
           </DialogTitle>
         </DialogHeader>
 
@@ -301,12 +337,14 @@ export function AskQuestionDialog({ topics, isAuthenticated, onSignInRequired, c
                     Preview
                   </Button>
                   
-                  <Button 
-                    type="submit" 
-                    disabled={createQuestionMutation.isPending}
+                  <Button
+                    type="submit"
+                    disabled={saveQuestionMutation.isPending}
                     className="bg-ceylon-green hover:bg-ceylon-green/90"
                   >
-                    {createQuestionMutation.isPending ? "Posting..." : "Post Question"}
+                    {saveQuestionMutation.isPending
+                      ? (isEditMode ? "Saving..." : "Posting...")
+                      : (isEditMode ? "Save Changes" : "Post Question")}
                   </Button>
                 </div>
               </form>
@@ -362,12 +400,14 @@ export function AskQuestionDialog({ topics, isAuthenticated, onSignInRequired, c
                 ← Back to Edit
               </Button>
               
-              <Button 
+              <Button
                 onClick={form.handleSubmit(onSubmit)}
-                disabled={createQuestionMutation.isPending || !watchedValues.title || !watchedValues.body}
+                disabled={saveQuestionMutation.isPending || !watchedValues.title || !watchedValues.body}
                 className="bg-ceylon-green hover:bg-ceylon-green/90"
               >
-                {createQuestionMutation.isPending ? "Posting..." : "Post Question"}
+                {saveQuestionMutation.isPending
+                  ? (isEditMode ? "Saving..." : "Posting...")
+                  : (isEditMode ? "Save Changes" : "Post Question")}
               </Button>
             </div>
           </TabsContent>
