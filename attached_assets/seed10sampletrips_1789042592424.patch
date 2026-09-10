@@ -1,0 +1,779 @@
+From 2794995450a0fee388fb9255d6f26336a73adec8 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 17:45:25 +0530
+Subject: [PATCH] Fix and expand sample-trip seed script to 10 trips
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+scripts/seed-trips.ts (wired to the admin /api/admin/seed-data route)
+had hardcoded Jan 2025 dates, which now fail the check_trip_date_future
+DB constraint since they're in the past; capitalized region values
+("Central") that don't match trip-card.tsx's lowercase region-color
+lookup, so badges silently fell back to gray; and pre-rebrand
+theceylonx.com branding. Fixed all three, switched dates to rolling
+futureDate() offsets so the script stays runnable indefinitely, and
+added 2 more trips (Arugam Bay, Jaffna) to reach 10 — ids already used
+the sample-trip- prefix that trip-card.tsx checks to show the
+"🎯 Sample Trip" badge, so no frontend change was needed.
+
+Deleted scripts/seed-sample-trips.ts: a second, unrelated seed script
+only reachable via `npm run seed:trips`, using trip-seed- prefixed ids
+(no Sample Trip badge) and missing the organizer contact fields the
+trips table requires, so it would have failed on insert. Repointed
+seed:trips/seed:all in package.json at the fixed script instead.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ package.json                 |   4 +-
+ scripts/seed-sample-trips.ts | 226 -----------------
+ scripts/seed-trips.ts        | 460 +++++++++++++++++++----------------
+ 3 files changed, 252 insertions(+), 438 deletions(-)
+ delete mode 100644 scripts/seed-sample-trips.ts
+
+diff --git a/package.json b/package.json
+index ce29a55..2151e92 100644
+--- a/package.json
++++ b/package.json
+@@ -10,8 +10,8 @@
+     "check": "tsc",
+     "db:push": "drizzle-kit push",
+     "seed:tribes": "tsx scripts/seed-tribes.ts",
+-    "seed:trips": "tsx scripts/seed-sample-trips.ts",
+-    "seed:all": "tsx scripts/seed-tribes.ts && tsx scripts/seed-sample-trips.ts"
++    "seed:trips": "tsx scripts/seed-trips.ts",
++    "seed:all": "tsx scripts/seed-tribes.ts && tsx scripts/seed-trips.ts"
+   },
+   "dependencies": {
+     "@clerk/backend": "^3.4.13",
+diff --git a/scripts/seed-sample-trips.ts b/scripts/seed-sample-trips.ts
+deleted file mode 100644
+index 3842776..0000000
+--- a/scripts/seed-sample-trips.ts
++++ /dev/null
+@@ -1,226 +0,0 @@
+-/**
+- * Seed 10 realistic Sri Lanka trips.
+- * Run: npx tsx scripts/seed-sample-trips.ts
+- */
+-import { db } from '../server/db';
+-import { trips, users, tripMetadata } from '../shared/schema';
+-import { eq } from 'drizzle-orm';
+-import { nanoid } from 'nanoid';
+-
+-const SEED_USERS = [
+-  { email: 'seed@theceylonx.com', name: 'CeylonX Team' },
+-  { email: 'traveler1@theceylonx.com', name: 'Nimal Perera' },
+-  { email: 'traveler2@theceylonx.com', name: 'Sanduni Silva' },
+-  { email: 'traveler3@theceylonx.com', name: 'Kasun Fernando' },
+-  { email: 'guide@theceylonx.com', name: 'Ruwan Jayawardena' },
+-];
+-
+-async function ensureUsers() {
+-  const ids: Record<string, string> = {};
+-  for (const u of SEED_USERS) {
+-    const existing = await db.select().from(users).where(eq(users.email, u.email));
+-    if (existing.length > 0) {
+-      ids[u.email] = existing[0].id;
+-    } else {
+-      const id = nanoid();
+-      await db.insert(users).values({ id, email: u.email, name: u.name });
+-      ids[u.email] = id;
+-    }
+-  }
+-  return ids;
+-}
+-
+-function futureDate(daysFromNow: number): Date {
+-  const d = new Date();
+-  d.setDate(d.getDate() + daysFromNow);
+-  return d;
+-}
+-
+-async function main() {
+-  console.log('Seeding sample trips...');
+-
+-  const userIds = await ensureUsers();
+-  console.log('✅ Users ready');
+-
+-  const SAMPLE_TRIPS = [
+-    {
+-      id: 'trip-seed-001',
+-      title: 'Colombo to Kandy — Temple of the Tooth & Botanical Gardens',
+-      fromLocation: 'Colombo Fort',
+-      toLocation: 'Kandy',
+-      date: futureDate(7),
+-      time: '06:30',
+-      seatsAvailable: 3,
+-      price: '3500.00',
+-      description: 'Heading to Kandy for the weekend. Plan to visit the Temple of the Tooth, Royal Botanical Gardens in Peradeniya, and the Kandy Lake walk. Have a car with AC. Looking for 2–3 travel buddies to split fuel. Will stop at a local rice and curry spot on the way.',
+-      region: 'central',
+-      category: 'culture',
+-      organizerEmail: 'traveler1@theceylonx.com',
+-    },
+-    {
+-      id: 'trip-seed-002',
+-      title: 'Ella Adventure Weekend — Nine Arch Bridge, Little Adam\'s Peak & Ella Rock',
+-      fromLocation: 'Colombo',
+-      toLocation: 'Ella',
+-      date: futureDate(10),
+-      time: '05:00',
+-      seatsAvailable: 2,
+-      price: '5000.00',
+-      description: 'Full adventure weekend in Ella. Driving up Friday night, hiking Saturday and Sunday. Nine Arch Bridge at sunrise, Little Adam\'s Peak mid-morning, and Ella Rock full day hike Sunday. Staying at a guesthouse with a mountain view — happy to share the room recommendation. Good for fit hikers, moderate trails.',
+-      region: 'uva',
+-      category: 'hiking',
+-      organizerEmail: 'traveler2@theceylonx.com',
+-    },
+-    {
+-      id: 'trip-seed-003',
+-      title: 'Mirissa Beach Long Weekend — Whale Watching + Beach Days',
+-      fromLocation: 'Colombo',
+-      toLocation: 'Mirissa',
+-      date: futureDate(14),
+-      time: '07:00',
+-      seatsAvailable: 4,
+-      price: '4000.00',
+-      description: 'Heading south for a 3-day beach escape. Have whale watching boat booked for Saturday morning (blue whales and sperm whales in season). Rest of the time is relaxed beach, food, and sunset drinks. Car has space for 4 more. Will split highway tolls and fuel equally.',
+-      region: 'southern',
+-      category: 'beach',
+-      organizerEmail: 'guide@theceylonx.com',
+-    },
+-    {
+-      id: 'trip-seed-004',
+-      title: 'Sigiriya & Dambulla Day Trip from Colombo',
+-      fromLocation: 'Colombo',
+-      toLocation: 'Sigiriya',
+-      date: futureDate(5),
+-      time: '04:30',
+-      seatsAvailable: 3,
+-      price: '2500.00',
+-      description: 'Early start to beat the crowds at Sigiriya Rock Fortress. Climbing starts at 6am before the heat and tourist rush. Then onto Dambulla Cave Temple in the afternoon. Back in Colombo by evening. I drive fast but safely — 3hr journey. Snacks and water provided. Bring comfortable climbing shoes.',
+-      region: 'north_central',
+-      category: 'culture',
+-      organizerEmail: 'traveler3@theceylonx.com',
+-    },
+-    {
+-      id: 'trip-seed-005',
+-      title: 'Yala National Park Safari — 2 Night Wildlife Trip',
+-      fromLocation: 'Galle',
+-      toLocation: 'Yala',
+-      date: futureDate(21),
+-      time: '14:00',
+-      seatsAvailable: 2,
+-      price: '12000.00',
+-      description: 'Joining a private jeep safari for 2 nights at Yala. Have a jeep and lodge booked. Looking for 1–2 people to share costs. Morning and evening safaris both days. Leopard, elephant, crocodile, and sloth bear country. Price per person covers jeep and accommodation share — food extra. Total trip cost dramatically reduced by sharing.',
+-      region: 'southern',
+-      category: 'wildlife',
+-      organizerEmail: 'traveler1@theceylonx.com',
+-    },
+-    {
+-      id: 'trip-seed-006',
+-      title: 'Nuwara Eliya Tea Country Drive — Horton Plains Included',
+-      fromLocation: 'Kandy',
+-      toLocation: 'Nuwara Eliya',
+-      date: futureDate(8),
+-      time: '06:00',
+-      seatsAvailable: 3,
+-      price: '3000.00',
+-      description: 'Scenic drive through the tea estates from Kandy to Nuwara Eliya. Stopping at a working tea factory for a tour and tasting. Then Horton Plains National Park and World\'s End viewpoint in the afternoon. Plan to stay overnight in a colonial-era guesthouse. British hill station vibes, cold weather — bring a layer.',
+-      region: 'central',
+-      category: 'hiking',
+-      organizerEmail: 'seed@theceylonx.com',
+-    },
+-    {
+-      id: 'trip-seed-007',
+-      title: 'Arugam Bay Surf Trip — East Coast Season',
+-      fromLocation: 'Colombo',
+-      toLocation: 'Arugam Bay',
+-      date: futureDate(30),
+-      time: '22:00',
+-      seatsAvailable: 3,
+-      price: '4500.00',
+-      description: 'Night drive to Arugam Bay for surf season. Leaving Saturday night, arriving Sunday morning. 4–5 days planned. Best surf season is June–September — this trip hits the peak. Staying at a surf camp near the main point. Beginners welcome, rental boards available on site. This is a chill trip, good vibes only.',
+-      region: 'eastern',
+-      category: 'beach',
+-      organizerEmail: 'traveler2@theceylonx.com',
+-    },
+-    {
+-      id: 'trip-seed-008',
+-      title: 'Jaffna Cultural Discovery — North Sri Lanka Weekend',
+-      fromLocation: 'Colombo',
+-      toLocation: 'Jaffna',
+-      date: futureDate(18),
+-      time: '05:30',
+-      seatsAvailable: 2,
+-      price: '6000.00',
+-      description: 'Weekend trip to Jaffna — one of the most underrated destinations in Sri Lanka. Nallur Kandaswamy Temple, the Jaffna Fort, Casuarina Beach, and the islands off the peninsula. Tamil cuisine is incredible here — crab curry you won\'t find in Colombo. Long drive but worth every km. Have a 4-seat car.',
+-      region: 'northern',
+-      category: 'culture',
+-      organizerEmail: 'guide@theceylonx.com',
+-    },
+-    {
+-      id: 'trip-seed-009',
+-      title: 'Knuckles Mountain Range Trekking — 2 Day Hike',
+-      fromLocation: 'Kandy',
+-      toLocation: 'Knuckles Range',
+-      date: futureDate(12),
+-      time: '07:00',
+-      seatsAvailable: 4,
+-      price: '2000.00',
+-      description: 'Guided 2-day trek through the Knuckles Conservation Forest. Day 1: Mini World\'s End and cloud forest trail. Day 2: Corbett\'s Gap to Pitawala Pathana grasslands. Camping overnight with sleeping bags and basic kit provided. Moderate difficulty — some steep sections. Spectacular biodiversity, chance of seeing purple-faced langurs and endemic birds.',
+-      region: 'central',
+-      category: 'hiking',
+-      organizerEmail: 'traveler3@theceylonx.com',
+-    },
+-    {
+-      id: 'trip-seed-010',
+-      title: 'Trincomalee Beach & Ancient Sites — East Coast Escape',
+-      fromLocation: 'Colombo',
+-      toLocation: 'Trincomalee',
+-      date: futureDate(25),
+-      time: '06:00',
+-      seatsAvailable: 3,
+-      price: '5500.00',
+-      description: 'Trinco has one of the best natural harbours in the world and the best beaches on the east coast in season. Marble Beach, Pigeon Island snorkelling (turtles and reef fish), Koneswaram Temple on the cliff, and Fort Frederick. 3-night trip. Best to go May–September when the east is calm and the west is monsooning.',
+-      region: 'eastern',
+-      category: 'beach',
+-      organizerEmail: 'seed@theceylonx.com',
+-    },
+-  ] as const;
+-
+-  let count = 0;
+-  for (const trip of SAMPLE_TRIPS) {
+-    const existing = await db.select().from(trips).where(eq(trips.id, trip.id));
+-    if (existing.length > 0) {
+-      console.log(`  Exists, skipping: ${trip.title}`);
+-    } else {
+-      const organizerId = userIds[trip.organizerEmail];
+-      if (!organizerId) { console.warn(`  No user for ${trip.organizerEmail}`); continue; }
+-
+-      await db.insert(trips).values({
+-        id: trip.id,
+-        title: trip.title,
+-        fromLocation: trip.fromLocation,
+-        toLocation: trip.toLocation,
+-        date: trip.date,
+-        time: trip.time,
+-        seatsAvailable: trip.seatsAvailable,
+-        price: trip.price,
+-        region: trip.region,
+-        category: trip.category,
+-        organizerId,
+-        status: 'active',
+-      });
+-      count++;
+-      console.log(`  ✅ ${trip.title}`);
+-    }
+-    await db.insert(tripMetadata).values({
+-      tripId: trip.id,
+-      notes: trip.description,
+-    }).onConflictDoUpdate({
+-      target: tripMetadata.tripId,
+-      set: { notes: trip.description },
+-    });
+-  }
+-
+-  console.log(`\nDone. Inserted ${count} trips.`);
+-}
+-
+-main().catch(console.error).finally(() => process.exit());
+diff --git a/scripts/seed-trips.ts b/scripts/seed-trips.ts
+index 1a0565d..eef5e5e 100644
+--- a/scripts/seed-trips.ts
++++ b/scripts/seed-trips.ts
+@@ -3,235 +3,275 @@ import { trips, tripMetadata, users } from '../shared/schema';
+ import { eq } from 'drizzle-orm';
+ import { nanoid } from 'nanoid';
+ 
+-async function seedUsers() {
+-  const usersData = [
+-    { email: "seed@theceylonx.com", name: "CeylonX" },
+-    { email: "traveler1@theceylonx.com", name: "Traveler One" },
+-    { email: "traveler2@theceylonx.com", name: "Traveler Two" },
+-    { email: "traveler3@theceylonx.com", name: "Traveler Three" },
+-    { email: "guide@theceylonx.com", name: "Local Guide" },
+-    { email: "explorer@theceylonx.com", name: "Adventure Explorer" },
+-  ];
++const SEED_USERS = [
++  { email: "seed@hibowan.com", name: "HiBowan Team", displayName: "HiBowan Team" },
++  { email: "traveler1@hibowan.com", name: "Nimal Perera", displayName: "Nimal Perera" },
++  { email: "traveler2@hibowan.com", name: "Sanduni Silva", displayName: "Sanduni Silva" },
++  { email: "guide@hibowan.com", name: "Ruwan Jayawardena", displayName: "Ruwan Jayawardena" },
++  { email: "explorer@hibowan.com", name: "Kasun Fernando", displayName: "Kasun Fernando" },
++];
+ 
+-  for (const userData of usersData) {
++async function seedUsers() {
++  for (const userData of SEED_USERS) {
+     const existing = await db.select().from(users).where(eq(users.email, userData.email));
+     if (existing.length === 0) {
+       await db.insert(users).values({
+         id: nanoid(),
+-        ...userData
++        ...userData,
+       });
+     }
+   }
+ }
+ 
++function futureDate(daysFromNow: number): Date {
++  const d = new Date();
++  d.setDate(d.getDate() + daysFromNow);
++  return d;
++}
++
+ async function seedSampleTrips() {
+   console.log("Starting sample trips seeding...");
+-  
++
+   try {
+-    // Verify database connection
+     await db.select().from(users).limit(1);
+     console.log("✅ Database connection verified for trips seeding");
+-    
+-    // Ensure seed users exist first
++
+     await seedUsers();
+-  
+-  const seedUser = await db.select().from(users).where(eq(users.email, "seed@theceylonx.com"));
+-  const traveler1 = await db.select().from(users).where(eq(users.email, "traveler1@theceylonx.com"));
+-  const traveler2 = await db.select().from(users).where(eq(users.email, "traveler2@theceylonx.com"));
+-  const guide = await db.select().from(users).where(eq(users.email, "guide@theceylonx.com"));
+-  const explorer = await db.select().from(users).where(eq(users.email, "explorer@theceylonx.com"));
+-  
+-  if (seedUser.length === 0) {
+-    console.error("Seed user not found");
+-    return;
+-  }
+-  
+-  const sampleTrips = [
+-    {
+-      id: "sample-trip-001",
+-      title: "Colombo to Kandy Cultural Journey",
+-      fromLocation: "Colombo",
+-      toLocation: "Kandy",
+-      date: new Date("2025-01-15"),
+-      time: "08:00",
+-      seatsAvailable: 3,
+-       price: "2500.00",
+-      region: "Central",
+-      category: "culture" as const,
+-      organizerId: seedUser[0].id,
+-      organizerPhone: "771234567",
+-      organizerEmail: "seed@theceylonx.com",
+-      contactInfo: "Contact via WhatsApp",
+-      status: "active",
+-      notes: "Visit Temple of the Tooth and Royal Botanical Gardens",
+-      tags: ["temple", "culture", "gardens"]
+-    },
+-    {
+-      id: "sample-trip-002", 
+-      title: "Galle Fort Sunset Tour",
+-      fromLocation: "Colombo",
+-      toLocation: "Galle",
+-      date: new Date("2025-01-18"),
+-      time: "14:00",
+-      seatsAvailable: 4,
+-       price: "3000.00",
+-      region: "Southern",
+-      category: "culture" as const,
+-      organizerId: traveler1[0]?.id || seedUser[0].id,
+-      organizerPhone: "776543210",
+-      organizerEmail: "traveler1@theceylonx.com",
+-      contactInfo: "Contact via phone or email",
+-      status: "active",
+-      notes: "Historic fort walls and amazing sunset views",
+-      tags: ["fort", "sunset", "photography"]
+-    },
+-    {
+-      id: "sample-trip-003",
+-      title: "Sigiriya Rock Fortress Adventure",
+-      fromLocation: "Kandy",
+-      toLocation: "Sigiriya",
+-      date: new Date("2025-01-20"),
+-      time: "06:00",
+-      seatsAvailable: 2,
+-       price: "4500.00",
+-      region: "Central",
+-      category: "adventure_sport" as const,
+-      organizerId: traveler2[0]?.id || seedUser[0].id,
+-      organizerPhone: "771122334",
+-      organizerEmail: "traveler2@theceylonx.com",
+-      contactInfo: "Early morning start for best views",
+-      status: "active",
+-      notes: "Ancient rock fortress with frescoes and water gardens",
+-      tags: ["sigiriya", "adventure", "history"]
+-    },
+-    {
+-      id: "sample-trip-004",
+-      title: "Ella Nine Arch Bridge & Little Adam's Peak",
+-      fromLocation: "Kandy",
+-      toLocation: "Ella",
+-      date: new Date("2025-01-22"),
+-      time: "07:30",
+-      seatsAvailable: 3,
+-       price: "2800.00",
+-      region: "Central",
+-      category: "hiking" as const,
+-      organizerId: guide[0]?.id || seedUser[0].id,
+-      organizerPhone: "774455667",
+-      organizerEmail: "guide@theceylonx.com",
+-      contactInfo: "Professional guide included",
+-      status: "active",
+-      notes: "Scenic train journey views and easy hiking",
+-      tags: ["ella", "bridge", "hiking", "train"]
+-    },
+-    {
+-      id: "sample-trip-005",
+-      title: "Yala National Park Safari",
+-      fromLocation: "Colombo",
+-      toLocation: "Yala",
+-      date: new Date("2025-01-25"),
+-      time: "05:00",
+-      seatsAvailable: 6,
+-       price: "5500.00",
+-      region: "Southern",
+-      category: "wildlife" as const,
+-      organizerId: explorer[0]?.id || seedUser[0].id,
+-      organizerPhone: "777888999",
+-      organizerEmail: "explorer@theceylonx.com",
+-      contactInfo: "Safari vehicle and guide included",
+-      status: "active",
+-      notes: "Best chance to spot leopards and elephants",
+-      tags: ["safari", "wildlife", "leopards", "elephants"]
+-    },
+-    {
+-      id: "sample-trip-006",
+-      title: "Nuwara Eliya Tea Plantation Tour",
+-      fromLocation: "Kandy",
+-      toLocation: "Nuwara Eliya",
+-      date: new Date("2025-01-28"),
+-      time: "09:00",
+-      seatsAvailable: 4,
+-       price: "3200.00",
+-      region: "Central",
+-      category: "hiking" as const,
+-      organizerId: seedUser[0].id,
+-      organizerPhone: "771234567",
+-      organizerEmail: "seed@theceylonx.com",
+-      contactInfo: "Tea tasting included",
+-      status: "active",
+-      notes: "Cool climate and beautiful tea estates",
+-      tags: ["tea", "plantation", "mountains"]
+-    },
+-    {
+-      id: "sample-trip-007",
+-      title: "Anuradhapura Ancient City",
+-      fromLocation: "Colombo",
+-      toLocation: "Anuradhapura",
+-      date: new Date("2025-02-01"),
+-      time: "07:00",
+-      seatsAvailable: 5,
+-       price: "4000.00",
+-      region: "North Central",
+-      category: "culture" as const,
+-      organizerId: guide[0]?.id || seedUser[0].id,
+-      organizerPhone: "774455667",
+-      organizerEmail: "guide@theceylonx.com",
+-      contactInfo: "Archaeological guide included",
+-      status: "active",
+-      notes: "Ancient Buddhist temples and dagobas",
+-      tags: ["ancient", "buddhist", "temples", "history"]
+-    },
+-    {
+-      id: "sample-trip-008",
+-      title: "Mirissa Whale Watching",
+-      fromLocation: "Galle",
+-      toLocation: "Mirissa",
+-      date: new Date("2025-02-05"),
+-      time: "06:30",
+-      seatsAvailable: 8,
+-       price: "3500.00",
+-      region: "Southern",
+-      category: "wildlife" as const,
+-      organizerId: explorer[0]?.id || seedUser[0].id,
+-      organizerPhone: "777888999",
+-      organizerEmail: "explorer@theceylonx.com",
+-      contactInfo: "Boat trip included",
+-      status: "active",
+-      notes: "Blue whales and dolphins season",
+-      tags: ["whales", "dolphins", "boat", "ocean"]
++
++    const seedUser = await db.select().from(users).where(eq(users.email, "seed@hibowan.com"));
++    const traveler1 = await db.select().from(users).where(eq(users.email, "traveler1@hibowan.com"));
++    const traveler2 = await db.select().from(users).where(eq(users.email, "traveler2@hibowan.com"));
++    const guide = await db.select().from(users).where(eq(users.email, "guide@hibowan.com"));
++    const explorer = await db.select().from(users).where(eq(users.email, "explorer@hibowan.com"));
++
++    if (seedUser.length === 0) {
++      console.error("Seed user not found");
++      return;
+     }
+-  ];
+ 
+-  let tripCount = 0;
+-  
+-  for (const trip of sampleTrips) {
+-    const existing = await db.select().from(trips).where(eq(trips.id, trip.id));
+-    let tripReady = existing.length > 0;
+-    if (existing.length === 0) {
+-      try {
+-        const { notes, ...tripData } = trip;
+-        await db.insert(trips).values([tripData]);
+-        tripReady = true;
+-        tripCount++;
+-        console.log(`✅ Created trip: ${trip.title}`);
+-      } catch (error) {
+-        console.error(`❌ Failed to create trip ${trip.title}:`, error);
++    const sampleTrips = [
++      {
++        id: "sample-trip-001",
++        title: "Colombo to Kandy Cultural Journey",
++        fromLocation: "Colombo",
++        toLocation: "Kandy",
++        date: futureDate(7),
++        time: "08:00",
++        seatsAvailable: 3,
++        price: "2500.00",
++        region: "central",
++        category: "culture" as const,
++        organizerId: seedUser[0].id,
++        organizerPhone: "771234567",
++        organizerEmail: "seed@hibowan.com",
++        contactInfo: "Contact via WhatsApp",
++        status: "active",
++        notes: "Visit the Temple of the Tooth and the Royal Botanical Gardens in Peradeniya, then a walk around Kandy Lake.",
++        tags: ["temple", "culture", "gardens"],
++      },
++      {
++        id: "sample-trip-002",
++        title: "Galle Fort Sunset Tour",
++        fromLocation: "Colombo",
++        toLocation: "Galle",
++        date: futureDate(10),
++        time: "14:00",
++        seatsAvailable: 4,
++        price: "3000.00",
++        region: "southern",
++        category: "culture" as const,
++        organizerId: traveler1[0]?.id || seedUser[0].id,
++        organizerPhone: "772345678",
++        organizerEmail: "traveler1@hibowan.com",
++        contactInfo: "Call or WhatsApp",
++        status: "active",
++        notes: "Historic Dutch colonial fort walls, boutique cafes, and one of the best sunset viewpoints on the south coast.",
++        tags: ["fort", "sunset", "photography"],
++      },
++      {
++        id: "sample-trip-003",
++        title: "Sigiriya Rock Fortress Adventure",
++        fromLocation: "Kandy",
++        toLocation: "Sigiriya",
++        date: futureDate(13),
++        time: "06:00",
++        seatsAvailable: 2,
++        price: "4500.00",
++        region: "north_central",
++        category: "adventure_sport" as const,
++        organizerId: traveler2[0]?.id || seedUser[0].id,
++        organizerPhone: "771122334",
++        organizerEmail: "traveler2@hibowan.com",
++        contactInfo: "Early morning start for the best views",
++        status: "active",
++        notes: "Climb the ancient rock fortress to see the ruins, frescoes, and water gardens before the midday heat and crowds.",
++        tags: ["sigiriya", "adventure", "history"],
++      },
++      {
++        id: "sample-trip-004",
++        title: "Ella Nine Arch Bridge & Little Adam's Peak",
++        fromLocation: "Kandy",
++        toLocation: "Ella",
++        date: futureDate(16),
++        time: "07:30",
++        seatsAvailable: 3,
++        price: "2800.00",
++        region: "uva",
++        category: "hiking" as const,
++        organizerId: guide[0]?.id || seedUser[0].id,
++        organizerPhone: "774455667",
++        organizerEmail: "guide@hibowan.com",
++        contactInfo: "Local guide included",
++        status: "active",
++        notes: "Scenic train-route views, an easy hike up Little Adam's Peak, and a stop at the iconic Nine Arch Bridge.",
++        tags: ["ella", "bridge", "hiking", "train"],
++      },
++      {
++        id: "sample-trip-005",
++        title: "Yala National Park Safari",
++        fromLocation: "Colombo",
++        toLocation: "Yala",
++        date: futureDate(19),
++        time: "05:00",
++        seatsAvailable: 6,
++        price: "5500.00",
++        region: "southern",
++        category: "wildlife" as const,
++        organizerId: explorer[0]?.id || seedUser[0].id,
++        organizerPhone: "777888999",
++        organizerEmail: "explorer@hibowan.com",
++        contactInfo: "Safari jeep and guide included",
++        status: "active",
++        notes: "Best chance in Sri Lanka to spot leopards, elephants, and sloth bears on a morning and evening game drive.",
++        tags: ["safari", "wildlife", "leopards", "elephants"],
++      },
++      {
++        id: "sample-trip-006",
++        title: "Nuwara Eliya Tea Plantation Tour",
++        fromLocation: "Kandy",
++        toLocation: "Nuwara Eliya",
++        date: futureDate(22),
++        time: "09:00",
++        seatsAvailable: 4,
++        price: "3200.00",
++        region: "central",
++        category: "hiking" as const,
++        organizerId: seedUser[0].id,
++        organizerPhone: "771234567",
++        organizerEmail: "seed@hibowan.com",
++        contactInfo: "Tea factory tour and tasting included",
++        status: "active",
++        notes: "Cool hill-country climate, working tea estates, a factory tour and tasting, plus Horton Plains in the afternoon.",
++        tags: ["tea", "plantation", "mountains"],
++      },
++      {
++        id: "sample-trip-007",
++        title: "Anuradhapura Ancient City",
++        fromLocation: "Colombo",
++        toLocation: "Anuradhapura",
++        date: futureDate(25),
++        time: "07:00",
++        seatsAvailable: 5,
++        price: "4000.00",
++        region: "north_central",
++        category: "culture" as const,
++        organizerId: guide[0]?.id || seedUser[0].id,
++        organizerPhone: "774455667",
++        organizerEmail: "guide@hibowan.com",
++        contactInfo: "Archaeological guide included",
++        status: "active",
++        notes: "Sri Lanka's ancient capital — Buddhist temples, dagobas, and ruins dating back over two thousand years.",
++        tags: ["ancient", "buddhist", "temples", "history"],
++      },
++      {
++        id: "sample-trip-008",
++        title: "Mirissa Whale Watching",
++        fromLocation: "Galle",
++        toLocation: "Mirissa",
++        date: futureDate(28),
++        time: "06:30",
++        seatsAvailable: 8,
++        price: "3500.00",
++        region: "southern",
++        category: "wildlife" as const,
++        organizerId: explorer[0]?.id || seedUser[0].id,
++        organizerPhone: "777888999",
++        organizerEmail: "explorer@hibowan.com",
++        contactInfo: "Boat trip included",
++        status: "active",
++        notes: "Peak whale-watching season — blue whales, sperm whales, and dolphins off the south coast.",
++        tags: ["whales", "dolphins", "boat", "ocean"],
++      },
++      {
++        id: "sample-trip-009",
++        title: "Arugam Bay Surf Trip",
++        fromLocation: "Colombo",
++        toLocation: "Arugam Bay",
++        date: futureDate(31),
++        time: "22:00",
++        seatsAvailable: 3,
++        price: "4500.00",
++        region: "eastern",
++        category: "beach" as const,
++        organizerId: traveler1[0]?.id || seedUser[0].id,
++        organizerPhone: "772345678",
++        organizerEmail: "traveler1@hibowan.com",
++        contactInfo: "Rental boards available on site",
++        status: "active",
++        notes: "Overnight drive to Sri Lanka's east-coast surf capital. Beginners welcome, boards available to rent at the beach.",
++        tags: ["surf", "beach", "eastcoast"],
++      },
++      {
++        id: "sample-trip-010",
++        title: "Jaffna Cultural Discovery",
++        fromLocation: "Colombo",
++        toLocation: "Jaffna",
++        date: futureDate(34),
++        time: "05:30",
++        seatsAvailable: 4,
++        price: "6000.00",
++        region: "northern",
++        category: "culture" as const,
++        organizerId: traveler2[0]?.id || seedUser[0].id,
++        organizerPhone: "771122334",
++        organizerEmail: "traveler2@hibowan.com",
++        contactInfo: "Contact via WhatsApp",
++        status: "active",
++        notes: "One of Sri Lanka's most underrated regions — Nallur Kandaswamy Temple, Jaffna Fort, Casuarina Beach, and Tamil cuisine.",
++        tags: ["jaffna", "culture", "northcoast"],
++      },
++    ];
++
++    let tripCount = 0;
++
++    for (const trip of sampleTrips) {
++      const existing = await db.select().from(trips).where(eq(trips.id, trip.id));
++      let tripReady = existing.length > 0;
++      if (existing.length === 0) {
++        try {
++          const { notes, ...tripData } = trip;
++          await db.insert(trips).values([tripData]);
++          tripReady = true;
++          tripCount++;
++          console.log(`✅ Created trip: ${trip.title}`);
++        } catch (error) {
++          console.error(`❌ Failed to create trip ${trip.title}:`, error);
++        }
++      } else {
++        console.log(`⚠️ Trip already exists: ${trip.title}`);
++      }
++      if (tripReady) {
++        await db.insert(tripMetadata).values({
++          tripId: trip.id,
++          notes: trip.notes,
++        }).onConflictDoUpdate({
++          target: tripMetadata.tripId,
++          set: { notes: trip.notes },
++        });
+       }
+-    } else {
+-      console.log(`⚠️ Trip already exists: ${trip.title}`);
+-    }
+-    if (tripReady) {
+-      await db.insert(tripMetadata).values({
+-        tripId: trip.id,
+-        notes: trip.notes,
+-      }).onConflictDoUpdate({
+-        target: tripMetadata.tripId,
+-        set: { notes: trip.notes },
+-      });
+     }
+-  }
+-  
+-  console.log(`✅ Seeded ${tripCount} sample trips`);
+-  
++
++    console.log(`✅ Seeded ${tripCount} sample trips`);
+   } catch (error) {
+     console.error("❌ Error in seedSampleTrips:", error);
+     throw error;
+@@ -254,4 +294,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
+   main();
+ }
+ 
+-export { seedSampleTrips };
+\ No newline at end of file
++export { seedSampleTrips };
+-- 
+2.50.1 (Apple Git-155)
+
