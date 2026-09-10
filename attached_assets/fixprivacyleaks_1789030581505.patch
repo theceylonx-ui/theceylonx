@@ -1,0 +1,230 @@
+From 8ffce2a08b2a90be2be0ccc020df6a4d5f3f6249 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 14:21:50 +0530
+Subject: [PATCH] Fix two real leaks found while verifying the 7 privacy
+ toggles are enforced everywhere
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Went through every place another user's data reaches the client
+(trip comments, chat participants, trip organizer info, the
+users/:id/trips page) to confirm the privacy settings fixed earlier
+are actually respected end to end, not just on the one profile-view
+endpoint. Found two real gaps:
+
+1. normalizeUserForUI() — the shared display-projection helper used
+   for trip organizers, comment authors, and chat participants —
+   unconditionally included `email` whenever the input row had one.
+   Most callers pass in another user's full row (trip comments,
+   accepted trip participants in /api/chat/users), so real email
+   addresses were leaking to anyone who could see a comment or share
+   a trip chat, regardless of that user's "Show Email" setting.
+   Removed email from its output entirely (the one legitimate
+   self-view caller, GET /api/user, now adds its own email back onto
+   its own response explicitly) so the safe behavior is the only
+   behavior, not something every future caller has to remember.
+
+2. GET /api/users/:userId/trips — unconditionally returned real
+   firstName/lastName with no check at all of "Show Real Name", and
+   never checked profileVisibility, so a user who set their profile
+   to Private still had their trips and real name exposed through
+   this endpoint. Also returned a user's hidden/inactive trips to
+   other viewers, undermining the "Trip Active" visibility toggle.
+   Now checks profileVisibility (403 if private and not self), gates
+   real name on showRealName, and filters to active trips only for
+   non-self viewers.
+
+Also cleaned up two more "Ceylon Traveler" fallback strings, and a
+dead isSampleTrip check comparing against an old, never-matching
+system@ceylonexpand.com address (the id.startsWith('sample-') check
+next to it already covers this correctly).
+
+Flagged but not changed: GET /api/trips/:tripId/interest-requests
+deliberately shows the trip organizer a requester's name/email/phone
+so they can evaluate a join request — this is a real product
+decision (does requesting to join imply consenting to share contact
+with that organizer?), not a clear-cut bug like the two above.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ client/src/components/trip-card.tsx   |  2 +-
+ client/src/pages/users/[id]/trips.tsx |  2 +-
+ server/routes.ts                      | 38 +++++++++++++++++----------
+ server/utils/userNormalization.ts     | 13 +++++----
+ 4 files changed, 34 insertions(+), 21 deletions(-)
+
+diff --git a/client/src/components/trip-card.tsx b/client/src/components/trip-card.tsx
+index e671b40..7f7bccc 100644
+--- a/client/src/components/trip-card.tsx
++++ b/client/src/components/trip-card.tsx
+@@ -58,7 +58,7 @@ export default function TripCard({ trip, badges }: TripCardProps) {
+   const isQuickTrip = (trip as any).tripType === 'quick';
+   const hoursLeft = useCountdownHours(isQuickTrip ? (trip as any).expiresAt : null);
+   
+-  const isSampleTrip = trip.id.startsWith('sample-') || trip.organizer?.email === 'system@ceylonexpand.com';
++  const isSampleTrip = trip.id.startsWith('sample-');
+ 
+   const pinMutation = useMutation({
+     mutationFn: async (pinned: boolean) => {
+diff --git a/client/src/pages/users/[id]/trips.tsx b/client/src/pages/users/[id]/trips.tsx
+index 4b080af..0091820 100644
+--- a/client/src/pages/users/[id]/trips.tsx
++++ b/client/src/pages/users/[id]/trips.tsx
+@@ -146,7 +146,7 @@ export default function UserTripsPage() {
+     );
+   }
+ 
+-  const displayName = getDisplayName(data.user) || 'Ceylon Traveler';
++  const displayName = getDisplayName(data.user) || 'HiBowan Traveler';
+ 
+   return (
+     <div className="min-h-screen bg-gray-50">
+diff --git a/server/routes.ts b/server/routes.ts
+index b9ff082..f297196 100644
+--- a/server/routes.ts
++++ b/server/routes.ts
+@@ -453,13 +453,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
+         return res.status(404).json({ message: "User not found" });
+       }
+       
+-      // Normalize user data for UI consumption
++      // Normalize user data for UI consumption. This is the user's own
++      // data, so (unlike other callers of normalizeUserForUI) it's safe
++      // to add email back onto the response.
+       const normalizedUser = normalizeUserForUI(userData);
+       if (!normalizedUser) {
+         return res.status(500).json({ message: "Failed to process user data" });
+       }
+-      
+-      res.json(normalizedUser);
++
++      res.json({ ...normalizedUser, email: userData.email || undefined });
+     } catch (error) {
+       console.error("❌ Error in /api/user:", error);
+       res.status(500).json({ message: "Failed to fetch user" });
+@@ -5534,39 +5536,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
+     try {
+       const { userId } = req.params;
+       const requesterId = req.user!.id;
+-      
++      const isSelf = userId === requesterId;
++
+       // Get user basic info
+       const user = await storage.getUser(userId);
+       if (!user) {
+         return res.status(404).json({ message: "User not found" });
+       }
+-      
+-      // Get user's trips
++
++      if (user.profileVisibility === 'private' && !isSelf) {
++        return res.status(403).json({ message: "Profile is private" });
++      }
++
++      const displayName = user.displayName || user.username || 'HiBowan Traveler';
++
++      // Get user's trips (organizer's own view includes hidden/inactive trips)
+       const trips = await storage.getUserTrips(userId);
+-      
++      const visibleTrips = isSelf ? trips : trips.filter(trip => trip.status === 'active');
++
+       // Format response with user info and trips
+       const response = {
+         user: {
+           id: user.id,
+-          displayName: user.displayName || user.username || 'Ceylon Traveler',
+-          firstName: user.firstName,
+-          lastName: user.lastName,
++          displayName,
++          firstName: (isSelf || user.showRealName) ? user.firstName : undefined,
++          lastName: (isSelf || user.showRealName) ? user.lastName : undefined,
+           username: user.username,
+           profileImageUrl: user.profileImageUrl,
+           isVerifiedUser: user.isVerifiedUser || false,
+           verificationBadges: user.verificationBadges || [],
+           verificationLevel: user.verificationLevel || 0,
+         },
+-        trips: trips.map(trip => ({
++        trips: visibleTrips.map(trip => ({
+           ...trip,
+           organizer: {
+             id: user.id,
+-            displayName: user.displayName || user.username || 'Ceylon Traveler',
++            displayName,
+             profileImageUrl: user.profileImageUrl
+           }
+         }))
+       };
+-      
++
+       res.json(response);
+     } catch (error) {
+       console.error("Error fetching user trips:", error);
+@@ -5594,7 +5604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
+       // Filter profile data based on privacy settings
+       const filteredProfile = {
+         id: userProfile.id,
+-        displayName: userProfile.displayName || userProfile.username || 'Ceylon Traveler',
++        displayName: userProfile.displayName || userProfile.username || 'HiBowan Traveler',
+         firstName: userProfile.showRealName ? userProfile.firstName : undefined,
+         lastName: userProfile.showRealName ? userProfile.lastName : undefined,
+         username: userProfile.username,
+diff --git a/server/utils/userNormalization.ts b/server/utils/userNormalization.ts
+index 8adc3c1..b37b3b7 100644
+--- a/server/utils/userNormalization.ts
++++ b/server/utils/userNormalization.ts
+@@ -6,19 +6,24 @@ export interface NormalizedUser {
+   displayName: string;
+   avatarUrl: string | null;
+   initials: string;
+-  email?: string;
+   provider?: string;
+ }
+ 
+ /**
+  * Normalizes user data for UI consumption with STRICT naming policy
+  * ONLY uses user-provided display name, username, or USER ID
+- * 
++ *
+  * STRICT POLICY:
+  * 1. Use 'displayName' field if available (user's chosen display name)
+  * 2. Use 'username' field if displayName is empty
+  * 3. Use USER ID if both are empty
+  * 4. NEVER use OAuth names, firstName+lastName, or email fallbacks
++ *
++ * Deliberately never includes email: most callers pass in another
++ * user's row to show to a third party (trip organizer, comment author,
++ * chat participant), and email must never leak there regardless of the
++ * caller. The one legitimate self-view case (GET /api/user) adds
++ * `email` back onto its own response explicitly, after calling this.
+  */
+ export function normalizeUserForUI(user: {
+   id: string;
+@@ -26,14 +31,13 @@ export function normalizeUserForUI(user: {
+   username?: string | null;
+   profileImageUrl?: string | null;
+   image?: string | null;
+-  email?: string | null;
+   provider?: string | null;
+ } | null): NormalizedUser | null {
+   if (!user) return null;
+ 
+   // STRICT naming policy - only use user-provided fields or USER ID
+   let displayName = '';
+-  
++
+   if (user.displayName?.trim()) {
+     displayName = user.displayName.trim();
+   } else if (user.username?.trim()) {
+@@ -58,7 +62,6 @@ export function normalizeUserForUI(user: {
+     displayName,
+     avatarUrl,
+     initials,
+-    email: user.email || undefined,
+     provider: user.provider || undefined,
+   };
+ }
+-- 
+2.50.1 (Apple Git-155)
+
