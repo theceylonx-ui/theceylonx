@@ -28,6 +28,8 @@ import {
   UserX,
   Trash2,
   Pencil,
+  CheckCircle2,
+  RotateCcw,
 } from "lucide-react";
 import { getDisplayName, getInitials, getAvatarOptions, AVATAR_STYLES } from "@/lib/profileUtils";
 import { VisibilityToggle } from "@/components/VisibilityToggle";
@@ -1292,6 +1294,38 @@ function UserActivity() {
     },
   });
 
+  const completeTripMutation = useMutation({
+    mutationFn: async (tripId: string) => {
+      const res = await apiRequest("POST", `/api/trips/${tripId}/complete`);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Trip Marked Complete",
+        description: data?.notifiedUsers
+          ? `Notified ${data.notifiedUsers} interested traveler${data.notifiedUsers === 1 ? '' : 's'}.`
+          : "Your trip is now marked as completed.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/me/activity/trips'] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to mark trip complete", variant: "destructive" });
+    },
+  });
+
+  const reopenTripMutation = useMutation({
+    mutationFn: async (tripId: string) => {
+      return await apiRequest("POST", `/api/trips/${tripId}/reopen`);
+    },
+    onSuccess: () => {
+      toast({ title: "Trip Reopened", description: "Your trip is active again." });
+      queryClient.invalidateQueries({ queryKey: ['/api/me/activity/trips'] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to reopen trip", variant: "destructive" });
+    },
+  });
+
   return (
     <Card>
       <CardHeader>
@@ -1472,6 +1506,36 @@ function UserActivity() {
                         id={trip.id}
                         currentVisibility={trip.status || "active"}
                       />
+                      <div className="mt-3 pt-3 border-t border-blue-100">
+                        {trip.status === 'completed' ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={reopenTripMutation.isPending}
+                            onClick={() => reopenTripMutation.mutate(trip.id)}
+                            data-testid={`button-reopen-trip-${trip.id}`}
+                          >
+                            <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                            {reopenTripMutation.isPending ? "Reopening..." : "Reopen Trip"}
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-green-300 text-green-700 hover:bg-green-50"
+                            disabled={completeTripMutation.isPending}
+                            onClick={() => {
+                              if (window.confirm("Mark this trip as completed? Anyone who showed interest will be notified.")) {
+                                completeTripMutation.mutate(trip.id);
+                              }
+                            }}
+                            data-testid={`button-complete-trip-${trip.id}`}
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                            {completeTripMutation.isPending ? "Marking..." : "Mark Complete"}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     {trip.notes && (
                       <div className="mt-3 p-2 bg-gray-50 rounded text-sm">
