@@ -1,0 +1,144 @@
+From dfac70a6f11de3fc8347e2c634c2a06539d627c5 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Thu, 10 Sep 2026 12:11:22 +0530
+Subject: [PATCH] Stop showing fabricated trip counts in Popular Destinations
+ footer
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+getPopularDestinations() fell back to hardcoded numbers (Colombo 15,
+Kandy 12, Galle 10, Nuwara Eliya 8, Sigiriya 7) whenever there was no
+real trip data to compute from, or on any query error — so visitors
+were shown fake activity stats with no trips behind them. Footer.tsx
+had its own duplicate hardcoded fallback list on top of that.
+
+Removed both fallbacks. The section (heading, list, "View more" link)
+now only renders when there's real aggregated data; it's hidden
+entirely otherwise, rather than showing invented numbers.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ client/src/components/Footer.tsx | 61 ++++++++++++++------------------
+ server/storage.ts                | 21 +----------
+ 2 files changed, 27 insertions(+), 55 deletions(-)
+
+diff --git a/client/src/components/Footer.tsx b/client/src/components/Footer.tsx
+index 91079d1..748ab7b 100644
+--- a/client/src/components/Footer.tsx
++++ b/client/src/components/Footer.tsx
+@@ -93,15 +93,15 @@ export default function Footer() {
+             </nav>
+           </div>
+ 
+-          <div>
+-            <h4 className="text-lg font-semibold mb-4" id="destinations-heading">Popular Destinations</h4>
+-            <nav aria-labelledby="destinations-heading">
+-              <ul className="space-y-2 text-gray-300" role="list">
+-                {popularDestinations.length > 0 ? (
+-                  popularDestinations.slice(0, 5).map((dest, index) => (
++          {popularDestinations.length > 0 && (
++            <div>
++              <h4 className="text-lg font-semibold mb-4" id="destinations-heading">Popular Destinations</h4>
++              <nav aria-labelledby="destinations-heading">
++                <ul className="space-y-2 text-gray-300" role="list">
++                  {popularDestinations.slice(0, 5).map((dest, index) => (
+                     <li key={index}>
+                       <Link href={`/destination/${encodeURIComponent(dest.destination)}`}>
+-                        <span 
++                        <span
+                           className="hover:text-ceylon-green transition-colors cursor-pointer focus:outline-none focus:underline focus:text-ceylon-green"
+                           data-testid={`footer-destination-${dest.destination.toLowerCase().replace(/\s+/g, '-')}`}
+                           tabIndex={0}
+@@ -111,34 +111,25 @@ export default function Footer() {
+                         </span>
+                       </Link>
+                     </li>
+-                  ))
+-                ) : (
+-                  // Fallback destinations if no data available
+-                  <>
+-                    <li><Link href="/destination/Colombo"><span className="hover:text-ceylon-green transition-colors cursor-pointer focus:outline-none focus:underline focus:text-ceylon-green" tabIndex={0} data-testid="footer-destination-colombo">Colombo</span></Link></li>
+-                    <li><Link href="/destination/Kandy"><span className="hover:text-ceylon-green transition-colors cursor-pointer focus:outline-none focus:underline focus:text-ceylon-green" tabIndex={0} data-testid="footer-destination-kandy">Kandy</span></Link></li>
+-                    <li><Link href="/destination/Galle"><span className="hover:text-ceylon-green transition-colors cursor-pointer focus:outline-none focus:underline focus:text-ceylon-green" tabIndex={0} data-testid="footer-destination-galle">Galle</span></Link></li>
+-                    <li><Link href="/destination/Nuwara%20Eliya"><span className="hover:text-ceylon-green transition-colors cursor-pointer focus:outline-none focus:underline focus:text-ceylon-green" tabIndex={0} data-testid="footer-destination-nuwara-eliya">Nuwara Eliya</span></Link></li>
+-                    <li><Link href="/destination/Sigiriya"><span className="hover:text-ceylon-green transition-colors cursor-pointer focus:outline-none focus:underline focus:text-ceylon-green" tabIndex={0} data-testid="footer-destination-sigiriya">Sigiriya</span></Link></li>
+-                  </>
+-                )}
+-              </ul>
+-              
+-              {/* View More Button */}
+-              <div className="mt-4">
+-                <Link href="/browse-trips">
+-                  <span 
+-                    className="text-sm text-gray-400 hover:text-ceylon-green transition-colors cursor-pointer border-b border-gray-400 hover:border-ceylon-green focus:outline-none focus:text-ceylon-green focus:border-ceylon-green"
+-                    data-testid="footer-view-more-destinations"
+-                    tabIndex={0}
+-                    aria-label="View more destinations and browse all trips"
+-                  >
+-                    View more destinations →
+-                  </span>
+-                </Link>
+-              </div>
+-            </nav>
+-          </div>
++                  ))}
++                </ul>
++
++                {/* View More Button */}
++                <div className="mt-4">
++                  <Link href="/browse-trips">
++                    <span
++                      className="text-sm text-gray-400 hover:text-ceylon-green transition-colors cursor-pointer border-b border-gray-400 hover:border-ceylon-green focus:outline-none focus:text-ceylon-green focus:border-ceylon-green"
++                      data-testid="footer-view-more-destinations"
++                      tabIndex={0}
++                      aria-label="View more destinations and browse all trips"
++                    >
++                      View more destinations →
++                    </span>
++                  </Link>
++                </div>
++              </nav>
++            </div>
++          )}
+ 
+           <div>
+             <h4 className="text-lg font-semibold mb-4" id="support-heading">Support</h4>
+diff --git a/server/storage.ts b/server/storage.ts
+index 6a60d3b..9e05117 100644
+--- a/server/storage.ts
++++ b/server/storage.ts
+@@ -1579,29 +1579,10 @@ export class DatabaseStorage implements IStorage {
+         .sort((a, b) => b.count - a.count)
+         .slice(0, limit);
+ 
+-      // 🚀 RELIABILITY: Fallback to popular Sri Lankan destinations if no data
+-      if (results.length === 0) {
+-        const fallbackDestinations = [
+-          { destination: 'Colombo', count: 15 },
+-          { destination: 'Kandy', count: 12 },
+-          { destination: 'Galle', count: 10 },
+-          { destination: 'Nuwara Eliya', count: 8 },
+-          { destination: 'Sigiriya', count: 7 }
+-        ];
+-        return fallbackDestinations.slice(0, limit);
+-      }
+-
+       return results;
+     } catch (error) {
+       console.error('❌ Error fetching popular destinations:', error);
+-      // 🚀 RELIABILITY: Always return something
+-      return [
+-        { destination: 'Colombo', count: 15 },
+-        { destination: 'Kandy', count: 12 },
+-        { destination: 'Galle', count: 10 },
+-        { destination: 'Nuwara Eliya', count: 8 },
+-        { destination: 'Sigiriya', count: 7 }
+-      ].slice(0, limit);
++      return [];
+     }
+   }
+ 
+-- 
+2.50.1 (Apple Git-155)
+
