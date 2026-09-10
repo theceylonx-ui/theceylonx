@@ -12,9 +12,7 @@ export function enhancedErrorHandler(err: any, req: Request, res: Response, next
     userId: (req as any).user?.id,
     userAgent: req.get('User-Agent'),
     ip: req.ip,
-    error: err.message,
     stack: err.stack,
-    statusCode: err.statusCode || err.status || 500,
   });
 
   // Handle different types of errors
@@ -113,10 +111,8 @@ export function setupGlobalErrorHandlers() {
     
     errorTracker.log('error', 'Unhandled Promise Rejection', {
       route: 'global',
-      meta: {
-        reason: reason?.message || reason,
-        stack: reason?.stack,
-      },
+      message: `Unhandled Promise Rejection: ${reason?.message || String(reason)}`,
+      stack: reason?.stack,
     });
     
     // Don't exit process in production, just log
@@ -131,10 +127,8 @@ export function setupGlobalErrorHandlers() {
     
     errorTracker.log('error', 'Uncaught Exception', {
       route: 'global',
-      meta: {
-        error: error.message,
-        stack: error.stack,
-      },
+      message: `Uncaught Exception: ${error.message}`,
+      stack: error.stack,
     });
     
     // Exit process for uncaught exceptions
@@ -147,7 +141,7 @@ export function setupGlobalErrorHandlers() {
     
     errorTracker.log('info', `Graceful shutdown initiated`, {
       route: 'global',
-      meta: { signal },
+      message: `Graceful shutdown initiated: ${signal}`,
     });
     
     // Give time for ongoing requests to complete

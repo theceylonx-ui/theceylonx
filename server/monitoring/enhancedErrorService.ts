@@ -298,7 +298,7 @@ class EnhancedErrorService {
       return;
     }
 
-    const threshold = this.alertConfig.thresholds[severity];
+    const threshold = this.alertConfig.thresholds[severity as keyof AlertConfig['thresholds']];
     if (!threshold) return;
 
     // Count recent errors of this severity

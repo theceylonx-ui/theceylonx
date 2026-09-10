@@ -42,10 +42,10 @@ export class AuditService {
       };
 
       // Store in database using existing audit log functionality
-      await storage.createAuditLog(
-        entry.action,
-        entry.userId,
-        {
+      await storage.createAuditLog({
+        action: entry.action,
+        userId: entry.userId,
+        ...{
           resource: entry.resource,
           resourceId: entry.resourceId,
           oldValues: entry.oldValues,
@@ -58,7 +58,7 @@ export class AuditService {
           metadata: entry.metadata,
           userEmail: entry.userEmail
         }
-      );
+      });
 
       console.log('📋 Audit logged:', {
         action: entry.action,

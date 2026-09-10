@@ -18,7 +18,7 @@ interface CacheConfig {
 }
 
 // Cache configuration registry
-const cacheConfigs: Map<string, CacheConfig> = new Map([
+const cacheConfigs = new Map<string, CacheConfig>([
   // API endpoints with optimized caching
   ['/api/trips', {
     ttl: CACHE_TTL.TRIP_LISTINGS,
@@ -55,7 +55,7 @@ const cacheConfigs: Map<string, CacheConfig> = new Map([
     ttl: CACHE_TTL.ADMIN_STATS,
     strategy: 'memory',
     tags: ['admin', 'stats'],
-    conditions: (req) => req.user?.role === 'admin',
+    conditions: (req) => (req.user as (typeof req.user & { role?: string }) | undefined)?.role === 'admin',
     cacheVisibility: 'private', // SECURITY: Private cache - admin-only data
     varyHeaders: ['Authorization', 'Cookie'] // SECURITY: Vary on auth headers
   }],
@@ -139,7 +139,8 @@ export function enhancedCacheMiddleware(endpoint?: string) {
             console.log(`🔄 Background revalidation starting for ${cacheKey}`);
             // The original request handler will execute and update the cache
             // This simulates the next request to refresh the stale data
-            const isStale = Date.now() - (cache.get(`${cacheKey}:timestamp`) || 0) > (config.revalidateTime * 1000);
+            const timestamp = cache.get<number>(`${cacheKey}:timestamp`) ?? 0;
+            const isStale = Date.now() - timestamp > ((config.revalidateTime ?? 0) * 1000);
             if (isStale) {
               // Mark for revalidation - next request will refresh
               cache.delete(cacheKey);
@@ -183,12 +184,12 @@ export function invalidateCacheTags(tags: string[]): number {
   
   for (const tag of tags) {
     // Find all cache keys with this tag
-    for (const [route, config] of cacheConfigs) {
+    cacheConfigs.forEach((config, route) => {
       if (config.tags?.includes(tag)) {
         const pattern = route.replace(/:\w+/g, '.*'); // Convert route params to regex
         invalidatedCount += cache.invalidatePattern(pattern);
       }
-    }
+    });
   }
   
   console.log(`🗑️ Invalidated ${invalidatedCount} cache entries for tags:`, tags);

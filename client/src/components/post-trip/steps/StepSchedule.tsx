@@ -27,7 +27,7 @@ export function StepSchedule({ form }: StepScheduleProps) {
   };
 
   // Generate time options
-  const timeOptions = [];
+  const timeOptions: Array<{ value: string; label: string }> = [];
   for (let hour = 0; hour < 24; hour++) {
     for (let minute of [0, 30]) {
       const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;

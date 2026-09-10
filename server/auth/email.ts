@@ -263,11 +263,14 @@ export async function verifyMagicLink(token: string, email: string): Promise<JWT
 
     if (!user) {
       // Create new user
-      [user] = await db.insert(users).values({
+      const insertedUsers = await db.insert(users).values({
         email,
         provider: 'email',
         emailVerified: true,
       }).returning();
+      if (Array.isArray(insertedUsers)) {
+        user = insertedUsers[0];
+      }
     } else {
       // Update email verified status
       await db.update(users)

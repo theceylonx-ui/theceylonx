@@ -1,5 +1,6 @@
 // Error tracking and monitoring system for production reliability
 export interface ErrorLog {
+  [key: string]: unknown;
   id: string;
   timestamp: Date;
   level: 'error' | 'warn' | 'info';
@@ -9,6 +10,7 @@ export interface ErrorLog {
   route?: string;
   userAgent?: string;
   ip?: string;
+  meta?: Record<string, unknown>;
 }
 
 class ErrorTracker {

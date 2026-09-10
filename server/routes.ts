@@ -5171,10 +5171,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
         // Notify the other participant
         if (otherUserId) {
-          websocketService.broadcastNotification({ type: 'new_message', data: { ...newMessageEvent.data, userId: otherUserId } });
+          websocketService.broadcastNotification({ type: 'new_message', data: { threadId, userId: otherUserId, message } });
         }
         // Also notify the sender so all their open tabs/devices update
-        websocketService.broadcastNotification({ type: 'new_message', data: { ...newMessageEvent.data, userId } });
+        websocketService.broadcastNotification({ type: 'new_message', data: { threadId, userId, message } });
       } catch (wsError) {
         // Non-fatal — message is already saved, WS is best-effort
         console.error('WebSocket broadcast failed:', wsError);
@@ -5365,8 +5365,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const { websocketService } = await import('./services/websocketService');
         const event = { type: 'new_message', data: { threadId: message.threadId, userId: '' } };
-        websocketService.broadcastNotification({ ...event, data: { ...event.data, userId: message.senderId } });
-        websocketService.broadcastNotification({ ...event, data: { ...event.data, userId } });
+        websocketService.broadcastNotification({ type: 'new_message', data: { threadId: message.threadId, userId: message.senderId } });
+        websocketService.broadcastNotification({ type: 'new_message', data: { threadId: message.threadId, userId } });
       } catch (_) {}
 
       res.json({ consumed: true });

@@ -33,6 +33,27 @@ interface PerformanceMetrics {
   rtt?: number;
 }
 
+interface PerformanceMemory {
+  usedJSHeapSize: number;
+  totalJSHeapSize: number;
+  jsHeapSizeLimit: number;
+}
+
+interface NetworkInformation extends EventTarget {
+  type?: string;
+  effectiveType?: string;
+  downlink?: number;
+  rtt?: number;
+}
+
+function hasPerformanceMemory(value: Performance): value is Performance & { memory: PerformanceMemory } {
+  return 'memory' in value;
+}
+
+function hasNetworkConnection(value: Navigator): value is Navigator & { connection: NetworkInformation } {
+  return 'connection' in value;
+}
+
 // Performance budget configuration
 interface PerformanceBudget {
   loadTime: number; // Max page load time in ms
@@ -86,8 +107,8 @@ export function usePerformanceMonitoring(budget: PerformanceBudget = DEFAULT_PER
     const resources = performance.getEntriesByType('resource');
     
     // Basic load metrics
-    const loadTime = navigation.loadEventEnd - navigation.navigationStart;
-    const domContentLoaded = navigation.domContentLoadedEventEnd - navigation.navigationStart;
+    const loadTime = navigation.loadEventEnd - navigation.startTime;
+    const domContentLoaded = navigation.domContentLoadedEventEnd - navigation.startTime;
     
     // Paint metrics
     const fcp = paint.find(entry => entry.name === 'first-contentful-paint');
@@ -96,13 +117,13 @@ export function usePerformanceMonitoring(budget: PerformanceBudget = DEFAULT_PER
     // Resource metrics
     const totalResources = resources.length;
     const resourceLoadTime = resources.reduce((total, resource) => {
-      return total + (resource.responseEnd - resource.startTime);
+      return total + (resource as PerformanceResourceTiming).responseEnd - resource.startTime;
     }, 0) / resources.length;
 
     // Memory metrics (if available)
     let memoryUsage;
-    if ('memory' in performance) {
-      const memory = (performance as any).memory;
+    if (hasPerformanceMemory(performance)) {
+      const memory = performance.memory;
       memoryUsage = {
         usedJSHeapSize: memory.usedJSHeapSize,
         totalJSHeapSize: memory.totalJSHeapSize,
@@ -112,8 +133,8 @@ export function usePerformanceMonitoring(budget: PerformanceBudget = DEFAULT_PER
 
     // Network metrics (if available)
     let connectionType, effectiveType, downlink, rtt;
-    if ('connection' in navigator) {
-      const connection = (navigator as any).connection;
+    if (hasNetworkConnection(navigator)) {
+      const connection = navigator.connection;
       connectionType = connection.type;
       effectiveType = connection.effectiveType;
       downlink = connection.downlink;
@@ -147,7 +168,7 @@ export function usePerformanceMonitoring(budget: PerformanceBudget = DEFAULT_PER
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           if (entry.name === 'first-input') {
-            metrics.firstInputDelay = entry.processingStart - entry.startTime;
+             metrics.firstInputDelay = (entry as PerformanceEventTiming).processingStart - entry.startTime;
           }
         }
       });
@@ -169,7 +190,7 @@ export function usePerformanceMonitoring(budget: PerformanceBudget = DEFAULT_PER
       let clsValue = 0;
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          if (!entry.hadRecentInput) {
+          if (!(entry as PerformanceEventTiming & { hadRecentInput?: boolean }).hadRecentInput) {
             clsValue += (entry as any).value;
           }
         }

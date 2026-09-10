@@ -36,10 +36,11 @@ export function ChatButton({
   // Open chat thread mutation (organizer only)
   const openChatMutation = useMutation({
     mutationFn: async (): Promise<{ thread: { id: string }; existed: boolean }> => {
-      return apiRequest("POST", "/api/chat/threads/open", {
+      const response = await apiRequest("POST", "/api/chat/threads/open", {
         tripId,
         userId,
       });
+      return await response.json() as { thread: { id: string }; existed: boolean };
     },
     onSuccess: (data) => {
       // Navigate to the chat thread

@@ -3,7 +3,7 @@
  * Run: npx tsx scripts/seed-sample-trips.ts
  */
 import { db } from '../server/db';
-import { trips, users } from '../shared/schema';
+import { trips, users, tripMetadata } from '../shared/schema';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 
@@ -124,7 +124,7 @@ async function main() {
       price: '3000.00',
       description: 'Scenic drive through the tea estates from Kandy to Nuwara Eliya. Stopping at a working tea factory for a tour and tasting. Then Horton Plains National Park and World\'s End viewpoint in the afternoon. Plan to stay overnight in a colonial-era guesthouse. British hill station vibes, cold weather — bring a layer.',
       region: 'central',
-      category: 'nature',
+      category: 'hiking',
       organizerEmail: 'seed@theceylonx.com',
     },
     {
@@ -183,36 +183,41 @@ async function main() {
       category: 'beach',
       organizerEmail: 'seed@theceylonx.com',
     },
-  ];
+  ] as const;
 
   let count = 0;
   for (const trip of SAMPLE_TRIPS) {
     const existing = await db.select().from(trips).where(eq(trips.id, trip.id));
     if (existing.length > 0) {
       console.log(`  Exists, skipping: ${trip.title}`);
-      continue;
+    } else {
+      const organizerId = userIds[trip.organizerEmail];
+      if (!organizerId) { console.warn(`  No user for ${trip.organizerEmail}`); continue; }
+
+      await db.insert(trips).values({
+        id: trip.id,
+        title: trip.title,
+        fromLocation: trip.fromLocation,
+        toLocation: trip.toLocation,
+        date: trip.date,
+        time: trip.time,
+        seatsAvailable: trip.seatsAvailable,
+        price: trip.price,
+        region: trip.region,
+        category: trip.category,
+        organizerId,
+        status: 'active',
+      });
+      count++;
+      console.log(`  ✅ ${trip.title}`);
     }
-
-    const organizerId = userIds[trip.organizerEmail];
-    if (!organizerId) { console.warn(`  No user for ${trip.organizerEmail}`); continue; }
-
-    await db.insert(trips).values({
-      id: trip.id,
-      title: trip.title,
-      fromLocation: trip.fromLocation,
-      toLocation: trip.toLocation,
-      date: trip.date,
-      time: trip.time,
-      seatsAvailable: trip.seatsAvailable,
-      price: trip.price,
-      description: trip.description,
-      region: trip.region,
-      category: trip.category as any,
-      organizerId,
-      status: 'active',
+    await db.insert(tripMetadata).values({
+      tripId: trip.id,
+      notes: trip.description,
+    }).onConflictDoUpdate({
+      target: tripMetadata.tripId,
+      set: { notes: trip.description },
     });
-    count++;
-    console.log(`  ✅ ${trip.title}`);
   }
 
   console.log(`\nDone. Inserted ${count} trips.`);

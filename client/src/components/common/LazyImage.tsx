@@ -169,9 +169,9 @@ export function TripImage({ trip, className, ...props }: {
   className?: string;
 } & Omit<LazyImageProps, 'src' | 'alt'>) {
   // Generate optimized image URL based on category
-  const getOptimizedImageUrl = (trip: typeof trip): string => {
-    if (trip.imageUrl) {
-      return trip.imageUrl;
+  const getOptimizedImageUrl = (tripData: { id: string; imageUrl?: string; title: string; category?: string }): string => {
+    if (tripData.imageUrl) {
+      return tripData.imageUrl;
     }
     
     // Use category-based fallback images
@@ -188,7 +188,7 @@ export function TripImage({ trip, className, ...props }: {
       'workshop': '/assets/category/workshop-default.jpg'
     };
     
-    return categoryImages[trip.category as keyof typeof categoryImages] || '/assets/category/default-trip.jpg';
+    return categoryImages[tripData.category as keyof typeof categoryImages] || '/assets/category/default-trip.jpg';
   };
 
   return (
@@ -222,11 +222,11 @@ export function useImagePerformance() {
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   const markImageLoaded = useCallback((src: string) => {
-    setLoadedImages(prev => new Set([...prev, src]));
+    setLoadedImages(prev => new Set(Array.from(prev).concat(src)));
   }, []);
 
   const markImageFailed = useCallback((src: string) => {
-    setFailedImages(prev => new Set([...prev, src]));
+    setFailedImages(prev => new Set(Array.from(prev).concat(src)));
   }, []);
 
   const isImageLoaded = useCallback((src: string) => {

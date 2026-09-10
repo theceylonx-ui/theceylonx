@@ -92,7 +92,8 @@ export async function verifyPhoneOtp(phone: string, code: string): Promise<JWTUs
     }
 
     // Check attempt limit
-    if (otpRecord.attempts >= 3) {
+    const attempts = otpRecord.attempts ?? 0;
+    if (attempts >= 3) {
       return null;
     }
 
@@ -102,7 +103,7 @@ export async function verifyPhoneOtp(phone: string, code: string): Promise<JWTUs
     if (!isValidCode) {
       // Increment attempts
       await db.update(phoneOtps)
-        .set({ attempts: otpRecord.attempts + 1 })
+        .set({ attempts: attempts + 1 })
         .where(eq(phoneOtps.id, otpRecord.id));
       return null;
     }
@@ -116,12 +117,15 @@ export async function verifyPhoneOtp(phone: string, code: string): Promise<JWTUs
     if (!user) {
       // Create new user with synthetic email
       const syntheticEmail = `phone:${phone.replace('+', '')}@hibowan.com`;
-      [user] = await db.insert(users).values({
+      const insertedUsers = await db.insert(users).values({
         phone,
         email: syntheticEmail,
         provider: 'phone',
         emailVerified: false,
       }).returning();
+      if (Array.isArray(insertedUsers)) {
+        user = insertedUsers[0];
+      }
     }
 
     return {

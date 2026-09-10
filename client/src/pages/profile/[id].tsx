@@ -238,7 +238,7 @@ export default function UserProfilePage() {
                     displayName: profile.displayName,
                     username: profile.username,
                     avatarUrl: profile.profileImageUrl,
-                    initials: profile.initials || 'U'
+                     initials: profile.displayName ? profile.displayName.slice(0, 2).toUpperCase() : 'U'
                   }}
                   showAvatar={true}
                   avatarSize="xl"

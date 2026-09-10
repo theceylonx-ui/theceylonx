@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { VerificationBadges } from "@/components/ui/verification-badges";
 import { getDisplayName, getInitials } from "@/lib/profileUtils";
 import TripCard from "@/components/trip-card";
+import type { TripWithOrganizer } from "@shared/types/api";
 
 interface UserTripsData {
   user: {
@@ -44,6 +45,40 @@ interface UserTripsData {
     };
     createdAt: string;
   }>;
+}
+
+function toTripCardTrip(trip: UserTripsData["trips"][number]): TripWithOrganizer {
+  const createdAt = new Date(trip.createdAt);
+  return {
+    id: trip.id,
+    title: trip.title,
+    fromLocation: trip.fromLocation,
+    toLocation: trip.toLocation,
+    date: new Date(trip.date),
+    time: trip.time,
+    seatsAvailable: trip.seatsAvailable,
+    price: trip.price ?? null,
+    region: trip.region,
+    notes: null,
+    status: trip.status,
+    category: trip.category,
+    imageUrl: trip.imageUrl ?? null,
+    mediaUrls: trip.mediaUrls ?? [],
+    coverImageIndex: trip.coverImageIndex ?? 0,
+    organizer: {
+      id: trip.organizer.id,
+      displayName: trip.organizer.displayName,
+      username: null,
+      avatarUrl: trip.organizer.profileImageUrl ?? null,
+      initials: getInitials({ displayName: trip.organizer.displayName }),
+    },
+    comments: [],
+    tags: [],
+    viewCount: 0,
+    bookingCount: 0,
+    createdAt,
+    updatedAt: createdAt,
+  };
 }
 
 export default function UserTripsPage() {
@@ -205,9 +240,7 @@ export default function UserTripsPage() {
               {data.trips.map((trip) => (
                 <TripCard
                   key={trip.id}
-                  trip={trip}
-                  currentUser={currentUser}
-                  showOrganizerInfo={false} // Don't show organizer info since it's all from the same user
+                  trip={toTripCardTrip(trip)}
                 />
               ))}
             </div>

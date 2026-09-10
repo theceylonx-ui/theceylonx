@@ -63,11 +63,7 @@ export function ReportButton({ userId, username }: ReportButtonProps) {
 
   const reportMutation = useMutation({
     mutationFn: async ({ reason, description }: { reason: string; description: string }) => {
-      await apiRequest(`/api/users/${userId}/report`, {
-        method: "POST",
-        body: JSON.stringify({ reason, description }),
-        headers: { "Content-Type": "application/json" },
-      });
+      await apiRequest("POST", `/api/users/${userId}/report`, { reason, description });
     },
     onSuccess: () => {
       setShowSuccess(true);

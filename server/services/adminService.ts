@@ -34,6 +34,7 @@ export class AdminService {
         // Create roles with new permission format
         const rolesToCreate = Object.entries(ROLE_DEFAULTS).map(([name, permissions]) => ({
           name,
+          displayName: name,
           permissions: permissions, // Use new array-based format
         }));
 

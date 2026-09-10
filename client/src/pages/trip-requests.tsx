@@ -276,7 +276,9 @@ export default function TripRequestsPage({ params }: TripRequestsPageProps) {
                             displayName: request.user.displayName,
                             username: request.user.username,
                             avatarUrl: request.user.profileImageUrl,
-                            initials: request.user.initials || 'U'
+                            initials: request.user.displayName
+                              ? request.user.displayName.slice(0, 2).toUpperCase()
+                              : 'U'
                           } : null}
                           showAvatar={true}
                           avatarSize="md"

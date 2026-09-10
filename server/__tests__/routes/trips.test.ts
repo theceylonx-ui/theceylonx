@@ -146,6 +146,23 @@ describe('Trips API Routes', () => {
       });
     });
 
+    it('does not expose private organizer fields to unauthenticated viewers', async () => {
+      const response = await request(app)
+        .get(`/api/trips/${testTrip.id}`)
+        .expect(200);
+
+      expect(response.body.organizer).toHaveProperty('id', testUser.id);
+      for (const field of [
+        'password', 'email', 'phone', 'phoneNumber', 'roleId',
+        'provider', 'providerId', 'googleId', 'facebookId', 'microsoftId',
+        'appleId', 'authProvider', 'linksJson', 'vibe', 'companions',
+        'interests', 'months', 'regions', 'budgetMin', 'budgetMax',
+        'profileVisibility', 'showEmail', 'showPhone', 'showRealName',
+      ]) {
+        expect(response.body.organizer).not.toHaveProperty(field);
+      }
+    });
+
     it('should return 404 for non-existent trip', async () => {
       const response = await request(app)
         .get('/api/trips/non-existent-id')

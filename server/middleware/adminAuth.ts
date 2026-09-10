@@ -32,7 +32,7 @@ const logAdminAccess = (req: Request, action: string, result: 'allow' | 'deny', 
       method: req.method,
       result,
       reason,
-      ip: req.ip,
+       ip: req.ip || '',
       userAgent: req.get('User-Agent')?.substring(0, 100)
     });
   }
@@ -283,8 +283,8 @@ export const auditAction = (action: string, targetType: string) => {
       targetType,
       targetId: req.params.id || req.body.id,
       startTime: new Date(),
-      ip: req.ip,
-      userAgent: req.get('User-Agent')
+       ip: req.ip || '',
+       userAgent: req.get('User-Agent') || undefined
     };
     
     next();

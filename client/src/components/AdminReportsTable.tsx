@@ -60,7 +60,11 @@ export function AdminReportsTable() {
   const handleMessageOrganizer = async (report: Report) => {
     // First, get trip details to find organizer name
     try {
-      const trip = await apiRequest("GET", `/api/trips/${report.tripId}`);
+      const response = await apiRequest("GET", `/api/trips/${report.tripId}`);
+      const trip = await response.json() as {
+        title: string;
+        organizer?: { displayName?: string };
+      };
       setSelectedReport({
         ...report,
         tripTitle: trip.title,

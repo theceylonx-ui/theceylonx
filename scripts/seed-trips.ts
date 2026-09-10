@@ -1,5 +1,5 @@
 import { db } from '../server/db';
-import { trips, users, type InsertTrip } from '../shared/schema';
+import { trips, tripMetadata, users } from '../shared/schema';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 
@@ -46,7 +46,7 @@ async function seedSampleTrips() {
     return;
   }
   
-  const sampleTrips: InsertTrip[] = [
+  const sampleTrips = [
     {
       id: "sample-trip-001",
       title: "Colombo to Kandy Cultural Journey",
@@ -55,7 +55,7 @@ async function seedSampleTrips() {
       date: new Date("2025-01-15"),
       time: "08:00",
       seatsAvailable: 3,
-      price: "2500.00",
+       price: "2500.00",
       region: "Central",
       category: "culture" as const,
       organizerId: seedUser[0].id,
@@ -74,7 +74,7 @@ async function seedSampleTrips() {
       date: new Date("2025-01-18"),
       time: "14:00",
       seatsAvailable: 4,
-      price: "3000.00",
+       price: "3000.00",
       region: "Southern",
       category: "culture" as const,
       organizerId: traveler1[0]?.id || seedUser[0].id,
@@ -93,7 +93,7 @@ async function seedSampleTrips() {
       date: new Date("2025-01-20"),
       time: "06:00",
       seatsAvailable: 2,
-      price: "4500.00",
+       price: "4500.00",
       region: "Central",
       category: "adventure_sport" as const,
       organizerId: traveler2[0]?.id || seedUser[0].id,
@@ -112,7 +112,7 @@ async function seedSampleTrips() {
       date: new Date("2025-01-22"),
       time: "07:30",
       seatsAvailable: 3,
-      price: "2800.00",
+       price: "2800.00",
       region: "Central",
       category: "hiking" as const,
       organizerId: guide[0]?.id || seedUser[0].id,
@@ -131,7 +131,7 @@ async function seedSampleTrips() {
       date: new Date("2025-01-25"),
       time: "05:00",
       seatsAvailable: 6,
-      price: "5500.00",
+       price: "5500.00",
       region: "Southern",
       category: "wildlife" as const,
       organizerId: explorer[0]?.id || seedUser[0].id,
@@ -150,7 +150,7 @@ async function seedSampleTrips() {
       date: new Date("2025-01-28"),
       time: "09:00",
       seatsAvailable: 4,
-      price: "3200.00",
+       price: "3200.00",
       region: "Central",
       category: "hiking" as const,
       organizerId: seedUser[0].id,
@@ -169,7 +169,7 @@ async function seedSampleTrips() {
       date: new Date("2025-02-01"),
       time: "07:00",
       seatsAvailable: 5,
-      price: "4000.00",
+       price: "4000.00",
       region: "North Central",
       category: "culture" as const,
       organizerId: guide[0]?.id || seedUser[0].id,
@@ -188,7 +188,7 @@ async function seedSampleTrips() {
       date: new Date("2025-02-05"),
       time: "06:30",
       seatsAvailable: 8,
-      price: "3500.00",
+       price: "3500.00",
       region: "Southern",
       category: "wildlife" as const,
       organizerId: explorer[0]?.id || seedUser[0].id,
@@ -205,9 +205,12 @@ async function seedSampleTrips() {
   
   for (const trip of sampleTrips) {
     const existing = await db.select().from(trips).where(eq(trips.id, trip.id));
+    let tripReady = existing.length > 0;
     if (existing.length === 0) {
       try {
-        await db.insert(trips).values([trip]);
+        const { notes, ...tripData } = trip;
+        await db.insert(trips).values([tripData]);
+        tripReady = true;
         tripCount++;
         console.log(`✅ Created trip: ${trip.title}`);
       } catch (error) {
@@ -215,6 +218,15 @@ async function seedSampleTrips() {
       }
     } else {
       console.log(`⚠️ Trip already exists: ${trip.title}`);
+    }
+    if (tripReady) {
+      await db.insert(tripMetadata).values({
+        tripId: trip.id,
+        notes: trip.notes,
+      }).onConflictDoUpdate({
+        target: tripMetadata.tripId,
+        set: { notes: trip.notes },
+      });
     }
   }
   

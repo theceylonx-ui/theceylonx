@@ -185,7 +185,10 @@ export class AIModerationService {
   }> {
     try {
       // Analyze content
-      const analysis = await this.analyzeContent(content, context);
+      const analysis = await this.analyzeContent(
+        content,
+        context === 'chat_message' ? 'comment' : context
+      );
       
       // Make AI decision
       const decision = await this.makeDecision(analysis, context);
@@ -202,14 +205,12 @@ export class AIModerationService {
           userId: context === 'user' ? resourceId : undefined,
           reporterId: 'ai-system', // Special AI system reporter
           reason: this.getReasonFromAnalysis(analysis),
-          description: `AI Moderation: ${decision.reason}`,
+          description: `AI Moderation: ${decision.reason} | Analysis: ${JSON.stringify(analysis)}`,
           status: decision.autoResolve ? 'resolved' : 'open',
           priority: this.getPriorityFromRisk(analysis.riskLevel),
           severity: this.getSeverityFromRisk(analysis.riskLevel),
           autoFlagged: true,
           flagScore: Math.round(analysis.toxicity * 100),
-          aiAnalysis: JSON.stringify(analysis),
-          aiDecision: JSON.stringify(decision)
         });
         
         reportId = report.id;

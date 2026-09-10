@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 interface ActionsMenuProps {
+  trip?: { id: string; organizerId?: string };
   onEdit?: () => void;
   onDelete?: () => void;
   canEdit?: boolean;

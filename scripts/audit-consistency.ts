@@ -349,7 +349,7 @@ function printAuditReport(results: AuditResults) {
 
   // Overall score
   const scoreColor = results.score >= 80 ? chalk.green : results.score >= 60 ? chalk.yellow : chalk.red;
-  console.log(`\nOverall Score: ${scoreColor(results.score)}/${results.maxScore}`);
+  console.log(`\nOverall Score: ${scoreColor(String(results.score))}/${results.maxScore}`);
 
   // Telemetry summary
   console.log(`\n${chalk.bold.cyan('📊 Telemetry Summary:')}`);
@@ -360,17 +360,17 @@ function printAuditReport(results: AuditResults) {
   console.log(`  Data completeness: ${results.telemetry.dataCompleteness.toFixed(1)}%`);
 
   // Issues breakdown
+  const criticalIssues = results.issues.filter(i => i.severity === 'critical');
+  const warningIssues = results.issues.filter(i => i.severity === 'warning');
+  const infoIssues = results.issues.filter(i => i.severity === 'info');
+
   if (results.issues.length === 0) {
     console.log(`\n${chalk.green('✅ No issues found! System is consistent.')}`);
   } else {
     console.log(`\n${chalk.bold.yellow('⚠️  Issues Found:')}`);
-    
-    const criticalIssues = results.issues.filter(i => i.severity === 'critical');
-    const warningIssues = results.issues.filter(i => i.severity === 'warning');
-    const infoIssues = results.issues.filter(i => i.severity === 'info');
 
     if (criticalIssues.length > 0) {
-      console.log(`\n${chalk.red.bold('🚨 Critical Issues:')}`);
+      console.log(`\n${chalk.bold.red('🚨 Critical Issues:')}`);
       criticalIssues.forEach(issue => {
         console.log(`  ${chalk.red('●')} ${issue.description} (${issue.count || 'N/A'})`);
         if (issue.details) {
@@ -380,14 +380,14 @@ function printAuditReport(results: AuditResults) {
     }
 
     if (warningIssues.length > 0) {
-      console.log(`\n${chalk.yellow.bold('⚠️  Warnings:')}`);
+      console.log(`\n${chalk.bold.yellow('⚠️  Warnings:')}`);
       warningIssues.forEach(issue => {
         console.log(`  ${chalk.yellow('●')} ${issue.description} (${issue.count || 'N/A'})`);
       });
     }
 
     if (infoIssues.length > 0) {
-      console.log(`\n${chalk.blue.bold('ℹ️  Information:')}`);
+      console.log(`\n${chalk.bold.blue('ℹ️  Information:')}`);
       infoIssues.forEach(issue => {
         console.log(`  ${chalk.blue('●')} ${issue.description} (${issue.count || 'N/A'})`);
       });

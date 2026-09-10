@@ -36,16 +36,23 @@ export class QueryOptimizer {
     
     return cache.getOrSet(cacheKey, async () => {
       // Build optimized query with proper joins and filtering
-      let query = db
+      const conditions = [eq(trips.status, 'active')];
+      if (category) conditions.push(eq(trips.category, category as typeof trips.category.enumValues[number]));
+      if (fromLocation) conditions.push(ilike(trips.fromLocation, `%${fromLocation}%`));
+      if (toLocation) conditions.push(ilike(trips.toLocation, `%${toLocation}%`));
+      if (priceMin !== undefined) conditions.push(gte(trips.price, priceMin.toString()));
+      if (priceMax !== undefined) conditions.push(lte(trips.price, priceMax.toString()));
+      if (departureDate) conditions.push(gte(trips.date, new Date(departureDate)));
+      if (userId) conditions.push(eq(trips.organizerId, userId));
+
+      const query = db
         .select({
           id: trips.id,
           title: trips.title,
-          description: trips.description,
           fromLocation: trips.fromLocation,
           toLocation: trips.toLocation,
           price: trips.price,
-          availableSpots: trips.availableSpots,
-          maxParticipants: trips.maxParticipants,
+          seatsAvailable: trips.seatsAvailable,
           departureDate: trips.date,
           endDate: trips.date,
           status: trips.status,
@@ -64,45 +71,10 @@ export class QueryOptimizer {
         })
         .from(trips)
         .leftJoin(users, eq(trips.organizerId, users.id))
-        .where(eq(trips.status, 'active'))
+        .where(and(...conditions))
         .orderBy(desc(trips.createdAt))
         .limit(limit)
         .offset(offset);
-      
-      // Apply filters efficiently
-      const conditions = [eq(trips.status, 'active')];
-      
-      if (category) {
-        conditions.push(eq(trips.category, category));
-      }
-      
-      if (fromLocation) {
-        conditions.push(ilike(trips.fromLocation, `%${fromLocation}%`));
-      }
-      
-      if (toLocation) {
-        conditions.push(ilike(trips.toLocation, `%${toLocation}%`));
-      }
-      
-      if (priceMin !== undefined) {
-        conditions.push(gte(trips.price, priceMin.toString()));
-      }
-      
-      if (priceMax !== undefined) {
-        conditions.push(lte(trips.price, priceMax.toString()));
-      }
-      
-      if (departureDate) {
-        conditions.push(gte(trips.date, departureDate));
-      }
-      
-      if (userId) {
-        conditions.push(eq(trips.organizerId, userId));
-      }
-      
-      if (conditions.length > 1) {
-        query = query.where(and(...conditions));
-      }
       
       const results = await query;
       
@@ -110,7 +82,7 @@ export class QueryOptimizer {
       const [{ totalCount }] = await db
         .select({ totalCount: count() })
         .from(trips)
-        .where(conditions.length > 1 ? and(...conditions) : conditions[0]);
+        .where(and(...conditions));
       
       return {
         trips: results,
@@ -130,7 +102,7 @@ export class QueryOptimizer {
     
     return cache.getOrSet(cacheKey, async () => {
       // Batch fetch user preferences and interactions
-      const [userPrefs, userInteractions] = await Promise.all([
+      const [userPrefs, interactionRows] = await Promise.all([
         db.select()
           .from(users)
           .where(eq(users.id, userId))
@@ -139,26 +111,25 @@ export class QueryOptimizer {
           .from(userInteractions)
           .where(and(
             eq(userInteractions.userId, userId),
-            inArray(userInteractions.type, ['viewed', 'saved', 'interested'])
+            inArray(userInteractions.interactionType, ['view', 'bookmark'])
           ))
       ]);
       
       if (!userPrefs.length) return [];
       
       const user = userPrefs[0];
-      const viewedTripIds = userInteractions.map(i => i.tripId);
+      const viewedTripIds = interactionRows.map(i => i.tripId);
       
       // Optimized recommendation query
       let query = db
         .select({
           id: trips.id,
           title: trips.title,
-          description: trips.description,
           fromLocation: trips.fromLocation,
           toLocation: trips.toLocation,
           price: trips.price,
           category: trips.category,
-          departureDate: trips.departureDate,
+           departureDate: trips.date,
           tags: trips.tags,
           score: sql<number>`
             CASE 
@@ -172,9 +143,9 @@ export class QueryOptimizer {
         .from(trips)
         .where(and(
           eq(trips.status, 'active'),
-          gte(trips.departureDate, new Date().toISOString()),
-          gte(trips.availableSpots, 1),
-          viewedTripIds.length > 0 ? sql`${trips.id} NOT IN (${viewedTripIds.join(',')})` : sql`1=1`
+          gte(trips.date, new Date()),
+          gte(trips.seatsAvailable, 1),
+          viewedTripIds.length > 0 ? sql`NOT ${inArray(trips.id, viewedTripIds)}` : sql`1=1`
         ))
         .orderBy(desc(sql`score`), desc(trips.createdAt))
         .limit(limit);
@@ -234,7 +205,6 @@ export class QueryOptimizer {
         .select({
           id: trips.id,
           title: trips.title,
-          description: trips.description,
           fromLocation: trips.fromLocation,
           toLocation: trips.toLocation,
           price: trips.price,
@@ -242,7 +212,7 @@ export class QueryOptimizer {
           tags: trips.tags,
           relevance: sql<number>`
             ts_rank_cd(
-              to_tsvector('english', ${trips.title} || ' ' || ${trips.description}),
+              to_tsvector('english', ${trips.title} || ' ' || ${trips.fromLocation} || ' ' || ${trips.toLocation}),
               plainto_tsquery('english', ${query})
             )
           `
@@ -251,7 +221,7 @@ export class QueryOptimizer {
         .where(and(
           eq(trips.status, 'active'),
           sql`
-            to_tsvector('english', ${trips.title} || ' ' || ${trips.description}) 
+            to_tsvector('english', ${trips.title} || ' ' || ${trips.fromLocation} || ' ' || ${trips.toLocation})
             @@ plainto_tsquery('english', ${query})
           `
         ))
@@ -320,7 +290,7 @@ export class QueryOptimizer {
       // Batch fetch user and related data
       const [user, tripCount, questionCount] = await Promise.all([
         db.select().from(users).where(eq(users.id, userId)).limit(1),
-        db.select({ count: count() }).from(trips).where(eq(trips.userId, userId)),
+         db.select({ count: count() }).from(trips).where(eq(trips.organizerId, userId)),
         db.select({ count: count() }).from(questions).where(eq(questions.userId, userId))
       ]);
       
@@ -356,7 +326,7 @@ export class DatabaseHealthMonitor {
     try {
       // Test basic connectivity
       const start = Date.now();
-      await db.select({ test: sql`1` }).limit(1);
+      await db.select({ test: sql`1` });
       const responseTime = Date.now() - start;
       tests.connectivity = true;
       

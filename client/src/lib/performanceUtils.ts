@@ -86,7 +86,7 @@ export function throttle<T extends (...args: any[]) => any>(
   
   return function throttledFunction(...args: Parameters<T>) {
     if (!inThrottle) {
-      func.apply(this, args);
+      func(...args);
       inThrottle = true;
       setTimeout(() => inThrottle = false, limit);
     }
@@ -94,7 +94,7 @@ export function throttle<T extends (...args: any[]) => any>(
 }
 
 // Lazy loading utilities
-export function createLazyComponent<T>(
+export function createLazyComponent<T extends React.ComponentType<unknown>>(
   loader: () => Promise<{ default: T }>,
   fallback?: React.ComponentType
 ) {

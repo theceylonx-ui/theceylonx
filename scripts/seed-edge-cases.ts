@@ -1,6 +1,5 @@
 import { db } from '../server/db';
-import { users, trips, questions, answers, comments, topics, chatThreads, messages } from '../shared/schema';
-import { sql } from 'drizzle-orm';
+import { users, trips, tripMetadata, questions, answers, comments, topics, chatThreads, chatMessages } from '../shared/schema';
 
 /**
  * Extends the existing seed data with edge cases for testing user normalization
@@ -75,7 +74,7 @@ async function seedEdgeCases() {
     }
 
     // Create edge case trips with organizers that have missing data
-    const edgeCaseTrips = [
+    const edgeCaseTrips: (typeof trips.$inferInsert)[] = [
       {
         id: 'trip-no-name-organizer',
         title: 'Trip by User with No Name',
@@ -90,7 +89,6 @@ async function seedEdgeCases() {
         organizerId: 'user-no-name',
         status: 'active',
         category: 'culture',
-        notes: 'Test trip with organizer who has no name data',
       },
       {
         id: 'trip-email-fallback-organizer',
@@ -106,7 +104,6 @@ async function seedEdgeCases() {
         organizerId: 'user-email-only',
         status: 'active',
         category: 'beach',
-        notes: 'Test trip with organizer using email fallback for display name',
       },
       {
         id: 'trip-missing-optional-fields',
@@ -122,7 +119,6 @@ async function seedEdgeCases() {
         organizerId: 'user-partial-name',
         status: 'active',
         category: 'unknown',
-        notes: null, // Missing notes
         tags: null, // Missing tags
       },
     ];
@@ -130,6 +126,20 @@ async function seedEdgeCases() {
     for (const trip of edgeCaseTrips) {
       await db.insert(trips).values(trip).onConflictDoNothing();
     }
+    await db.insert(tripMetadata).values([
+      {
+        tripId: 'trip-no-name-organizer',
+        notes: 'Test trip with organizer who has no name data',
+      },
+      {
+        tripId: 'trip-email-fallback-organizer',
+        notes: 'Test trip with organizer using email fallback for display name',
+      },
+      {
+        tripId: 'trip-missing-optional-fields',
+        notes: null,
+      },
+    ]).onConflictDoNothing();
 
     // Create topics for community edge cases
     const testTopic = {
@@ -242,7 +252,13 @@ async function seedEdgeCases() {
     ];
 
     for (const message of edgeCaseMessages) {
-      await db.insert(messages).values(message).onConflictDoNothing();
+      await db.insert(chatMessages).values({
+        id: message.id,
+        threadId: message.threadId,
+        senderId: message.authorId,
+        text: message.body,
+        kind: message.messageType,
+      }).onConflictDoNothing();
     }
 
     console.log('✅ Edge case seed data completed successfully!');

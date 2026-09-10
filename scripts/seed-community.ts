@@ -1,14 +1,6 @@
 import { storage } from "../server/storage";
 import { nanoid } from "nanoid";
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
 async function seedTopics() {
   const topicsData = [
     { slug: "hidden-trails", name: "Hidden Trails & Trekking", description: "Knuckles, Pekoe Trail, secret waterfalls" },
@@ -21,7 +13,6 @@ async function seedTopics() {
   for (const topic of topicsData) {
     try {
       await storage.createTopic({
-        id: nanoid(),
         ...topic
       });
       console.log(`Created topic: ${topic.name}`);
@@ -296,12 +287,10 @@ async function seedQA() {
       continue;
     }
 
-    const slug = slugify(item.title);
-    
     try {
       // Check if question already exists
       const { questions: existingQuestions } = await storage.getQuestions({ limit: 200 });
-      const exists = existingQuestions.find(q => q.slug === slug);
+      const exists = existingQuestions.find(q => q.title === item.title);
       
       if (exists) {
         console.log(`Question "${item.title}" already exists, skipping`);
@@ -315,48 +304,35 @@ async function seedQA() {
       }
 
       const question = await storage.createQuestion({
-        id: nanoid(),
         title: item.title,
         body: item.bodyHtml,
         tags: item.tags,
-        slug,
         topicId: topic.id,
         userId: seedUser.id,
-        votesCount: item.votes ?? 0,
-        answersCount: 0,
-        createdAt: new Date(),
-        acceptedAnswerId: null
+        score: item.votes ?? 0,
+        isAnonymous: false,
+        visibility: "public"
       });
       qCount++;
       console.log(`Created question: ${item.title}`);
 
       // Add answers
-      let acceptedAnswerId = null;
       for (const ans of item.answers) {
         const user = allUsers.get(ans.authorEmail) || seedUser;
         
         const answer = await storage.createAnswer({
-          id: nanoid(),
           body: ans.bodyHtml,
           questionId: question.id,
           userId: user.id,
-          votesCount: ans.votes ?? 0,
-          isAccepted: !!ans.accepted,
-          createdAt: new Date()
+          score: "votes" in ans ? ans.votes : 0
         });
-        
-        if (ans.accepted) acceptedAnswerId = answer.id;
+        if (ans.accepted) {
+          await storage.acceptAnswer(question.id, answer.id);
+         }
         aCount++;
         console.log(`  Added answer by ${user.name}`);
       }
 
-      // Update question with accepted answer if exists
-      if (acceptedAnswerId) {
-        await storage.updateQuestion(question.id, { 
-          acceptedAnswerId,
-          answersCount: item.answers.length 
-        });
-      }
     } catch (error) {
       console.log(`Error creating question "${item.title}":`, error);
     }

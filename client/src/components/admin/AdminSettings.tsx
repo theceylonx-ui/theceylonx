@@ -104,7 +104,11 @@ export default function AdminSettings() {
 
   // Handle background image upload
   const handleBackgroundImageUpload = async () => {
-    return await apiRequest("POST", "/api/admin/settings/background-upload");
+    const response = await apiRequest("POST", "/api/admin/settings/background-upload");
+    return await response.json() as {
+      method: "PUT";
+      url: string;
+    };
   };
 
   const handleBackgroundImageComplete = async (uploadUrl: string) => {

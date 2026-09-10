@@ -59,7 +59,7 @@ export {
   VolumeX,
   Play,
   Pause,
-  Stop,
+  StopCircle as Stop,
   SkipForward,
   SkipBack,
   Repeat,
@@ -73,7 +73,7 @@ export {
   Shield,
   Globe,
   Link,
-  LinkOff
+  Link2Off as LinkOff
 } from 'lucide-react';
 
 // Admin-specific icons (lazy loaded)

@@ -4,12 +4,13 @@ import {
   userInteractions, 
   tripFeatures, 
   trips, 
+  tripStats,
   ratings, 
   users,
   // userPersonalization, // Consolidated into users table
   kpiEvents
 } from "@shared/schema";
-import { eq, desc, and, or, sql, asc, inArray, ne, not, gte } from "drizzle-orm";
+import { eq, desc, and, or, sql, asc, inArray, ne, not, gte, getTableColumns } from "drizzle-orm";
 import type { 
   Trip, 
   User, 
@@ -17,6 +18,29 @@ import type {
   TripFeatures,
   KpiEvent 
 } from "@shared/schema";
+
+export interface PublicRecommendationOrganizer {
+  id: string;
+  name: string | null;
+  username: string | null;
+  image: string | null;
+  profileImageUrl: string | null;
+}
+
+export const publicRecommendationOrganizerSelection = {
+  id: users.id,
+  name: users.name,
+  username: users.username,
+  image: users.image,
+  profileImageUrl: users.profileImageUrl,
+} satisfies Record<keyof PublicRecommendationOrganizer, unknown>;
+
+type CandidateTrip = Trip & {
+  organizer: PublicRecommendationOrganizer;
+  viewCount: number;
+  bookingCount: number;
+  freshBoost: string;
+};
 
 interface UserProfile {
   userId: string;
@@ -29,7 +53,7 @@ interface UserProfile {
 }
 
 interface TripRecommendation {
-  trip: Trip & { organizer: User };
+  trip: CandidateTrip;
   score: number;
   reasons: string[];
   features: TripFeatures | null;
@@ -189,7 +213,7 @@ export class EnhancedRecommendationService {
 
   // Enhanced trip scoring with all factors
   private async scoreTrip(
-    trip: Trip & { organizer: User }, 
+    trip: CandidateTrip,
     userProfile: UserProfile,
     filters?: RecommendationFilters
   ): Promise<TripRecommendation> {
@@ -203,6 +227,10 @@ export class EnhancedRecommendationService {
         tripId: tripFeatures.tripId,
         viewCount: tripFeatures.viewCount,
         totalBookings: tripFeatures.totalBookings,
+        distanceKm: tripFeatures.distanceKm,
+        avgRating: tripFeatures.avgRating,
+        difficulty: tripFeatures.difficulty,
+        season: tripFeatures.season,
         popularityScore: tripFeatures.popularityScore,
         tags: tripFeatures.tags,
         createdAt: tripFeatures.createdAt,
@@ -438,8 +466,8 @@ export class EnhancedRecommendationService {
   // Filter out trips user marked as "not interested"
   private async applyNegativeFeedbackFilter(
     userId: string, 
-    candidateTrips: (Trip & { organizer: User })[]
-  ): Promise<(Trip & { organizer: User })[]> {
+    candidateTrips: CandidateTrip[]
+  ): Promise<CandidateTrip[]> {
     const notInterestedTrips = await db
       .select({ 
         tripId: userInteractions.tripId 
@@ -675,52 +703,7 @@ export class EnhancedRecommendationService {
   private async getCandidateTrips(
     userId: string, 
     filters?: RecommendationFilters
-  ): Promise<(Trip & { organizer: User })[]> {
-    let query = db
-      .select({
-        id: trips.id,
-        title: trips.title,
-        fromLocation: trips.fromLocation,
-        toLocation: trips.toLocation,
-        date: trips.date,
-        time: trips.time,
-        seatsAvailable: trips.seatsAvailable,
-        price: trips.price,
-        region: trips.region,
-        contactInfo: trips.contactInfo,
-        organizerId: trips.organizerId,
-        status: trips.status,
-        priceMin: trips.priceMin,
-        priceMax: trips.priceMax,
-        createdAt: trips.createdAt,
-        updatedAt: trips.updatedAt,
-        isDeleted: trips.isDeleted,
-        deletedAt: trips.deletedAt,
-        // Flatten organizer fields to avoid nested object issues
-        organizerEmail: users.email,
-        organizerPhone: users.phone,
-        organizerName: users.name,
-        organizerImage: users.image,
-        organizerProvider: users.provider,
-        organizerFirstName: users.firstName,
-        organizerLastName: users.lastName,
-        organizerUsername: users.username,
-        organizerProfileImageUrl: users.profileImageUrl,
-        organizerPhoneNumber: users.phoneNumber,
-        organizerBio: users.bio,
-        organizerEmailVerified: users.emailVerified,
-        organizerCreatedAt: users.createdAt,
-        organizerUpdatedAt: users.updatedAt
-      })
-      .from(trips)
-      .innerJoin(users, eq(trips.organizerId, users.id))
-      .where(and(
-        eq(trips.status, 'active'),
-        // Remove the filter that excludes user's own trips - users should see their own posts
-        sql`${trips.date} >= CURRENT_DATE` // Only future trips
-      ));
-
-    // Apply filters
+  ): Promise<CandidateTrip[]> {
     const conditions = [];
     if (filters?.region) {
       conditions.push(eq(trips.region, filters.region));
@@ -735,98 +718,31 @@ export class EnhancedRecommendationService {
       conditions.push(sql`DATE(${trips.date}) = DATE(${filters.date.toISOString()})`);
     }
 
-    // Apply additional filters to the base query
-    let finalQuery = query;
-    if (conditions.length > 0) {
-      finalQuery = db
-        .select({
-          id: trips.id,
-          title: trips.title,
-          fromLocation: trips.fromLocation,
-          toLocation: trips.toLocation,
-          date: trips.date,
-          time: trips.time,
-          seatsAvailable: trips.seatsAvailable,
-          price: trips.price,
-          region: trips.region,
-          contactInfo: trips.contactInfo,
-          organizerId: trips.organizerId,
-          status: trips.status,
-          priceMin: trips.priceMin,
-          priceMax: trips.priceMax,
-          createdAt: trips.createdAt,
-          updatedAt: trips.updatedAt,
-          isDeleted: trips.isDeleted,
-          deletedAt: trips.deletedAt,
-          // Flatten organizer fields to avoid nested object issues
-          organizerEmail: users.email,
-          organizerPhone: users.phone,
-          organizerName: users.name,
-          organizerImage: users.image,
-          organizerProvider: users.provider,
-          organizerFirstName: users.firstName,
-          organizerLastName: users.lastName,
-          organizerUsername: users.username,
-          organizerProfileImageUrl: users.profileImageUrl,
-          organizerPhoneNumber: users.phoneNumber,
-          organizerBio: users.bio,
-          organizerEmailVerified: users.emailVerified,
-          organizerCreatedAt: users.createdAt,
-          organizerUpdatedAt: users.updatedAt
-        })
-        .from(trips)
-        .innerJoin(users, eq(trips.organizerId, users.id))
-        .where(and(
-          eq(trips.status, 'active'),
-          // Remove the filter that excludes user's own trips - users should see their own posts
-          sql`${trips.date} >= CURRENT_DATE`,
-          ...conditions
-        ));
-    }
-
-    const results = await finalQuery.limit(100); // Get more candidates for better filtering
+    const results = await db
+      .select({
+        trip: getTableColumns(trips),
+        organizer: publicRecommendationOrganizerSelection,
+        viewCount: tripStats.viewCount,
+        bookingCount: tripStats.bookingCount,
+        freshBoost: tripStats.freshBoost,
+      })
+      .from(trips)
+      .innerJoin(users, eq(trips.organizerId, users.id))
+      .leftJoin(tripStats, eq(tripStats.tripId, trips.id))
+      .where(and(
+        eq(trips.status, 'active'),
+        sql`${trips.date} >= CURRENT_DATE`,
+        ...conditions
+      ))
+      .limit(100);
     
     // Transform flattened results back to nested structure
-    return results.map((row: any) => ({
-      id: row.id,
-      title: row.title,
-      description: row.description,
-      fromLocation: row.fromLocation,
-      toLocation: row.toLocation,
-      date: row.date,
-      time: row.time,
-      seatsAvailable: row.seatsAvailable,
-      price: row.price,
-      region: row.region,
-      contactInfo: row.contactInfo,
-      organizerId: row.organizerId,
-      status: row.status,
-      priceMin: row.priceMin,
-      priceMax: row.priceMax,
-      viewCount: row.viewCount,
-      bookingCount: row.bookingCount,
-      freshBoost: row.freshBoost,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      isDeleted: row.isDeleted,
-      deletedAt: row.deletedAt,
-      organizer: {
-        id: row.organizerId,
-        email: row.organizerEmail,
-        phone: row.organizerPhone,
-        name: row.organizerName,
-        image: row.organizerImage,
-        provider: row.organizerProvider,
-        firstName: row.organizerFirstName,
-        lastName: row.organizerLastName,
-        username: row.organizerUsername,
-        profileImageUrl: row.organizerProfileImageUrl,
-        phoneNumber: row.organizerPhoneNumber,
-        bio: row.organizerBio,
-        emailVerified: row.organizerEmailVerified,
-        createdAt: row.organizerCreatedAt,
-        updatedAt: row.organizerUpdatedAt
-      }
+    return results.map(({ trip, organizer, viewCount, bookingCount, freshBoost }): CandidateTrip => ({
+      ...trip,
+      organizer,
+      viewCount: viewCount ?? 0,
+      bookingCount: bookingCount ?? 0,
+      freshBoost: freshBoost ?? "1.0",
     }));
   }
 
@@ -851,6 +767,7 @@ export class EnhancedRecommendationService {
         interactionType: userInteractions.interactionType,
         duration: userInteractions.duration,
         sessionId: userInteractions.sessionId,
+        abTestGroup: userInteractions.abTestGroup,
         createdAt: userInteractions.createdAt
       })
       .from(userInteractions)
@@ -917,9 +834,12 @@ export class EnhancedRecommendationService {
         title: trips.title,
         organizerId: trips.organizerId,
         createdAt: trips.createdAt,
-        updatedAt: trips.updatedAt
+        updatedAt: trips.updatedAt,
+        viewCount: tripFeatures.viewCount,
+        totalBookings: tripFeatures.totalBookings
       })
       .from(trips)
+      .leftJoin(tripFeatures, eq(tripFeatures.tripId, trips.id))
       .where(eq(trips.id, tripId))
       .limit(1);
 
@@ -929,7 +849,7 @@ export class EnhancedRecommendationService {
     
     // Calculate popularity score
     const viewCount = tripData.viewCount || 0;
-    const bookingCount = tripData.bookingCount || 0;
+    const bookingCount = tripData.totalBookings || 0;
     const popularityScore = (viewCount * 0.3 + bookingCount * 0.7) / 10;
 
     // Upsert trip features
@@ -1015,7 +935,7 @@ export class EnhancedRecommendationService {
 
     // 1. Popularity badge (35% weight)
     if (scores.popularity > 0.7) {
-      const count = Math.floor((trip.viewCount || 0) + (trip.bookingCount || 0) * 2);
+      const count = Math.floor((features?.viewCount || 0) + (features?.totalBookings || 0) * 2);
       if (count > 20) badges.push(`⭐ Popular with ${count} travelers`);
     }
 

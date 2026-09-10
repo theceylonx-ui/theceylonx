@@ -20,7 +20,15 @@ export interface NormalizedUser {
  * 3. Use USER ID if both are empty
  * 4. NEVER use OAuth names, firstName+lastName, or email fallbacks
  */
-export function normalizeUserForUI(user: User | null): NormalizedUser | null {
+export function normalizeUserForUI(user: {
+  id: string;
+  displayName?: string | null;
+  username?: string | null;
+  profileImageUrl?: string | null;
+  image?: string | null;
+  email?: string | null;
+  provider?: string | null;
+} | null): NormalizedUser | null {
   if (!user) return null;
 
   // STRICT naming policy - only use user-provided fields or USER ID

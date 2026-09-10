@@ -51,7 +51,7 @@ export const responseTimeTracking = (req: Request, res: Response, next: NextFunc
       console.debug('Could not set response time header:', error);
     }
     
-    return originalEnd.apply(res, args);
+    return Reflect.apply(originalEnd, res, args as Parameters<typeof originalEnd>);
   };
   
   res.on('finish', () => {
@@ -169,7 +169,7 @@ export const memoryMonitoring = (req: Request, res: Response, next: NextFunction
       console.debug('Could not set memory usage header:', error);
     }
     
-    return originalEnd.apply(res, args);
+    return Reflect.apply(originalEnd, res, args as Parameters<typeof originalEnd>);
   };
   
   res.on('finish', () => {

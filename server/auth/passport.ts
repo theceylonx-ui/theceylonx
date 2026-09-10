@@ -25,13 +25,16 @@ const assignSuperadminRole = async (userId: string): Promise<void> => {
     if (!superadminRole) {
       // Create superadmin role with all permissions
       console.log('🔐 Creating new superadmin role with all permissions');
-      const [newRole] = await db.insert(roles).values({
+      const insertedRoles = await db.insert(roles).values({
         name: 'superadmin',
+        displayName: 'Superadmin',
         description: 'Full system access',
         permissions: ALL_PERMS, // Full permissions array
         isSystem: true,
       }).returning();
-      superadminRole = newRole;
+      if (Array.isArray(insertedRoles)) {
+        superadminRole = insertedRoles[0];
+      }
     } else {
       // Ensure superadmin role has ALL permissions (not legacy format or '*')
       const perms = superadminRole.permissions;

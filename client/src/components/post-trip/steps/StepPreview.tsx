@@ -54,7 +54,7 @@ export function StepPreview({ form }: StepPreviewProps) {
   
   const isReadyToPublish = missingFields.length === 0;
   
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string | Date) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',

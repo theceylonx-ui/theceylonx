@@ -1,6 +1,5 @@
 import { storage } from '../storage';
-import { validatePermissions } from '../admin/validation';
-import type { AdminPermission } from '../admin/permissions';
+import { ALL_PERMS, type PermKey } from '../admin/permissions';
 
 export interface Role {
   id: string;
@@ -166,9 +165,11 @@ export class RoleService {
     isSystem?: boolean;
   }, createdBy: string): Promise<Role> {
     // Validate permissions
-    const validation = validatePermissions(roleData.permissions);
-    if (!validation.isValid) {
-      throw new Error(`Invalid permissions: ${validation.errors.join(', ')}`);
+    const invalidPermissions = roleData.permissions.filter(
+      permission => !ALL_PERMS.includes(permission as PermKey)
+    );
+    if (invalidPermissions.length > 0) {
+      throw new Error(`Invalid permissions: ${invalidPermissions.join(', ')}`);
     }
 
     // Create role in database (simplified - would use actual storage)
@@ -212,9 +213,11 @@ export class RoleService {
    */
   async updateRolePermissions(roleId: string, permissions: string[], updatedBy: string): Promise<void> {
     // Validate permissions
-    const validation = validatePermissions(permissions);
-    if (!validation.isValid) {
-      throw new Error(`Invalid permissions: ${validation.errors.join(', ')}`);
+    const invalidPermissions = permissions.filter(
+      permission => !ALL_PERMS.includes(permission as PermKey)
+    );
+    if (invalidPermissions.length > 0) {
+      throw new Error(`Invalid permissions: ${invalidPermissions.join(', ')}`);
     }
 
     // TODO: Implement actual database update
@@ -298,7 +301,7 @@ export class RoleService {
   /**
    * Check if user has specific permission
    */
-  async userHasPermission(userId: string, permission: AdminPermission): Promise<boolean> {
+  async userHasPermission(userId: string, permission: PermKey): Promise<boolean> {
     const userRoles = await this.getUserRoles(userId);
     return userRoles.some(role => 
       role.isActive && role.permissions.includes(permission)

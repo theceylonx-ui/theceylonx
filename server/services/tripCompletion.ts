@@ -65,9 +65,8 @@ export class TripCompletionService {
             title: 'Trip Now Occupied',
             message: `A trip you showed interest in has been marked as completed/occupied by the organizer.`,
             category: 'trip_updates',
-            priority: 'medium',
-            relatedId: tripId,
-            relatedType: 'trip',
+            priority: 'normal',
+            tripId,
             isRead: false,
           })
           .returning();
@@ -84,8 +83,6 @@ export class TripCompletionService {
             category: notification.category!,
             priority: notification.priority!,
             isRead: false,
-            relatedId: tripId,
-            relatedType: 'trip',
             createdAt: notification.createdAt!.toISOString(),
           }
         });

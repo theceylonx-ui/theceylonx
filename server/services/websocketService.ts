@@ -29,6 +29,15 @@ export interface NotificationBroadcast {
   };
 }
 
+export interface ChatMessageBroadcast {
+  type: 'new_message';
+  data: {
+    threadId: string;
+    userId: string;
+    message?: unknown;
+  };
+}
+
 export class WebSocketService {
   private wss: WebSocketServer | null = null;
   private clients = new Map<string, WebSocketClient[]>();
@@ -201,7 +210,7 @@ export class WebSocketService {
   /**
    * Broadcast a notification to a specific user
    */
-  broadcastNotification(notification: NotificationBroadcast): void {
+  broadcastNotification(notification: NotificationBroadcast | ChatMessageBroadcast): void {
     const targetUserId = notification.data.userId;
     const userClients = this.clients.get(targetUserId);
 

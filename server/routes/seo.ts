@@ -25,7 +25,7 @@ router.get('/sitemap.xml', async (req: Request, res: Response) => {
     ];
     
     // Get recent active trips for dynamic content (simplified for now)
-    let recentTrips = [];
+    let recentTrips: Array<{ id: string; createdAt: Date | null }> = [];
     try {
       recentTrips = await db
         .select()

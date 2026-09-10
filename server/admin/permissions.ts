@@ -161,7 +161,7 @@ export function validatePermissions(permissions: string[]): PermKey[] {
 }
 
 // Permission descriptions for UI
-export const PERMISSION_DESCRIPTIONS: Record<PermKey, string> = {
+export const PERMISSION_DESCRIPTIONS: Partial<Record<PermKey, string>> = {
   // Users
   'users.view': 'View user profiles and basic information',
   'users.edit': 'Edit user profiles and account details',  

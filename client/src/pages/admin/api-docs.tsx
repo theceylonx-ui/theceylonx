@@ -485,7 +485,7 @@ export default function APIDocsPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => copyToClipboard(JSON.stringify(selectedEndpoint.requestBody.example, null, 2))}
+                                 onClick={() => copyToClipboard(JSON.stringify(selectedEndpoint.requestBody?.example, null, 2))}
                               >
                                 <Copy className="w-4 h-4" />
                               </Button>

@@ -272,7 +272,9 @@ async function checkAuth(): Promise<HealthStatus> {
     
     // Check JWT system
     try {
-      const { verifyJWT } = await import('../auth/jwt');
+      const { verifyAccessToken } = await import('../auth/jwt');
+      // Importing the verifier confirms the JWT module is available.
+      void verifyAccessToken;
       // Test JWT functionality with a dummy payload
       checks.push({
         provider: 'jwt',

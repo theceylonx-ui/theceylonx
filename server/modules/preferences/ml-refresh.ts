@@ -8,6 +8,16 @@ import {
   // type UserPreferences // Consolidated into users table 
 } from "../../../shared/schema";
 
+type UserPreferences = {
+  vibe?: string[];
+  companions?: string[];
+  interests?: string[];
+  months?: string[];
+  regions?: string[];
+  budgetMin?: number;
+  budgetMax?: number;
+};
+
 /**
  * ML Refresh Service for User Preferences
  * 

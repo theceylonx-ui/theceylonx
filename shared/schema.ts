@@ -14,6 +14,7 @@ import {
   pgEnum,
   unique,
   foreignKey,
+  AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -129,7 +130,7 @@ export const users = pgTable("users", {
   facebookId: varchar("facebook_id", { length: 100 }),
   microsoftId: varchar("microsoft_id", { length: 100 }),
   appleId: varchar("apple_id", { length: 100 }),
-  roleId: varchar("role_id").references(() => roles.id, { onDelete: 'set null' }), // FK to roles.id
+  roleId: varchar("role_id").references((): AnyPgColumn => roles.id, { onDelete: 'set null' }), // FK to roles.id
   emailVerified: boolean("email_verified").default(false).notNull(),
   // Additional auth fields that exist in database
   authProvider: varchar("auth_provider", { length: 50 }).default("email").notNull(),
@@ -868,7 +869,7 @@ export const roles = pgTable("roles", {
   hierarchy: integer("hierarchy").notNull().default(0), // Role hierarchy level (higher = more power)
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  createdBy: varchar("created_by").references(() => users.id), // Who created this role
+  createdBy: varchar("created_by").references((): AnyPgColumn => users.id), // Who created this role
 }, (table) => [
   index("IDX_roles_hierarchy").on(table.hierarchy),
   index("IDX_roles_active").on(table.isActive),

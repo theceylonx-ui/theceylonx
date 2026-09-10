@@ -30,7 +30,7 @@ export function setupErrorReporting(app: Express) {
         userAgent: errorData.userAgent || req.get('User-Agent'),
         userId: errorData.userId || (req as any).user?.id,
         ip: req.ip,
-        timestamp: errorData.timestamp.toISOString(),
+        timestamp: errorData.timestamp,
         additionalContext: errorData.additionalContext,
         reportedAt: new Date().toISOString(),
       });

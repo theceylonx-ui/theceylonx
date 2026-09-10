@@ -101,9 +101,21 @@ import {
   type QuickTripWithOrganizer,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, ilike, desc, asc, gte, lte, count, sql, isNull, ne } from "drizzle-orm";
+import { eq, and, or, ilike, desc, asc, gte, lte, count, sql, isNull, ne, inArray } from "drizzle-orm";
 import { normalizeUserForUI } from "./utils/userNormalization";
 import { withDatabaseTransaction } from "./utils/databaseErrorHandler";
+
+type TripOrganizerDto = Pick<
+  User,
+  'id' | 'name' | 'username' | 'displayName' | 'profileImageUrl' |
+  'image' | 'firstName' | 'lastName'
+> & {
+  email?: string | null;
+  phone?: string | null;
+  phoneNumber?: string | null;
+};
+
+type TripWithOrganizerDto = Trip & { organizer: TripOrganizerDto };
 
 // Contact redaction utilities
 export function redactContact<T extends { contactInfo?: string | null; whatsapp?: string | null; email?: string | null; phone?: string | null }>(userOrTrip: T): T & { contactRedacted?: boolean } {
@@ -157,7 +169,7 @@ export interface IStorage {
   
   // Trip operations
   createTrip(trip: InsertTrip): Promise<Trip>;
-  getTrip(id: string): Promise<TripWithOrganizer | undefined>;
+  getTrip(id: string): Promise<TripWithOrganizerDto | undefined>;
   updateTrip(id: string, trip: Partial<InsertTrip>): Promise<Trip>;
   deleteTrip(id: string): Promise<void>;
   getUserTrips(userId: string): Promise<TripWithOrganizer[]>;
@@ -652,97 +664,68 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async getTrip(id: string, requestingUserId?: string): Promise<TripWithOrganizer | undefined> {
+  async getTrip(id: string, requestingUserId?: string): Promise<TripWithOrganizerDto | undefined> {
     try {
-      const { pool } = await import("./db");
-      const result = await pool.query(
-        `SELECT * FROM trips WHERE id = $1 AND is_deleted = false`,
-        [id]
-      );
-      
-      if (result.rows.length === 0) return undefined;
-      
-      const tripRow = result.rows[0];
-      
-      // Get organizer separately if needed
-      let organizer = null;
-      if (tripRow.organizer_id) {
-        const organizerResult = await pool.query(
-          `SELECT * FROM users WHERE id = $1`,
-          [tripRow.organizer_id]
-        );
-        organizer = organizerResult.rows[0] || null;
-      }
-      
-      // Get metadata separately
-      let metadata = null;
-      const metadataResult = await pool.query(
-        `SELECT * FROM trip_metadata WHERE trip_id = $1`,
-        [id]
-      );
-      metadata = metadataResult.rows[0] || null;
-      
-      // Construct trip object from result
-      const trip = {
-        id: tripRow.id,
-        title: tripRow.title,
-        description: tripRow.description,
-        fromLocation: tripRow.from_location,
-        toLocation: tripRow.to_location,
-        date: tripRow.date ? tripRow.date.toISOString() : null,
-        time: tripRow.time,
-        price: tripRow.price,
-        priceMin: tripRow.price_min,
-        priceMax: tripRow.price_max,
-        seatsAvailable: tripRow.seats_available,
-        organizerId: tripRow.organizer_id,
-        organizerPhone: tripRow.organizer_phone,
-        organizerEmail: tripRow.organizer_email,
-        organizerCountryCode: tripRow.organizer_country_code,
-        contactInfo: tripRow.contact_info,
-        region: tripRow.region,
-        category: tripRow.category,
-        status: tripRow.status,
-        imageUrl: tripRow.image_url,
-        mediaUrls: tripRow.media_urls,
-        coverImageIndex: tripRow.cover_image_index,
-        isDeleted: tripRow.is_deleted,
-        createdAt: tripRow.created_at ? tripRow.created_at.toISOString() : null,
-        updatedAt: tripRow.updated_at ? tripRow.updated_at.toISOString() : null,
-        deletedAt: tripRow.deleted_at ? tripRow.deleted_at.toISOString() : null,
-      };
-      
-      // Construct organizer object if found
-      const organizerObject = organizer ? {
-        id: organizer.id,
-        name: organizer.name,
-        username: organizer.username,
-        email: organizer.email,
-        profileImage: organizer.profile_image_url,
-      } : {
-        id: trip.organizerId,
-        name: 'Unknown User',
-        username: null,
-        email: null,
-        profileImage: null,
+      const [record] = await db
+        .select({
+          trip: trips,
+          organizer: {
+            id: users.id,
+            name: users.name,
+            username: users.username,
+            displayName: users.displayName,
+            profileImageUrl: users.profileImageUrl,
+            image: users.image,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            email: users.email,
+            phone: users.phone,
+            phoneNumber: users.phoneNumber,
+          },
+        })
+        .from(trips)
+        .leftJoin(users, eq(trips.organizerId, users.id))
+        .where(and(eq(trips.id, id), eq(trips.isDeleted, false)));
+
+      if (!record || !record.organizer) return undefined;
+
+      const [metadata] = await db
+        .select()
+        .from(tripMetadata)
+        .where(eq(tripMetadata.tripId, id));
+
+      const trip = record.trip;
+      const shouldRedact = shouldRedactContact(requestingUserId, trip.organizerId);
+      const organizerObject: TripOrganizerDto = {
+        id: record.organizer.id,
+        name: record.organizer.name,
+        username: record.organizer.username,
+        displayName: record.organizer.displayName,
+        profileImageUrl: record.organizer.profileImageUrl,
+        image: record.organizer.image,
+        firstName: record.organizer.firstName,
+        lastName: record.organizer.lastName,
+        ...(shouldRedact ? {} : {
+          email: record.organizer.email,
+          phone: record.organizer.phone,
+          phoneNumber: record.organizer.phoneNumber,
+        }),
       };
       
       // Apply contact redaction if not the trip organizer
-      const shouldRedact = shouldRedactContact(requestingUserId, trip.organizerId);
       const redactedTrip = shouldRedact ? redactContact(trip) : trip;
-      const redactedOrganizer = shouldRedact ? redactContact(organizerObject) : organizerObject;
       
-      return { 
-        ...redactedTrip, 
-        organizer: redactedOrganizer as any,
+      return {
+        ...redactedTrip,
+        organizer: organizerObject,
         // Include metadata fields if available
         duration: metadata?.duration || null,
         difficulty: metadata?.difficulty || null,
-        buddyFriendly: metadata?.buddy_friendly || null,
-        seasonality: metadata?.seasonality || null,
-        safetyFlags: metadata?.safety_flags || null,
+        buddyFriendly: metadata?.buddyFriendly || null,
+        seasonality: metadata?.seasonality?.join(', ') || null,
+        safetyFlags: metadata?.safetyFlags || null,
         tags: metadata?.tags || null,
-      } as TripWithOrganizer;
+      };
     } catch (error) {
       console.error("Error in getTrip:", error);
       throw error;

@@ -22,6 +22,7 @@ export interface LogContext {
   feature?: string;
   action?: string;
   metadata?: Record<string, any>;
+  email?: string;
 }
 
 export interface LogEntry {

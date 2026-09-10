@@ -110,7 +110,7 @@ export function EnhancedRecommendedTrips() {
       const throttleKey = `${data.eventType}_${data.tripId || 'global'}`;
       if (kpiThrottle.has(throttleKey)) return;
       
-      setKpiThrottle(prev => new Set([...prev, throttleKey]));
+      setKpiThrottle(prev => new Set(Array.from(prev).concat(throttleKey)));
       setTimeout(() => {
         setKpiThrottle(prev => {
           const newSet = new Set(prev);

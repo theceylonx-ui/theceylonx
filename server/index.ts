@@ -218,7 +218,6 @@ export function initializeApp(): Promise<void> {
           req.user = {
             id: req.header('x-test-user-id') || 'test-user-id',
             email: 'test@ceylonexpand.com',
-            role: 'user',
           };
           next();
         });

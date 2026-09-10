@@ -96,7 +96,7 @@ export async function seedSampleTrips() {
       seatsAvailable: 5,
       price: "4500.00",
       region: "Uva",
-      category: "adventure" as const,
+      category: "adventure_sport" as const,
       organizerId: seedUser[0].id,
       organizerPhone: "773456789",
       organizerEmail: "seed@hibowan.com",
@@ -112,7 +112,7 @@ export async function seedSampleTrips() {
   for (const trip of sampleTrips) {
     const existing = await db.select().from(trips).where(eq(trips.id, trip.id));
     if (existing.length === 0) {
-      await db.insert(trips).values([trip]);
+      await db.insert(trips).values(trip);
       seededCount++;
     }
   }

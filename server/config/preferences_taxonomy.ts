@@ -110,7 +110,7 @@ export function canonicalizeArray<T extends string>(
   }
 
   const lowercased = input.map(val => String(val).toLowerCase());
-  const unique = [...new Set(lowercased)];
+  const unique = Array.from(new Set(lowercased));
   const valid = unique.filter(validator);
   
   return valid.sort() as T[];
@@ -128,7 +128,7 @@ export function getRejectedValues<T extends string>(
   }
 
   const lowercased = input.map(val => String(val).toLowerCase());
-  const unique = [...new Set(lowercased)];
+  const unique = Array.from(new Set(lowercased));
   
   return unique.filter(val => !validator(val));
 }
