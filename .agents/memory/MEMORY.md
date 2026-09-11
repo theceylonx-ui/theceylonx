@@ -1,0 +1,1 @@
+- [Daily digest scheduling](daily-digest-scheduling.md) — autoscaled web instances cannot guarantee exact-time in-process email delivery; use a Scheduled Deployment for reliability.
