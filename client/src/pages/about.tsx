@@ -27,6 +27,28 @@ export default function AboutPage() {
             </p>
           </div>
 
+          <div className="mb-16">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">A message from the team</h2>
+            <p className="text-gray-700 text-lg leading-relaxed mb-4">
+              We didn't build HiBowan sitting in an office thinking about travel apps. We built it after years of actually being out there — on early morning trains to Ella, hitchhiking stretches of the south coast, sitting around a fire in Yala with people we'd met three hours earlier and would stay in touch with for years.
+            </p>
+            <p className="text-gray-700 text-lg leading-relaxed mb-4">
+              What struck us wasn't just how beautiful this island is — it's how much the people who visit end up loving it too. Every tourist who comes to Sri Lanka seems to leave a little bit changed, and a lot of them come back, or send their friends, or plan their next trip around here before they've even left. That love keeps spreading, traveler to traveler.
+            </p>
+            <p className="text-gray-700 text-lg leading-relaxed mb-4">
+              We wanted to build something that made that easier — a place where two strangers heading to the same waterfall, or the same stretch of coast, could actually find each other and go together. Not a booking site. Not a tour company. Just a way for travelers to connect the way we did.
+            </p>
+            <p className="text-gray-700 text-lg leading-relaxed mb-4">
+              And the name felt obvious once we had the idea. <em>Ayubowan</em> is how Sri Lankans greet you — a wish for a long, good life, hands together. <em>Hi</em> is how the rest of the world says hello. HiBowan is that greeting, shortened just enough for a traveler from anywhere to say it back.
+            </p>
+            <p className="text-gray-700 text-lg leading-relaxed mb-6">
+              So — hi. Ayubowan. Welcome to HiBowan.
+            </p>
+            <p className="text-gray-500 italic">
+              — The HiBowan Team
+            </p>
+          </div>
+
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-8">What We Do</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-16">
             <Card className="border-l-4 border-l-ceylon-green shadow-sm hover:shadow-md transition-shadow">
