@@ -261,8 +261,8 @@ function ReportCard({ report, onAssign, onResolve, onEscalate }: {
 }
 
 function ModerationQueue() {
-  const [selectedPriority, setSelectedPriority] = useState<string>('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [selectedPriority, setSelectedPriority] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -272,8 +272,8 @@ function ModerationQueue() {
     queryKey: ['/api/admin/reports', { priority: selectedPriority, status: selectedStatus, search: searchTerm }],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (selectedPriority) params.append('priority', selectedPriority);
-      if (selectedStatus) params.append('status', selectedStatus);
+      if (selectedPriority !== 'all') params.append('priority', selectedPriority);
+      if (selectedStatus !== 'all') params.append('status', selectedStatus);
       if (searchTerm) params.append('search', searchTerm);
       
       const response = await fetch(`/api/admin/reports?${params}`);
@@ -371,7 +371,7 @@ function ModerationQueue() {
                   <SelectValue placeholder="All" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All</SelectItem>
+                  <SelectItem value="all">All</SelectItem>
                   <SelectItem value="critical">Critical</SelectItem>
                   <SelectItem value="high">High</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
@@ -387,7 +387,7 @@ function ModerationQueue() {
                   <SelectValue placeholder="All" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All</SelectItem>
+                  <SelectItem value="all">All</SelectItem>
                   <SelectItem value="open">Open</SelectItem>
                   <SelectItem value="investigating">Investigating</SelectItem>
                   <SelectItem value="resolved">Resolved</SelectItem>
