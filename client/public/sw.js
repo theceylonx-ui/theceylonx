@@ -1,5 +1,5 @@
-// Ceylon Expand Service Worker - Progressive Web App
-const CACHE_NAME = 'ceylon-expand-v2.3.0';
+// HiBowan Service Worker - Progressive Web App
+const CACHE_NAME = 'hibowan-v3.0.0';
 const OFFLINE_URL = '/offline.html';
 
 // Only cache true binary/static assets — never HTML or JS.
@@ -119,7 +119,7 @@ function cacheFirst(request) {
 // Push notification handler
 self.addEventListener('push', (event) => {
   let data = {
-    title: 'Ceylon Expand',
+    title: 'HiBowan',
     body: 'You have a new notification',
     icon: '/pwa-icon-192x192.png',
     badge: '/pwa-icon-96x96.png',

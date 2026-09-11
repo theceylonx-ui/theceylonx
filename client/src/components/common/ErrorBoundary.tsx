@@ -23,6 +23,27 @@ interface State {
 class ErrorBoundary extends Component<Props, State> {
   private resetTimeoutId: number | null = null;
 
+  private reloadAfterModuleLoadFailure = (error: Error): boolean => {
+    const isModuleLoadFailure = /importing a module script failed|failed to fetch dynamically imported module|loading chunk \d+ failed/i.test(error.message);
+
+    if (!isModuleLoadFailure) {
+      return false;
+    }
+
+    // A freshly published Vite build changes hashed chunk names. Reload once
+    // per entry bundle to recover clients that attempt to load a retired chunk.
+    const entryBundle = document.querySelector<HTMLScriptElement>('script[type="module"][src*="/assets/"]')?.src || window.location.pathname;
+    const reloadKey = `hibowan-module-reload:${entryBundle}`;
+
+    if (sessionStorage.getItem(reloadKey)) {
+      return false;
+    }
+
+    sessionStorage.setItem(reloadKey, '1');
+    window.location.reload();
+    return true;
+  };
+
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -57,6 +78,10 @@ class ErrorBoundary extends Component<Props, State> {
     });
 
     this.setState({ errorInfo });
+
+    if (this.reloadAfterModuleLoadFailure(error)) {
+      return;
+    }
 
     // Call custom error handler if provided
     if (this.props.onError) {
