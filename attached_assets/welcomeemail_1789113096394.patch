@@ -1,0 +1,181 @@
+From ab5dae20743fe4d53c037ee826675e0c3d10c349 Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Fri, 11 Sep 2026 13:14:01 +0530
+Subject: [PATCH] Send a welcome email on new account creation
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Adds sendWelcomeEmail() to server/auth/email.ts, reusing the existing
+nodemailer/SMTP transporter and EMAIL_FROM pattern already used for
+verification codes and magic links (server/auth/email.ts). Requires
+SMTP_HOST/SMTP_USER/SMTP_PASS to be set (e.g. Resend's SMTP relay) and
+a verified hibowan.com sending domain — falls back to a console log
+in development when those aren't set, matching sendVerificationCode's
+existing dev-mode behavior.
+
+Wired into both OAuth "create new user" branches in
+server/auth/passport.ts — confirmed via App.tsx that these are the
+only live signup paths on the site today (Clerk's sign-in components
+are commented out as "temporarily disabled", and the custom
+email/magic-link path in server/auth/email.ts has no reachable UI).
+Facebook signups usually come back with no email, so the send is
+skipped rather than attempted. Fire-and-forget with a caught/logged
+error in both call sites: a failed send must never block or fail the
+login the user is actively waiting on.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ server/auth/email.ts    | 88 +++++++++++++++++++++++++++++++++++++++++
+ server/auth/passport.ts | 17 +++++++-
+ 2 files changed, 104 insertions(+), 1 deletion(-)
+
+diff --git a/server/auth/email.ts b/server/auth/email.ts
+index 45314a1..bcf579d 100644
+--- a/server/auth/email.ts
++++ b/server/auth/email.ts
+@@ -236,6 +236,94 @@ HiBowan - Your travel companion in Sri Lanka
+   }
+ }
+ 
++// Sent once, right after a new account is created via OAuth. Not a
++// verification gate — the account already works when this sends, so a
++// failure here must never block or fail the signup itself. Callers should
++// wrap this in try/catch and only log on error.
++export async function sendWelcomeEmail(email: string, name?: string | null): Promise<void> {
++  const firstName = name?.trim().split(/\s+/)[0] || 'there';
++
++  const isDevelopment = process.env.NODE_ENV === 'development';
++  const hasSmtpCredentials = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS;
++
++  if (isDevelopment && !hasSmtpCredentials) {
++    console.log('🔍 DEVELOPMENT MODE - Welcome email would be sent to:', email);
++    return;
++  }
++
++  const browseTripsUrl = `${APP_URL}/browse-trips`;
++  const postTripUrl = `${APP_URL}/post-trip`;
++  const faqUrl = `${APP_URL}/faq`;
++  const safetyUrl = `${APP_URL}/safety-guidelines`;
++
++  const emailContent = {
++    from: EMAIL_FROM,
++    to: email,
++    subject: "Welcome to HiBowan — you're in",
++    html: `
++      <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
++        <div style="text-align: center; margin-bottom: 30px;">
++          <h1 style="color: #DB354E; margin: 0;">HiBowan</h1>
++          <p style="color: #666; margin: 5px 0;">Your travel companion in Sri Lanka</p>
++        </div>
++
++        <div style="background: #f8fafc; padding: 30px; border-radius: 8px;">
++          <p style="color: #1f2937; margin: 0 0 16px 0; line-height: 1.5;">Hi ${firstName},</p>
++          <p style="color: #4b5563; margin: 0 0 16px 0; line-height: 1.5;">
++            You're officially part of HiBowan — welcome aboard.
++          </p>
++          <p style="color: #4b5563; margin: 0 0 24px 0; line-height: 1.5;">
++            From here you can browse trips already forming across Sri Lanka, or post your own and see who joins. No bookings, no commissions — just fellow travellers coordinating directly.
++          </p>
++
++          <div style="text-align: center; margin: 0 0 24px 0;">
++            <a href="${browseTripsUrl}"
++               style="background: #DB354E; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin: 0 8px 8px 0;">
++              Browse Trips
++            </a>
++            <a href="${postTripUrl}"
++               style="background: white; color: #DB354E; border: 2px solid #DB354E; padding: 10px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin: 0 0 8px 0;">
++              Post a Trip
++            </a>
++          </div>
++
++          <p style="color: #4b5563; margin: 0 0 16px 0; line-height: 1.5;">
++            Here's how to get the most out of HiBowan: <a href="${faqUrl}" style="color: #DB354E;">Help &amp; FAQ</a> — how requests and matching work, what Quick Trip vs. Detailed Trip means, and more.
++          </p>
++
++          <p style="color: #4b5563; margin: 0; line-height: 1.5;">
++            Before your first trip, a couple of quick reminders: always meet in public places, and take a look at our <a href="${safetyUrl}" style="color: #DB354E;">Safety Guidelines</a> — it's a short read and worth it.
++          </p>
++        </div>
++
++        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
++          <p style="color: #9ca3af; font-size: 12px; margin: 0;">
++            — The HiBowan Team
++          </p>
++        </div>
++      </div>
++    `,
++    text: `
++Hi ${firstName},
++
++You're officially part of HiBowan — welcome aboard.
++
++From here you can browse trips already forming across Sri Lanka, or post your own and see who joins. No bookings, no commissions — just fellow travellers coordinating directly.
++
++Browse Trips: ${browseTripsUrl}
++Post a Trip: ${postTripUrl}
++
++Here's how to get the most out of HiBowan: ${faqUrl} — how requests and matching work, what Quick Trip vs. Detailed Trip means, and more.
++
++Before your first trip, a couple of quick reminders: always meet in public places, and take a look at our Safety Guidelines (${safetyUrl}) — it's a short read and worth it.
++
++— The HiBowan Team
++    `,
++  };
++
++  await transporter.sendMail(emailContent);
++}
++
+ export async function verifyMagicLink(token: string, email: string): Promise<JWTUser | null> {
+   try {
+     // Find token record
+diff --git a/server/auth/passport.ts b/server/auth/passport.ts
+index 983161f..eee2614 100644
+--- a/server/auth/passport.ts
++++ b/server/auth/passport.ts
+@@ -7,6 +7,7 @@ import { users, roles } from '@shared/schema';
+ import { eq, or } from 'drizzle-orm';
+ import { JWTUser } from './jwt';
+ import { ALL_PERMS } from '../admin/permissions';
++import { sendWelcomeEmail } from './email';
+ 
+ // Helper to check if email is a designated superadmin
+ const isSuperadminEmail = (email: string): boolean => {
+@@ -139,12 +140,18 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+         emailVerified: true,
+       }).returning() as any[];
+       const newUser = newUsers[0];
+-      
++
+       // Auto-assign superadmin role if email is designated
+       if (userEmail && isSuperadminEmail(userEmail)) {
+         await assignSuperadminRole(newUser.id);
+       }
+ 
++      if (newUser.email) {
++        sendWelcomeEmail(newUser.email, newUser.name).catch((error) => {
++          console.error('Failed to send welcome email:', error);
++        });
++      }
++
+       const jwtUser: JWTUser = {
+         id: newUser.id,
+         email: newUser.email || undefined,
+@@ -226,6 +233,14 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
+       }).returning() as any[];
+       const newUser = newUsers[0];
+ 
++      // Facebook usually doesn't hand back an email, so there's often
++      // nothing to send this to — sendWelcomeEmail is skipped, not failed.
++      if (newUser.email) {
++        sendWelcomeEmail(newUser.email, newUser.name).catch((error) => {
++          console.error('Failed to send welcome email:', error);
++        });
++      }
++
+       const jwtUser: JWTUser = {
+         id: newUser.id,
+         email: newUser.email || undefined,
+-- 
+2.50.1 (Apple Git-155)
+
