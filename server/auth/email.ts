@@ -6,11 +6,13 @@ import { users, emailTokens } from '@shared/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { JWTUser } from './jwt';
 
+const smtpPort = parseInt(process.env.SMTP_PORT || process.env.EMAIL_SERVER_PORT || '587');
+
 // Email Configuration
 const SMTP_CONFIG = {
   host: process.env.SMTP_HOST || process.env.EMAIL_SERVER_HOST,
-  port: parseInt(process.env.SMTP_PORT || process.env.EMAIL_SERVER_PORT || '587'),
-  secure: false, // true for 465, false for other ports
+  port: smtpPort,
+  secure: smtpPort === 465,
   auth: {
     user: process.env.SMTP_USER || process.env.EMAIL_SERVER_USER,
     pass: process.env.SMTP_PASS || process.env.EMAIL_SERVER_PASSWORD,
