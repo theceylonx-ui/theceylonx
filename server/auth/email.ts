@@ -5,6 +5,7 @@ import { db } from '../db';
 import { users, emailTokens } from '@shared/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { JWTUser } from './jwt';
+import type { DigestStats } from '../services/digestService';
 
 const smtpPort = parseInt(process.env.SMTP_PORT || process.env.EMAIL_SERVER_PORT || '587');
 
@@ -323,6 +324,103 @@ Here's how to get the most out of HiBowan: ${faqUrl} — how requests and matchi
 Before your first trip, a couple of quick reminders: always meet in public places, and take a look at our Safety Guidelines (${safetyUrl}) — it's a short read and worth it.
 
 — The HiBowan Team
+    `,
+  };
+
+  await transporter.sendMail(emailContent);
+}
+
+const DIGEST_RECIPIENT = process.env.DIGEST_RECIPIENT_EMAIL || 'theyceylonx@gmail.com';
+
+function escapeEmailHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+/**
+ * Daily admin digest — replaces per-event admin pings with one email a
+ * day. stats is already filtered to exclude seeded/test data by the
+ * caller (server/services/digestService.ts); this function only formats
+ * and sends.
+ */
+export async function sendDailyDigestEmail(stats: DigestStats): Promise<void> {
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const hasSmtpCredentials = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS;
+
+  if (isDevelopment && !hasSmtpCredentials) {
+    console.log('🔍 DEVELOPMENT MODE - Daily digest would be sent to:', DIGEST_RECIPIENT, stats);
+    return;
+  }
+
+  const dashboardUrl = `${APP_URL}/admin`;
+  const signupCount = stats.newSignups.length;
+  const tripCount = stats.newTrips.length;
+
+  const signupListHtml = signupCount > 0
+    ? stats.newSignups.map((s) => `<li style="margin-bottom: 4px;">${escapeEmailHtml(s.name)} (${escapeEmailHtml(s.email)})</li>`).join('')
+    : '<li style="list-style: none; color: #9ca3af;">No new signups since yesterday.</li>';
+
+  const tripListHtml = tripCount > 0
+    ? stats.newTrips.map((t) => `<li style="margin-bottom: 4px;">${escapeEmailHtml(t.title)} — ${escapeEmailHtml(t.fromLocation)} → ${escapeEmailHtml(t.toLocation)} (${t.type})</li>`).join('')
+    : '<li style="list-style: none; color: #9ca3af;">No new trips posted since yesterday.</li>';
+
+  const signupListText = signupCount > 0
+    ? stats.newSignups.map((s) => `- ${s.name} (${s.email})`).join('\n')
+    : 'No new signups since yesterday.';
+
+  const tripListText = tripCount > 0
+    ? stats.newTrips.map((t) => `- ${t.title} — ${t.fromLocation} → ${t.toLocation} (${t.type})`).join('\n')
+    : 'No new trips posted since yesterday.';
+
+  const emailContent = {
+    from: EMAIL_FROM,
+    to: DIGEST_RECIPIENT,
+    subject: `HiBowan daily — ${signupCount} new signups, ${tripCount} new trips`,
+    html: `
+      <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #DB354E; margin: 0;">HiBowan</h1>
+          <p style="color: #666; margin: 5px 0;">Daily admin digest</p>
+        </div>
+
+        <div style="background: #f8fafc; padding: 30px; border-radius: 8px;">
+          <p style="color: #1f2937; margin: 0 0 20px 0;">Since yesterday:</p>
+
+          <p style="color: #1f2937; font-weight: bold; margin: 0 0 8px 0;">${signupCount} new signup${signupCount === 1 ? '' : 's'}</p>
+          <ul style="color: #4b5563; margin: 0 0 20px 0; padding-left: 20px;">${signupListHtml}</ul>
+
+          <p style="color: #1f2937; font-weight: bold; margin: 0 0 8px 0;">${tripCount} new trip${tripCount === 1 ? '' : 's'} posted</p>
+          <ul style="color: #4b5563; margin: 0 0 20px 0; padding-left: 20px;">${tripListHtml}</ul>
+
+          <p style="color: #1f2937; margin: 0 0 20px 0;">
+            <strong>Running totals:</strong> ${stats.totalUsers} users · ${stats.totalTrips} trips · ${stats.tripsThisWeek} trips this week
+          </p>
+
+          <div style="text-align: center;">
+            <a href="${dashboardUrl}"
+               style="background: #DB354E; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+              Open dashboard
+            </a>
+          </div>
+        </div>
+      </div>
+    `,
+    text: `
+Since yesterday:
+
+${signupCount} new signup${signupCount === 1 ? '' : 's'}
+${signupListText}
+
+${tripCount} new trip${tripCount === 1 ? '' : 's'} posted
+${tripListText}
+
+Running totals: ${stats.totalUsers} users · ${stats.totalTrips} trips · ${stats.tripsThisWeek} trips this week
+
+Open dashboard: ${dashboardUrl}
     `,
   };
 

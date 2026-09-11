@@ -337,6 +337,51 @@ async function startServer() {
     setInterval(runTripArchiver, DAILY_ARCHIVE_INTERVAL);
     console.log('✅ Trip auto-archiver started (runs daily)');
 
+    // Start scheduled admin daily digest email (8:00 AM Asia/Colombo).
+    // Development can use the authenticated send-now endpoint without
+    // unexpectedly emailing the administrator from a long-running preview.
+    if (!isDevelopment) {
+      console.log('Starting daily digest scheduler...');
+
+      const runDailyDigest = async () => {
+        try {
+          const { getDigestStats } = await import('./services/digestService');
+          const { sendDailyDigestEmail } = await import('./auth/email');
+          const stats = await getDigestStats();
+          await sendDailyDigestEmail(stats);
+          console.log(`📧 Daily digest sent: ${stats.newSignups.length} new signups, ${stats.newTrips.length} new trips`);
+        } catch (error) {
+          console.error('❌ Daily digest failed:', error);
+        }
+      };
+
+      // Sri Lanka is a fixed UTC+5:30 offset with no DST, so this can be
+      // computed directly rather than depending on a timezone database.
+      const COLOMBO_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+      const msUntilNextColomboEightAM = (): number => {
+        const now = new Date();
+        const nowColombo = new Date(now.getTime() + COLOMBO_OFFSET_MS);
+        const nextRunColombo = new Date(Date.UTC(
+          nowColombo.getUTCFullYear(),
+          nowColombo.getUTCMonth(),
+          nowColombo.getUTCDate(),
+          8, 0, 0, 0
+        ));
+        if (nextRunColombo.getTime() <= nowColombo.getTime()) {
+          nextRunColombo.setUTCDate(nextRunColombo.getUTCDate() + 1);
+        }
+        const nextRunUTC = new Date(nextRunColombo.getTime() - COLOMBO_OFFSET_MS);
+        return nextRunUTC.getTime() - now.getTime();
+      };
+
+      const delayUntilNextDigest = msUntilNextColomboEightAM();
+      setTimeout(() => {
+        runDailyDigest();
+        setInterval(runDailyDigest, DAILY_ARCHIVE_INTERVAL);
+      }, delayUntilNextDigest);
+      console.log(`✅ Daily digest scheduler started (next run in ${Math.round(delayUntilNextDigest / 60000)} minutes)`);
+    }
+
     // Setup static file serving for production (Vite already set up in dev)
     if (!isDevelopment) {
       console.log('Setting up static file serving for production...');

@@ -660,9 +660,31 @@ router.post('/seed-data', requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Manual seeding error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       status: 'error',
       message: 'Failed to seed sample data',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Manually trigger the daily digest email — for testing without waiting
+// for the 8 AM Asia/Colombo schedule in server/index.ts. Same stats and
+// send path as the real scheduled run.
+router.post('/digest/send-now', requireAdmin, async (req, res) => {
+  try {
+    const { getDigestStats } = await import('../services/digestService');
+    const { sendDailyDigestEmail } = await import('../auth/email');
+
+    const stats = await getDigestStats();
+    await sendDailyDigestEmail(stats);
+
+    res.json({ status: 'success', stats });
+  } catch (error) {
+    console.error('❌ Manual digest send error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to send digest',
       error: error instanceof Error ? error.message : 'Unknown error'
     });
   }

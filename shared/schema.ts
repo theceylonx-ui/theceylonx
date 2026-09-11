@@ -172,7 +172,13 @@ export const users = pgTable("users", {
   verificationBadges: text("verification_badges").array().default(sql`'{}'::text[]`).notNull(), // ['email', 'phone', 'id', 'host', 'plus']
   verificationLevel: integer("verification_level").default(0).notNull(), // 0-5 scale
   verificationDate: timestamp("verification_date"),
-  
+
+  // Seeded/sample content, set by scripts/seed-trips.ts. Admin's own manual
+  // test accounts are excluded separately via the TEST_ACCOUNT_EMAILS env
+  // var (see server/utils/testDataFilter.ts) rather than this column, since
+  // there's no UI to flag those yet.
+  isTestData: boolean("is_test_data").default(false).notNull(),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [

@@ -11,7 +11,12 @@ async function seedUsers() {
       await db.insert(users).values({
         id: nanoid(),
         ...userData,
+        isTestData: true,
       });
+    } else if (!existing[0].isTestData) {
+      // Backfill: a user created by an earlier version of this script,
+      // before isTestData existed.
+      await db.update(users).set({ isTestData: true }).where(eq(users.id, existing[0].id));
     }
   }
 }
