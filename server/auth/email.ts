@@ -257,7 +257,7 @@ export async function sendWelcomeEmail(email: string, name?: string | null): Pro
   }
 
   const browseTripsUrl = `${APP_URL}/browse-trips`;
-  const postTripUrl = `${APP_URL}/post-trip`;
+  const postTripUrl = `${APP_URL}/post`;
   const faqUrl = `${APP_URL}/faq`;
   const safetyUrl = `${APP_URL}/safety-guidelines`;
 
