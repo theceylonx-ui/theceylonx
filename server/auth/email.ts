@@ -19,7 +19,10 @@ const SMTP_CONFIG = {
   },
 };
 
-const EMAIL_FROM = process.env.EMAIL_FROM || 'HiBowan <no-reply@hibowan.com>';
+const configuredEmailFrom = process.env.EMAIL_FROM;
+const EMAIL_FROM = configuredEmailFrom && !configuredEmailFrom.includes('theceylonx.com')
+  ? configuredEmailFrom
+  : 'HiBowan <no-reply@hibowan.com>';
 // Determine APP_URL based on environment
 const APP_URL = process.env.APP_URL ||
   (process.env.NODE_ENV === 'production'
