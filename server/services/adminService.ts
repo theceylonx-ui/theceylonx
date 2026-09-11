@@ -1,13 +1,16 @@
-import { eq, desc, and, like, count } from "drizzle-orm";
+import { eq, desc, and, like, count, gte, notInArray, sql } from "drizzle-orm";
 import { db } from "../db";
-import { 
-  users, 
-  roles, 
-  auditLogs, 
-  mediaAssets, 
-  trips, 
+import {
+  users,
+  roles,
+  auditLogs,
+  mediaAssets,
+  trips,
   reports,
   roleAssignments,
+  quickTrips,
+  chatThreads,
+  userInteractions,
   type User,
   type Role,
   type AuditLog,
@@ -20,6 +23,24 @@ import {
 } from "@shared/schema";
 import { ROLE_DEFAULTS, PermKey, validatePermissions } from "../admin/permissions";
 import { validateRolePermissions, sanitizePermissions, newToLegacyPermissions } from "../admin/validation";
+import { getExcludedUserIds } from "../utils/testDataFilter";
+
+// The three route clusters HiBowan launched with (client/src/pages/landing.tsx),
+// classified by substring match against a trip's from/to location. A trip can
+// count toward more than one cluster if it touches more than one.
+const ROUTE_CLUSTERS: { name: string; cities: string[] }[] = [
+  { name: 'Colombo–Galle–Ella', cities: ['colombo', 'galle', 'ella', 'mirissa', 'unawatuna', 'hikkaduwa', 'bentota', 'weligama', 'matara', 'nuwara eliya'] },
+  { name: 'Ella–Arugam Bay', cities: ['ella', 'arugam bay', 'pottuvil'] },
+  { name: 'Yala–Udawalawe', cities: ['yala', 'udawalawe', 'tissamaharama', 'embilipitiya'] },
+];
+
+function excludeIds(column: any, excludedUserIds: string[]) {
+  return excludedUserIds.length > 0 ? notInArray(column, excludedUserIds) : sql`true`;
+}
+
+function dayKey(d: Date): string {
+  return d.toISOString().slice(0, 10); // YYYY-MM-DD
+}
 
 export class AdminService {
   // Initialize admin system with default roles and validation
@@ -137,60 +158,152 @@ export class AdminService {
     trips: { total: number; active: number; pending: number };
     reports: { total: number; open: number; resolved24h: number };
     chat: { activeThreads: number; flaggedMessages: number };
+    activityChart: { date: string; signups: number; trips: number }[];
+    routeClusters: { name: string; count: number }[];
+    recentSignups: { id: string; name: string; email: string; createdAt: string }[];
+    recentTrips: { id: string; title: string; fromLocation: string; toLocation: string; type: string; createdAt: string }[];
     recentActions: AuditLog[];
   }> {
+    const empty = {
+      users: { total: 0, active24h: 0, newToday: 0 },
+      trips: { total: 0, active: 0, pending: 0 },
+      reports: { total: 0, open: 0, resolved24h: 0 },
+      chat: { activeThreads: 0, flaggedMessages: 0 },
+      activityChart: [],
+      routeClusters: [],
+      recentSignups: [],
+      recentTrips: [],
+      recentActions: [],
+    };
+
     try {
-      const now = new Date();
-      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const excludedUserIds = await getExcludedUserIds();
+      const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
       const [
         [{ totalUsers }],
+        [{ newToday }],
+        [{ active24h }],
         [{ totalTrips }],
+        [{ totalQuickTrips }],
         [{ activeTrips }],
-        [{ pendingReports }],
+        [{ activeQuickTrips }],
+        [{ pendingTripReports }],
         [{ totalReports }],
+        [{ openReports }],
+        [{ resolved24h }],
+        [{ activeThreads }],
+        [{ flaggedMessages }],
         recentActions,
       ] = await Promise.all([
-        db.select({ totalUsers: count() }).from(users),
-        db.select({ totalTrips: count() }).from(trips),
-        db.select({ activeTrips: count() }).from(trips).where(eq(trips.status, 'active')),
-        db.select({ pendingReports: count() }).from(reports).where(eq(reports.status, 'open')),
+        db.select({ totalUsers: count() }).from(users).where(excludeIds(users.id, excludedUserIds)),
+        db.select({ newToday: count() }).from(users).where(and(gte(users.createdAt, since24h), excludeIds(users.id, excludedUserIds))),
+        db.select({ active24h: sql<number>`count(distinct ${userInteractions.userId})::int` }).from(userInteractions)
+          .where(and(gte(userInteractions.createdAt, since24h), excludeIds(userInteractions.userId, excludedUserIds))),
+        db.select({ totalTrips: count() }).from(trips).where(excludeIds(trips.organizerId, excludedUserIds)),
+        db.select({ totalQuickTrips: count() }).from(quickTrips).where(excludeIds(quickTrips.organizerId, excludedUserIds)),
+        db.select({ activeTrips: count() }).from(trips).where(and(eq(trips.status, 'active'), excludeIds(trips.organizerId, excludedUserIds))),
+        db.select({ activeQuickTrips: count() }).from(quickTrips).where(and(eq(quickTrips.status, 'active'), excludeIds(quickTrips.organizerId, excludedUserIds))),
+        // Trips have no "pending" status (check_status_valid only allows
+        // active/inactive/cancelled/completed/archived) — the closest real
+        // "needs review" signal is an open report against a trip.
+        db.select({ pendingTripReports: count() }).from(reports).where(and(eq(reports.context, 'trip'), eq(reports.status, 'open'))),
         db.select({ totalReports: count() }).from(reports),
+        db.select({ openReports: count() }).from(reports).where(eq(reports.status, 'open')),
+        db.select({ resolved24h: count() }).from(reports).where(gte(reports.resolvedAt, since24h)),
+        db.select({ activeThreads: count() }).from(chatThreads).where(eq(chatThreads.status, 'open')),
+        db.select({ flaggedMessages: count() }).from(reports).where(and(eq(reports.context, 'chat_message'), eq(reports.status, 'open'))),
         db.select().from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(20),
       ]);
 
+      // --- 30-day activity chart (signups vs. trips posted per day) ---
+      const [signupRows, tripDateRows, quickTripDateRows] = await Promise.all([
+        db.select({ createdAt: users.createdAt }).from(users)
+          .where(and(gte(users.createdAt, since30d), excludeIds(users.id, excludedUserIds))),
+        db.select({ createdAt: trips.createdAt }).from(trips)
+          .where(and(gte(trips.createdAt, since30d), excludeIds(trips.organizerId, excludedUserIds))),
+        db.select({ createdAt: quickTrips.createdAt }).from(quickTrips)
+          .where(and(gte(quickTrips.createdAt, since30d), excludeIds(quickTrips.organizerId, excludedUserIds))),
+      ]);
+
+      const signupsByDay = new Map<string, number>();
+      const tripsByDay = new Map<string, number>();
+      for (const row of signupRows) {
+        const key = dayKey(row.createdAt);
+        signupsByDay.set(key, (signupsByDay.get(key) || 0) + 1);
+      }
+      for (const row of [...tripDateRows, ...quickTripDateRows]) {
+        const key = dayKey(row.createdAt);
+        tripsByDay.set(key, (tripsByDay.get(key) || 0) + 1);
+      }
+
+      const activityChart: { date: string; signups: number; trips: number }[] = [];
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+        const key = dayKey(d);
+        activityChart.push({ date: key, signups: signupsByDay.get(key) || 0, trips: tripsByDay.get(key) || 0 });
+      }
+
+      // --- Route cluster breakdown ---
+      const [tripLocationRows, quickTripLocationRows] = await Promise.all([
+        db.select({ fromLocation: trips.fromLocation, toLocation: trips.toLocation }).from(trips)
+          .where(excludeIds(trips.organizerId, excludedUserIds)),
+        db.select({ fromLocation: quickTrips.fromLocation, toLocation: quickTrips.toLocation }).from(quickTrips)
+          .where(excludeIds(quickTrips.organizerId, excludedUserIds)),
+      ]);
+      const allLocations = [...tripLocationRows, ...quickTripLocationRows];
+      const routeClusters = ROUTE_CLUSTERS.map((cluster) => ({
+        name: cluster.name,
+        count: allLocations.filter((t) => {
+          const from = (t.fromLocation || '').toLowerCase();
+          const to = (t.toLocation || '').toLowerCase();
+          return cluster.cities.some((city) => from.includes(city) || to.includes(city));
+        }).length,
+      }));
+
+      // --- Recent signups / recent trips (last 20 each, newest first) ---
+      const recentSignupRows = await db
+        .select({ id: users.id, displayName: users.displayName, username: users.username, email: users.email, createdAt: users.createdAt })
+        .from(users)
+        .where(excludeIds(users.id, excludedUserIds))
+        .orderBy(desc(users.createdAt))
+        .limit(20);
+
+      const [recentTripRows, recentQuickTripRows] = await Promise.all([
+        db.select({ id: trips.id, title: trips.title, fromLocation: trips.fromLocation, toLocation: trips.toLocation, createdAt: trips.createdAt })
+          .from(trips).where(excludeIds(trips.organizerId, excludedUserIds)).orderBy(desc(trips.createdAt)).limit(20),
+        db.select({ id: quickTrips.id, title: quickTrips.title, fromLocation: quickTrips.fromLocation, toLocation: quickTrips.toLocation, createdAt: quickTrips.createdAt })
+          .from(quickTrips).where(excludeIds(quickTrips.organizerId, excludedUserIds)).orderBy(desc(quickTrips.createdAt)).limit(20),
+      ]);
+
+      const recentTrips = [
+        ...recentTripRows.map((t) => ({ ...t, type: 'Detailed Trip' })),
+        ...recentQuickTripRows.map((t) => ({ ...t, type: 'Quick Trip' })),
+      ]
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .slice(0, 20)
+        .map((t) => ({ ...t, createdAt: t.createdAt.toISOString() }));
+
       return {
-        users: {
-          total: totalUsers || 0,
-          active24h: 0,
-          newToday: 0,
-        },
-        trips: {
-          total: totalTrips || 0,
-          active: activeTrips || 0,
-          pending: 0,
-        },
-        reports: {
-          total: totalReports || 0,
-          open: pendingReports || 0,
-          resolved24h: 0,
-        },
-        chat: {
-          activeThreads: 0,
-          flaggedMessages: 0,
-        },
+        users: { total: totalUsers || 0, active24h: active24h || 0, newToday: newToday || 0 },
+        trips: { total: (totalTrips || 0) + (totalQuickTrips || 0), active: (activeTrips || 0) + (activeQuickTrips || 0), pending: pendingTripReports || 0 },
+        reports: { total: totalReports || 0, open: openReports || 0, resolved24h: resolved24h || 0 },
+        chat: { activeThreads: activeThreads || 0, flaggedMessages: flaggedMessages || 0 },
+        activityChart,
+        routeClusters,
+        recentSignups: recentSignupRows.map((u) => ({
+          id: u.id,
+          name: u.displayName?.trim() || u.username?.trim() || 'Unnamed',
+          email: u.email || '(no email)',
+          createdAt: u.createdAt.toISOString(),
+        })),
+        recentTrips,
         recentActions,
       };
     } catch (error) {
       console.error('❌ Failed to get dashboard summary:', error);
-      return {
-        users: { total: 0, active24h: 0, newToday: 0 },
-        trips: { total: 0, active: 0, pending: 0 },
-        reports: { total: 0, open: 0, resolved24h: 0 },
-        chat: { activeThreads: 0, flaggedMessages: 0 },
-        recentActions: [],
-      };
+      return empty;
     }
   }
 

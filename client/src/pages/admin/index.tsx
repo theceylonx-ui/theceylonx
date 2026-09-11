@@ -7,18 +7,20 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { PermissionGuard } from "@/components/admin/PermissionGuard";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Users, 
-  FileText, 
-  Flag, 
-  MessageSquare, 
+import {
+  Users,
+  FileText,
+  Flag,
+  MessageSquare,
   TrendingUp,
   AlertTriangle,
   CheckCircle,
   Clock,
   Database,
-  Loader2
+  Loader2,
+  MapPin
 } from "lucide-react";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 
 interface DashboardStats {
   users: {
@@ -40,6 +42,15 @@ interface DashboardStats {
     activeThreads: number;
     flaggedMessages: number;
   };
+  activityChart: { date: string; signups: number; trips: number }[];
+  routeClusters: { name: string; count: number }[];
+  recentSignups: { id: string; name: string; email: string; createdAt: string }[];
+  recentTrips: { id: string; title: string; fromLocation: string; toLocation: string; type: string; createdAt: string }[];
+}
+
+function formatChartDate(dateStr: string): string {
+  const d = new Date(`${dateStr}T00:00:00`);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 function StatCard({ 
@@ -110,8 +121,14 @@ export default function AdminOverviewPage() {
     users: { total: 0, active24h: 0, newToday: 0 },
     trips: { total: 0, active: 0, pending: 0 },
     reports: { total: 0, open: 0, resolved24h: 0 },
-    chat: { activeThreads: 0, flaggedMessages: 0 }
+    chat: { activeThreads: 0, flaggedMessages: 0 },
+    activityChart: [],
+    routeClusters: [],
+    recentSignups: [],
+    recentTrips: [],
   };
+
+  const maxClusterCount = Math.max(1, ...dashboardStats.routeClusters.map((c) => c.count));
 
   const seedSampleData = useMutation({
     mutationFn: async () => {
@@ -220,6 +237,127 @@ export default function AdminOverviewPage() {
             icon={MessageSquare}
             permission="chat.view"
           />
+        </div>
+
+        {/* 30-Day Activity Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Signups & Trips — Last 30 Days
+            </CardTitle>
+            <CardDescription>
+              Daily new signups and trips posted. Excludes sample/test data.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={dashboardStats.activityChart} margin={{ top: 5, right: 12, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="date" tickFormatter={formatChartDate} interval={4} tick={{ fontSize: 12 }} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                  <Tooltip labelFormatter={formatChartDate} />
+                  <Legend />
+                  <Line type="monotone" dataKey="signups" name="Signups" stroke="#DB354E" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="trips" name="Trips Posted" stroke="#3F8AB4" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Launch Route Clusters */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Launch Route Clusters
+            </CardTitle>
+            <CardDescription>
+              Trips touching each of the three routes HiBowan launched with, of {dashboardStats.trips.total} total trips.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {dashboardStats.routeClusters.map((cluster) => (
+                <div key={cluster.name}>
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="font-medium text-gray-900">{cluster.name}</span>
+                    <span className="text-gray-500">{cluster.count.toLocaleString()} trip{cluster.count === 1 ? '' : 's'}</span>
+                  </div>
+                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-accent rounded-full"
+                      style={{ width: `${(cluster.count / maxClusterCount) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Signups / Recent Trips */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Recent Signups
+              </CardTitle>
+              <CardDescription>Last 20 real signups, newest first</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 max-h-80 overflow-y-auto">
+                {dashboardStats.recentSignups.length === 0 ? (
+                  <div className="text-sm text-gray-500">No signups yet.</div>
+                ) : (
+                  dashboardStats.recentSignups.map((u) => (
+                    <div key={u.id} className="flex items-center justify-between gap-3 text-sm border-b border-gray-100 pb-2 last:border-0 last:pb-0">
+                      <div className="min-w-0">
+                        <div className="font-medium text-gray-900 truncate">{u.name}</div>
+                        <div className="text-gray-500 truncate">{u.email}</div>
+                      </div>
+                      <div className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0">
+                        {new Date(u.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Recent Trips Posted
+              </CardTitle>
+              <CardDescription>Last 20 real trips, newest first</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 max-h-80 overflow-y-auto">
+                {dashboardStats.recentTrips.length === 0 ? (
+                  <div className="text-sm text-gray-500">No trips posted yet.</div>
+                ) : (
+                  dashboardStats.recentTrips.map((t) => (
+                    <div key={t.id} className="flex items-center justify-between gap-3 text-sm border-b border-gray-100 pb-2 last:border-0 last:pb-0">
+                      <div className="min-w-0">
+                        <div className="font-medium text-gray-900 truncate">{t.title}</div>
+                        <div className="text-gray-500 truncate">{t.fromLocation} → {t.toLocation}</div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <Badge variant="outline" className="text-xs">{t.type}</Badge>
+                        <div className="text-xs text-gray-400 mt-1">{new Date(t.createdAt).toLocaleDateString()}</div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Quick Actions Grid */}
