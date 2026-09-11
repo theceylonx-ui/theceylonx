@@ -7,6 +7,7 @@ import { users, roles } from '@shared/schema';
 import { eq, or } from 'drizzle-orm';
 import { JWTUser } from './jwt';
 import { ALL_PERMS } from '../admin/permissions';
+import { sendWelcomeEmail } from './email';
 
 // Helper to check if email is a designated superadmin
 const isSuperadminEmail = (email: string): boolean => {
@@ -139,10 +140,16 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         emailVerified: true,
       }).returning() as any[];
       const newUser = newUsers[0];
-      
+
       // Auto-assign superadmin role if email is designated
       if (userEmail && isSuperadminEmail(userEmail)) {
         await assignSuperadminRole(newUser.id);
+      }
+
+      if (newUser.email) {
+        sendWelcomeEmail(newUser.email, newUser.name).catch((error) => {
+          console.error('Failed to send welcome email:', error);
+        });
       }
 
       const jwtUser: JWTUser = {
@@ -225,6 +232,14 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
         emailVerified: false,
       }).returning() as any[];
       const newUser = newUsers[0];
+
+      // Facebook usually doesn't hand back an email, so there's often
+      // nothing to send this to — sendWelcomeEmail is skipped, not failed.
+      if (newUser.email) {
+        sendWelcomeEmail(newUser.email, newUser.name).catch((error) => {
+          console.error('Failed to send welcome email:', error);
+        });
+      }
 
       const jwtUser: JWTUser = {
         id: newUser.id,

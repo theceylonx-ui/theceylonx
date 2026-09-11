@@ -236,6 +236,94 @@ HiBowan - Your travel companion in Sri Lanka
   }
 }
 
+// Sent once, right after a new account is created via OAuth. Not a
+// verification gate — the account already works when this sends, so a
+// failure here must never block or fail the signup itself. Callers should
+// wrap this in try/catch and only log on error.
+export async function sendWelcomeEmail(email: string, name?: string | null): Promise<void> {
+  const firstName = name?.trim().split(/\s+/)[0] || 'there';
+
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const hasSmtpCredentials = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS;
+
+  if (isDevelopment && !hasSmtpCredentials) {
+    console.log('🔍 DEVELOPMENT MODE - Welcome email would be sent to:', email);
+    return;
+  }
+
+  const browseTripsUrl = `${APP_URL}/browse-trips`;
+  const postTripUrl = `${APP_URL}/post-trip`;
+  const faqUrl = `${APP_URL}/faq`;
+  const safetyUrl = `${APP_URL}/safety-guidelines`;
+
+  const emailContent = {
+    from: EMAIL_FROM,
+    to: email,
+    subject: "Welcome to HiBowan — you're in",
+    html: `
+      <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #DB354E; margin: 0;">HiBowan</h1>
+          <p style="color: #666; margin: 5px 0;">Your travel companion in Sri Lanka</p>
+        </div>
+
+        <div style="background: #f8fafc; padding: 30px; border-radius: 8px;">
+          <p style="color: #1f2937; margin: 0 0 16px 0; line-height: 1.5;">Hi ${firstName},</p>
+          <p style="color: #4b5563; margin: 0 0 16px 0; line-height: 1.5;">
+            You're officially part of HiBowan — welcome aboard.
+          </p>
+          <p style="color: #4b5563; margin: 0 0 24px 0; line-height: 1.5;">
+            From here you can browse trips already forming across Sri Lanka, or post your own and see who joins. No bookings, no commissions — just fellow travellers coordinating directly.
+          </p>
+
+          <div style="text-align: center; margin: 0 0 24px 0;">
+            <a href="${browseTripsUrl}"
+               style="background: #DB354E; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin: 0 8px 8px 0;">
+              Browse Trips
+            </a>
+            <a href="${postTripUrl}"
+               style="background: white; color: #DB354E; border: 2px solid #DB354E; padding: 10px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin: 0 0 8px 0;">
+              Post a Trip
+            </a>
+          </div>
+
+          <p style="color: #4b5563; margin: 0 0 16px 0; line-height: 1.5;">
+            Here's how to get the most out of HiBowan: <a href="${faqUrl}" style="color: #DB354E;">Help &amp; FAQ</a> — how requests and matching work, what Quick Trip vs. Detailed Trip means, and more.
+          </p>
+
+          <p style="color: #4b5563; margin: 0; line-height: 1.5;">
+            Before your first trip, a couple of quick reminders: always meet in public places, and take a look at our <a href="${safetyUrl}" style="color: #DB354E;">Safety Guidelines</a> — it's a short read and worth it.
+          </p>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+          <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+            — The HiBowan Team
+          </p>
+        </div>
+      </div>
+    `,
+    text: `
+Hi ${firstName},
+
+You're officially part of HiBowan — welcome aboard.
+
+From here you can browse trips already forming across Sri Lanka, or post your own and see who joins. No bookings, no commissions — just fellow travellers coordinating directly.
+
+Browse Trips: ${browseTripsUrl}
+Post a Trip: ${postTripUrl}
+
+Here's how to get the most out of HiBowan: ${faqUrl} — how requests and matching work, what Quick Trip vs. Detailed Trip means, and more.
+
+Before your first trip, a couple of quick reminders: always meet in public places, and take a look at our Safety Guidelines (${safetyUrl}) — it's a short read and worth it.
+
+— The HiBowan Team
+    `,
+  };
+
+  await transporter.sendMail(emailContent);
+}
+
 export async function verifyMagicLink(token: string, email: string): Promise<JWTUser | null> {
   try {
     // Find token record
