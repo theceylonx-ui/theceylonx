@@ -1,0 +1,438 @@
+From 72d4cc39a4b9906fd035da898e50882fba7417fb Mon Sep 17 00:00:00 2001
+From: Agnya <manthram@Pradass-MacBook-Pro.local>
+Date: Fri, 11 Sep 2026 13:33:07 +0530
+Subject: [PATCH] Add daily admin digest email, excluding seeded/test data
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+New scheduled job (server/index.ts) sends one email a day to
+theyceylonx@gmail.com (overridable via DIGEST_RECIPIENT_EMAIL) at
+8:00 AM Asia/Colombo — computed directly against Sri Lanka's fixed
+UTC+5:30 offset rather than a timezone database, since it has no DST.
+Reports new signups, new trips (regular + Quick Trips, labeled), and
+running totals, matching the brief's copy. A requireAdmin-gated
+POST /api/admin/digest/send-now (adminRoutes.ts) triggers the same
+path on demand for testing without waiting for the schedule.
+
+The counts exclude seeded/test data, which needed a real mechanism —
+none existed. Adds users.isTestData (shared/schema.ts), set
+automatically by scripts/seed-trips.ts on its 5 seed users (with a
+backfill for users it already created in an earlier run), plus a
+TEST_ACCOUNT_EMAILS env var for the admin's own manual test accounts,
+following the same allowlist pattern SUPERADMIN_EMAILS already uses in
+server/auth/passport.ts. server/utils/testDataFilter.ts resolves both
+into one excluded-user-id set; trips and quick trips need no separate
+flag since every row has a required organizerId to filter on.
+server/services/digestService.ts holds the stat queries,
+server/auth/email.ts the send/template — same split already used for
+sendWelcomeEmail and the DB layer.
+
+Needs `npm run db:push` in Replit for the new isTestData column before
+this can run.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ scripts/seed-trips.ts            |   5 ++
+ server/auth/email.ts             |  89 +++++++++++++++++++++++++++
+ server/index.ts                  |  40 ++++++++++++
+ server/routes/adminRoutes.ts     |  24 +++++++-
+ server/services/digestService.ts | 101 +++++++++++++++++++++++++++++++
+ server/utils/testDataFilter.ts   |  41 +++++++++++++
+ shared/schema.ts                 |   8 ++-
+ 7 files changed, 306 insertions(+), 2 deletions(-)
+ create mode 100644 server/services/digestService.ts
+ create mode 100644 server/utils/testDataFilter.ts
+
+diff --git a/scripts/seed-trips.ts b/scripts/seed-trips.ts
+index a10b96b..87b76c4 100644
+--- a/scripts/seed-trips.ts
++++ b/scripts/seed-trips.ts
+@@ -11,7 +11,12 @@ async function seedUsers() {
+       await db.insert(users).values({
+         id: nanoid(),
+         ...userData,
++        isTestData: true,
+       });
++    } else if (!existing[0].isTestData) {
++      // Backfill: a user created by an earlier version of this script,
++      // before isTestData existed.
++      await db.update(users).set({ isTestData: true }).where(eq(users.id, existing[0].id));
+     }
+   }
+ }
+diff --git a/server/auth/email.ts b/server/auth/email.ts
+index bcf579d..786b2ec 100644
+--- a/server/auth/email.ts
++++ b/server/auth/email.ts
+@@ -5,6 +5,7 @@ import { db } from '../db';
+ import { users, emailTokens } from '@shared/schema';
+ import { eq, and, sql } from 'drizzle-orm';
+ import { JWTUser } from './jwt';
++import type { DigestStats } from '../services/digestService';
+ 
+ // Email Configuration
+ const SMTP_CONFIG = {
+@@ -324,6 +325,94 @@ Before your first trip, a couple of quick reminders: always meet in public place
+   await transporter.sendMail(emailContent);
+ }
+ 
++const DIGEST_RECIPIENT = process.env.DIGEST_RECIPIENT_EMAIL || 'theyceylonx@gmail.com';
++
++/**
++ * Daily admin digest — replaces per-event admin pings with one email a
++ * day. stats is already filtered to exclude seeded/test data by the
++ * caller (server/services/digestService.ts); this function only formats
++ * and sends.
++ */
++export async function sendDailyDigestEmail(stats: DigestStats): Promise<void> {
++  const isDevelopment = process.env.NODE_ENV === 'development';
++  const hasSmtpCredentials = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS;
++
++  if (isDevelopment && !hasSmtpCredentials) {
++    console.log('🔍 DEVELOPMENT MODE - Daily digest would be sent to:', DIGEST_RECIPIENT, stats);
++    return;
++  }
++
++  const dashboardUrl = `${APP_URL}/admin`;
++  const signupCount = stats.newSignups.length;
++  const tripCount = stats.newTrips.length;
++
++  const signupListHtml = signupCount > 0
++    ? stats.newSignups.map((s) => `<li style="margin-bottom: 4px;">${s.name} (${s.email})</li>`).join('')
++    : '<li style="list-style: none; color: #9ca3af;">No new signups since yesterday.</li>';
++
++  const tripListHtml = tripCount > 0
++    ? stats.newTrips.map((t) => `<li style="margin-bottom: 4px;">${t.title} — ${t.fromLocation} → ${t.toLocation} (${t.type})</li>`).join('')
++    : '<li style="list-style: none; color: #9ca3af;">No new trips posted since yesterday.</li>';
++
++  const signupListText = signupCount > 0
++    ? stats.newSignups.map((s) => `- ${s.name} (${s.email})`).join('\n')
++    : 'No new signups since yesterday.';
++
++  const tripListText = tripCount > 0
++    ? stats.newTrips.map((t) => `- ${t.title} — ${t.fromLocation} → ${t.toLocation} (${t.type})`).join('\n')
++    : 'No new trips posted since yesterday.';
++
++  const emailContent = {
++    from: EMAIL_FROM,
++    to: DIGEST_RECIPIENT,
++    subject: `HiBowan daily — ${signupCount} new signups, ${tripCount} new trips`,
++    html: `
++      <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
++        <div style="text-align: center; margin-bottom: 30px;">
++          <h1 style="color: #DB354E; margin: 0;">HiBowan</h1>
++          <p style="color: #666; margin: 5px 0;">Daily admin digest</p>
++        </div>
++
++        <div style="background: #f8fafc; padding: 30px; border-radius: 8px;">
++          <p style="color: #1f2937; margin: 0 0 20px 0;">Since yesterday:</p>
++
++          <p style="color: #1f2937; font-weight: bold; margin: 0 0 8px 0;">${signupCount} new signup${signupCount === 1 ? '' : 's'}</p>
++          <ul style="color: #4b5563; margin: 0 0 20px 0; padding-left: 20px;">${signupListHtml}</ul>
++
++          <p style="color: #1f2937; font-weight: bold; margin: 0 0 8px 0;">${tripCount} new trip${tripCount === 1 ? '' : 's'} posted</p>
++          <ul style="color: #4b5563; margin: 0 0 20px 0; padding-left: 20px;">${tripListHtml}</ul>
++
++          <p style="color: #1f2937; margin: 0 0 20px 0;">
++            <strong>Running totals:</strong> ${stats.totalUsers} users · ${stats.totalTrips} trips · ${stats.tripsThisWeek} trips this week
++          </p>
++
++          <div style="text-align: center;">
++            <a href="${dashboardUrl}"
++               style="background: #DB354E; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
++              Open dashboard
++            </a>
++          </div>
++        </div>
++      </div>
++    `,
++    text: `
++Since yesterday:
++
++${signupCount} new signup${signupCount === 1 ? '' : 's'}
++${signupListText}
++
++${tripCount} new trip${tripCount === 1 ? '' : 's'} posted
++${tripListText}
++
++Running totals: ${stats.totalUsers} users · ${stats.totalTrips} trips · ${stats.tripsThisWeek} trips this week
++
++Open dashboard: ${dashboardUrl}
++    `,
++  };
++
++  await transporter.sendMail(emailContent);
++}
++
+ export async function verifyMagicLink(token: string, email: string): Promise<JWTUser | null> {
+   try {
+     // Find token record
+diff --git a/server/index.ts b/server/index.ts
+index 6070139..faf7c6d 100644
+--- a/server/index.ts
++++ b/server/index.ts
+@@ -337,6 +337,46 @@ async function startServer() {
+     setInterval(runTripArchiver, DAILY_ARCHIVE_INTERVAL);
+     console.log('✅ Trip auto-archiver started (runs daily)');
+ 
++    // Start scheduled admin daily digest email (8:00 AM Asia/Colombo)
++    console.log('Starting daily digest scheduler...');
++
++    const runDailyDigest = async () => {
++      try {
++        const { getDigestStats } = await import('./services/digestService');
++        const { sendDailyDigestEmail } = await import('./auth/email');
++        const stats = await getDigestStats();
++        await sendDailyDigestEmail(stats);
++        console.log(`📧 Daily digest sent: ${stats.newSignups.length} new signups, ${stats.newTrips.length} new trips`);
++      } catch (error) {
++        console.error('❌ Daily digest failed:', error);
++      }
++    };
++
++    // Sri Lanka is a fixed UTC+5:30 offset with no DST, so this can be
++    // computed directly rather than depending on a timezone database.
++    const COLOMBO_OFFSET_MS = 5.5 * 60 * 60 * 1000;
++    const msUntilNextColomboEightAM = (): number => {
++      const now = new Date();
++      const nowColombo = new Date(now.getTime() + COLOMBO_OFFSET_MS);
++      const nextRunColombo = new Date(Date.UTC(
++        nowColombo.getUTCFullYear(),
++        nowColombo.getUTCMonth(),
++        nowColombo.getUTCDate(),
++        8, 0, 0, 0
++      ));
++      if (nextRunColombo.getTime() <= nowColombo.getTime()) {
++        nextRunColombo.setUTCDate(nextRunColombo.getUTCDate() + 1);
++      }
++      const nextRunUTC = new Date(nextRunColombo.getTime() - COLOMBO_OFFSET_MS);
++      return nextRunUTC.getTime() - now.getTime();
++    };
++
++    setTimeout(() => {
++      runDailyDigest();
++      setInterval(runDailyDigest, DAILY_ARCHIVE_INTERVAL);
++    }, msUntilNextColomboEightAM());
++    console.log(`✅ Daily digest scheduler started (next run in ${Math.round(msUntilNextColomboEightAM() / 60000)} minutes)`);
++
+     // Setup static file serving for production (Vite already set up in dev)
+     if (!isDevelopment) {
+       console.log('Setting up static file serving for production...');
+diff --git a/server/routes/adminRoutes.ts b/server/routes/adminRoutes.ts
+index 901e36f..2ef6faf 100644
+--- a/server/routes/adminRoutes.ts
++++ b/server/routes/adminRoutes.ts
+@@ -660,7 +660,7 @@ router.post('/seed-data', requireAdmin, async (req, res) => {
+     });
+   } catch (error) {
+     console.error('❌ Manual seeding error:', error);
+-    res.status(500).json({ 
++    res.status(500).json({
+       status: 'error',
+       message: 'Failed to seed sample data',
+       error: error instanceof Error ? error.message : 'Unknown error'
+@@ -668,4 +668,26 @@ router.post('/seed-data', requireAdmin, async (req, res) => {
+   }
+ });
+ 
++// Manually trigger the daily digest email — for testing without waiting
++// for the 8 AM Asia/Colombo schedule in server/index.ts. Same stats and
++// send path as the real scheduled run.
++router.post('/digest/send-now', requireAdmin, async (req, res) => {
++  try {
++    const { getDigestStats } = await import('../services/digestService');
++    const { sendDailyDigestEmail } = await import('../auth/email');
++
++    const stats = await getDigestStats();
++    await sendDailyDigestEmail(stats);
++
++    res.json({ status: 'success', stats });
++  } catch (error) {
++    console.error('❌ Manual digest send error:', error);
++    res.status(500).json({
++      status: 'error',
++      message: 'Failed to send digest',
++      error: error instanceof Error ? error.message : 'Unknown error'
++    });
++  }
++});
++
+ export default router;
+\ No newline at end of file
+diff --git a/server/services/digestService.ts b/server/services/digestService.ts
+new file mode 100644
+index 0000000..1ee29cb
+--- /dev/null
++++ b/server/services/digestService.ts
+@@ -0,0 +1,101 @@
++import { db } from '../db';
++import { users, trips, quickTrips } from '@shared/schema';
++import { and, gte, notInArray, sql } from 'drizzle-orm';
++import { getExcludedUserIds } from '../utils/testDataFilter';
++
++export interface DigestSignup {
++  name: string;
++  email: string;
++}
++
++export interface DigestTrip {
++  title: string;
++  fromLocation: string;
++  toLocation: string;
++  type: 'Quick Trip' | 'Detailed Trip';
++}
++
++export interface DigestStats {
++  newSignups: DigestSignup[];
++  newTrips: DigestTrip[];
++  totalUsers: number;
++  totalTrips: number;
++  tripsThisWeek: number;
++}
++
++/**
++ * excludedUserIds can be empty on a fresh DB with no seeded/test accounts
++ * yet, in which case notInArray with an empty array would match nothing —
++ * Drizzle needs an explicit true-clause instead.
++ */
++function excludeIds(column: any, excludedUserIds: string[]) {
++  return excludedUserIds.length > 0 ? notInArray(column, excludedUserIds) : sql`true`;
++}
++
++export async function getDigestStats(sinceHours = 24): Promise<DigestStats> {
++  const excludedUserIds = await getExcludedUserIds();
++  const since = new Date(Date.now() - sinceHours * 60 * 60 * 1000);
++  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
++
++  const newSignupRows = await db
++    .select({ name: users.displayName, username: users.username, email: users.email, id: users.id })
++    .from(users)
++    .where(and(gte(users.createdAt, since), excludeIds(users.id, excludedUserIds)));
++
++  const newTripRows = await db
++    .select({
++      title: trips.title,
++      fromLocation: trips.fromLocation,
++      toLocation: trips.toLocation,
++    })
++    .from(trips)
++    .where(and(gte(trips.createdAt, since), excludeIds(trips.organizerId, excludedUserIds)));
++
++  const newQuickTripRows = await db
++    .select({
++      title: quickTrips.title,
++      fromLocation: quickTrips.fromLocation,
++      toLocation: quickTrips.toLocation,
++    })
++    .from(quickTrips)
++    .where(and(gte(quickTrips.createdAt, since), excludeIds(quickTrips.organizerId, excludedUserIds)));
++
++  const [{ count: totalUsers }] = await db
++    .select({ count: sql<number>`count(*)::int` })
++    .from(users)
++    .where(excludeIds(users.id, excludedUserIds));
++
++  const [{ count: totalTripsCount }] = await db
++    .select({ count: sql<number>`count(*)::int` })
++    .from(trips)
++    .where(excludeIds(trips.organizerId, excludedUserIds));
++
++  const [{ count: totalQuickTripsCount }] = await db
++    .select({ count: sql<number>`count(*)::int` })
++    .from(quickTrips)
++    .where(excludeIds(quickTrips.organizerId, excludedUserIds));
++
++  const [{ count: tripsThisWeekCount }] = await db
++    .select({ count: sql<number>`count(*)::int` })
++    .from(trips)
++    .where(and(gte(trips.createdAt, weekAgo), excludeIds(trips.organizerId, excludedUserIds)));
++
++  const [{ count: quickTripsThisWeekCount }] = await db
++    .select({ count: sql<number>`count(*)::int` })
++    .from(quickTrips)
++    .where(and(gte(quickTrips.createdAt, weekAgo), excludeIds(quickTrips.organizerId, excludedUserIds)));
++
++  return {
++    newSignups: newSignupRows.map((u) => ({
++      name: u.name?.trim() || u.username?.trim() || 'Unnamed',
++      email: u.email || '(no email)',
++    })),
++    newTrips: [
++      ...newTripRows.map((t) => ({ ...t, type: 'Detailed Trip' as const })),
++      ...newQuickTripRows.map((t) => ({ ...t, type: 'Quick Trip' as const })),
++    ],
++    totalUsers,
++    totalTrips: totalTripsCount + totalQuickTripsCount,
++    tripsThisWeek: tripsThisWeekCount + quickTripsThisWeekCount,
++  };
++}
+diff --git a/server/utils/testDataFilter.ts b/server/utils/testDataFilter.ts
+new file mode 100644
+index 0000000..addc51c
+--- /dev/null
++++ b/server/utils/testDataFilter.ts
+@@ -0,0 +1,41 @@
++import { db } from '../db';
++import { users } from '@shared/schema';
++import { eq, inArray, or } from 'drizzle-orm';
++
++/**
++ * Admin's own manual test accounts (personal Google/Facebook logins used
++ * while building/testing), as a comma-separated list of emails in
++ * TEST_ACCOUNT_EMAILS. Seeded content is excluded separately via
++ * users.isTestData, set automatically by scripts/seed-trips.ts.
++ *
++ * Both are "not real product usage" for the same reason: admin dashboard
++ * and digest counts must only reflect genuine signups/trips.
++ */
++function getTestAccountEmails(): string[] {
++  return (process.env.TEST_ACCOUNT_EMAILS || '')
++    .split(',')
++    .map((e) => e.trim().toLowerCase())
++    .filter(Boolean);
++}
++
++/**
++ * User ids to exclude from any "real users/trips" count: seeded users
++ * (users.isTestData) plus the admin's manual test accounts
++ * (TEST_ACCOUNT_EMAILS). Trips and quick trips are excluded by checking
++ * their organizerId against this same set, since every trip has a
++ * required organizer — no separate isTestData column needed on trips.
++ */
++export async function getExcludedUserIds(): Promise<string[]> {
++  const testEmails = getTestAccountEmails();
++
++  const rows = await db
++    .select({ id: users.id })
++    .from(users)
++    .where(
++      testEmails.length > 0
++        ? or(eq(users.isTestData, true), inArray(users.email, testEmails))
++        : eq(users.isTestData, true)
++    );
++
++  return rows.map((r) => r.id);
++}
+diff --git a/shared/schema.ts b/shared/schema.ts
+index ec705aa..ff6f375 100644
+--- a/shared/schema.ts
++++ b/shared/schema.ts
+@@ -172,7 +172,13 @@ export const users = pgTable("users", {
+   verificationBadges: text("verification_badges").array().default(sql`'{}'::text[]`).notNull(), // ['email', 'phone', 'id', 'host', 'plus']
+   verificationLevel: integer("verification_level").default(0).notNull(), // 0-5 scale
+   verificationDate: timestamp("verification_date"),
+-  
++
++  // Seeded/sample content, set by scripts/seed-trips.ts. Admin's own manual
++  // test accounts are excluded separately via the TEST_ACCOUNT_EMAILS env
++  // var (see server/utils/testDataFilter.ts) rather than this column, since
++  // there's no UI to flag those yet.
++  isTestData: boolean("is_test_data").default(false).notNull(),
++
+   createdAt: timestamp("created_at").defaultNow().notNull(),
+   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+ }, (table) => [
+-- 
+2.50.1 (Apple Git-155)
+
